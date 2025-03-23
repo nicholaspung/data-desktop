@@ -17,7 +17,13 @@ func Initialize(dbPath string) error {
 		return err
 	}
 
-	return err
+	// Initialize the database schema
+	err = InitializeSchema(DB)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Close closes the database connection
