@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <!-- Square background with rounded corners -->
+  <rect x="20" y="20" width="160" height="160" rx="15" fill="#f1f5f9" stroke="#334155" stroke-width="4"/>
+  
+  <!-- Grid lines -->
+  <line x1="50" y1="50" x2="150" y2="50" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="50" y1="85" x2="150" y2="85" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="50" y1="120" x2="150" y2="120" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="50" y1="155" x2="150" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  
+  <line x1="50" y1="50" x2="50" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="85" y1="50" x2="85" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="120" y1="50" x2="120" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  <line x1="150" y1="50" x2="150" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+  
+  <!-- Data points -->
+  <circle cx="50" cy="120" r="5" fill="#06b6d4"/>
+  <circle cx="85" cy="85" r="5" fill="#06b6d4"/>
+  <circle cx="120" cy="100" r="5" fill="#06b6d4"/>
+  <circle cx="150" cy="65" r="5" fill="#06b6d4"/>
+  
+  <!-- Connecting data flow -->
+  <path d="M50,120 C60,110 75,85 85,85 C95,85 110,95 120,100 C130,105 140,80 150,65" 
+        fill="none" 
+        stroke="#0284c7" 
+        stroke-width="3"/>
+  
+  <!-- No additional elements as requested -->
+</svg>
