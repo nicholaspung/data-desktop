@@ -8,7 +8,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-10 bg-background border-b p-4 flex justify-between items-center">
       <Link to="/" className="flex items-center gap-2">
-        <img src={Logo} alt="Data Desktop Logo" className="h-16 w-16" />
+        <img src={Logo} alt="Data Desktop Logo" className="h-11 w-11" />
         <h1 className="text-xl font-bold">Data Desktop</h1>
         <Badge variant="secondary" className="text-xs">
           v{VERSION_NUMBER}

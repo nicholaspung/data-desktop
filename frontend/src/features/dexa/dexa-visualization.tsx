@@ -1,22 +1,7 @@
 // src/features/dexa/dexa-visualization.tsx
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiService } from "@/services/api";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
@@ -28,36 +13,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import BodyCompositionTab from "./visualization/body-composition-tab";
+import TrendsTab from "./visualization/trends-tab";
+import RegionalAnalysisTab from "./visualization/regional-analysis-tab";
+import SymmetryTab from "./visualization/symmetry-tab";
+
+export interface DexaScan {
+  id: string;
+  date: Date;
+  createdAt: string;
+  lastModified: string;
+  [key: string]: any;
+}
 
 interface DexaVisualizationProps {
   className?: string;
 }
 
-// Define color palette
-const COLORS = [
-  "#8884d8", // Purple
-  "#82ca9d", // Green
-  "#ffc658", // Yellow
-  "#ff8042", // Orange
-  "#0088fe", // Blue
-  "#00C49F", // Teal
-  "#FFBB28", // Amber
-  "#FF8042", // Coral
-];
-
-// Mapping percentage values to different semantic colors
-const getColorForPercentage = (value: number) => {
-  if (value < 10) return "#82ca9d"; // Lean - Green
-  if (value < 20) return "#8884d8"; // Athletic - Purple
-  if (value < 25) return "#ffc658"; // Fitness - Yellow
-  if (value < 30) return "#ff8042"; // Average - Orange
-  return "#d32f2f"; // Higher body fat - Red
-};
-
 export default function DexaVisualization({
   className = "",
 }: DexaVisualizationProps) {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<DexaScan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("bodyComp");
@@ -76,33 +52,76 @@ export default function DexaVisualization({
     { value: "resting_metabolic_rate", label: "RMR (calories)" },
   ];
 
-  // Different compare metrics for the comparison chart
-  const compareMetrics = [
-    { key: "arms_total_region_fat_percentage", name: "Arms" },
-    { key: "legs_total_region_fat_percentage", name: "Legs" },
-    { key: "trunk_total_region_fat_percentage", name: "Trunk" },
-    { key: "android_total_region_fat_percentage", name: "Android" },
-    { key: "gynoid_total_region_fat_percentage", name: "Gynoid" },
-  ];
-
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
+    console.log("Loading DEXA scan data...");
     setIsLoading(true);
     setError(null);
 
     try {
-      const records = await ApiService.getRecords("dexa");
+      const records = await ApiService.getRecords<DexaScan>("dexa");
+      console.log("Fetched DEXA records:", records);
+
+      if (!records || records.length === 0) {
+        console.log("No DEXA records found");
+        setData([]);
+        setError("No DEXA scan data available. Please add some records first.");
+        setIsLoading(false);
+        return;
+      }
 
       // Process and sort the data
       const processedRecords = records
-        .map((record: any) => ({
-          ...record,
-          date: new Date(record.date),
-        }))
+        .map((record) => {
+          // Ensure all numeric fields have at least a zero value
+          const processedRecord = { ...record };
+          // Check commonly used fields
+          const numericFields = [
+            "total_body_fat_percentage",
+            "fat_tissue_lbs",
+            "lean_tissue_lbs",
+            "total_mass_lbs",
+            "bone_mineral_content",
+            "arms_total_region_fat_percentage",
+            "legs_total_region_fat_percentage",
+            "trunk_total_region_fat_percentage",
+            "android_total_region_fat_percentage",
+            "gynoid_total_region_fat_percentage",
+          ];
+
+          numericFields.forEach((field) => {
+            if (
+              processedRecord[field] === undefined ||
+              processedRecord[field] === null
+            ) {
+              processedRecord[field] = 0;
+              console.log(`Set missing field ${field} to 0`);
+            }
+          });
+
+          return {
+            ...processedRecord,
+            date: new Date(record.date),
+          };
+        })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      console.log("Processed DEXA records:", processedRecords);
+
+      if (processedRecords.length > 0) {
+        console.log(
+          "First record fields:",
+          Object.keys(processedRecords[0] as DexaScan)
+            .filter(
+              (key) =>
+                typeof (processedRecords[0] as DexaScan)[key] === "number"
+            )
+            .join(", ")
+        );
+      }
 
       setData(processedRecords);
     } catch (error) {
@@ -141,163 +160,6 @@ export default function DexaVisualization({
   // Format date for charts
   const formatDate = (date: Date) => {
     return format(new Date(date), "MMM d, yyyy");
-  };
-
-  // Custom tooltip formatter
-  const renderTooltip = (props: any) => {
-    const { active, payload, label } = props;
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border p-2 rounded shadow-sm">
-          <p className="font-bold">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={`item-${index}`} style={{ color: entry.color }}>
-              {entry.name}: {entry.value.toFixed(2)} {entry.unit || ""}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // Generate the latest body composition data for the pie chart
-  const getLatestBodyCompData = () => {
-    if (data.length === 0) return [];
-
-    const latest = data[data.length - 1];
-    const fatMass = latest.fat_tissue_lbs || 0;
-    const leanMass = latest.lean_tissue_lbs || 0;
-    const boneMass = latest.bone_mineral_content || 0;
-
-    return [
-      { name: "Fat Mass", value: fatMass },
-      { name: "Lean Mass", value: leanMass },
-      { name: "Bone Mass", value: boneMass },
-    ];
-  };
-
-  // Create data for the body fat distribution comparison
-  const getBodyFatDistributionData = () => {
-    if (data.length === 0) return [];
-
-    const latest = data[data.length - 1];
-
-    return compareMetrics.map((metric) => ({
-      name: metric.name,
-      value: latest[metric.key] || 0,
-      fill: getColorForPercentage(latest[metric.key] || 0),
-    }));
-  };
-
-  // Get trend data for trend chart
-  const getTrendData = () => {
-    const filtered = getFilteredData();
-
-    return filtered
-      .map((item) => ({
-        date: formatDate(item.date),
-        [selectedMetric]: item[selectedMetric] || 0,
-        dateObj: item.date, // Keep original date for sorting
-      }))
-      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  };
-
-  // Get comparison data for comparison chart
-  const getComparisonData = () => {
-    const filtered = getFilteredData();
-    if (filtered.length === 0) return [];
-
-    return filtered
-      .map((item) => {
-        const result: any = {
-          date: formatDate(item.date),
-          dateObj: item.date,
-        };
-
-        compareMetrics.forEach((metric) => {
-          result[metric.name] = item[metric.key] || 0;
-        });
-
-        return result;
-      })
-      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  };
-
-  // Get lean vs fat trend data
-  const getLeanVsFatData = () => {
-    const filtered = getFilteredData();
-
-    return filtered
-      .map((item) => ({
-        date: formatDate(item.date),
-        "Lean Tissue": item.lean_tissue_lbs || 0,
-        "Fat Tissue": item.fat_tissue_lbs || 0,
-        dateObj: item.date,
-      }))
-      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
-  };
-
-  // Get limb symmetry data (right vs left comparison)
-  const getLimbSymmetryData = () => {
-    if (data.length === 0) return [];
-
-    const latest = data[data.length - 1];
-
-    return [
-      {
-        category: "Arms Fat %",
-        Right: latest.right_arm_total_region_fat_percentage || 0,
-        Left: latest.left_arm_total_region_fat_percentage || 0,
-      },
-      {
-        category: "Arms Lean (lbs)",
-        Right: latest.right_arm_lean_tissue_lbs || 0,
-        Left: latest.left_arm_lean_tissue_lbs || 0,
-      },
-      {
-        category: "Legs Fat %",
-        Right: latest.right_leg_total_region_fat_percentage || 0,
-        Left: latest.left_leg_total_region_fat_percentage || 0,
-      },
-      {
-        category: "Legs Lean (lbs)",
-        Right: latest.right_leg_lean_tissue_lbs || 0,
-        Left: latest.left_leg_lean_tissue_lbs || 0,
-      },
-    ];
-  };
-
-  // Get unit for selected metric
-  const getUnitForMetric = (metric: string) => {
-    switch (metric) {
-      case "total_body_fat_percentage":
-      case "arms_total_region_fat_percentage":
-      case "legs_total_region_fat_percentage":
-      case "trunk_total_region_fat_percentage":
-      case "android_total_region_fat_percentage":
-      case "gynoid_total_region_fat_percentage":
-        return "%";
-      case "lean_tissue_lbs":
-      case "fat_tissue_lbs":
-      case "total_mass_lbs":
-      case "vat_mass_lbs":
-        return "lbs";
-      case "bone_density_g_cm2_total":
-        return "g/cm²";
-      case "resting_metabolic_rate":
-        return "cal";
-      default:
-        return "";
-    }
-  };
-
-  // Get display name for metric
-  const getMetricDisplayName = () => {
-    const found = metricOptions.find(
-      (option) => option.value === selectedMetric
-    );
-    return found ? found.label : selectedMetric;
   };
 
   if (isLoading) {
@@ -376,193 +238,33 @@ export default function DexaVisualization({
         </div>
       </div>
 
-      <TabsContent value="bodyComp" className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Current Body Composition */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Body Composition</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={getLatestBodyCompData()}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(1)}%`
-                      }
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {getLatestBodyCompData().map((_, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => `${Number(value).toFixed(2)} lbs`}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Use direct conditional rendering instead of TabsContent */}
+      <div className="space-y-6">
+        {activeTab === "bodyComp" && (
+          <BodyCompositionTab
+            data={getFilteredData()}
+            formatDate={formatDate}
+          />
+        )}
 
-          {/* Fat vs Lean Tissue Trend */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Fat vs Lean Tissue Trend</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={getLeanVsFatData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis unit=" lbs" />
-                    <Tooltip content={renderTooltip} />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="Lean Tissue"
-                      stroke="#8884d8"
-                      activeDot={{ r: 8 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="Fat Tissue"
-                      stroke="#82ca9d"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {activeTab === "trends" && (
+          <TrendsTab
+            data={getFilteredData()}
+            formatDate={formatDate}
+            selectedMetric={selectedMetric}
+            metricOptions={metricOptions}
+          />
+        )}
 
-        {/* Body Fat Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Body Fat Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={getBodyFatDistributionData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis unit="%" />
-                  <Tooltip
-                    formatter={(value) => `${Number(value).toFixed(2)}%`}
-                  />
-                  <Bar dataKey="value" name="Body Fat %" radius={[4, 4, 0, 0]}>
-                    {getBodyFatDistributionData().map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+        {activeTab === "regional" && (
+          <RegionalAnalysisTab
+            data={getFilteredData()}
+            formatDate={formatDate}
+          />
+        )}
 
-      <TabsContent value="trends" className="space-y-6">
-        {/* Metric Trend Over Time */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{getMetricDisplayName()} Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={getTrendData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis unit={` ${getUnitForMetric(selectedMetric)}`} />
-                  <Tooltip content={renderTooltip} />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey={selectedMetric}
-                    name={getMetricDisplayName()}
-                    stroke="#8884d8"
-                    activeDot={{ r: 8 }}
-                    unit={getUnitForMetric(selectedMetric)}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="regional" className="space-y-6">
-        {/* Regional Fat Comparison */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Regional Fat Percentage Comparison</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={getComparisonData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis unit="%" />
-                  <Tooltip content={renderTooltip} />
-                  <Legend />
-                  {compareMetrics.map((metric, index) => (
-                    <Line
-                      key={metric.key}
-                      type="monotone"
-                      dataKey={metric.name}
-                      stroke={COLORS[index % COLORS.length]}
-                      unit="%"
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="symmetry" className="space-y-6">
-        {/* Limb Symmetry */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Left vs Right Symmetry</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={getLimbSymmetryData()}
-                  layout="vertical"
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="category" type="category" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Right" fill="#8884d8" name="Right Side" />
-                  <Bar dataKey="Left" fill="#82ca9d" name="Left Side" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+        {activeTab === "symmetry" && <SymmetryTab data={getFilteredData()} />}
+      </div>
     </div>
   );
 }
