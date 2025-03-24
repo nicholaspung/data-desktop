@@ -27,3 +27,17 @@ export interface FieldDefinition {
 }
 
 export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";
+
+// Interface for the store state
+export interface FieldDefinitionsState {
+  datasets: {
+    [key: string]: FieldDefinitionsDataset;
+  };
+}
+
+export type FieldDefinitionsDataset = {
+  id: string;
+  name: string;
+  description?: string;
+  fields: FieldDefinition[];
+};

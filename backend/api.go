@@ -4,7 +4,9 @@ package backend
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"myproject/backend/database"
+	_ "myproject/backend/database/models" // Import for side effects to register field functions
 	"time"
 
 	"github.com/google/uuid"
@@ -27,7 +29,14 @@ func (a *App) Startup(ctx context.Context) {
 	// Initialize the database
 	err := database.Initialize("./DataDesktop.db")
 	if err != nil {
-		println("Error initializing database:", err.Error())
+		log.Println("Error initializing database:", err.Error())
+		return
+	}
+
+	// Sync datasets with the database
+	err = database.SyncDatasets()
+	if err != nil {
+		log.Println("Error synchronizing datasets:", err.Error())
 	}
 }
 

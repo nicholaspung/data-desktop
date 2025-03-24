@@ -1,4 +1,4 @@
-// src/pages/index.tsx
+// src/pages/index.tsx - Updated with null check
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Card,
@@ -35,6 +35,13 @@ function Home() {
       try {
         // Get all datasets
         const datasets = await ApiService.getDatasets();
+
+        // Add null check to handle case where datasets is null
+        if (!datasets || datasets.length === 0) {
+          setSummaries([]);
+          setIsLoading(false);
+          return;
+        }
 
         // Create a list of promises to get record counts for each dataset
         const countPromises = datasets.map(async (dataset) => {
@@ -79,6 +86,8 @@ function Home() {
         setSummaries(results);
       } catch (error) {
         console.error("Error loading dataset summaries:", error);
+        // In case of error, set empty summaries to prevent UI errors
+        setSummaries([]);
       } finally {
         setIsLoading(false);
       }

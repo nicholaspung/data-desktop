@@ -1,0 +1,487 @@
+import { FieldDefinitionsDataset } from "@/types";
+
+export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "dexa",
+  name: "DEXA Scan",
+  description: "Body composition measurements from DEXA scans",
+  fields: [
+    // General scan information
+    {
+      key: "date",
+      type: "date",
+      displayName: "Date",
+      description: "Date of the DEXA scan",
+      isSearchable: true,
+    },
+    {
+      key: "fasted",
+      type: "boolean",
+      displayName: "Fasted",
+      description: "Whether the scan was taken in a fasted state",
+    },
+
+    // Total body measurements
+    {
+      key: "total_body_fat_percentage",
+      type: "percentage",
+      displayName: "Body Fat %",
+      description: "Total body fat percentage",
+      isSearchable: true,
+    },
+    {
+      key: "total_mass_lbs",
+      type: "number",
+      displayName: "Total Mass",
+      unit: "lbs",
+      description: "Total body mass",
+    },
+    {
+      key: "fat_tissue_lbs",
+      type: "number",
+      displayName: "Fat Tissue",
+      unit: "lbs",
+      description: "Total fat tissue mass",
+    },
+    {
+      key: "lean_tissue_lbs",
+      type: "number",
+      displayName: "Lean Tissue",
+      unit: "lbs",
+      description: "Total lean tissue mass",
+      isSearchable: true,
+    },
+    {
+      key: "bone_mineral_content",
+      type: "number",
+      displayName: "BMC",
+      unit: "g",
+      description: "Bone Mineral Content",
+    },
+
+    // Arms region measurements
+    {
+      key: "arms_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Arms Fat %",
+      description: "Arms region fat percentage",
+    },
+    {
+      key: "arms_total_mass_lbs",
+      type: "number",
+      displayName: "Arms Mass",
+      unit: "lbs",
+      description: "Total arms mass",
+    },
+    {
+      key: "arms_fat_tissue_lbs",
+      type: "number",
+      displayName: "Arms Fat",
+      unit: "lbs",
+      description: "Arms fat tissue mass",
+    },
+    {
+      key: "arms_lean_tissue_lbs",
+      type: "number",
+      displayName: "Arms Lean",
+      unit: "lbs",
+      description: "Arms lean tissue mass",
+    },
+    {
+      key: "arms_bone_mineral_content",
+      type: "number",
+      displayName: "Arms BMC",
+      unit: "g",
+      description: "Arms bone mineral content",
+    },
+
+    // Legs region measurements
+    {
+      key: "legs_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Legs Fat %",
+      description: "Legs region fat percentage",
+    },
+    {
+      key: "legs_total_mass_lbs",
+      type: "number",
+      displayName: "Legs Mass",
+      unit: "lbs",
+      description: "Total legs mass",
+    },
+    {
+      key: "legs_fat_tissue_lbs",
+      type: "number",
+      displayName: "Legs Fat",
+      unit: "lbs",
+      description: "Legs fat tissue mass",
+    },
+    {
+      key: "legs_lean_tissue_lbs",
+      type: "number",
+      displayName: "Legs Lean",
+      unit: "lbs",
+      description: "Legs lean tissue mass",
+    },
+    {
+      key: "legs_bone_mineral_content",
+      type: "number",
+      displayName: "Legs BMC",
+      unit: "g",
+      description: "Legs bone mineral content",
+    },
+
+    // Trunk region measurements
+    {
+      key: "trunk_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Trunk Fat %",
+      description: "Trunk region fat percentage",
+    },
+    {
+      key: "trunk_total_mass_lbs",
+      type: "number",
+      displayName: "Trunk Mass",
+      unit: "lbs",
+      description: "Total trunk mass",
+    },
+    {
+      key: "trunk_fat_tissue_lbs",
+      type: "number",
+      displayName: "Trunk Fat",
+      unit: "lbs",
+      description: "Trunk fat tissue mass",
+    },
+    {
+      key: "trunk_lean_tissue_lbs",
+      type: "number",
+      displayName: "Trunk Lean",
+      unit: "lbs",
+      description: "Trunk lean tissue mass",
+    },
+    {
+      key: "trunk_bone_mineral_content",
+      type: "number",
+      displayName: "Trunk BMC",
+      unit: "g",
+      description: "Trunk bone mineral content",
+    },
+
+    // Android region measurements
+    {
+      key: "android_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Android Fat %",
+      description: "Android region fat percentage",
+    },
+    {
+      key: "android_total_mass_lbs",
+      type: "number",
+      displayName: "Android Mass",
+      unit: "lbs",
+      description: "Total android region mass",
+    },
+    {
+      key: "android_fat_tissue_lbs",
+      type: "number",
+      displayName: "Android Fat",
+      unit: "lbs",
+      description: "Android region fat tissue mass",
+    },
+    {
+      key: "android_lean_tissue_lbs",
+      type: "number",
+      displayName: "Android Lean",
+      unit: "lbs",
+      description: "Android region lean tissue mass",
+    },
+    {
+      key: "android_bone_mineral_content",
+      type: "number",
+      displayName: "Android BMC",
+      unit: "g",
+      description: "Android region bone mineral content",
+    },
+
+    // Gynoid region measurements
+    {
+      key: "gynoid_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Gynoid Fat %",
+      description: "Gynoid region fat percentage",
+    },
+    {
+      key: "gynoid_total_mass_lbs",
+      type: "number",
+      displayName: "Gynoid Mass",
+      unit: "lbs",
+      description: "Total gynoid region mass",
+    },
+    {
+      key: "gynoid_fat_tissue_lbs",
+      type: "number",
+      displayName: "Gynoid Fat",
+      unit: "lbs",
+      description: "Gynoid region fat tissue mass",
+    },
+    {
+      key: "gynoid_lean_tissue_lbs",
+      type: "number",
+      displayName: "Gynoid Lean",
+      unit: "lbs",
+      description: "Gynoid region lean tissue mass",
+    },
+    {
+      key: "gynoid_bone_mineral_content",
+      type: "number",
+      displayName: "Gynoid BMC",
+      unit: "g",
+      description: "Gynoid region bone mineral content",
+    },
+
+    // Additional measurements
+    {
+      key: "resting_metabolic_rate",
+      type: "number",
+      displayName: "RMR",
+      unit: "calories",
+      description: "Resting metabolic rate",
+      isSearchable: true,
+    },
+    {
+      key: "android",
+      type: "percentage",
+      displayName: "Android %",
+      description: "Android percentage",
+    },
+    {
+      key: "gynoid",
+      type: "percentage",
+      displayName: "Gynoid %",
+      description: "Gynoid percentage",
+    },
+    {
+      key: "a_g_ratio",
+      type: "number",
+      displayName: "A/G Ratio",
+      description: "Android to gynoid ratio",
+    },
+    {
+      key: "vat_mass_lbs",
+      type: "number",
+      displayName: "VAT Mass",
+      unit: "lbs",
+      description: "Visceral adipose tissue mass",
+      isSearchable: true,
+    },
+    {
+      key: "vat_volume_in3",
+      type: "number",
+      displayName: "VAT Volume",
+      unit: "in³",
+      description: "Visceral adipose tissue volume",
+    },
+
+    // Bone density measurements
+    {
+      key: "bone_density_g_cm2_head",
+      type: "number",
+      displayName: "Head BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the head",
+    },
+    {
+      key: "bone_density_g_cm2_arms",
+      type: "number",
+      displayName: "Arms BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the arms",
+    },
+    {
+      key: "bone_density_g_cm2_legs",
+      type: "number",
+      displayName: "Legs BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the legs",
+    },
+    {
+      key: "bone_density_g_cm2_trunk",
+      type: "number",
+      displayName: "Trunk BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the trunk",
+    },
+    {
+      key: "bone_density_g_cm2_ribs",
+      type: "number",
+      displayName: "Ribs BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the ribs",
+    },
+    {
+      key: "bone_density_g_cm2_spine",
+      type: "number",
+      displayName: "Spine BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the spine",
+    },
+    {
+      key: "bone_density_g_cm2_pelvis",
+      type: "number",
+      displayName: "Pelvis BMD",
+      unit: "g/cm²",
+      description: "Bone mineral density of the pelvis",
+    },
+    {
+      key: "bone_density_g_cm2_total",
+      type: "number",
+      displayName: "Total BMD",
+      unit: "g/cm²",
+      description: "Total bone mineral density",
+      isSearchable: true,
+    },
+
+    // Right arm measurements
+    {
+      key: "right_arm_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Right Arm Fat %",
+      description: "Right arm region fat percentage",
+    },
+    {
+      key: "right_arm_total_mass_lbs",
+      type: "number",
+      displayName: "Right Arm Mass",
+      unit: "lbs",
+      description: "Total right arm mass",
+    },
+    {
+      key: "right_arm_fat_tissue_lbs",
+      type: "number",
+      displayName: "Right Arm Fat",
+      unit: "lbs",
+      description: "Right arm fat tissue mass",
+    },
+    {
+      key: "right_arm_lean_tissue_lbs",
+      type: "number",
+      displayName: "Right Arm Lean",
+      unit: "lbs",
+      description: "Right arm lean tissue mass",
+    },
+    {
+      key: "right_arm_bone_mineral_content",
+      type: "number",
+      displayName: "Right Arm BMC",
+      unit: "g",
+      description: "Right arm bone mineral content",
+    },
+
+    // Left arm measurements
+    {
+      key: "left_arm_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Left Arm Fat %",
+      description: "Left arm region fat percentage",
+    },
+    {
+      key: "left_arm_total_mass_lbs",
+      type: "number",
+      displayName: "Left Arm Mass",
+      unit: "lbs",
+      description: "Total left arm mass",
+    },
+    {
+      key: "left_arm_fat_tissue_lbs",
+      type: "number",
+      displayName: "Left Arm Fat",
+      unit: "lbs",
+      description: "Left arm fat tissue mass",
+    },
+    {
+      key: "left_arm_lean_tissue_lbs",
+      type: "number",
+      displayName: "Left Arm Lean",
+      unit: "lbs",
+      description: "Left arm lean tissue mass",
+    },
+    {
+      key: "left_arm_bone_mineral_content",
+      type: "number",
+      displayName: "Left Arm BMC",
+      unit: "g",
+      description: "Left arm bone mineral content",
+    },
+
+    // Right leg measurements
+    {
+      key: "right_leg_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Right Leg Fat %",
+      description: "Right leg region fat percentage",
+    },
+    {
+      key: "right_leg_total_mass_lbs",
+      type: "number",
+      displayName: "Right Leg Mass",
+      unit: "lbs",
+      description: "Total right leg mass",
+    },
+    {
+      key: "right_leg_fat_tissue_lbs",
+      type: "number",
+      displayName: "Right Leg Fat",
+      unit: "lbs",
+      description: "Right leg fat tissue mass",
+    },
+    {
+      key: "right_leg_lean_tissue_lbs",
+      type: "number",
+      displayName: "Right Leg Lean",
+      unit: "lbs",
+      description: "Right leg lean tissue mass",
+    },
+    {
+      key: "right_leg_bone_mineral_content",
+      type: "number",
+      displayName: "Right Leg BMC",
+      unit: "g",
+      description: "Right leg bone mineral content",
+    },
+
+    // Left leg measurements
+    {
+      key: "left_leg_total_region_fat_percentage",
+      type: "percentage",
+      displayName: "Left Leg Fat %",
+      description: "Left leg region fat percentage",
+    },
+    {
+      key: "left_leg_total_mass_lbs",
+      type: "number",
+      displayName: "Left Leg Mass",
+      unit: "lbs",
+      description: "Total left leg mass",
+    },
+    {
+      key: "left_leg_fat_tissue_lbs",
+      type: "number",
+      displayName: "Left Leg Fat",
+      unit: "lbs",
+      description: "Left leg fat tissue mass",
+    },
+    {
+      key: "left_leg_lean_tissue_lbs",
+      type: "number",
+      displayName: "Left Leg Lean",
+      unit: "lbs",
+      description: "Left leg lean tissue mass",
+    },
+    {
+      key: "left_leg_bone_mineral_content",
+      type: "number",
+      displayName: "Left Leg BMC",
+      unit: "g",
+      description: "Left leg bone mineral content",
+    },
+  ],
+};

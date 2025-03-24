@@ -1,76 +1,12 @@
 // src/features/field-definitions/field-definitions-store.ts
-import { FieldDefinition } from "@/types";
+import { FieldDefinition, FieldDefinitionsState } from "@/types";
 import { Store } from "@tanstack/react-store";
-
-// Interface for the store state
-interface FieldDefinitionsState {
-  datasets: {
-    [key: string]: {
-      id: string;
-      name: string;
-      description?: string;
-      fields: FieldDefinition[];
-    };
-  };
-}
+import { DEXA_FIELD_DEFINITIONS } from "./dexa-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
   datasets: {
-    dexa: {
-      id: "dexa",
-      name: "DEXA Scan",
-      description: "Body composition measurements from DEXA scans",
-      fields: [
-        {
-          key: "date",
-          type: "date",
-          displayName: "Date",
-          description: "Date of the DEXA scan",
-          isSearchable: true,
-        },
-        {
-          key: "fasted",
-          type: "boolean",
-          displayName: "Fasted",
-          description: "Whether the scan was taken in a fasted state",
-        },
-        {
-          key: "total_body_fat_percentage",
-          type: "percentage",
-          displayName: "Body Fat %",
-          description: "Total body fat percentage",
-        },
-        {
-          key: "total_mass_lbs",
-          type: "number",
-          displayName: "Total Mass",
-          unit: "lbs",
-          description: "Total body mass",
-        },
-        {
-          key: "fat_tissue_lbs",
-          type: "number",
-          displayName: "Fat Tissue",
-          unit: "lbs",
-          description: "Total fat tissue mass",
-        },
-        {
-          key: "lean_tissue_lbs",
-          type: "number",
-          displayName: "Lean Tissue",
-          unit: "lbs",
-          description: "Total lean tissue mass",
-        },
-        {
-          key: "bone_mineral_content",
-          type: "number",
-          displayName: "BMC",
-          description: "Bone Mineral Content",
-        },
-        // Add more fields as needed
-      ],
-    },
+    dexa: DEXA_FIELD_DEFINITIONS,
     bloodwork: {
       id: "bloodwork",
       name: "Bloodwork",
