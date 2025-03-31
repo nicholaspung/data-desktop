@@ -70,12 +70,7 @@ const CustomTooltip = ({ active, payload, formatter, valueUnit }: any) => {
 };
 
 // Default formatter for tooltip values
-const defaultFormatter = (
-  value: any,
-  name: string,
-  props: any,
-  valueUnit?: string
-) => {
+const defaultFormatter = (value: any, valueUnit?: string) => {
   const displayValue = value?.toFixed(2) || 0;
 
   if (valueUnit) {
@@ -127,8 +122,8 @@ export default function CustomPieChart({
   className,
 }: CustomPieChartProps) {
   // Default formatter that includes the value unit if provided
-  const defaultFormatterWithUnit = (value: any, name: string, props: any) =>
-    defaultFormatter(value, name, props, valueUnit);
+  const defaultFormatterWithUnit = (value: any, name: string) =>
+    defaultFormatter(value, name);
 
   // Handle label prop correctly for Recharts Pie component
   const getLabelProp = (): boolean | PieLabel<any> | undefined => {

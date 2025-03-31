@@ -213,41 +213,6 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
       {viewMode === "single" ? (
         // Single view
         <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Current Body Composition */}
-            <PieChart
-              data={getBodyCompData(selectedScan)}
-              pieConfig={{
-                dataKey: "value",
-                nameKey: "name",
-                outerRadius: 100,
-                minAngle: 5,
-                label: ({ name, percent }) =>
-                  percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : "",
-              }}
-              title="Body Composition"
-              valueUnit="lbs"
-              tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
-            />
-
-            {/* Body Fat Distribution */}
-            <BarChart
-              data={getBodyFatDistributionData(selectedScan)}
-              bars={[
-                {
-                  dataKey: "value",
-                  name: "Body Fat %",
-                  colorByValue: true,
-                  getColorByValue: getColorForPercentage,
-                },
-              ]}
-              xAxisKey="name"
-              yAxisUnit="%"
-              title="Body Fat Distribution"
-              tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
-            />
-          </div>
-
           {/* Key Metrics */}
           <Card>
             <CardHeader>
@@ -289,6 +254,41 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
               </div>
             </CardContent>
           </Card>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Current Body Composition */}
+            <PieChart
+              data={getBodyCompData(selectedScan)}
+              pieConfig={{
+                dataKey: "value",
+                nameKey: "name",
+                outerRadius: 100,
+                minAngle: 5,
+                label: ({ name, percent }) =>
+                  percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : "",
+              }}
+              title="Body Composition"
+              valueUnit="lbs"
+              tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
+            />
+
+            {/* Body Fat Distribution */}
+            <BarChart
+              data={getBodyFatDistributionData(selectedScan)}
+              bars={[
+                {
+                  dataKey: "value",
+                  name: "Body Fat %",
+                  colorByValue: true,
+                  getColorByValue: getColorForPercentage,
+                },
+              ]}
+              xAxisKey="name"
+              yAxisUnit="%"
+              title="Body Fat Distribution"
+              tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+            />
+          </div>
         </div>
       ) : (
         // Comparison view

@@ -19,7 +19,9 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
         ? `${value.toLocaleString()}${meta.unit ? ` ${meta.unit}` : ""}`
         : value;
     case "percentage":
-      return typeof value === "number" ? `${value.toLocaleString()}%` : value;
+      return typeof value === "number"
+        ? `${(value * 100).toLocaleString()}%`
+        : value;
     case "text":
     default:
       return value;

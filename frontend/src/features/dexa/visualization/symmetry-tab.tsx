@@ -322,7 +322,7 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
             layout="vertical"
             title="Left vs Right Symmetry"
             height={400}
-            tooltipFormatter={(value, name, props) => {
+            tooltipFormatter={(value, _, props) => {
               if (props.category.includes("%")) {
                 return `${value.toFixed(2)}%`;
               }
@@ -369,7 +369,7 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
                   : "Symmetry"
               }
               height={300}
-              tooltipFormatter={(value, name, props) => {
+              tooltipFormatter={(value, _, props) => {
                 if (props.category.includes("%")) {
                   return `${value.toFixed(2)}%`;
                 }
@@ -389,7 +389,7 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
                   : "Symmetry"
               }
               height={300}
-              tooltipFormatter={(value, name, props) => {
+              tooltipFormatter={(value, _, props) => {
                 if (props.category.includes("%")) {
                   return `${value.toFixed(2)}%`;
                 }

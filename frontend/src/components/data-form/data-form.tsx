@@ -1,8 +1,8 @@
 // src/components/data-form/data-form.tsx
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useState, useMemo } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -37,6 +37,7 @@ interface DataFormProps {
   successMessage?: string;
   mode?: "add" | "edit";
   recordId?: string;
+  hideSubmitButton?: boolean;
 }
 
 export default function DataForm({
@@ -48,47 +49,42 @@ export default function DataForm({
   successMessage = "Data saved successfully",
   mode = "add",
   recordId,
+  hideSubmitButton = false,
 }: DataFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formSchema, setFormSchema] = useState<z.ZodTypeAny>(z.object({}));
-  const [defaultValues, setDefaultValues] = useState<Record<string, any>>({});
 
-  // Dynamically build the form schema and default values from field definitions
-  useEffect(() => {
+  // Generate a dynamic schema from the field definitions
+  const { schema, defaultValues } = useMemo(() => {
+    // Create schema object and default values
     const schemaObj: Record<string, z.ZodTypeAny> = {};
-    const defaults: Record<string, any> = { ...initialValues };
+    const defaults: Record<string, any> = {};
 
+    // Process each field to build schema and defaults
     fields.forEach((field) => {
-      // Add field to schema based on its type
       switch (field.type) {
         case "date":
           schemaObj[field.key] = z.date({
             required_error: `${field.displayName} is required`,
           });
+
           // Use initial value or default to current date
-          if (!defaults[field.key]) {
+          if (initialValues[field.key]) {
+            defaults[field.key] = new Date(initialValues[field.key]);
+          } else {
             defaults[field.key] = new Date();
-          } else if (!(defaults[field.key] instanceof Date)) {
-            defaults[field.key] = new Date(defaults[field.key]);
           }
           break;
 
         case "boolean":
           schemaObj[field.key] = z.boolean().default(false);
-          // Use initial value or default to false
-          if (defaults[field.key] === undefined) {
-            defaults[field.key] = false;
-          }
+          defaults[field.key] = initialValues[field.key] ?? false;
           break;
 
         case "number":
           schemaObj[field.key] = z.coerce
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0");
-          // Use initial value or default to 0
-          if (defaults[field.key] === undefined) {
-            defaults[field.key] = 0;
-          }
+          defaults[field.key] = initialValues[field.key] ?? 0;
           break;
 
         case "percentage":
@@ -96,35 +92,32 @@ export default function DataForm({
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0")
             .max(100, "Must be less than 100");
-          // Use initial value or default to 0
-          if (defaults[field.key] === undefined) {
-            defaults[field.key] = 0;
-          }
+          defaults[field.key] = initialValues[field.key] ?? 0;
           break;
 
         case "text":
           schemaObj[field.key] = z
             .string()
             .min(1, `${field.displayName} is required`);
-          // Use initial value or default to empty string
-          if (defaults[field.key] === undefined) {
-            defaults[field.key] = "";
-          }
+          defaults[field.key] = initialValues[field.key] ?? "";
           break;
       }
     });
 
-    setFormSchema(z.object(schemaObj));
-    setDefaultValues(defaults);
+    return {
+      schema: z.object(schemaObj),
+      defaultValues: defaults,
+    };
   }, [fields, initialValues]);
 
-  // Initialize form with dynamic schema and defaults
-  const form = useForm<Record<string, any>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultValues,
-    values: defaultValues, // This ensures form updates when defaults change
+  // Initialize the form with our schema and default values
+  const form = useForm({
+    resolver: zodResolver(schema),
+    defaultValues,
+    mode: "onBlur",
   });
 
+  // Handle form submission
   const onSubmit = async (values: Record<string, any>) => {
     setIsSubmitting(true);
     try {
@@ -135,7 +128,11 @@ export default function DataForm({
       }
 
       toast.success(successMessage);
-      form.reset(defaultValues);
+
+      // Don't reset the form on edit mode to allow for consecutive edits
+      if (mode === "add") {
+        form.reset(defaultValues);
+      }
 
       if (onSuccess) {
         onSuccess();
@@ -151,8 +148,18 @@ export default function DataForm({
     }
   };
 
-  // Generate form fields dynamically based on field definitions
-  const renderFormField = (field: FieldDefinition) => {
+  // Group fields by type for consistent organization
+  const fieldsByType = {
+    date: fields.filter((field) => field.type === "date"),
+    boolean: fields.filter((field) => field.type === "boolean"),
+    numeric: fields.filter(
+      (field) => field.type === "number" || field.type === "percentage"
+    ),
+    text: fields.filter((field) => field.type === "text"),
+  };
+
+  // Render a field based on its type
+  const renderField = (field: FieldDefinition) => {
     switch (field.type) {
       case "date":
         return (
@@ -167,7 +174,7 @@ export default function DataForm({
                   <PopoverTrigger asChild>
                     <FormControl>
                       <Button
-                        variant={"outline"}
+                        variant="outline"
                         className={cn(
                           "w-full pl-3 text-left font-normal",
                           !formField.value && "text-muted-foreground"
@@ -186,7 +193,9 @@ export default function DataForm({
                     <Calendar
                       mode="single"
                       selected={
-                        formField.value ? new Date(formField.value) : undefined
+                        formField.value instanceof Date
+                          ? formField.value
+                          : new Date(formField.value)
                       }
                       onSelect={formField.onChange}
                       disabled={(date) =>
@@ -233,20 +242,27 @@ export default function DataForm({
       case "number":
       case "percentage":
         return (
-          <FormField
+          <Controller
             key={field.key}
             control={form.control}
             name={field.key}
-            render={({ field: formField }) => (
+            render={({ field: formField, fieldState }) => (
               <FormItem>
                 <FormLabel>{field.displayName}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    step="0.1"
+                    inputMode="decimal"
+                    step="any"
                     min="0"
                     max={field.type === "percentage" ? "100" : undefined}
-                    {...formField}
+                    value={formField.value}
+                    onChange={(e) => {
+                      const rawValue = e.target.value;
+                      const value = rawValue === "" ? 0 : parseFloat(rawValue);
+                      formField.onChange(value);
+                    }}
+                    onBlur={formField.onBlur}
                   />
                 </FormControl>
                 {field.description && (
@@ -255,7 +271,9 @@ export default function DataForm({
                     {field.unit ? ` (${field.unit})` : ""}
                   </FormDescription>
                 )}
-                <FormMessage />
+                {fieldState.error && (
+                  <FormMessage>{fieldState.error.message}</FormMessage>
+                )}
               </FormItem>
             )}
           />
@@ -287,45 +305,41 @@ export default function DataForm({
     }
   };
 
-  // Group fields by category for better organization
-  const dateFields = fields.filter((field) => field.type === "date");
-  const booleanFields = fields.filter((field) => field.type === "boolean");
-  const numericFields = fields.filter(
-    (field) => field.type === "number" || field.type === "percentage"
-  );
-  const textFields = fields.filter((field) => field.type === "text");
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Date fields */}
-        {dateFields.length > 0 && (
-          <div className="space-y-4">{dateFields.map(renderFormField)}</div>
+        {fieldsByType.date.length > 0 && (
+          <div className="space-y-4">{fieldsByType.date.map(renderField)}</div>
         )}
 
         {/* Boolean fields */}
-        {booleanFields.length > 0 && (
-          <div className="space-y-4">{booleanFields.map(renderFormField)}</div>
-        )}
-
-        {/* Numeric and text fields in a grid */}
-        {(numericFields.length > 0 || textFields.length > 0) && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {numericFields.map(renderFormField)}
-            {textFields.map(renderFormField)}
+        {fieldsByType.boolean.length > 0 && (
+          <div className="space-y-4">
+            {fieldsByType.boolean.map(renderField)}
           </div>
         )}
 
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            submitLabel
-          )}
-        </Button>
+        {/* Numeric and text fields in a grid */}
+        {(fieldsByType.numeric.length > 0 || fieldsByType.text.length > 0) && (
+          <div className="grid gap-4 md:grid-cols-2">
+            {fieldsByType.numeric.map(renderField)}
+            {fieldsByType.text.map(renderField)}
+          </div>
+        )}
+
+        {!hideSubmitButton && (
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              submitLabel
+            )}
+          </Button>
+        )}
       </form>
     </Form>
   );

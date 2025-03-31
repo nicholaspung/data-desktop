@@ -29,7 +29,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -38,6 +43,7 @@ interface DataTableProps<TData, TValue> {
   searchPlaceholder?: string;
   className?: string;
   pageSize?: number;
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -47,6 +53,7 @@ export function DataTable<TData, TValue>({
   searchPlaceholder = "Search...",
   className,
   pageSize = 10,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -71,6 +78,9 @@ export function DataTable<TData, TValue>({
         pageSize,
       },
     },
+    // Enable sorting for all columns
+    enableSorting: true,
+    enableMultiSort: true,
   });
 
   return (
@@ -123,13 +133,29 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                    <TableHead
+                      key={header.id}
+                      className={
+                        header.column.getCanSort()
+                          ? "cursor-pointer select-none"
+                          : ""
+                      }
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <div className="flex items-center gap-1">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        {header.column.getIsSorted() === "asc" && (
+                          <ChevronUp className="ml-1 h-4 w-4" />
+                        )}
+                        {header.column.getIsSorted() === "desc" && (
+                          <ChevronDown className="ml-1 h-4 w-4" />
+                        )}
+                      </div>
                     </TableHead>
                   );
                 })}
@@ -142,6 +168,16 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={onRowClick ? "cursor-pointer hover:bg-muted" : ""}
+                  onClick={() => {
+                    if (onRowClick) {
+                      console.log(
+                        "Row clicked, calling handler with:",
+                        row.original
+                      );
+                      onRowClick(row.original as TData);
+                    }
+                  }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

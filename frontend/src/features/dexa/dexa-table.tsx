@@ -17,6 +17,8 @@ export default function DexaTable({ onDataChange }: DexaTableProps) {
       title="DEXA Scan Results"
       onDataChange={onDataChange}
       pageSize={10}
+      // Enable editing (enabled by default, but explicitly setting for clarity)
+      disableEdit={false}
     />
   );
 }
