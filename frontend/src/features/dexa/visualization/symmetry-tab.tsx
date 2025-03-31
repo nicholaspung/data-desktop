@@ -1,25 +1,9 @@
 // src/features/dexa/visualization/symmetry-tab.tsx
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-} from "recharts";
 import { DexaScan } from "../dexa-visualization";
 import { ComparisonSelector, ViewMode } from "./comparison-selector";
 import { format } from "date-fns";
+import { BarChart, RadarChart } from "@/components/charts";
 
 const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("single");
@@ -129,27 +113,27 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
     return [
       {
         name: "Arms Fat",
-        value: armsFatSymmetry.toFixed(2),
+        value: parseFloat(armsFatSymmetry.toFixed(2)),
         fill: armsFatSymmetry > 90 ? "#82ca9d" : "#ffc658",
       },
       {
         name: "Arms Lean",
-        value: armsLeanSymmetry.toFixed(2),
+        value: parseFloat(armsLeanSymmetry.toFixed(2)),
         fill: armsLeanSymmetry > 90 ? "#82ca9d" : "#ffc658",
       },
       {
         name: "Legs Fat",
-        value: legsFatSymmetry.toFixed(2),
+        value: parseFloat(legsFatSymmetry.toFixed(2)),
         fill: legsFatSymmetry > 90 ? "#82ca9d" : "#ffc658",
       },
       {
         name: "Legs Lean",
-        value: legsLeanSymmetry.toFixed(2),
+        value: parseFloat(legsLeanSymmetry.toFixed(2)),
         fill: legsLeanSymmetry > 90 ? "#82ca9d" : "#ffc658",
       },
       {
         name: "Overall",
-        value: overallSymmetry.toFixed(2),
+        value: parseFloat(overallSymmetry.toFixed(2)),
         fill: overallSymmetry > 90 ? "#82ca9d" : "#ffc658",
       },
     ];
@@ -256,31 +240,63 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
     return metrics;
   };
 
-  // Custom tooltip formatter
-  const renderTooltip = (props: any) => {
-    const { active, payload, label } = props;
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border p-2 rounded shadow-sm">
-          <p className="font-bold">{label}</p>
-          {payload.map((entry: any, index: number) => {
-            let displayValue = entry.value?.toFixed(2) || 0;
+  // Configure bar chart for symmetry data
+  const getSymmetryBarConfigs = () => {
+    return [
+      {
+        dataKey: "value",
+        name: "Symmetry Score",
+        colorByValue: true,
+        getColorByValue: (value: number) =>
+          value > 90 ? "#82ca9d" : "#ffc658",
+      },
+    ];
+  };
 
-            if (entry.payload.category.includes("%")) {
-              displayValue = `${displayValue}%`;
-            } else {
-              displayValue = `${displayValue} lbs`;
-            }
-            return (
-              <p key={`item-${index}`} style={{ color: entry.color }}>
-                {entry.name}: {displayValue} {entry.unit || ""}
-              </p>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
+  // Configure bars for limb symmetry comparison
+  const getLimbSymmetryBarConfigs = () => {
+    return [
+      {
+        dataKey: "Right",
+        name: "Right Side",
+        color: "#8884d8",
+      },
+      {
+        dataKey: "Left",
+        name: "Left Side",
+        color: "#82ca9d",
+      },
+    ];
+  };
+
+  // Configure radars for comparison view
+  const getRadarConfigs = () => {
+    if (!selectedScan || !comparisonScan) return [];
+
+    const primaryDate = format(new Date(selectedScan.date), "MMM d, yyyy");
+    const secondaryDate = format(new Date(comparisonScan.date), "MMM d, yyyy");
+
+    return [
+      {
+        dataKey: primaryDate,
+        name: primaryDate,
+        fill: "#8884d8",
+        stroke: "#8884d8",
+        fillOpacity: 0.6,
+      },
+      {
+        dataKey: secondaryDate,
+        name: secondaryDate,
+        fill: "#82ca9d",
+        stroke: "#82ca9d",
+        fillOpacity: 0.6,
+      },
+    ];
+  };
+
+  // Custom tooltip formatter for symmetry percentage values
+  const symmetryTooltipFormatter = (value: any) => {
+    return `${Number(value).toFixed(2)}%`;
   };
 
   return (
@@ -299,183 +315,87 @@ const SymmetryTab = ({ data }: { data: DexaScan[] }) => {
         // Single view
         <div className="grid gap-6 md:grid-cols-2">
           {/* Left vs Right Comparison */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Left vs Right Symmetry</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={getLimbSymmetryData(selectedScan)}
-                    layout="vertical"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="category" type="category" />
-                    <Tooltip content={renderTooltip} />
-                    <Legend />
-                    <Bar dataKey="Right" fill="#8884d8" name="Right Side" />
-                    <Bar dataKey="Left" fill="#82ca9d" name="Left Side" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <BarChart
+            data={getLimbSymmetryData(selectedScan)}
+            bars={getLimbSymmetryBarConfigs()}
+            xAxisKey="category"
+            layout="vertical"
+            title="Left vs Right Symmetry"
+            height={400}
+            tooltipFormatter={(value, name, props) => {
+              if (props.category.includes("%")) {
+                return `${value.toFixed(2)}%`;
+              }
+              return `${value.toFixed(2)} lbs`;
+            }}
+          />
 
           {/* Symmetry Scores */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Symmetry Scores</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={calculateSymmetryScores(selectedScan)}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis domain={[0, 100]} unit="%" />
-                    <Tooltip
-                      formatter={(value) => [
-                        `${Number(value).toFixed(2)}%`,
-                        "Symmetry Score",
-                      ]}
-                    />
-                    <Bar dataKey="value" name="Symmetry Score">
-                      {calculateSymmetryScores(selectedScan).map(
-                        (entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        )
-                      )}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <BarChart
+            data={calculateSymmetryScores(selectedScan)}
+            bars={getSymmetryBarConfigs()}
+            xAxisKey="name"
+            yAxisUnit="%"
+            yAxisDomain={[0, 100]}
+            title="Symmetry Scores"
+            height={400}
+            tooltipFormatter={symmetryTooltipFormatter}
+          />
         </div>
       ) : (
         // Comparison view
         <div className="space-y-6">
           {/* Symmetry Radar Comparison */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Symmetry Score Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart outerRadius={160} data={getRadarComparisonData()}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                    {selectedScan && comparisonScan && (
-                      <>
-                        <Radar
-                          name={format(
-                            new Date(selectedScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          dataKey={format(
-                            new Date(selectedScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          stroke="#8884d8"
-                          fill="#8884d8"
-                          fillOpacity={0.6}
-                        />
-                        <Radar
-                          name={format(
-                            new Date(comparisonScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          dataKey={format(
-                            new Date(comparisonScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          stroke="#82ca9d"
-                          fill="#82ca9d"
-                          fillOpacity={0.6}
-                        />
-                      </>
-                    )}
-                    <Legend />
-                    <Tooltip
-                      formatter={(value) => [
-                        `${Number(value).toFixed(2)}%`,
-                        "Symmetry Score",
-                      ]}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <RadarChart
+            data={getRadarComparisonData()}
+            radars={getRadarConfigs()}
+            title="Symmetry Score Comparison"
+            height={400}
+            outerRadius={160}
+            tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+          />
 
           {/* Detailed Comparison */}
           <div className="grid gap-6 md:grid-cols-2">
             {/* Primary Scan Symmetry */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {selectedScan
-                    ? format(new Date(selectedScan.date), "MMM d, yyyy")
-                    : ""}{" "}
-                  Symmetry
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={getLimbSymmetryData(selectedScan)}
-                      layout="vertical"
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="category" type="category" />
-                      <Tooltip content={renderTooltip} />
-                      <Legend />
-                      <Bar dataKey="Right" fill="#8884d8" name="Right Side" />
-                      <Bar dataKey="Left" fill="#82ca9d" name="Left Side" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <BarChart
+              data={getLimbSymmetryData(selectedScan)}
+              bars={getLimbSymmetryBarConfigs()}
+              xAxisKey="category"
+              layout="vertical"
+              title={
+                selectedScan
+                  ? `${format(new Date(selectedScan.date), "MMM d, yyyy")} Symmetry`
+                  : "Symmetry"
+              }
+              height={300}
+              tooltipFormatter={(value, name, props) => {
+                if (props.category.includes("%")) {
+                  return `${value.toFixed(2)}%`;
+                }
+                return `${value.toFixed(2)} lbs`;
+              }}
+            />
 
             {/* Comparison Scan Symmetry */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {comparisonScan
-                    ? format(new Date(comparisonScan.date), "MMM d, yyyy")
-                    : ""}{" "}
-                  Symmetry
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={getLimbSymmetryData(comparisonScan)}
-                      layout="vertical"
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="category" type="category" />
-                      <Tooltip content={renderTooltip} />
-                      <Legend />
-                      <Bar dataKey="Right" fill="#8884d8" name="Right Side" />
-                      <Bar dataKey="Left" fill="#82ca9d" name="Left Side" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <BarChart
+              data={getLimbSymmetryData(comparisonScan)}
+              bars={getLimbSymmetryBarConfigs()}
+              xAxisKey="category"
+              layout="vertical"
+              title={
+                comparisonScan
+                  ? `${format(new Date(comparisonScan.date), "MMM d, yyyy")} Symmetry`
+                  : "Symmetry"
+              }
+              height={300}
+              tooltipFormatter={(value, name, props) => {
+                if (props.category.includes("%")) {
+                  return `${value.toFixed(2)}%`;
+                }
+                return `${value.toFixed(2)} lbs`;
+              }}
+            />
           </div>
         </div>
       )}

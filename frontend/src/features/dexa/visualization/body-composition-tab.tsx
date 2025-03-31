@@ -1,28 +1,10 @@
 // src/features/dexa/visualization/body-composition-tab.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
 import { DexaScan } from "../dexa-visualization";
 import { ComparisonSelector, ViewMode } from "./comparison-selector";
 import { format } from "date-fns";
-import { COLORS } from "@/lib/date-utils";
+import { PieChart, BarChart, RadarChart } from "@/components/charts";
 
 // Mapping percentage values to different semantic colors
 const getColorForPercentage = (value: number) => {
@@ -41,36 +23,6 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
   // Find selected scans
   const selectedScan = data.find((scan) => scan.id === selectedDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
-
-  // Custom tooltip formatter
-  const renderTooltip = (props: any) => {
-    const { active, payload, label } = props;
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border p-2 rounded shadow-sm">
-          <p className="font-bold">{label}</p>
-          {payload.map((entry: any, index: number) => {
-            let displayValue = entry.value?.toFixed(2) || 0;
-
-            // Special handling for body fat percentage
-            if (entry.name.includes("Fat") && entry.name.includes("%")) {
-              // If the value is stored as decimal (less than 1), convert to percentage
-              if (entry.value < 1 && entry.value > 0) {
-                displayValue = (entry.value * 100).toFixed(1);
-              }
-            }
-
-            return (
-              <p key={`item-${index}`} style={{ color: entry.color }}>
-                {entry.name}: {displayValue} {entry.payload.unit || ""}
-              </p>
-            );
-          })}
-        </div>
-      );
-    }
-    return null;
-  };
 
   // Generate the body composition data for the pie chart
   const getBodyCompData = (scan: DexaScan | undefined) => {
@@ -137,8 +89,8 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
 
     return compareMetrics.map((metric) => ({
       name: metric.name,
-      value: metric.multiplier ? scan[metric.key] * 100 : scan[metric.key] || 0,
-      fill: getColorForPercentage(scan[metric.key] || 0),
+      value: scan[metric.key] * 100 || 0,
+      fill: getColorForPercentage(scan[metric.key] * 100 || 0),
     }));
   };
 
@@ -231,6 +183,21 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
     }));
   };
 
+  // Custom tooltip formatter for charts
+  const tooltipFormatter = (value: any, name: string, props: any) => {
+    let displayValue = value?.toFixed(2) || 0;
+
+    // Special handling for body fat percentage
+    if (name.includes("Fat") && name.includes("%")) {
+      // If the value is stored as decimal (less than 1), convert to percentage
+      if (value < 1 && value > 0) {
+        displayValue = (value * 100).toFixed(1);
+      }
+    }
+
+    return `${displayValue} ${props.unit || ""}`;
+  };
+
   return (
     <div className="space-y-6">
       <ComparisonSelector
@@ -248,92 +215,37 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Current Body Composition */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Body Composition</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      {selectedScan ? (
-                        <>
-                          <Pie
-                            data={getBodyCompData(selectedScan)}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) =>
-                              percent > 0
-                                ? `${name}: ${(percent * 100).toFixed(1)}%`
-                                : ""
-                            }
-                            outerRadius={100}
-                            fill="#8884d8"
-                            dataKey="value"
-                            minAngle={5}
-                          >
-                            {getBodyCompData(selectedScan).map((_, index) => (
-                              <Cell
-                                key={`cell-${index}`}
-                                fill={COLORS[index % COLORS.length]}
-                              />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value) =>
-                              `${Number(value).toFixed(2)} lbs`
-                            }
-                          />
-                          <Legend />
-                        </>
-                      ) : (
-                        <text
-                          x="50%"
-                          y="50%"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          No data available
-                        </text>
-                      )}
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <PieChart
+              data={getBodyCompData(selectedScan)}
+              pieConfig={{
+                dataKey: "value",
+                nameKey: "name",
+                outerRadius: 100,
+                minAngle: 5,
+                label: ({ name, percent }) =>
+                  percent > 0 ? `${name}: ${(percent * 100).toFixed(1)}%` : "",
+              }}
+              title="Body Composition"
+              valueUnit="lbs"
+              tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
+            />
 
             {/* Body Fat Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Body Fat Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getBodyFatDistributionData(selectedScan)}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis unit="%" />
-                      <Tooltip
-                        formatter={(value) => `${Number(value).toFixed(2)}%`}
-                      />
-                      <Bar
-                        dataKey="value"
-                        name="Body Fat %"
-                        radius={[4, 4, 0, 0]}
-                      >
-                        {getBodyFatDistributionData(selectedScan).map(
-                          (entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          )
-                        )}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <BarChart
+              data={getBodyFatDistributionData(selectedScan)}
+              bars={[
+                {
+                  dataKey: "value",
+                  name: "Body Fat %",
+                  colorByValue: true,
+                  getColorByValue: getColorForPercentage,
+                },
+              ]}
+              xAxisKey="name"
+              yAxisUnit="%"
+              title="Body Fat Distribution"
+              tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+            />
           </div>
 
           {/* Key Metrics */}
@@ -382,98 +294,63 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
         // Comparison view
         <div className="space-y-6">
           {/* Body Composition Comparison */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Body Composition Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={getComparisonData()}
-                    layout="vertical"
-                    margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip content={renderTooltip} />
-                    <Legend />
-                    {selectedScan && comparisonScan && (
-                      <>
-                        <Bar
-                          dataKey={format(
-                            new Date(selectedScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          fill="#8884d8"
-                          name="Primary"
-                        />
-                        <Bar
-                          dataKey={format(
-                            new Date(comparisonScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          fill="#82ca9d"
-                          name="Comparison"
-                        />
-                      </>
-                    )}
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <BarChart
+            data={getComparisonData()}
+            bars={[
+              {
+                dataKey: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                name: "Primary",
+                color: "#8884d8",
+              },
+              {
+                dataKey: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                name: "Comparison",
+                color: "#82ca9d",
+              },
+            ]}
+            xAxisKey="name"
+            layout="vertical"
+            title="Body Composition Comparison"
+            height={400}
+            tooltipFormatter={tooltipFormatter}
+          />
 
           {/* Body Fat Distribution Comparison */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Body Fat Distribution Comparison</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart outerRadius={150} data={getRadarComparisonData()}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="subject" />
-                    <PolarRadiusAxis angle={30} domain={[0, "auto"]} />
-                    {selectedScan && comparisonScan && (
-                      <>
-                        <Radar
-                          name={format(
-                            new Date(selectedScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          dataKey={format(
-                            new Date(selectedScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          stroke="#8884d8"
-                          fill="#8884d8"
-                          fillOpacity={0.6}
-                        />
-                        <Radar
-                          name={format(
-                            new Date(comparisonScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          dataKey={format(
-                            new Date(comparisonScan.date),
-                            "MMM d, yyyy"
-                          )}
-                          stroke="#82ca9d"
-                          fill="#82ca9d"
-                          fillOpacity={0.6}
-                        />
-                      </>
-                    )}
-                    <Legend />
-                    <Tooltip content={renderTooltip} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+          <RadarChart
+            data={getRadarComparisonData()}
+            radars={[
+              {
+                dataKey: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                name: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                fill: "#8884d8",
+                stroke: "#8884d8",
+                fillOpacity: 0.6,
+              },
+              {
+                dataKey: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                name: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                fill: "#82ca9d",
+                stroke: "#82ca9d",
+                fillOpacity: 0.6,
+              },
+            ]}
+            title="Body Fat Distribution Comparison"
+            height={400}
+            outerRadius={150}
+            tooltipFormatter={tooltipFormatter}
+          />
 
           {/* Changes Summary */}
           <Card>

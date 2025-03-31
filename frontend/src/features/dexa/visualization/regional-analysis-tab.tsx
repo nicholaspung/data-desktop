@@ -1,37 +1,20 @@
 // src/features/dexa/visualization/regional-analysis-tab.tsx
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts";
-import { DexaScan } from "../dexa-visualization";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DexaScan } from "../dexa-visualization";
 import { COLORS, formatDate } from "@/lib/date-utils";
+import { LineChart, RadarChart, BarChart } from "@/components/charts";
+import { ComparisonSelector, ViewMode } from "./comparison-selector";
+import { format } from "date-fns";
 
 const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
   const [activeTab, setActiveTab] = useState("percentage");
   const [selectedScan, setSelectedScan] = useState<string>("");
+
+  // Add state for comparison mode
+  const [viewMode, setViewMode] = useState<ViewMode>("single");
+  const [primaryDate, setPrimaryDate] = useState<string>("");
+  const [comparisonDate, setComparisonDate] = useState<string>("");
 
   // Define metrics for percentage and absolute values
   const percentageMetrics = [
@@ -65,9 +48,21 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     }))
     .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
 
+  // Find selected scans
+  const primaryScan = data.find((scan) => scan.id === primaryDate);
+  const comparisonScan = data.find((scan) => scan.id === comparisonDate);
+
   // Set default scan when component loads
-  if (dateOptions.length > 0 && !selectedScan) {
-    setSelectedScan(dateOptions[0].value);
+  if (dateOptions.length > 0) {
+    if (!selectedScan) {
+      setSelectedScan(dateOptions[0].value);
+    }
+    if (!primaryDate) {
+      setPrimaryDate(dateOptions[0].value);
+    }
+    if (!comparisonDate && dateOptions.length > 1) {
+      setComparisonDate(dateOptions[1].value);
+    }
   }
 
   // Get comparison data for line charts
@@ -125,8 +120,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
   };
 
   // Get current scan data for radar chart
-  const getCurrentScanData = () => {
-    const scan = data.find((s) => s.id === selectedScan);
+  const getScanDataForRadar = (scan: DexaScan | undefined) => {
     if (!scan) return [];
 
     // For percentage data
@@ -150,35 +144,155 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     return [];
   };
 
-  // Custom tooltip formatter
-  const renderTooltip = (props: any) => {
-    const { active, payload, label } = props;
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border p-2 rounded shadow-sm">
-          <p className="font-bold">{label}</p>
-          {payload.map((entry: any, index: number) => {
-            let displayValue = entry.value?.toFixed(2) || 0;
+  // Get comparison data for radar
+  const getComparisonRadarData = () => {
+    if (!primaryScan || !comparisonScan) return [];
 
-            // Special handling for fat percentage values
-            if (activeTab === "percentage" || entry.name.includes("Fat %")) {
-              // If the value is stored as decimal (less than 1), convert to percentage
-              if (entry.value < 1 && entry.value > 0) {
-                displayValue = (entry.value * 100).toFixed(1);
-              }
-            }
+    const primaryLabel = format(new Date(primaryScan.date), "MMM d, yyyy");
+    const comparisonLabel = format(
+      new Date(comparisonScan.date),
+      "MMM d, yyyy"
+    );
 
-            return (
-              <p key={`item-${index}`} style={{ color: entry.color }}>
-                {entry.name}: {displayValue}{" "}
-                {activeTab === "percentage" ? "%" : "lbs"}
-              </p>
-            );
-          })}
-        </div>
-      );
+    // For percentage data
+    if (activeTab === "percentage") {
+      return percentageMetrics.map((metric) => ({
+        subject: metric.name,
+        [primaryLabel]: primaryScan[metric.key] * 100 || 0,
+        [comparisonLabel]: comparisonScan[metric.key] * 100 || 0,
+      }));
     }
-    return null;
+
+    // For absolute data
+    if (activeTab === "absolute") {
+      return [...absoluteMetrics, ...leanMassMetrics].map((metric) => ({
+        subject: metric.name,
+        [primaryLabel]: primaryScan[metric.key] || 0,
+        [comparisonLabel]: comparisonScan[metric.key] || 0,
+      }));
+    }
+
+    return [];
+  };
+
+  // Get data for bar chart comparison
+  const getBarChartComparisonData = () => {
+    if (!primaryScan || !comparisonScan) return [];
+
+    // For percentage data
+    if (activeTab === "percentage") {
+      return percentageMetrics.map((metric) => ({
+        name: metric.name,
+        Primary: primaryScan[metric.key] * 100 || 0,
+        Comparison: comparisonScan[metric.key] * 100 || 0,
+      }));
+    }
+
+    // For absolute data
+    if (activeTab === "absolute") {
+      const metrics = [...absoluteMetrics, ...leanMassMetrics];
+      return metrics.map((metric) => ({
+        name: metric.name,
+        Primary: primaryScan[metric.key] || 0,
+        Comparison: comparisonScan[metric.key] || 0,
+      }));
+    }
+
+    return [];
+  };
+
+  // Convert percentage metrics to line configs
+  const getPercentageLineConfigs = () => {
+    return percentageMetrics.map((metric, index) => ({
+      dataKey: metric.name,
+      name: metric.name,
+      stroke: COLORS[index % COLORS.length],
+      unit: "%",
+    }));
+  };
+
+  // Convert absolute metrics to line configs
+  const getAbsoluteLineConfigs = () => {
+    return absoluteMetrics.map((metric, index) => ({
+      dataKey: metric.name,
+      name: metric.name,
+      stroke: COLORS[index % COLORS.length],
+      unit: " lbs",
+    }));
+  };
+
+  // Convert lean mass metrics to line configs
+  const getLeanMassLineConfigs = () => {
+    return leanMassMetrics.map((metric, index) => ({
+      dataKey: metric.name,
+      name: metric.name,
+      stroke: COLORS[(index + 5) % COLORS.length], // Use different colors
+      unit: " lbs",
+    }));
+  };
+
+  // Custom tooltip formatter based on data type
+  const tooltipFormatter = (value: any, name: string) => {
+    const displayValue = Number(value).toFixed(2);
+    if (activeTab === "percentage" || name.includes("%")) {
+      return `${displayValue}%`;
+    }
+    return `${displayValue} lbs`;
+  };
+
+  // Get the list of radar configs for comparison
+  const getRadarComparisonConfigs = () => {
+    if (!primaryScan || !comparisonScan) return [];
+
+    const primaryLabel = format(new Date(primaryScan.date), "MMM d, yyyy");
+    const comparisonLabel = format(
+      new Date(comparisonScan.date),
+      "MMM d, yyyy"
+    );
+
+    return [
+      {
+        dataKey: primaryLabel,
+        name: primaryLabel,
+        fill: "#8884d8",
+        stroke: "#8884d8",
+        fillOpacity: 0.6,
+      },
+      {
+        dataKey: comparisonLabel,
+        name: comparisonLabel,
+        fill: "#82ca9d",
+        stroke: "#82ca9d",
+        fillOpacity: 0.6,
+      },
+    ];
+  };
+
+  // Get current scan bars
+  const getCurrentScanBars = () => {
+    return [
+      {
+        dataKey: "value",
+        name: activeTab === "percentage" ? "Fat %" : "Mass",
+        fill: activeTab === "percentage" ? "#8884d8" : "#82ca9d",
+      },
+    ];
+  };
+
+  // Get comparison bars
+  const getComparisonBars = () => {
+    return [
+      {
+        dataKey: "Primary",
+        name: "Primary",
+        fill: "#8884d8",
+      },
+      {
+        dataKey: "Comparison",
+        name: "Comparison",
+        fill: "#82ca9d",
+      },
+    ];
   };
 
   return (
@@ -192,199 +306,152 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         <TabsContent value="percentage" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Regional Fat % Comparison Over Time */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Regional Fat Percentage Comparison</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getPercentageComparisonData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis unit="%" domain={[0, "auto"]} />
-                      <Tooltip content={renderTooltip} />
-                      <Legend />
-                      {percentageMetrics.map((metric, index) => (
-                        <Line
-                          key={metric.key}
-                          type="monotone"
-                          dataKey={metric.name}
-                          stroke={COLORS[index % COLORS.length]}
-                          unit="%"
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <LineChart
+              data={getPercentageComparisonData()}
+              lines={getPercentageLineConfigs()}
+              xAxisKey="date"
+              yAxisUnit="%"
+              title="Regional Fat Percentage Comparison"
+              height={400}
+              tooltipFormatter={tooltipFormatter}
+              className="md:col-span-2"
+            />
 
-            {/* Current Scan Regional Distribution */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Current Distribution</CardTitle>
-                <Select
-                  value={selectedScan}
-                  onValueChange={setSelectedScan}
-                  disabled={dateOptions.length === 0}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dateOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart outerRadius={90} data={getCurrentScanData()}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="subject" />
-                      <PolarRadiusAxis angle={30} domain={[0, "auto"]} />
-                      <Radar
-                        name="Fat %"
-                        dataKey="value"
-                        stroke="#8884d8"
-                        fill="#8884d8"
-                        fillOpacity={0.6}
-                      />
-                      <Tooltip
-                        formatter={(value) => `${Number(value).toFixed(2)}%`}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Comparison selector for distribution charts */}
+            <div className="md:col-span-2">
+              <ComparisonSelector
+                data={data}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                selectedDate={primaryDate}
+                comparisonDate={comparisonDate}
+                onSelectedDateChange={setPrimaryDate}
+                onComparisonDateChange={setComparisonDate}
+              />
+            </div>
 
-            {/* Current Scan Bar Chart */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Region Comparison</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getCurrentScanData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="subject" />
-                      <YAxis unit="%" />
-                      <Tooltip
-                        formatter={(value) => `${Number(value).toFixed(2)}%`}
-                      />
-                      <Bar dataKey="value" name="Fat %" fill="#8884d8" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            {viewMode === "single" ? (
+              <>
+                {/* Current Scan Regional Distribution - Single Mode */}
+                <RadarChart
+                  data={getScanDataForRadar(primaryScan)}
+                  radars={[
+                    {
+                      dataKey: "value",
+                      name: "Fat %",
+                      fill: "#8884d8",
+                      stroke: "#8884d8",
+                      fillOpacity: 0.6,
+                    },
+                  ]}
+                  title="Current Distribution"
+                  height={300}
+                  outerRadius={90}
+                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+                />
+
+                {/* Current Scan Bar Chart - Single Mode */}
+                <BarChart
+                  data={getScanDataForRadar(primaryScan)}
+                  bars={getCurrentScanBars()}
+                  xAxisKey="subject"
+                  yAxisUnit="%"
+                  title="Region Comparison"
+                  height={300}
+                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+                />
+              </>
+            ) : (
+              <>
+                {/* Current Scan Regional Distribution - Comparison Mode */}
+                <RadarChart
+                  data={getComparisonRadarData()}
+                  radars={getRadarComparisonConfigs()}
+                  title="Distribution Comparison"
+                  height={300}
+                  outerRadius={90}
+                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+                />
+
+                {/* Current Scan Bar Chart - Comparison Mode */}
+                <BarChart
+                  data={getBarChartComparisonData()}
+                  bars={getComparisonBars()}
+                  xAxisKey="name"
+                  yAxisUnit="%"
+                  title="Region Comparison"
+                  height={300}
+                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
+                />
+              </>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="absolute" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Regional Fat Mass Comparison Over Time */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Fat Tissue Distribution (lbs)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getAbsoluteComparisonData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis unit=" lbs" domain={[0, "auto"]} />
-                      <Tooltip content={renderTooltip} />
-                      <Legend />
-                      {absoluteMetrics.map((metric, index) => (
-                        <Line
-                          key={metric.key}
-                          type="monotone"
-                          dataKey={metric.name}
-                          stroke={COLORS[index % COLORS.length]}
-                          unit=" lbs"
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <LineChart
+              data={getAbsoluteComparisonData()}
+              lines={getAbsoluteLineConfigs()}
+              xAxisKey="date"
+              yAxisUnit=" lbs"
+              title="Fat Tissue Distribution (lbs)"
+              height={400}
+              tooltipFormatter={tooltipFormatter}
+              className="md:col-span-2"
+            />
 
             {/* Regional Lean Mass Comparison Over Time */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Lean Tissue Distribution (lbs)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[400px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={getLeanMassComparisonData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
-                      <YAxis unit=" lbs" domain={[0, "auto"]} />
-                      <Tooltip content={renderTooltip} />
-                      <Legend />
-                      {leanMassMetrics.map((metric, index) => (
-                        <Line
-                          key={metric.key}
-                          type="monotone"
-                          dataKey={metric.name}
-                          stroke={COLORS[(index + 5) % COLORS.length]} // Use different colors
-                          unit=" lbs"
-                        />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            <LineChart
+              data={getLeanMassComparisonData()}
+              lines={getLeanMassLineConfigs()}
+              xAxisKey="date"
+              yAxisUnit=" lbs"
+              title="Lean Tissue Distribution (lbs)"
+              height={400}
+              tooltipFormatter={tooltipFormatter}
+              className="md:col-span-2"
+            />
 
-            {/* Current Scan Distribution */}
-            <Card className="md:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Current Distribution (lbs)</CardTitle>
-                <Select
-                  value={selectedScan}
-                  onValueChange={setSelectedScan}
-                  disabled={dateOptions.length === 0}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dateOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getCurrentScanData()}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="subject" />
-                      <YAxis unit=" lbs" />
-                      <Tooltip
-                        formatter={(value) => `${Number(value).toFixed(2)} lbs`}
-                      />
-                      <Bar dataKey="value" name="Mass" fill="#82ca9d" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Comparison selector for distribution charts */}
+            <div className="md:col-span-2">
+              <ComparisonSelector
+                data={data}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                selectedDate={primaryDate}
+                comparisonDate={comparisonDate}
+                onSelectedDateChange={setPrimaryDate}
+                onComparisonDateChange={setComparisonDate}
+              />
+            </div>
+
+            {viewMode === "single" ? (
+              /* Single scan view */
+              <BarChart
+                data={getScanDataForRadar(primaryScan)}
+                bars={getCurrentScanBars()}
+                xAxisKey="subject"
+                yAxisUnit=" lbs"
+                title="Current Distribution (lbs)"
+                height={300}
+                tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
+                className="md:col-span-2"
+              />
+            ) : (
+              /* Comparison view */
+              <BarChart
+                data={getBarChartComparisonData()}
+                bars={getComparisonBars()}
+                xAxisKey="name"
+                yAxisUnit=" lbs"
+                title="Distribution Comparison (lbs)"
+                height={300}
+                tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
+                className="md:col-span-2"
+              />
+            )}
           </div>
         </TabsContent>
       </Tabs>
