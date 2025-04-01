@@ -44,6 +44,7 @@ interface DataTableProps<TData, TValue> {
   className?: string;
   pageSize?: number;
   onRowClick?: (row: TData) => void;
+  rowClassName?: (row: TData) => string; // New prop for custom row classes
 }
 
 export function DataTable<TData, TValue>({
@@ -54,6 +55,7 @@ export function DataTable<TData, TValue>({
   className,
   pageSize = 10,
   onRowClick,
+  rowClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -168,7 +170,10 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={onRowClick ? "cursor-pointer hover:bg-muted" : ""}
+                  className={cn(
+                    onRowClick ? "cursor-pointer hover:bg-muted" : "",
+                    rowClassName ? rowClassName(row.original as TData) : ""
+                  )}
                   onClick={() => {
                     if (onRowClick) {
                       console.log(

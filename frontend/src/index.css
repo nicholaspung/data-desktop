@@ -96,7 +96,24 @@
   }
 }
 
+@layer components {
+  /* Highlight animation for newly added rows */
+  .highlight-row {
+    animation: highlight-pulse 2s ease-in-out;
+  }
 
+  @keyframes highlight-pulse {
+    0% {
+      background-color: hsl(var(--primary) / 0.1);
+    }
+    50% {
+      background-color: hsl(var(--primary) / 0.2);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+}
 
 @layer base {
   * {

@@ -34,6 +34,7 @@ interface GenericDataTableProps {
   disableEdit?: boolean;
   onDataChange?: () => void;
   pageSize?: number;
+  highlightedRecordId?: string | null;
 }
 
 export default function GenericDataTable({
@@ -46,9 +47,10 @@ export default function GenericDataTable({
   disableEdit = false,
   onDataChange,
   pageSize = 10,
+  highlightedRecordId = null,
 }: GenericDataTableProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Record<
     string,
@@ -142,6 +144,39 @@ export default function GenericDataTable({
   useEffect(() => {
     loadData();
   }, [datasetId]);
+
+  // Scroll to highlighted row when data is loaded or highlightedRecordId changes
+  useEffect(() => {
+    if (highlightedRecordId && data.length > 0) {
+      // Find the highlighted record in the data
+      const highlightedRecordIndex = data.findIndex(
+        (item) => item[dataKey] === highlightedRecordId
+      );
+
+      if (highlightedRecordIndex !== -1) {
+        // Find the corresponding row element and scroll to it
+        setTimeout(() => {
+          const table = tableContainerRef.current?.querySelector("table");
+          if (table) {
+            const rows = table.querySelectorAll("tbody tr");
+            const highlightedRow = rows[highlightedRecordIndex];
+            if (highlightedRow) {
+              highlightedRow.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              });
+              // Add a highlight class that will be animated
+              highlightedRow.classList.add("bg-primary/10");
+              // Remove the highlight after 2 seconds
+              setTimeout(() => {
+                highlightedRow.classList.remove("bg-primary/10");
+              }, 2000);
+            }
+          }
+        }, 100);
+      }
+    }
+  }, [data, highlightedRecordId]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -295,12 +330,14 @@ export default function GenericDataTable({
 
         // Update the record
         if (selectedRecord && selectedRecord[dataKey]) {
-          await ApiService.updateRecord(
+          const updatedRecord = await ApiService.updateRecord(
             selectedRecord[dataKey].toString(),
             formValues
           );
           toast.success(`${title} data updated successfully`);
-          handleEditSuccess();
+          if (updatedRecord) {
+            handleEditSuccess();
+          }
         }
       }
     } catch (error) {
@@ -424,6 +461,11 @@ export default function GenericDataTable({
                       console.log("Row clicked in GenericDataTable, row:", row);
                       handleEditRecord(row);
                     }
+              }
+              rowClassName={(row) =>
+                highlightedRecordId && row[dataKey] === highlightedRecordId
+                  ? "highlight-row"
+                  : ""
               }
             />
           )}

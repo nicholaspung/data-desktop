@@ -1,5 +1,5 @@
 // src/components/data-form/data-form.tsx
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,41 +23,94 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Trash2, X } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface DataFormProps {
   datasetId: string;
   fields: FieldDefinition[];
-  onSuccess?: () => void;
+  onSuccess?: (recordId: string) => void;
+  onCancel?: () => void;
   initialValues?: Record<string, any>;
   submitLabel?: string;
   successMessage?: string;
   mode?: "add" | "edit";
   recordId?: string;
   hideSubmitButton?: boolean;
+  persistKey?: string; // Optional key for local storage persistence
 }
 
 export default function DataForm({
   datasetId,
   fields,
   onSuccess,
+  onCancel,
   initialValues = {},
   submitLabel = "Save",
   successMessage = "Data saved successfully",
   mode = "add",
   recordId,
   hideSubmitButton = false,
+  persistKey,
 }: DataFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+
+  // Generate storage key for this form
+  const storageKey = persistKey || `form_${datasetId}_data`;
+
+  // Load persisted data from localStorage on initial render
+  const getInitialValues = () => {
+    if (mode === "edit" && Object.keys(initialValues).length > 0) {
+      // For edit mode, prioritize passed initialValues
+      return initialValues;
+    }
+
+    // For add mode, try to get saved form data from local storage
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+
+        // Convert date strings back to Date objects
+        fields.forEach((field) => {
+          if (
+            field.type === "date" &&
+            parsedData[field.key] &&
+            typeof parsedData[field.key] === "string"
+          ) {
+            parsedData[field.key] = new Date(parsedData[field.key]);
+          }
+        });
+
+        return parsedData;
+      }
+    } catch (error) {
+      console.error("Error loading saved form data:", error);
+    }
+
+    // If no saved data or error occurred, use provided initialValues
+    return initialValues;
+  };
 
   // Generate a dynamic schema from the field definitions
   const { schema, defaultValues } = useMemo(() => {
     // Create schema object and default values
     const schemaObj: Record<string, z.ZodTypeAny> = {};
-    const defaults: Record<string, any> = {};
+    const defaults: Record<string, any> = getInitialValues();
 
     // Process each field to build schema and defaults
     fields.forEach((field) => {
@@ -67,24 +120,24 @@ export default function DataForm({
             required_error: `${field.displayName} is required`,
           });
 
-          // Use initial value or default to current date
-          if (initialValues[field.key]) {
-            defaults[field.key] = new Date(initialValues[field.key]);
-          } else {
+          // Set default value for date if not already in defaults
+          if (!defaults[field.key]) {
             defaults[field.key] = new Date();
+          } else if (typeof defaults[field.key] === "string") {
+            defaults[field.key] = new Date(defaults[field.key]);
           }
           break;
 
         case "boolean":
           schemaObj[field.key] = z.boolean().default(false);
-          defaults[field.key] = initialValues[field.key] ?? false;
+          defaults[field.key] = defaults[field.key] ?? false;
           break;
 
         case "number":
           schemaObj[field.key] = z.coerce
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0");
-          defaults[field.key] = initialValues[field.key] ?? 0;
+          defaults[field.key] = defaults[field.key] ?? 0;
           break;
 
         case "percentage":
@@ -92,14 +145,14 @@ export default function DataForm({
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0")
             .max(100, "Must be less than 100");
-          defaults[field.key] = initialValues[field.key] ?? 0;
+          defaults[field.key] = defaults[field.key] ?? 0;
           break;
 
         case "text":
           schemaObj[field.key] = z
             .string()
             .min(1, `${field.displayName} is required`);
-          defaults[field.key] = initialValues[field.key] ?? "";
+          defaults[field.key] = defaults[field.key] ?? "";
           break;
       }
     });
@@ -108,7 +161,7 @@ export default function DataForm({
       schema: z.object(schemaObj),
       defaultValues: defaults,
     };
-  }, [fields, initialValues]);
+  }, [fields, initialValues, mode, storageKey]);
 
   // Initialize the form with our schema and default values
   const form = useForm({
@@ -117,14 +170,43 @@ export default function DataForm({
     mode: "onBlur",
   });
 
+  // Save form values to localStorage whenever they change
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      // Only save to localStorage in "add" mode
+      if (mode === "add") {
+        try {
+          // Convert Date objects to ISO strings for safe storage
+          const safeValues = { ...values };
+          Object.keys(safeValues).forEach((key) => {
+            if (safeValues[key] instanceof Date) {
+              safeValues[key] = safeValues[key].toISOString();
+            }
+          });
+
+          localStorage.setItem(storageKey, JSON.stringify(safeValues));
+        } catch (error) {
+          console.error("Error saving form data to localStorage:", error);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, mode, storageKey]);
+
   // Handle form submission
   const onSubmit = async (values: Record<string, any>) => {
     setIsSubmitting(true);
     try {
+      let response;
+
       if (mode === "add") {
-        await ApiService.addRecord(datasetId, values);
+        response = await ApiService.addRecord(datasetId, values);
+
+        // Clear the persisted form data on successful submission
+        localStorage.removeItem(storageKey);
       } else if (mode === "edit" && recordId) {
-        await ApiService.updateRecord(recordId, values);
+        response = await ApiService.updateRecord(recordId, values);
       }
 
       toast.success(successMessage);
@@ -134,8 +216,9 @@ export default function DataForm({
         form.reset(defaultValues);
       }
 
-      if (onSuccess) {
-        onSuccess();
+      if (onSuccess && response && response.id) {
+        // Pass the record ID to the success callback
+        onSuccess(response.id);
       }
     } catch (error) {
       console.error(
@@ -145,6 +228,27 @@ export default function DataForm({
       toast.error(`Failed to ${mode === "add" ? "add" : "update"} record`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Clear form data and localStorage
+  const handleClearForm = () => {
+    // Reset form to default values
+    form.reset({});
+
+    // Clear localStorage
+    localStorage.removeItem(storageKey);
+
+    // Close the confirm dialog
+    setClearConfirmOpen(false);
+
+    toast.info("Form data has been cleared");
+  };
+
+  // Handle cancel button click
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
     }
   };
 
@@ -329,16 +433,61 @@ export default function DataForm({
         )}
 
         {!hideSubmitButton && (
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              submitLabel
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+
+              {mode === "add" && (
+                <AlertDialog
+                  open={clearConfirmOpen}
+                  onOpenChange={setClearConfirmOpen}
+                >
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" type="button">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Reset
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Clear form data?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will reset all form fields and delete any saved
+                        data. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleClearForm}>
+                        Clear
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+
+            {onCancel && (
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={handleCancel}
+                className="sm:ml-2"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
             )}
-          </Button>
+          </div>
         )}
       </form>
     </Form>
