@@ -25,6 +25,6 @@
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
-- Add edit/delete buttons to view data component
+- Add edit/delete buttons to view data component [DONE 2025-03-31]
 
 ### GAVE UP
