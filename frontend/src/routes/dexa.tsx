@@ -81,6 +81,15 @@ function DexaPage() {
 
   // Function to update URL when tab changes
   const handleTabChange = (value: string) => {
+    // If switching away from the add tab, clear the form data
+    if (activeTab === "add" && value !== "add") {
+      // Clear the form data from localStorage
+      localStorage.removeItem("dexa_scan_form_data");
+
+      // Force re-render of the add form by updating key
+      setKey((prev) => prev + 1);
+    }
+
     setActiveTab(value);
 
     // Clear the record ID when switching tabs (except table tab)
@@ -156,6 +165,7 @@ function DexaPage() {
             </CardHeader>
             <CardContent>
               <DataForm
+                key={`add-form-${key}`} // Add key to force re-render when changed
                 datasetId="dexa"
                 fields={dexaFields}
                 onSuccess={handleFormSuccess}

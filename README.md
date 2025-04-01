@@ -26,5 +26,8 @@
 - When finished editing or clicked cancelled, remove data for the edit section and the add data section [DONE 2025-03-31]
 - In view data, remove the edit and delete button, and make the delete button where the import csv button is (also that button doesn't work) [DONE 2025-04-01]
 - In view data, make the items also selectable, so that if I click a checkbox, for multiple items, I can delete all of them at the same time [DONE 2025-04-01]
+- In add entry, when I add an entry, it should then reset everything [DONE 2025-04-01]
+- In add entry, reset doesn't work, it should reset everything [DONE 2025-04-01]
+- In add entry, cancel doesn't work, it should reset everything [DONE 2025-04-01]
 
 ### GAVE UP

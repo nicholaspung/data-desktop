@@ -1,4 +1,4 @@
-// src/components/data-form/data-form.tsx
+// Updated version of frontend/src/components/data-form/data-form.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -72,6 +72,52 @@ export default function DataForm({
   // Generate storage key for this form
   const storageKey = persistKey || `form_${datasetId}_data`;
 
+  // Utility function to create fresh default values
+  const createFreshDefaultValues = () => {
+    const freshDefaults: Record<string, any> = {};
+
+    // Set initial values for each field type
+    fields.forEach((field) => {
+      switch (field.type) {
+        case "date":
+          freshDefaults[field.key] = new Date();
+          break;
+        case "boolean":
+          freshDefaults[field.key] = false;
+          break;
+        case "number":
+        case "percentage":
+          freshDefaults[field.key] = 0;
+          break;
+        case "text":
+          freshDefaults[field.key] = "";
+          break;
+      }
+    });
+
+    return freshDefaults;
+  };
+
+  // Utility function to completely reset the form
+  const completeFormReset = () => {
+    // Create fresh default values
+    const freshDefaults = createFreshDefaultValues();
+
+    // Reset the form with the fresh defaults
+    form.reset(freshDefaults, {
+      keepDirty: false,
+      keepErrors: false,
+      keepDirtyValues: false,
+      keepTouched: false,
+      keepIsSubmitted: false,
+      keepIsValid: false,
+      keepSubmitCount: false,
+    });
+
+    // Clear localStorage
+    localStorage.removeItem(storageKey);
+  };
+
   // Load persisted data from localStorage on initial render
   const getInitialValues = () => {
     if (mode === "edit" && Object.keys(initialValues).length > 0) {
@@ -79,31 +125,36 @@ export default function DataForm({
       return initialValues;
     }
 
+    // Get fresh default values
+    const freshDefaults = createFreshDefaultValues();
+
     // For add mode, try to get saved form data from local storage
-    try {
-      const savedData = localStorage.getItem(storageKey);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
+    if (mode === "add") {
+      try {
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
 
-        // Convert date strings back to Date objects
-        fields.forEach((field) => {
-          if (
-            field.type === "date" &&
-            parsedData[field.key] &&
-            typeof parsedData[field.key] === "string"
-          ) {
-            parsedData[field.key] = new Date(parsedData[field.key]);
-          }
-        });
+          // Convert date strings back to Date objects
+          fields.forEach((field) => {
+            if (
+              field.type === "date" &&
+              parsedData[field.key] &&
+              typeof parsedData[field.key] === "string"
+            ) {
+              parsedData[field.key] = new Date(parsedData[field.key]);
+            }
+          });
 
-        return parsedData;
+          return { ...freshDefaults, ...parsedData };
+        }
+      } catch (error) {
+        console.error("Error loading saved form data:", error);
       }
-    } catch (error) {
-      console.error("Error loading saved form data:", error);
     }
 
-    // If no saved data or error occurred, use provided initialValues
-    return initialValues;
+    // Merge the fresh defaults with any provided initialValues
+    return { ...freshDefaults, ...initialValues };
   };
 
   // Generate a dynamic schema from the field definitions
@@ -203,18 +254,13 @@ export default function DataForm({
       if (mode === "add") {
         response = await ApiService.addRecord(datasetId, values);
 
-        // Clear the persisted form data on successful submission
-        localStorage.removeItem(storageKey);
+        // After successful submission, completely reset the form
+        completeFormReset();
       } else if (mode === "edit" && recordId) {
         response = await ApiService.updateRecord(recordId, values);
       }
 
       toast.success(successMessage);
-
-      // Don't reset the form on edit mode to allow for consecutive edits
-      if (mode === "add") {
-        form.reset(defaultValues);
-      }
 
       if (onSuccess && response && response.id) {
         // Pass the record ID to the success callback
@@ -233,20 +279,14 @@ export default function DataForm({
 
   // Clear form data and localStorage
   const handleClearForm = () => {
-    // Reset form to default values
-    form.reset({});
-
-    // Clear localStorage
-    localStorage.removeItem(storageKey);
-
-    // Close the confirm dialog
+    completeFormReset();
     setClearConfirmOpen(false);
-
     toast.info("Form data has been cleared");
   };
 
   // Handle cancel button click
   const handleCancel = () => {
+    completeFormReset();
     if (onCancel) {
       onCancel();
     }
