@@ -4,13 +4,13 @@ import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Upload,
   Loader2,
   Trash,
   Pencil,
   X,
   RotateCcw,
   Save,
+  Upload,
 } from "lucide-react";
 import { parseCSV } from "@/lib/csv-parser";
 import { toast } from "sonner";
@@ -40,6 +40,7 @@ interface GenericDataTableProps {
   disableImport?: boolean;
   disableDelete?: boolean;
   disableEdit?: boolean;
+  enableSelection?: boolean; // Enable row selection
   onDataChange?: () => void;
   pageSize?: number;
   highlightedRecordId?: string | null;
@@ -53,13 +54,14 @@ export default function GenericDataTable({
   disableImport = false,
   disableDelete = false,
   disableEdit = false,
+  enableSelection = false,
   onDataChange,
   pageSize = 10,
   highlightedRecordId = null,
 }: GenericDataTableProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isImporting, setIsImporting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<Record<
     string,
     any
@@ -69,11 +71,12 @@ export default function GenericDataTable({
     any
   > | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
     useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -96,8 +99,8 @@ export default function GenericDataTable({
       )
     );
 
-    // Add actions column if edit or delete is enabled
-    if (!disableDelete || !disableEdit) {
+    // Add actions column if edit or delete is enabled and selection is disabled
+    if ((!disableDelete || !disableEdit) && !enableSelection) {
       columns.push({
         id: "actions",
         header: "Actions",
@@ -284,6 +287,8 @@ export default function GenericDataTable({
       });
 
       setData(processedRecords);
+      // Clear selection when data is reloaded
+      setSelectedRows([]);
     } catch (error) {
       console.error(`Error loading ${datasetId} data:`, error);
       toast.error(`Failed to load ${title} data`);
@@ -298,7 +303,7 @@ export default function GenericDataTable({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsImporting(true);
+    setIsSubmitting(true);
     try {
       // Parse the CSV file
       const parsedData = await parseCSV(file, fields);
@@ -320,7 +325,7 @@ export default function GenericDataTable({
         "Failed to import CSV file. Please check the format and try again."
       );
     } finally {
-      setIsImporting(false);
+      setIsSubmitting(false);
 
       // Clear the file input
       if (event.target) {
@@ -341,6 +346,53 @@ export default function GenericDataTable({
     } catch (error) {
       console.error("Error deleting record:", error);
       toast.error("Failed to delete record");
+    }
+  };
+
+  const handleDeleteSelectedRecords = async () => {
+    setShowDeleteConfirm(false);
+    setIsSubmitting(true);
+
+    try {
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Delete each selected record
+      for (const id of selectedRows) {
+        try {
+          await ApiService.deleteRecord(id);
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting record ${id}:`, error);
+          errorCount++;
+        }
+      }
+
+      // Show toast with results
+      if (successCount > 0) {
+        toast.success(
+          `Successfully deleted ${successCount} record${successCount !== 1 ? "s" : ""}`
+        );
+      }
+
+      if (errorCount > 0) {
+        toast.error(
+          `Failed to delete ${errorCount} record${errorCount !== 1 ? "s" : ""}`
+        );
+      }
+
+      // Reload data
+      await loadData();
+
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (error) {
+      console.error("Error in batch delete:", error);
+      toast.error("An error occurred during batch delete");
+    } finally {
+      setIsSubmitting(false);
+      setSelectedRows([]);
     }
   };
 
@@ -377,6 +429,11 @@ export default function GenericDataTable({
     if (onDataChange) {
       onDataChange();
     }
+  };
+
+  // Handle selection changes
+  const handleSelectedRowsChange = (newSelectedRows: string[]) => {
+    setSelectedRows(newSelectedRows);
   };
 
   // New function to handle form changes and save to local storage
@@ -537,6 +594,13 @@ export default function GenericDataTable({
       .map((field) => field.key);
   };
 
+  // Row click handler - if selection is enabled, handle selection; otherwise, edit the record
+  const handleRowClick = (row: Record<string, any>) => {
+    if (!enableSelection && !disableEdit) {
+      handleEditRecord(row);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-4">
       {/* Unsaved changes confirmation dialog */}
@@ -558,6 +622,29 @@ export default function GenericDataTable({
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDiscard}>
               Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete selected items confirmation dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Selected Items</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedRows.length} selected{" "}
+              {selectedRows.length === 1 ? "item" : "items"}? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelectedRecords}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -658,35 +745,59 @@ export default function GenericDataTable({
       <Card className="flex-1 min-w-0" ref={tableContainerRef}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{title}</CardTitle>
-          {!disableImport && (
-            <div className="relative">
+          <div className="flex items-center gap-2">
+            {/* Only show delete button when items are selected */}
+            {enableSelection && selectedRows.length > 0 && !disableDelete && (
               <Button
-                variant="outline"
-                className="cursor-pointer relative overflow-hidden"
-                disabled={isImporting}
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isSubmitting}
               >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Importing...
-                  </>
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import CSV
-                  </>
+                  <Trash className="h-4 w-4 mr-2" />
                 )}
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  onChange={handleFileUpload}
-                  disabled={isImporting}
-                  onClick={(e) => e.stopPropagation()}
-                />
+                Delete{" "}
+                {selectedRows.length === 1
+                  ? "Selected Item"
+                  : `${selectedRows.length} Items`}
               </Button>
-            </div>
-          )}
+            )}
+
+            {/* The Import CSV button - hidden if disableImport is true or if items are selected */}
+            {!disableImport &&
+              (!enableSelection || selectedRows.length === 0) && (
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="cursor-pointer relative overflow-hidden"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Importing...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import CSV
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept=".csv"
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      onChange={handleFileUpload}
+                      disabled={isSubmitting}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </Button>
+                </div>
+              )}
+          </div>
         </CardHeader>
         <CardContent className="overflow-auto">
           {isLoading ? (
@@ -700,19 +811,16 @@ export default function GenericDataTable({
               filterableColumns={getSearchableColumns()}
               searchPlaceholder="Search..."
               pageSize={pageSize}
-              onRowClick={
-                disableEdit
-                  ? undefined
-                  : (row) => {
-                      console.log("Row clicked in GenericDataTable, row:", row);
-                      handleEditRecord(row);
-                    }
-              }
+              onRowClick={handleRowClick}
               rowClassName={(row) =>
                 highlightedRecordId && row[dataKey] === highlightedRecordId
                   ? "highlight-row"
                   : ""
               }
+              enableSelection={enableSelection}
+              dataKey={dataKey}
+              selectedRows={selectedRows}
+              onSelectedRowsChange={handleSelectedRowsChange}
             />
           )}
         </CardContent>

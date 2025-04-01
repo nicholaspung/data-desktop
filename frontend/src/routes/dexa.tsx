@@ -144,6 +144,8 @@ function DexaPage() {
             title="DEXA Scan Results"
             onDataChange={handleDataChange}
             highlightedRecordId={newRecordId}
+            disableImport={true} // Disable the import button in the table view
+            enableSelection={true} // Enable row selection
           />
         </TabsContent>
 
