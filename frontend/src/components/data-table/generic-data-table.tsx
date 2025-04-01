@@ -3,7 +3,15 @@ import React, { useState, useEffect, useRef } from "react";
 import { DataTable } from "@/components/data-table/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Loader2, Trash, Pencil, X } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  Trash,
+  Pencil,
+  X,
+  RotateCcw,
+  Save,
+} from "lucide-react";
 import { parseCSV } from "@/lib/csv-parser";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
@@ -56,10 +64,21 @@ export default function GenericDataTable({
     string,
     any
   > | null>(null);
+  const [originalRecord, setOriginalRecord] = useState<Record<
+    string,
+    any
+  > | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
+    useState(false);
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Create local storage key for this specific dataset's editing
+  const editStorageKey = `${datasetId}_edit_data`;
 
   // Function to create columns for the data table with explicit type
   const createTableColumns = (): ColumnDef<Record<string, any>, any>[] => {
@@ -144,6 +163,73 @@ export default function GenericDataTable({
   useEffect(() => {
     loadData();
   }, [datasetId]);
+
+  // Check for unsaved changes when component unmounts
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = "";
+        return "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  // Use a ref to track if we've already checked for saved data for the current record
+  const hasCheckedLocalStorage = useRef(false);
+  const currentRecordId = useRef<string | null>(null);
+
+  // Load any saved edit data only when first opening the sidebar
+  useEffect(() => {
+    // Reset the check flag if the record changes
+    if (selectedRecord && selectedRecord[dataKey] !== currentRecordId.current) {
+      hasCheckedLocalStorage.current = false;
+      currentRecordId.current = selectedRecord[dataKey] as string;
+    }
+
+    if (isSidebarOpen && selectedRecord && !hasCheckedLocalStorage.current) {
+      hasCheckedLocalStorage.current = true;
+
+      try {
+        const savedEditData = localStorage.getItem(editStorageKey);
+        if (savedEditData) {
+          const parsedData = JSON.parse(savedEditData);
+
+          // Only restore if the record ID matches
+          if (parsedData.id === selectedRecord[dataKey]) {
+            const processedData = { ...parsedData };
+
+            // Convert date strings back to Date objects
+            fields.forEach((field) => {
+              if (field.type === "date" && processedData[field.key]) {
+                processedData[field.key] = new Date(processedData[field.key]);
+              }
+            });
+
+            setSelectedRecord(processedData);
+            setHasUnsavedChanges(true);
+            toast.info("Restored unsaved changes from previous edit session");
+          }
+        }
+      } catch (error) {
+        console.error("Error loading saved edit data:", error);
+      }
+    }
+
+    // Clean up function to reset the ref when the sidebar closes
+    return () => {
+      if (!isSidebarOpen) {
+        hasCheckedLocalStorage.current = false;
+        currentRecordId.current = null;
+      }
+    };
+  }, [isSidebarOpen, selectedRecord]);
 
   // Scroll to highlighted row when data is loaded or highlightedRecordId changes
   useEffect(() => {
@@ -259,7 +345,6 @@ export default function GenericDataTable({
   };
 
   const handleEditRecord = (record: Record<string, any>) => {
-    // Add debugging
     console.log("Row clicked! Opening edit sidebar for record:", record);
 
     // Create a deep copy of the record to avoid modifying the original
@@ -272,17 +357,64 @@ export default function GenericDataTable({
       }
     });
 
+    // Save the original record for comparison
+    setOriginalRecord(recordCopy);
     setSelectedRecord(recordCopy);
     setIsSidebarOpen(true);
+    setHasUnsavedChanges(false); // Reset unsaved changes flag when opening a new record
   };
 
   const handleEditSuccess = async () => {
+    // Clear the local storage for this record
+    localStorage.removeItem(editStorageKey);
+
     setIsSidebarOpen(false);
     setSelectedRecord(null);
+    setOriginalRecord(null);
+    setHasUnsavedChanges(false);
     await loadData();
 
     if (onDataChange) {
       onDataChange();
+    }
+  };
+
+  // New function to handle form changes and save to local storage
+  const handleFormChange = (values: Record<string, any>) => {
+    if (!selectedRecord || !originalRecord) return;
+
+    // Check if values are different from original
+    let changed = false;
+    for (const key in values) {
+      if (JSON.stringify(values[key]) !== JSON.stringify(originalRecord[key])) {
+        changed = true;
+        break;
+      }
+    }
+
+    setHasUnsavedChanges(changed);
+
+    if (changed) {
+      // Save to local storage
+      try {
+        // Ensure the record ID is included
+        const dataToSave = {
+          ...values,
+          [dataKey]: selectedRecord[dataKey], // Make sure ID is preserved
+        };
+
+        // Convert Date objects to ISO strings for safe storage
+        const storageData = { ...dataToSave };
+        Object.keys(storageData).forEach((key) => {
+          if (storageData[key] instanceof Date) {
+            storageData[key] = storageData[key].toISOString();
+          }
+        });
+
+        localStorage.setItem(editStorageKey, JSON.stringify(storageData));
+      } catch (error) {
+        console.error("Error saving edit data to localStorage:", error);
+      }
     }
   };
 
@@ -348,6 +480,56 @@ export default function GenericDataTable({
     }
   };
 
+  // Function to reset the form to original values
+  const handleResetForm = () => {
+    if (originalRecord) {
+      setSelectedRecord({ ...originalRecord });
+      localStorage.removeItem(editStorageKey);
+      setHasUnsavedChanges(false);
+      toast.info("Changes reverted to original values");
+    }
+  };
+
+  // Function to close edit sidebar with confirmation if needed
+  const handleCloseSidebar = (callback?: () => void) => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedChangesDialog(true);
+      if (callback) {
+        setPendingAction(() => callback);
+      } else {
+        setPendingAction(() => () => {
+          setIsSidebarOpen(false);
+          setSelectedRecord(null);
+          setOriginalRecord(null);
+          localStorage.removeItem(editStorageKey);
+          setHasUnsavedChanges(false);
+        });
+      }
+    } else {
+      setIsSidebarOpen(false);
+      setSelectedRecord(null);
+      setOriginalRecord(null);
+      if (callback) {
+        callback();
+      }
+    }
+  };
+
+  // Handle confirmation dialog responses
+  const handleConfirmDiscard = () => {
+    setShowUnsavedChangesDialog(false);
+    localStorage.removeItem(editStorageKey);
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
+  };
+
+  const handleCancelDiscard = () => {
+    setShowUnsavedChangesDialog(false);
+    setPendingAction(null);
+  };
+
   // Get the searchable columns for the filter
   const getSearchableColumns = () => {
     return fields
@@ -357,6 +539,30 @@ export default function GenericDataTable({
 
   return (
     <div className="flex flex-col md:flex-row gap-4">
+      {/* Unsaved changes confirmation dialog */}
+      <AlertDialog
+        open={showUnsavedChangesDialog}
+        onOpenChange={setShowUnsavedChangesDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost. Do you want to
+              continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDiscard}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDiscard}>
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Edit Panel - Fixed width with height matching the table */}
       {isSidebarOpen && selectedRecord && (
         <div className="md:w-[450px] md:h-[800px] flex-shrink-0 bg-background border rounded-lg flex flex-col">
@@ -365,10 +571,7 @@ export default function GenericDataTable({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                setIsSidebarOpen(false);
-                setSelectedRecord(null);
-              }}
+              onClick={() => handleCloseSidebar()}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -378,6 +581,20 @@ export default function GenericDataTable({
             ref={formRef}
             onSubmit={handleFormSubmit}
             className="flex flex-col h-full"
+            onChange={() => {
+              // Capture form values and save to local storage
+              if (formRef.current) {
+                const formData = new FormData(formRef.current);
+                const formValues: Record<string, any> = {};
+
+                fields.forEach((field) => {
+                  const value = formData.get(field.key);
+                  formValues[field.key] = value;
+                });
+
+                handleFormChange(formValues);
+              }
+            }}
           >
             <ScrollArea className="flex-1 p-4">
               {selectedRecord && (
@@ -395,17 +612,43 @@ export default function GenericDataTable({
             </ScrollArea>
 
             {/* Fixed footer with update button */}
-            <div className="p-4 border-t mt-auto">
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  "Update Record"
-                )}
-              </Button>
+            <div className="p-4 border-t mt-auto space-y-3">
+              {hasUnsavedChanges && (
+                <div className="flex items-center justify-center w-full py-1 px-2 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                  <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                    You have unsaved changes
+                  </span>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isSubmitting || !hasUnsavedChanges}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetForm}
+                  disabled={!hasUnsavedChanges}
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </form>
         </div>
@@ -416,30 +659,33 @@ export default function GenericDataTable({
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{title}</CardTitle>
           {!disableImport && (
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              disabled={isImporting}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Import CSV
-                </>
-              )}
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileUpload}
+            <div className="relative">
+              <Button
+                variant="outline"
+                className="cursor-pointer relative overflow-hidden"
                 disabled={isImporting}
-              />
-            </Button>
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import CSV
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  onChange={handleFileUpload}
+                  disabled={isImporting}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </Button>
+            </div>
           )}
         </CardHeader>
         <CardContent className="overflow-auto">
