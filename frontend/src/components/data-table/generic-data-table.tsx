@@ -44,6 +44,8 @@ interface GenericDataTableProps {
   onDataChange?: () => void;
   pageSize?: number;
   highlightedRecordId?: string | null;
+  initialPage?: number; // Initial page index
+  persistState?: boolean; // Whether to persist pagination state
 }
 
 export default function GenericDataTable({
@@ -58,6 +60,8 @@ export default function GenericDataTable({
   onDataChange,
   pageSize = 10,
   highlightedRecordId = null,
+  initialPage = 0,
+  persistState = true,
 }: GenericDataTableProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +83,13 @@ export default function GenericDataTable({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [currentPageSize, setCurrentPageSize] = useState(pageSize);
+
+  // Generate local storage key for this specific dataset's pagination
+  const paginationStorageKey = `${datasetId}_pagination_state`;
 
   // Create local storage key for this specific dataset's editing
   const editStorageKey = `${datasetId}_edit_data`;
@@ -165,7 +176,38 @@ export default function GenericDataTable({
   // Load data when the component mounts
   useEffect(() => {
     loadData();
+
+    // Load pagination state from localStorage if enabled
+    if (persistState) {
+      try {
+        const savedPaginationState = localStorage.getItem(paginationStorageKey);
+        if (savedPaginationState) {
+          const { pageIndex, pageSize } = JSON.parse(savedPaginationState);
+          setCurrentPage(pageIndex);
+          setCurrentPageSize(pageSize);
+        }
+      } catch (error) {
+        console.error("Error loading pagination state:", error);
+      }
+    }
   }, [datasetId]);
+
+  // Save pagination state when it changes
+  useEffect(() => {
+    if (persistState) {
+      try {
+        localStorage.setItem(
+          paginationStorageKey,
+          JSON.stringify({
+            pageIndex: currentPage,
+            pageSize: currentPageSize,
+          })
+        );
+      } catch (error) {
+        console.error("Error saving pagination state:", error);
+      }
+    }
+  }, [currentPage, currentPageSize, persistState]);
 
   // Check for unsaved changes when component unmounts
   useEffect(() => {
@@ -810,7 +852,7 @@ export default function GenericDataTable({
               data={data}
               filterableColumns={getSearchableColumns()}
               searchPlaceholder="Search..."
-              pageSize={pageSize}
+              pageSize={currentPageSize}
               onRowClick={handleRowClick}
               rowClassName={(row) =>
                 highlightedRecordId && row[dataKey] === highlightedRecordId
@@ -821,6 +863,9 @@ export default function GenericDataTable({
               dataKey={dataKey}
               selectedRows={selectedRows}
               onSelectedRowsChange={handleSelectedRowsChange}
+              initialPage={currentPage}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setCurrentPageSize}
             />
           )}
         </CardContent>

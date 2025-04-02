@@ -8,7 +8,6 @@
 
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
-- Pagination is not working in table component
 - Add multiple data entries as an option
 
 ### IN PROGRESS
@@ -29,5 +28,6 @@
 - In add entry, when I add an entry, it should then reset everything [DONE 2025-04-01]
 - In add entry, reset doesn't work, it should reset everything [DONE 2025-04-01]
 - In add entry, cancel doesn't work, it should reset everything [DONE 2025-04-01]
+- Pagination is not working in table component [DONE 2025-04-01]
 
 ### GAVE UP

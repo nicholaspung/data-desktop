@@ -50,6 +50,9 @@ interface DataTableProps<TData, TValue> {
   dataKey?: string; // The key to use for identifying rows
   selectedRows?: string[]; // Currently selected row IDs
   onSelectedRowsChange?: (selectedRowIds: string[]) => void; // Callback when selection changes
+  initialPage?: number; // Initial page index
+  onPageChange?: (page: number) => void; // Callback when page changes
+  onPageSizeChange?: (pageSize: number) => void; // Callback when page size changes
 }
 
 export function DataTable<TData extends Record<string, any>, TValue>({
@@ -65,6 +68,9 @@ export function DataTable<TData extends Record<string, any>, TValue>({
   dataKey = "id",
   selectedRows = [],
   onSelectedRowsChange,
+  initialPage = 0,
+  onPageChange,
+  onPageSizeChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -72,6 +78,10 @@ export function DataTable<TData extends Record<string, any>, TValue>({
     filterableColumns.length > 0 ? filterableColumns[0] : ""
   );
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [pagination, setPagination] = useState({
+    pageIndex: initialPage,
+    pageSize: pageSize,
+  });
 
   // Create selection column if selection is enabled
   const selectionColumn: ColumnDef<TData, any> = {
@@ -171,16 +181,32 @@ export function DataTable<TData extends Record<string, any>, TValue>({
     state: {
       sorting,
       columnFilters,
-      pagination: {
-        pageIndex: 0,
-        pageSize,
-      },
+      pagination,
       rowSelection,
+    },
+    onPaginationChange: (updater) => {
+      const newPagination =
+        typeof updater === "function" ? updater(pagination) : updater;
+
+      setPagination(newPagination);
+
+      // Call the callbacks if provided
+      if (onPageChange && newPagination.pageIndex !== pagination.pageIndex) {
+        onPageChange(newPagination.pageIndex);
+      }
+
+      if (onPageSizeChange && newPagination.pageSize !== pagination.pageSize) {
+        onPageSizeChange(newPagination.pageSize);
+      }
     },
     onRowSelectionChange: setRowSelection,
     // Enable sorting for all columns
     enableSorting: true,
     enableMultiSort: true,
+    // For manual pagination
+    manualPagination: false,
+    // To help with debugging
+    debugTable: process.env.NODE_ENV === "development",
   });
 
   // Handle row click with selection integration
@@ -344,11 +370,16 @@ export function DataTable<TData extends Record<string, any>, TValue>({
       </div>
 
       {/* Pagination controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="text-sm text-muted-foreground">
-          Showing {table.getState().pagination.pageIndex * pageSize + 1} to{" "}
+          Showing{" "}
+          {table.getState().pagination.pageIndex *
+            table.getState().pagination.pageSize +
+            1}{" "}
+          to{" "}
           {Math.min(
-            (table.getState().pagination.pageIndex + 1) * pageSize,
+            (table.getState().pagination.pageIndex + 1) *
+              table.getState().pagination.pageSize,
             table.getFilteredRowModel().rows.length
           )}{" "}
           of {table.getFilteredRowModel().rows.length} entries
@@ -358,23 +389,76 @@ export function DataTable<TData extends Record<string, any>, TValue>({
             </span>
           )}
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Page size selector */}
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+            }}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="h-8 w-[80px]">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[5, 10, 20, 50, 100].map((pageSize) => (
+                <SelectItem key={pageSize} value={`${pageSize}`}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Page navigation */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to first page</span>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Go to previous page</span>
+            </Button>
+
+            <span className="text-sm flex items-center gap-1">
+              Page
+              <strong>
+                {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </strong>
+            </span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to last page</span>
+              <ChevronRight className="h-4 w-4 mr-1" />
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
