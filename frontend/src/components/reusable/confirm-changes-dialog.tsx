@@ -11,46 +11,42 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { CircleX } from "lucide-react";
 
-interface ConfirmDeleteDialogProps {
+interface ConfirmChangesDialogProps {
   title?: string;
   description?: string;
   onConfirm: () => void;
+  onCancel: () => void;
   trigger?: React.ReactNode;
   variant?: "destructive" | "outline" | "ghost" | "link" | "default";
   size?: "default" | "sm" | "lg" | "icon";
   loading?: boolean;
   showTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-/**
- * A reusable delete confirmation dialog
- *
- * @example
- * <ConfirmDeleteDialog
- *   title="Delete Record"
- *   description="Are you sure you want to delete this record? This action cannot be undone."
- *   onConfirm={() => handleDelete(record.id)}
- * />
- */
-export function ConfirmDeleteDialog({
-  title = "Confirm Delete",
-  description = "Are you sure you want to delete this item? This action cannot be undone.",
+export function ConfirmChangesDialog({
+  title = "Unsaved changes",
+  description = "You have unsaved changes that will be lost. Do you want to continue?",
   onConfirm,
+  onCancel,
   trigger,
-  variant = "destructive",
+  variant = "outline",
   size = "icon",
   loading = false,
   showTrigger = true,
-}: ConfirmDeleteDialogProps) {
+  open = false,
+  onOpenChange = () => {},
+}: ConfirmChangesDialogProps) {
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       {showTrigger && (
         <AlertDialogTrigger asChild>
           {trigger || (
             <Button variant={variant} size={size} disabled={loading}>
-              <Trash className="h-4 w-4" />
+              <CircleX className="h-4 w-4" />
             </Button>
           )}
         </AlertDialogTrigger>
@@ -61,12 +57,9 @@ export function ConfirmDeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground"
-          >
-            Delete
+          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            Discard Changes
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

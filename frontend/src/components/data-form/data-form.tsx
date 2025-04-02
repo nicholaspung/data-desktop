@@ -1,4 +1,4 @@
-// Updated version of frontend/src/components/data-form/data-form.tsx
+// src/components/data-form/data-form.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,21 +23,11 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Trash2, X } from "lucide-react";
+import { CalendarIcon, Loader2, X } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 
 interface DataFormProps {
   datasetId: string;
@@ -51,6 +41,8 @@ interface DataFormProps {
   recordId?: string;
   hideSubmitButton?: boolean;
   persistKey?: string; // Optional key for local storage persistence
+  onChange?: (values: Record<string, any>, isValid: boolean) => void; // New callback for form changes
+  forceClear?: boolean; // Signal to clear all data including localStorage
 }
 
 export default function DataForm({
@@ -65,9 +57,10 @@ export default function DataForm({
   recordId,
   hideSubmitButton = false,
   persistKey,
+  onChange, // New callback for form changes
+  forceClear = false, // Signal to clear all data including localStorage
 }: DataFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
 
   // Generate storage key for this form
   const storageKey = persistKey || `form_${datasetId}_data`;
@@ -116,6 +109,11 @@ export default function DataForm({
 
     // Clear localStorage
     localStorage.removeItem(storageKey);
+
+    // Report empty and invalid form state via onChange if provided
+    if (onChange) {
+      onChange(freshDefaults, false);
+    }
   };
 
   // Load persisted data from localStorage on initial render
@@ -221,8 +219,37 @@ export default function DataForm({
     mode: "onBlur",
   });
 
-  // Save form values to localStorage whenever they change
+  // Watch for forceClear prop changes
   useEffect(() => {
+    if (forceClear) {
+      completeFormReset();
+    }
+  }, [forceClear]);
+
+  // Add an effect specifically to watch validation state changes
+  useEffect(() => {
+    // When form validation state changes, notify parent
+    if (onChange) {
+      const currentValues = form.getValues();
+      // Only consider the form valid if there are no errors AND it's actually changed
+      const hasChanges =
+        form.formState.isDirty ||
+        Object.keys(form.formState.dirtyFields).length > 0;
+      const isValid =
+        Object.keys(form.formState.errors).length === 0 && hasChanges;
+      onChange(currentValues, isValid);
+    }
+  }, [
+    form.formState.isValid,
+    form.formState.errors,
+    form.formState.isDirty,
+    form.formState.dirtyFields,
+    onChange,
+  ]);
+
+  // Save form values to localStorage whenever they change and call onChange if provided
+  useEffect(() => {
+    // Subscribe to all form value changes
     const subscription = form.watch((values) => {
       // Only save to localStorage in "add" mode
       if (mode === "add") {
@@ -240,10 +267,42 @@ export default function DataForm({
           console.error("Error saving form data to localStorage:", error);
         }
       }
+
+      // Call onChange if provided, with current form validation state
+      if (onChange) {
+        // Check if there are any changes from the default values
+        let hasChanged = false;
+        Object.keys(defaultValues).forEach((key) => {
+          const defaultVal = defaultValues[key];
+          const currentVal = values[key];
+
+          // Special handling for dates
+          if (defaultVal instanceof Date && currentVal instanceof Date) {
+            hasChanged =
+              hasChanged || defaultVal.getTime() !== currentVal.getTime();
+          }
+          // Special handling for booleans
+          else if (
+            typeof defaultVal === "boolean" &&
+            typeof currentVal === "boolean"
+          ) {
+            hasChanged = hasChanged || defaultVal !== currentVal;
+          }
+          // Regular comparison
+          else {
+            hasChanged = hasChanged || defaultVal !== currentVal;
+          }
+        });
+
+        // Only consider the form valid if there are no errors AND there are actual changes
+        const isValid =
+          hasChanged && Object.keys(form.formState.errors).length === 0;
+        onChange(values as Record<string, any>, isValid);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, [form, mode, storageKey]);
+  }, [form, mode, storageKey, onChange, defaultValues]);
 
   // Handle form submission
   const onSubmit = async (values: Record<string, any>) => {
@@ -280,7 +339,6 @@ export default function DataForm({
   // Clear form data and localStorage
   const handleClearForm = () => {
     completeFormReset();
-    setClearConfirmOpen(false);
     toast.info("Form data has been cleared");
   };
 
@@ -341,7 +399,11 @@ export default function DataForm({
                           ? formField.value
                           : new Date(formField.value)
                       }
-                      onSelect={formField.onChange}
+                      onSelect={(date) => {
+                        formField.onChange(date);
+                        // Trigger validation
+                        form.trigger(field.key);
+                      }}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
                       }
@@ -364,22 +426,39 @@ export default function DataForm({
             key={field.key}
             control={form.control}
             name={field.key}
-            render={({ field: formField }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={formField.value}
-                    onCheckedChange={formField.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>{field.displayName}</FormLabel>
-                  {field.description && (
-                    <FormDescription>{field.description}</FormDescription>
-                  )}
-                </div>
-              </FormItem>
-            )}
+            render={({ field: formField }) => {
+              // Compare with default value to determine if it has changed
+              const defaultValue = defaultValues[field.key] === true;
+              const hasChanged = formField.value !== defaultValue;
+
+              return (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={formField.value}
+                      onCheckedChange={(checked) => {
+                        formField.onChange(checked);
+                        // Manually track if this is different from default
+                        form.setValue(field.key, checked, {
+                          shouldDirty: checked !== defaultValue,
+                          shouldTouch: true,
+                          shouldValidate: true,
+                        });
+                      }}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>{field.displayName}</FormLabel>
+                    {field.description && (
+                      <FormDescription>{field.description}</FormDescription>
+                    )}
+                    {hasChanged && (
+                      <p className="text-xs text-blue-500">(Changed)</p>
+                    )}
+                  </div>
+                </FormItem>
+              );
+            }}
           />
         );
 
@@ -405,6 +484,8 @@ export default function DataForm({
                       const rawValue = e.target.value;
                       const value = rawValue === "" ? 0 : parseFloat(rawValue);
                       formField.onChange(value);
+                      // Trigger validation
+                      form.trigger(field.key);
                     }}
                     onBlur={formField.onBlur}
                   />
@@ -433,7 +514,14 @@ export default function DataForm({
               <FormItem>
                 <FormLabel>{field.displayName}</FormLabel>
                 <FormControl>
-                  <Input {...formField} />
+                  <Input
+                    {...formField}
+                    onChange={(e) => {
+                      formField.onChange(e);
+                      // Trigger validation
+                      form.trigger(field.key);
+                    }}
+                  />
                 </FormControl>
                 {field.description && (
                   <FormDescription>{field.description}</FormDescription>
@@ -460,7 +548,35 @@ export default function DataForm({
         {/* Boolean fields */}
         {fieldsByType.boolean.length > 0 && (
           <div className="space-y-4">
-            {fieldsByType.boolean.map(renderField)}
+            {fieldsByType.boolean.map((field) => (
+              <FormField
+                key={field.key}
+                control={form.control}
+                name={field.key}
+                render={({ field: formField }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={formField.value}
+                        onCheckedChange={(checked) => {
+                          formField.onChange(checked);
+                          // Manually trigger form validation after checkbox change
+                          setTimeout(() => {
+                            form.trigger();
+                          }, 0);
+                        }}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>{field.displayName}</FormLabel>
+                      {field.description && (
+                        <FormDescription>{field.description}</FormDescription>
+                      )}
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
           </div>
         )}
 
@@ -487,32 +603,7 @@ export default function DataForm({
               </Button>
 
               {mode === "add" && (
-                <AlertDialog
-                  open={clearConfirmOpen}
-                  onOpenChange={setClearConfirmOpen}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" type="button">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Reset
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Clear form data?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will reset all form fields and delete any saved
-                        data. This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleClearForm}>
-                        Clear
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <ConfirmResetDialog onConfirm={handleClearForm} />
               )}
             </div>
 

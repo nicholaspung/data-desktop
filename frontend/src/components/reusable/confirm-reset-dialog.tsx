@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 
-interface ConfirmDeleteDialogProps {
+interface ConfirmResetDialogProps {
   title?: string;
   description?: string;
   onConfirm: () => void;
@@ -24,33 +24,24 @@ interface ConfirmDeleteDialogProps {
   showTrigger?: boolean;
 }
 
-/**
- * A reusable delete confirmation dialog
- *
- * @example
- * <ConfirmDeleteDialog
- *   title="Delete Record"
- *   description="Are you sure you want to delete this record? This action cannot be undone."
- *   onConfirm={() => handleDelete(record.id)}
- * />
- */
-export function ConfirmDeleteDialog({
-  title = "Confirm Delete",
-  description = "Are you sure you want to delete this item? This action cannot be undone.",
+export function ConfirmResetDialog({
+  title = "Clear form data?",
+  description = "This will reset all form fields and delete any saved data. This action cannot be undone.",
   onConfirm,
   trigger,
-  variant = "destructive",
+  variant = "outline",
   size = "icon",
   loading = false,
   showTrigger = true,
-}: ConfirmDeleteDialogProps) {
+}: ConfirmResetDialogProps) {
   return (
     <AlertDialog>
       {showTrigger && (
         <AlertDialogTrigger asChild>
           {trigger || (
             <Button variant={variant} size={size} disabled={loading}>
-              <Trash className="h-4 w-4" />
+              <Trash className="mr-2 h-4 w-4" />
+              Reset
             </Button>
           )}
         </AlertDialogTrigger>
@@ -62,12 +53,7 @@ export function ConfirmDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground"
-          >
-            Delete
-          </AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>Clear</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

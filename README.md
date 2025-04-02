@@ -9,6 +9,8 @@
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
 - Add multiple data entries as an option
+- In "Import CSV" section, view the data preview first before importing the data
+- Somehow, the edit entries disappeared in "View data"
 
 ### IN PROGRESS
 

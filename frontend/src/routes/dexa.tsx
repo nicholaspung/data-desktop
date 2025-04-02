@@ -1,4 +1,3 @@
-// src/routes/dexa.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +9,7 @@ import DexaVisualization from "@/features/dexa/dexa-visualization";
 import DexaImport from "@/features/dexa/dexa-import";
 import { useState, useEffect } from "react";
 
+// Route definition for the DEXA page
 export const Route = createFileRoute("/dexa")({
   component: DexaPage,
 });
