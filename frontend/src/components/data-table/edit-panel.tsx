@@ -1,4 +1,4 @@
-import { Loader2, RotateCcw, Save, X } from "lucide-react";
+import { Loader2, Save, UndoDot, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import DataForm from "../data-form/data-form";
@@ -115,7 +115,7 @@ export default function EditPanel({
                 onClick={handleResetForm}
                 disabled={!hasUnsavedChanges}
               >
-                <RotateCcw className="h-4 w-4" />
+                <UndoDot className="h-4 w-4" />
               </Button>
             </div>
           </div>

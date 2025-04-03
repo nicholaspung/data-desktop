@@ -211,6 +211,7 @@ interface EditableDataTableProps<TData, TValue> {
   onPageSizeChange?: (pageSize: number) => void;
   onDataChange?: () => void; // Callback when data changes
   useInlineEditing?: boolean; // Flag to enable inline editing
+  showActionColumn?: boolean; // Flag to show/hide action column
 }
 
 export function EditableDataTable<TData extends Record<string, any>, TValue>({
@@ -232,7 +233,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onPageChange,
   onPageSizeChange,
   onDataChange,
-  useInlineEditing,
+  useInlineEditing = false,
+  showActionColumn = true,
 }: EditableDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -347,13 +349,15 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
               </Button>
             </>
           ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleEditRow(row.original)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+            useInlineEditing && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleEditRow(row.original)}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )
           )}
         </div>
       );
@@ -362,10 +366,12 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
   // Add selection column if enabled and add action column
   let tableColumns = [...columns];
-  if (enableSelection && !useInlineEditing) {
+  if (enableSelection) {
     tableColumns = [selectionColumn, ...tableColumns];
   }
-  tableColumns = [actionColumn, ...tableColumns];
+  if (showActionColumn && (useInlineEditing || editingRow !== null)) {
+    tableColumns = [actionColumn, ...tableColumns];
+  }
 
   // Update internal selection state when selectedRows prop changes
   useEffect(() => {

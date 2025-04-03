@@ -1,23 +1,11 @@
 // src/components/data-table/generic-data-table.tsx
 import React, { useState, useEffect, useRef } from "react";
-import { DataTable } from "@/components/data-table/data-table";
 import { EditableDataTable } from "@/components/data-table/editable-data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Trash, Pencil } from "lucide-react";
+import { Loader2, Trash } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { ColumnDef } from "@tanstack/react-table";
 import { createColumn } from "@/lib/table-utils";
 import { FieldDefinition } from "@/types";
@@ -41,13 +29,11 @@ interface GenericDataTableProps {
   disableImport?: boolean;
   disableDelete?: boolean;
   disableEdit?: boolean;
-  enableSelection?: boolean; // Enable row selection
   onDataChange?: () => void;
   pageSize?: number;
   highlightedRecordId?: string | null;
   initialPage?: number; // Initial page index
   persistState?: boolean; // Whether to persist pagination state
-  enableInlineEditing?: boolean; // New prop to control inline editing
   onRowClick?: (row: Record<string, any>) => void;
 }
 
@@ -58,13 +44,11 @@ export default function GenericDataTable({
   dataKey = "id",
   disableDelete = false,
   disableEdit = false,
-  enableSelection = false,
   onDataChange,
   pageSize = 10,
   highlightedRecordId = null,
   initialPage = 0,
   persistState = true,
-  enableInlineEditing = true, // Default to true for inline editing
   onRowClick,
 }: GenericDataTableProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
@@ -84,9 +68,9 @@ export default function GenericDataTable({
     useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
-    "view"
-  );
+  const [tableMode, setTableMode] = useState<
+    "view" | "single-edit" | "multi-edit" | "delete"
+  >("view");
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -115,71 +99,6 @@ export default function GenericDataTable({
         }
       )
     );
-
-    // Add actions column if edit or delete is enabled and selection is disabled
-    // Only add when not using inline editing and not in delete mode
-    if (
-      (!disableDelete || !disableEdit) &&
-      !enableSelection &&
-      tableMode === "view"
-    ) {
-      columns.unshift({
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }: { row: { original: Record<string, any> } }) => (
-          <div
-            className="flex gap-2"
-            onClick={(e) => {
-              // This is crucial to prevent row click when clicking actions
-              e.stopPropagation();
-            }}
-          >
-            {!disableEdit && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditRecord(row.original);
-                }}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            {!disableDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete
-                      this record.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDeleteRecord(row.original[dataKey])}
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        ),
-      });
-    }
 
     return columns;
   };
@@ -347,21 +266,6 @@ export default function GenericDataTable({
       toast.error(`Failed to load ${title} data`);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDeleteRecord = async (id: string) => {
-    try {
-      await ApiService.deleteRecord(id);
-      toast.success("Record deleted successfully");
-      await loadData();
-
-      if (onDataChange) {
-        onDataChange();
-      }
-    } catch (error) {
-      console.error("Error deleting record:", error);
-      toast.error("Failed to delete record");
     }
   };
 
@@ -618,12 +522,15 @@ export default function GenericDataTable({
   // Row click handler based on table mode
   const handleRowClick = (row: Record<string, any>) => {
     // Handle row click based on the current mode
-    if (tableMode === "view" && !disableEdit) {
-      // In view mode, open edit sidebar
+    if (tableMode === "single-edit" && !disableEdit) {
+      // In single edit mode, open edit sidebar
       handleEditRecord(row);
     } else if (tableMode === "delete") {
-      // In delete mode, selection is handled by the DataTable component
+      // In delete mode, selection is handled by the EditableDataTable component
       // No additional action needed here
+    } else if (tableMode === "view") {
+      // In view mode, only trigger the external handler if provided
+      // Do not open edit panel
     }
 
     // Call external handler if provided
@@ -672,22 +579,34 @@ export default function GenericDataTable({
               </Label>
               <Select
                 value={tableMode}
-                onValueChange={(value: "view" | "edit" | "delete") => {
+                onValueChange={(
+                  value: "view" | "single-edit" | "multi-edit" | "delete"
+                ) => {
                   setTableMode(value);
 
                   // Clear selected rows when switching modes
                   if (selectedRows.length > 0) {
                     setSelectedRows([]);
                   }
+
+                  // Close sidebar if open and switching away from single-edit mode
+                  if (isSidebarOpen && value !== "single-edit") {
+                    handleCloseSidebar();
+                  }
                 }}
               >
-                <SelectTrigger className="w-[130px]" id="table-mode">
+                <SelectTrigger className="w-[150px]" id="table-mode">
                   <SelectValue placeholder="Select mode" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="view">View Mode</SelectItem>
-                  {!disableEdit && enableInlineEditing && (
-                    <SelectItem value="edit">Edit Mode</SelectItem>
+                  {!disableEdit && (
+                    <SelectItem value="single-edit">
+                      Single Edit Mode
+                    </SelectItem>
+                  )}
+                  {!disableEdit && (
+                    <SelectItem value="multi-edit">Multi Edit Mode</SelectItem>
                   )}
                   {!disableDelete && (
                     <SelectItem value="delete">Delete Mode</SelectItem>
@@ -702,7 +621,9 @@ export default function GenericDataTable({
               !disableDelete && (
                 <ConfirmDeleteDialog
                   title="Delete Selected Items"
-                  description={`Are you sure you want to delete ${selectedRows.length} selected ${selectedRows.length === 1 ? "item" : "items"}? This action cannot be undone.`}
+                  description={`Are you sure you want to delete ${selectedRows.length} selected ${
+                    selectedRows.length === 1 ? "item" : "items"
+                  }? This action cannot be undone.`}
                   onConfirm={handleDeleteSelectedRecords}
                   trigger={
                     <Button
@@ -730,7 +651,7 @@ export default function GenericDataTable({
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : tableMode === "edit" && !disableEdit && enableInlineEditing ? (
+          ) : (
             <EditableDataTable
               columns={createTableColumns()}
               data={data}
@@ -745,28 +666,6 @@ export default function GenericDataTable({
                   ? "highlight-row"
                   : ""
               }
-              enableSelection={false}
-              dataKey={dataKey}
-              selectedRows={[]}
-              initialPage={currentPage}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={setCurrentPageSize}
-              onDataChange={handleDataUpdated}
-              useInlineEditing={true}
-            />
-          ) : (
-            <DataTable
-              columns={createTableColumns()}
-              data={data}
-              filterableColumns={getSearchableColumns()}
-              searchPlaceholder="Search..."
-              pageSize={currentPageSize}
-              onRowClick={handleRowClick}
-              rowClassName={(row: any) =>
-                highlightedRecordId && row[dataKey] === highlightedRecordId
-                  ? "highlight-row"
-                  : ""
-              }
               enableSelection={tableMode === "delete"}
               dataKey={dataKey}
               selectedRows={selectedRows}
@@ -774,6 +673,8 @@ export default function GenericDataTable({
               initialPage={currentPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setCurrentPageSize}
+              onDataChange={handleDataUpdated}
+              useInlineEditing={tableMode === "multi-edit" && !disableEdit}
             />
           )}
         </CardContent>
