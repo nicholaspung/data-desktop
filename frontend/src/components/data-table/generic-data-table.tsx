@@ -21,11 +21,17 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { createColumn } from "@/lib/table-utils";
 import { FieldDefinition } from "@/types";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 import { ConfirmChangesDialog } from "../reusable/confirm-changes-dialog";
 import EditPanel from "./edit-panel";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface GenericDataTableProps {
   datasetId: string;
@@ -78,7 +84,9 @@ export default function GenericDataTable({
     useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [useInlineEditing, setUseInlineEditing] = useState(enableInlineEditing);
+  const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
+    "view"
+  );
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -109,11 +117,11 @@ export default function GenericDataTable({
     );
 
     // Add actions column if edit or delete is enabled and selection is disabled
-    // Only add when not using inline editing
+    // Only add when not using inline editing and not in delete mode
     if (
       (!disableDelete || !disableEdit) &&
       !enableSelection &&
-      !useInlineEditing
+      tableMode === "view"
     ) {
       columns.unshift({
         id: "actions",
@@ -607,14 +615,18 @@ export default function GenericDataTable({
     }
   };
 
-  // Row click handler - if selection is enabled, handle selection; otherwise, edit the record
+  // Row click handler based on table mode
   const handleRowClick = (row: Record<string, any>) => {
-    // First perform internal row click handling
-    if (!enableSelection && !disableEdit && !useInlineEditing) {
+    // Handle row click based on the current mode
+    if (tableMode === "view" && !disableEdit) {
+      // In view mode, open edit sidebar
       handleEditRecord(row);
+    } else if (tableMode === "delete") {
+      // In delete mode, selection is handled by the DataTable component
+      // No additional action needed here
     }
 
-    // Then call external handler if provided
+    // Call external handler if provided
     if (onRowClick) {
       onRowClick(row);
     }
@@ -653,31 +665,41 @@ export default function GenericDataTable({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Editing mode toggle */}
-            {enableInlineEditing && !disableEdit && (
-              <div className="flex items-center gap-2">
-                <Label htmlFor="inline-edit-mode" className="text-sm">
-                  Inline Editing
-                </Label>
-                <Switch
-                  id="inline-edit-mode"
-                  checked={useInlineEditing}
-                  onCheckedChange={(checked) => {
-                    setUseInlineEditing(checked);
-                    // Clear selected rows when switching to inline editing
-                    if (checked && selectedRows.length > 0) {
-                      setSelectedRows([]);
-                    }
-                  }}
-                />
-              </div>
-            )}
+            {/* Table mode selector */}
+            <div className="flex items-center gap-2">
+              <Label htmlFor="table-mode" className="text-sm">
+                Mode
+              </Label>
+              <Select
+                value={tableMode}
+                onValueChange={(value: "view" | "edit" | "delete") => {
+                  setTableMode(value);
 
-            {/* Only show delete button when items are selected and inline editing is disabled */}
-            {enableSelection &&
+                  // Clear selected rows when switching modes
+                  if (selectedRows.length > 0) {
+                    setSelectedRows([]);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[130px]" id="table-mode">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="view">View Mode</SelectItem>
+                  {!disableEdit && enableInlineEditing && (
+                    <SelectItem value="edit">Edit Mode</SelectItem>
+                  )}
+                  {!disableDelete && (
+                    <SelectItem value="delete">Delete Mode</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Only show delete button when items are selected and in delete mode */}
+            {tableMode === "delete" &&
               selectedRows.length > 0 &&
-              !disableDelete &&
-              !useInlineEditing && (
+              !disableDelete && (
                 <ConfirmDeleteDialog
                   title="Delete Selected Items"
                   description={`Are you sure you want to delete ${selectedRows.length} selected ${selectedRows.length === 1 ? "item" : "items"}? This action cannot be undone.`}
@@ -708,7 +730,7 @@ export default function GenericDataTable({
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : useInlineEditing && !disableEdit ? (
+          ) : tableMode === "edit" && !disableEdit && enableInlineEditing ? (
             <EditableDataTable
               columns={createTableColumns()}
               data={data}
@@ -723,15 +745,14 @@ export default function GenericDataTable({
                   ? "highlight-row"
                   : ""
               }
-              enableSelection={enableSelection}
+              enableSelection={false}
               dataKey={dataKey}
-              selectedRows={selectedRows}
-              onSelectedRowsChange={handleSelectedRowsChange}
+              selectedRows={[]}
               initialPage={currentPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setCurrentPageSize}
               onDataChange={handleDataUpdated}
-              useInlineEditing={useInlineEditing}
+              useInlineEditing={true}
             />
           ) : (
             <DataTable
@@ -746,7 +767,7 @@ export default function GenericDataTable({
                   ? "highlight-row"
                   : ""
               }
-              enableSelection={enableSelection}
+              enableSelection={tableMode === "delete"}
               dataKey={dataKey}
               selectedRows={selectedRows}
               onSelectedRowsChange={handleSelectedRowsChange}

@@ -1,14 +1,6 @@
 // src/components/data-table/editable-data-table.tsx
 import React, { useState, useEffect } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
@@ -635,123 +627,141 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         )}
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const columnId = header.column.id;
-                  const width = columnWidths[columnId] || "auto";
-
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        header.column.getCanSort()
-                          ? "cursor-pointer select-none"
-                          : "",
-                        "whitespace-nowrap"
-                      )}
-                      onClick={header.column.getToggleSortingHandler()}
-                      style={{
-                        width,
-                        minWidth:
-                          columnId === "actions"
-                            ? "80px"
-                            : columnId === "select"
-                              ? "40px"
-                              : "100px",
-                      }}
-                    >
-                      <div className="flex items-center gap-1">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        {header.column.getIsSorted() === "asc" && (
-                          <ChevronUp className="ml-1 h-4 w-4" />
-                        )}
-                        {header.column.getIsSorted() === "desc" && (
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        )}
-                      </div>
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={cn(
-                    (onRowClick || enableSelection) &&
-                      editingRow !== row.original[dataKey]
-                      ? "cursor-pointer hover:bg-muted"
-                      : "",
-                    row.getIsSelected() ? "bg-muted/50" : "",
-                    editingRow === row.original[dataKey] ? "bg-muted/30" : "",
-                    rowClassName ? rowClassName(row.original as TData) : ""
-                  )}
-                  onClick={() => {
-                    if (editingRow !== row.original[dataKey]) {
-                      handleRowClick(row.original as TData);
-                    }
-                  }}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const columnId = cell.column.id;
-                    const width = columnWidths[columnId] || "auto";
-
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        style={{
-                          width,
-                          minWidth:
-                            columnId === "actions"
-                              ? "80px"
-                              : columnId === "select"
-                                ? "40px"
-                                : "100px",
-                        }}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={tableColumns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
       {/* Pagination component */}
       <Pagination
         table={table}
         enableSelection={enableSelection}
         selectedRows={selectedRows}
       />
+
+      {/* Table with frozen header and first column */}
+      <div className="rounded-md border relative">
+        <div
+          className="overflow-auto max-h-[600px]"
+          style={{ position: "relative" }}
+        >
+          {/* Custom table with sticky header and first column */}
+          <div className="relative">
+            <table className="w-full border-collapse">
+              {/* Sticky Header */}
+              <thead className="sticky top-0 z-20 bg-background border-b">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header, headerIndex) => {
+                      const columnId = header.column.id;
+                      const width = columnWidths[columnId] || "auto";
+                      const isFirstColumn = headerIndex === 0;
+
+                      return (
+                        <th
+                          key={header.id}
+                          className={cn(
+                            header.column.getCanSort()
+                              ? "cursor-pointer select-none"
+                              : "",
+                            "whitespace-nowrap p-2 text-left align-middle font-medium text-muted-foreground",
+                            isFirstColumn &&
+                              "sticky left-0 z-10 bg-background border-r"
+                          )}
+                          onClick={header.column.getToggleSortingHandler()}
+                          style={{
+                            width,
+                            minWidth:
+                              columnId === "actions" || columnId === "select"
+                                ? "80px"
+                                : "100px",
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                            {header.column.getIsSorted() === "asc" && (
+                              <ChevronUp className="ml-1 h-4 w-4" />
+                            )}
+                            {header.column.getIsSorted() === "desc" && (
+                              <ChevronDown className="ml-1 h-4 w-4" />
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              {/* Table Body with Sticky First Column */}
+              <tbody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={cn(
+                        "border-b",
+                        (onRowClick || enableSelection) &&
+                          editingRow !== row.original[dataKey]
+                          ? "cursor-pointer hover:bg-muted"
+                          : "",
+                        row.getIsSelected() ? "bg-muted/50" : "",
+                        editingRow === row.original[dataKey]
+                          ? "bg-muted/30"
+                          : "",
+                        rowClassName ? rowClassName(row.original as TData) : ""
+                      )}
+                      onClick={() => {
+                        if (editingRow !== row.original[dataKey]) {
+                          handleRowClick(row.original as TData);
+                        }
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        const columnId = cell.column.id;
+                        const width = columnWidths[columnId] || "auto";
+                        const isFirstColumn = cellIndex === 0;
+
+                        return (
+                          <td
+                            key={cell.id}
+                            className={cn(
+                              "p-2 align-middle",
+                              isFirstColumn &&
+                                "sticky left-0 z-10 bg-background border-r"
+                            )}
+                            style={{
+                              width,
+                              minWidth:
+                                columnId === "actions" || columnId === "select"
+                                  ? "80px"
+                                  : "100px",
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={tableColumns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

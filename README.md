@@ -11,7 +11,6 @@
 - Add multiple data entries as an option
 - In "Import CSV" section, view the data preview first before importing the data
 - Somehow, the edit entries disappeared in "View data"
-- Pagination component somehow making double scrollbar (should also abstract out pagination component in `data-table`)
 
 ### IN PROGRESS
 
@@ -32,5 +31,7 @@
 - In add entry, reset doesn't work, it should reset everything [DONE 2025-04-01]
 - In add entry, cancel doesn't work, it should reset everything [DONE 2025-04-01]
 - Pagination is not working in table component [DONE 2025-04-01]
+- Add freeze row 1 and col 1 to table, make width according to data field, changed mode to toggle mode between view/edit/delete [DONE 2025-04-03]
+- Pagination component somehow making double scrollbar (should also abstract out pagination component in `data-table`) [DONE 2025-04-03]
 
 ### GAVE UP

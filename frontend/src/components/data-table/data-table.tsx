@@ -1,14 +1,6 @@
 // src/components/data-table/data-table.tsx
 import { useEffect, useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
@@ -19,7 +11,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -29,14 +20,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { calculateColumnWidth } from "./table-width-utils";
+import Pagination from "./pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -54,6 +41,7 @@ interface DataTableProps<TData, TValue> {
   initialPage?: number; // Initial page index
   onPageChange?: (page: number) => void; // Callback when page changes
   onPageSizeChange?: (pageSize: number) => void; // Callback when page size changes
+  maxHeight?: string; // Maximum height for the table container
 }
 
 export function DataTable<TData extends Record<string, any>, TValue>({
@@ -72,6 +60,7 @@ export function DataTable<TData extends Record<string, any>, TValue>({
   initialPage = 0,
   onPageChange,
   onPageSizeChange,
+  maxHeight = "600px",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -308,210 +297,145 @@ export function DataTable<TData extends Record<string, any>, TValue>({
         )}
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const columnId = header.column.id;
-                  const width = columnWidths[columnId] || "auto";
+      {/* Table with sticky header and first column */}
+      <div className="rounded-md border relative">
+        <div className="overflow-auto" style={{ maxHeight }}>
+          {/* Custom table with sticky header and first column */}
+          <div className="relative">
+            <table className="w-full border-collapse">
+              {/* Sticky Header */}
+              <thead className="sticky top-0 z-20 bg-background border-b">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header, headerIndex) => {
+                      const columnId = header.column.id;
+                      const width = columnWidths[columnId] || "auto";
+                      const isFirstColumn = headerIndex === 0;
 
-                  return (
-                    <TableHead
-                      key={header.id}
-                      className={cn(
-                        header.column.getCanSort()
-                          ? "cursor-pointer select-none"
-                          : "",
-                        "whitespace-nowrap"
-                      )}
-                      onClick={header.column.getToggleSortingHandler()}
-                      style={{
-                        width,
-                        minWidth:
-                          columnId === "actions" || columnId === "select"
-                            ? "80px"
-                            : "100px",
-                      }}
-                    >
-                      <div className="flex items-center gap-1">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                        {header.column.getIsSorted() === "asc" && (
-                          <ChevronUp className="ml-1 h-4 w-4" />
-                        )}
-                        {header.column.getIsSorted() === "desc" && (
-                          <ChevronDown className="ml-1 h-4 w-4" />
-                        )}
-                      </div>
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className={cn(
-                    onRowClick || enableSelection
-                      ? "cursor-pointer hover:bg-muted"
-                      : "",
-                    row.getIsSelected() ? "bg-muted/50" : "",
-                    rowClassName ? rowClassName(row.original as TData) : ""
-                  )}
-                  onClick={() => handleRowClick(row.original as TData)}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const columnId = cell.column.id;
-                    const width = columnWidths[columnId] || "auto";
-
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        style={{
-                          width,
-                          minWidth: columnId === "select" ? "80px" : "100px",
-                        }}
-                      >
-                        <div
+                      return (
+                        <th
+                          key={header.id}
                           className={cn(
-                            columnId !== "select" &&
-                              columnId !== "actions" &&
-                              "truncate"
+                            header.column.getCanSort()
+                              ? "cursor-pointer select-none"
+                              : "",
+                            "whitespace-nowrap p-2 text-left align-middle font-medium text-muted-foreground",
+                            isFirstColumn &&
+                              "sticky left-0 z-10 bg-background border-r"
                           )}
-                          style={{ maxWidth: "100%" }}
-                          title={
-                            typeof cell.getValue() === "string"
-                              ? (cell.getValue() as string)
-                              : undefined
-                          }
+                          onClick={header.column.getToggleSortingHandler()}
+                          style={{
+                            width,
+                            minWidth:
+                              columnId === "actions" || columnId === "select"
+                                ? "80px"
+                                : "100px",
+                          }}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </div>
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={tableColumns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                          <div className="flex items-center gap-1">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                            {header.column.getIsSorted() === "asc" && (
+                              <ChevronUp className="ml-1 h-4 w-4" />
+                            )}
+                            {header.column.getIsSorted() === "desc" && (
+                              <ChevronDown className="ml-1 h-4 w-4" />
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              {/* Table Body with Sticky First Column */}
+              <tbody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={cn(
+                        "border-b",
+                        onRowClick || enableSelection
+                          ? "cursor-pointer hover:bg-muted"
+                          : "",
+                        row.getIsSelected() ? "bg-muted/50" : "",
+                        rowClassName ? rowClassName(row.original as TData) : ""
+                      )}
+                      onClick={() => handleRowClick(row.original as TData)}
+                    >
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        const columnId = cell.column.id;
+                        const width = columnWidths[columnId] || "auto";
+                        const isFirstColumn = cellIndex === 0;
 
-      {/* Pagination controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-sm text-muted-foreground">
-          Showing{" "}
-          {table.getState().pagination.pageIndex *
-            table.getState().pagination.pageSize +
-            1}{" "}
-          to{" "}
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
-            table.getFilteredRowModel().rows.length
-          )}{" "}
-          of {table.getFilteredRowModel().rows.length} entries
-          {enableSelection && selectedRows.length > 0 && (
-            <span className="ml-2 font-medium">
-              ({selectedRows.length} selected)
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Page size selector */}
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => {
-              table.setPageSize(Number(value));
-            }}
-          >
-            <SelectTrigger className="h-8 w-[80px]">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[5, 10, 20, 50, 100].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Page navigation */}
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to first page</span>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Go to previous page</span>
-            </Button>
-
-            <span className="text-sm flex items-center gap-1">
-              Page
-              <strong>
-                {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
-              </strong>
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to next page</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to last page</span>
-              <ChevronRight className="h-4 w-4 mr-1" />
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+                        return (
+                          <td
+                            key={cell.id}
+                            className={cn(
+                              "p-2 align-middle",
+                              isFirstColumn &&
+                                "sticky left-0 z-10 bg-background border-r"
+                            )}
+                            style={{
+                              width,
+                              minWidth:
+                                columnId === "actions" || columnId === "select"
+                                  ? "80px"
+                                  : "100px",
+                            }}
+                          >
+                            <div
+                              className={cn(
+                                columnId !== "select" &&
+                                  columnId !== "actions" &&
+                                  "truncate"
+                              )}
+                              style={{ maxWidth: "100%" }}
+                              title={
+                                typeof cell.getValue() === "string" ||
+                                typeof cell.getValue() === "number"
+                                  ? String(cell.getValue())
+                                  : undefined
+                              }
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={tableColumns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
+      {/* Pagination component */}
+      <Pagination
+        table={table}
+        enableSelection={enableSelection}
+        selectedRows={selectedRows}
+      />
     </div>
   );
 }
