@@ -8,9 +8,6 @@
 
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
-- Add multiple data entries as an option
-- In "Import CSV" section, view the data preview first before importing the data
-- Somehow, the edit entries disappeared in "View data"
 
 ### IN PROGRESS
 
@@ -34,5 +31,8 @@
 - Add freeze row 1 and col 1 to table, make width according to data field, changed mode to toggle mode between view/edit/delete [DONE 2025-04-03]
 - Pagination component somehow making double scrollbar (should also abstract out pagination component in `data-table`) [DONE 2025-04-03]
 - Made editable-data-table be able to be in view, single edit, multi edit, and delete mode [DONE 2025-04-03]
+- Add multiple data entries as an option [DONE 2025-04-03]
+- In "Import CSV" section, view the data preview first before importing the data [DONE 2025-04-03]
+- Somehow, the edit entries disappeared in "View data" [DONE 2025-04-03]
 
 ### GAVE UP

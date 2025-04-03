@@ -1,7 +1,15 @@
 // src/components/data-table/batch-entry-table.tsx
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash, Upload, Download, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Save,
+  Trash,
+  Upload,
+  Download,
+  Loader2,
+  InfoIcon,
+} from "lucide-react";
 import { FieldDefinition } from "@/types";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
@@ -26,7 +34,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ConfirmResetDialog } from "@/components/reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
-import { ScrollArea } from "../ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface BatchEntryTableProps {
   datasetId: string;
@@ -42,7 +55,10 @@ export function BatchEntryTable({
   title,
   onSuccess,
   maxBatchSize = 50,
-}: BatchEntryTableProps) {
+  onNavigateToTable,
+}: BatchEntryTableProps & {
+  onNavigateToTable?: () => void;
+}) {
   // Main state for entries
   const [entries, setEntries] = useState<Record<string, any>[]>([
     getEmptyEntry(),
@@ -134,6 +150,11 @@ export function BatchEntryTable({
         if (onSuccess) {
           onSuccess();
         }
+
+        // Navigate to the data table view if handler is provided
+        if (onNavigateToTable) {
+          onNavigateToTable();
+        }
       } else {
         toast.error("No records were added");
       }
@@ -219,39 +240,46 @@ export function BatchEntryTable({
   ) => {
     const value = entry[field.key];
 
+    // Set a minimum width for all cell contents
+    const cellStyle = { minWidth: "80px", width: "100%" };
+
     switch (field.type) {
       case "text":
         return (
-          <Input
-            value={value || ""}
-            onChange={(e) =>
-              updateEntryField(entryIndex, field.key, e.target.value)
-            }
-            className="h-8 w-full"
-          />
+          <div style={cellStyle}>
+            <Input
+              value={value || ""}
+              onChange={(e) =>
+                updateEntryField(entryIndex, field.key, e.target.value)
+              }
+              className="h-8 w-full"
+            />
+          </div>
         );
 
       case "number":
       case "percentage":
         return (
-          <Input
-            type="number"
-            value={value}
-            onChange={(e) => {
-              const val =
-                e.target.value === "" ? 0 : parseFloat(e.target.value);
-              updateEntryField(entryIndex, field.key, isNaN(val) ? 0 : val);
-            }}
-            className="h-8 w-full"
-            step="any"
-            min={0}
-            max={field.type === "percentage" ? 100 : undefined}
-          />
+          <div style={cellStyle}>
+            <Input
+              type="number"
+              value={value}
+              onChange={(e) => {
+                const val =
+                  e.target.value === "" ? 0 : parseFloat(e.target.value);
+                updateEntryField(entryIndex, field.key, isNaN(val) ? 0 : val);
+              }}
+              className="h-8 w-full"
+              step="any"
+              min={0}
+              max={field.type === "percentage" ? 100 : undefined}
+            />
+          </div>
         );
 
       case "boolean":
         return (
-          <div className="flex justify-center">
+          <div className="flex justify-center" style={cellStyle}>
             <Checkbox
               checked={!!value}
               onCheckedChange={(checked) =>
@@ -263,30 +291,32 @@ export function BatchEntryTable({
 
       case "date":
         return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="h-8 w-full justify-start text-left font-normal"
-              >
-                {value ? format(new Date(value), "PPP") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={value ? new Date(value) : undefined}
-                onSelect={(date) =>
-                  updateEntryField(entryIndex, field.key, date)
-                }
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <div style={cellStyle}>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-8 w-full justify-start text-left font-normal"
+                >
+                  {value ? format(new Date(value), "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={value ? new Date(value) : undefined}
+                  onSelect={(date) =>
+                    updateEntryField(entryIndex, field.key, date)
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         );
 
       default:
-        return <span>{value}</span>;
+        return <span style={cellStyle}>{value}</span>;
     }
   };
 
@@ -295,35 +325,65 @@ export function BatchEntryTable({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title} Batch Entry</CardTitle>
         <div className="flex items-center gap-2">
-          {/* CSV Import Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isSubmitting}
-          >
-            <Upload className="h-4 w-4 mr-2" />
-            Import CSV
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={handleImportCSV}
-              disabled={isSubmitting}
-            />
-          </Button>
+          {/* CSV Import Button with Tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isSubmitting}
+                  className="flex items-center"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import CSV
+                  <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={handleImportCSV}
+                    disabled={isSubmitting}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>
+                  Import data from a CSV file. The file should have headers
+                  matching the field names. Use the Template button to download
+                  a correctly formatted example.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-          {/* Template Download Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadTemplate}
-            disabled={isSubmitting}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Template
-          </Button>
+          {/* Template Download Button with Tooltip */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadTemplate}
+                  disabled={isSubmitting}
+                  className="flex items-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Template
+                  <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>
+                  Download a CSV template with the correct headers for this data
+                  type. Fill in your data and then use the Import CSV button to
+                  upload it.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </CardHeader>
 
@@ -348,48 +408,78 @@ export function BatchEntryTable({
               </Button>
 
               {/* Reset/Clear Button */}
-              <ConfirmResetDialog onConfirm={clearEntries} />
+              <ConfirmResetDialog
+                onConfirm={clearEntries}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <Trash className="h-4 w-4 mr-2" />
+                    Reset
+                  </Button>
+                }
+              />
             </div>
           </div>
 
           {/* Table of entries */}
           <div className="border rounded-md">
-            <ScrollArea className="max-h-[500px]">
-              <Table>
-                <TableHeader className="sticky top-0 bg-background">
-                  <TableRow>
-                    {fields.map((field) => (
-                      <TableHead key={field.key} className="whitespace-nowrap">
-                        {field.displayName}
+            <div className="overflow-auto max-h-[500px]">
+              <div style={{ minWidth: "100%", overflowX: "auto" }}>
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background">
+                    <TableRow>
+                      {/* Delete Button Header */}
+                      <TableHead style={{ minWidth: "50px", width: "50px" }}>
+                        {/* Empty header for delete button column */}
                       </TableHead>
-                    ))}
-                    <TableHead className="w-16"></TableHead>
-                  </TableRow>
-                </TableHeader>
-
-                <TableBody>
-                  {entries.map((entry, entryIndex) => (
-                    <TableRow key={entry.id}>
                       {fields.map((field) => (
-                        <TableCell key={`${entry.id}-${field.key}`}>
-                          {renderCell(entry, field, entryIndex)}
-                        </TableCell>
-                      ))}
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeEntry(entryIndex)}
-                          disabled={entries.length <= 1 && entryIndex === 0}
+                        <TableHead
+                          key={field.key}
+                          className="whitespace-nowrap"
+                          style={{ minWidth: "80px" }}
                         >
-                          <Trash className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
+                          {field.displayName}
+                        </TableHead>
+                      ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                  </TableHeader>
+
+                  <TableBody>
+                    {entries.map((entry, entryIndex) => (
+                      <TableRow key={entry.id}>
+                        {/* Delete Button Cell */}
+                        <TableCell
+                          style={{
+                            minWidth: "50px",
+                            width: "50px",
+                            padding: "0 4px",
+                          }}
+                        >
+                          <div className="flex justify-center">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeEntry(entryIndex)}
+                              disabled={entries.length <= 1 && entryIndex === 0}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        {fields.map((field) => (
+                          <TableCell
+                            key={`${entry.id}-${field.key}`}
+                            style={{ minWidth: "80px" }}
+                          >
+                            {renderCell(entry, field, entryIndex)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
           </div>
 
           {/* Submit Button */}
