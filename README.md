@@ -8,6 +8,9 @@
 
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
+- Add data form has a weird visual bug at the submit portion
+- Do I want the batch entry tab to also save data locally, until reset?
+- In generic-data-page, if there are more than 4 tabs, it looks weird
 
 ### IN PROGRESS
 

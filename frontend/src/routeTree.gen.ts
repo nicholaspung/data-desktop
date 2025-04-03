@@ -11,11 +11,25 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as PaychecksImport } from './routes/paychecks'
+import { Route as HabitsImport } from './routes/habits'
 import { Route as DexaImport } from './routes/dexa'
 import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const PaychecksRoute = PaychecksImport.update({
+  id: '/paychecks',
+  path: '/paychecks',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const HabitsRoute = HabitsImport.update({
+  id: '/habits',
+  path: '/habits',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const DexaRoute = DexaImport.update({
   id: '/dexa',
@@ -60,6 +74,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DexaImport
       parentRoute: typeof rootRoute
     }
+    '/habits': {
+      id: '/habits'
+      path: '/habits'
+      fullPath: '/habits'
+      preLoaderRoute: typeof HabitsImport
+      parentRoute: typeof rootRoute
+    }
+    '/paychecks': {
+      id: '/paychecks'
+      path: '/paychecks'
+      fullPath: '/paychecks'
+      preLoaderRoute: typeof PaychecksImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +97,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
   '/dexa': typeof DexaRoute
+  '/habits': typeof HabitsRoute
+  '/paychecks': typeof PaychecksRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
   '/dexa': typeof DexaRoute
+  '/habits': typeof HabitsRoute
+  '/paychecks': typeof PaychecksRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +114,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
   '/dexa': typeof DexaRoute
+  '/habits': typeof HabitsRoute
+  '/paychecks': typeof PaychecksRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bloodwork' | '/dexa'
+  fullPaths: '/' | '/bloodwork' | '/dexa' | '/habits' | '/paychecks'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bloodwork' | '/dexa'
-  id: '__root__' | '/' | '/bloodwork' | '/dexa'
+  to: '/' | '/bloodwork' | '/dexa' | '/habits' | '/paychecks'
+  id: '__root__' | '/' | '/bloodwork' | '/dexa' | '/habits' | '/paychecks'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +131,16 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BloodworkRoute: typeof BloodworkRoute
   DexaRoute: typeof DexaRoute
+  HabitsRoute: typeof HabitsRoute
+  PaychecksRoute: typeof PaychecksRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BloodworkRoute: BloodworkRoute,
   DexaRoute: DexaRoute,
+  HabitsRoute: HabitsRoute,
+  PaychecksRoute: PaychecksRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +155,9 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/bloodwork",
-        "/dexa"
+        "/dexa",
+        "/habits",
+        "/paychecks"
       ]
     },
     "/": {
@@ -128,6 +168,12 @@ export const routeTree = rootRoute
     },
     "/dexa": {
       "filePath": "dexa.tsx"
+    },
+    "/habits": {
+      "filePath": "habits.tsx"
+    },
+    "/paychecks": {
+      "filePath": "paychecks.tsx"
     }
   }
 }

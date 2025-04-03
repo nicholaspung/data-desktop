@@ -7,6 +7,15 @@ import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
 import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
 import { FieldDefinition } from "@/types";
+import React from "react";
+
+interface CustomTab {
+  id: string;
+  label: string;
+  icon?: React.ReactElement;
+  content: React.ReactNode;
+  position?: "before" | "after"; // Position relative to standard tabs
+}
 
 interface GenericDataPageProps {
   datasetId: string;
@@ -15,7 +24,13 @@ interface GenericDataPageProps {
   description?: string;
   addLabel?: string;
   disableBatchEntry?: boolean;
-  disableImport?: boolean;
+  disableTableView?: boolean;
+  disableAddForm?: boolean;
+  defaultTab?: string;
+  customTabs?: CustomTab[];
+  onDataChange?: () => void;
+  tablePageSize?: number;
+  highlightedRecordId?: string | null;
 }
 
 export default function GenericDataPage({
@@ -25,78 +40,142 @@ export default function GenericDataPage({
   description,
   addLabel = "Add New",
   disableBatchEntry = false,
+  disableTableView = false,
+  disableAddForm = false,
+  defaultTab = "table",
+  customTabs = [],
+  onDataChange,
+  tablePageSize = 10,
+  highlightedRecordId = null,
 }: GenericDataPageProps) {
-  const [key, setKey] = useState(0); // Used to force refresh the table component
+  const [key, setKey] = useState(0); // Used to force refresh components
 
-  // Function to refresh the table data when a new record is added
+  // Function to refresh data when changes are made
   const handleDataChange = () => {
     setKey((prev) => prev + 1);
+    if (onDataChange) {
+      onDataChange();
+    }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{title}</h1>
-      </div>
+  // Organize custom tabs by position
+  const beforeTabs = customTabs.filter(
+    (tab) => tab.position === "before" || !tab.position
+  );
+  const afterTabs = customTabs.filter((tab) => tab.position === "after");
 
-      {description && <p className="text-muted-foreground">{description}</p>}
-
-      <Tabs defaultValue="table">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="table" className="flex items-center gap-2">
-            <Table className="h-4 w-4" />
-            View Data
-          </TabsTrigger>
-          <TabsTrigger value="add" className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            {addLabel}
-          </TabsTrigger>
-          {!disableBatchEntry && (
-            <TabsTrigger value="batch" className="flex items-center gap-2">
-              <ListPlus className="h-4 w-4" />
-              Batch Entry
-            </TabsTrigger>
-          )}
-        </TabsList>
-
-        <TabsContent value="table" className="mt-6">
-          <GenericDataTable
-            key={key}
-            datasetId={datasetId}
-            fields={fields}
-            title={`${title} Data`}
-            onDataChange={handleDataChange}
-          />
-        </TabsContent>
-
-        <TabsContent value="add" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{addLabel}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataForm
-                datasetId={datasetId}
-                fields={fields}
-                onSuccess={handleDataChange}
-                submitLabel={addLabel}
-                successMessage={`${title} data added successfully`}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {!disableBatchEntry && (
-          <TabsContent value="batch" className="mt-6">
+  // Generate the list of standard tabs based on disabled options
+  const standardTabsList = [
+    !disableTableView
+      ? {
+          id: "table",
+          label: "View Data",
+          icon: <Table className="h-4 w-4" />,
+          content: (
+            <GenericDataTable
+              key={`${datasetId}-table-${key}`}
+              datasetId={datasetId}
+              fields={fields}
+              title={`${title} Data`}
+              onDataChange={handleDataChange}
+              pageSize={tablePageSize}
+              highlightedRecordId={highlightedRecordId}
+            />
+          ),
+        }
+      : null,
+    !disableAddForm
+      ? {
+          id: "add",
+          label: addLabel,
+          icon: <PlusCircle className="h-4 w-4" />,
+          content: (
+            <Card>
+              <CardHeader>
+                <CardTitle>{addLabel}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataForm
+                  datasetId={datasetId}
+                  fields={fields}
+                  onSuccess={handleDataChange}
+                  submitLabel={addLabel}
+                  successMessage={`${title} data added successfully`}
+                  persistKey={`${datasetId}_add_form_data`}
+                />
+              </CardContent>
+            </Card>
+          ),
+        }
+      : null,
+    !disableBatchEntry
+      ? {
+          id: "batch",
+          label: "Batch Entry",
+          icon: <ListPlus className="h-4 w-4" />,
+          content: (
             <BatchEntryTable
               datasetId={datasetId}
               fields={fields}
               title={title}
               onSuccess={handleDataChange}
             />
-          </TabsContent>
-        )}
-      </Tabs>
+          ),
+        }
+      : null,
+  ].filter((tab): tab is NonNullable<typeof tab> => tab !== null);
+
+  // Combine tabs in order: beforeTabs, standard tabs, afterTabs
+  const allTabs = [...beforeTabs, ...standardTabsList, ...afterTabs];
+
+  // Ensure default tab exists in the tabs list
+  const validDefaultTab = allTabs.some((tab) => tab.id === defaultTab)
+    ? defaultTab
+    : allTabs.length > 0
+      ? allTabs[0].id
+      : "";
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          {description && (
+            <p className="text-muted-foreground mt-1">{description}</p>
+          )}
+        </div>
+      </div>
+
+      {allTabs.length > 0 ? (
+        <Tabs defaultValue={validDefaultTab} className="space-y-6">
+          <TabsList
+            className={`grid w-full grid-cols-${Math.min(allTabs.length, 5)}`}
+          >
+            {allTabs.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="flex items-center gap-2"
+              >
+                {tab.icon}
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {allTabs.map((tab) => (
+            <TabsContent key={tab.id} value={tab.id} className="mt-6">
+              {tab.content}
+            </TabsContent>
+          ))}
+        </Tabs>
+      ) : (
+        <div className="text-center p-12 border rounded-md bg-muted/10">
+          <p className="text-muted-foreground">
+            No content configured for this page.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
