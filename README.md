@@ -11,6 +11,7 @@
 - Add multiple data entries as an option
 - In "Import CSV" section, view the data preview first before importing the data
 - Somehow, the edit entries disappeared in "View data"
+- Pagination component somehow making double scrollbar (should also abstract out pagination component in `data-table`)
 
 ### IN PROGRESS
 

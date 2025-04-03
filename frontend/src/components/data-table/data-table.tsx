@@ -36,6 +36,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { calculateColumnWidth } from "./table-width-utils";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -82,6 +83,20 @@ export function DataTable<TData extends Record<string, any>, TValue>({
     pageIndex: initialPage,
     pageSize: pageSize,
   });
+  const [columnWidths, setColumnWidths] = useState<Record<string, string>>({});
+
+  // Calculate column widths on initial render and when data changes
+  useEffect(() => {
+    const widths: Record<string, string> = {};
+
+    columns.forEach((column) => {
+      if (column.id) {
+        widths[column.id] = calculateColumnWidth(column, data);
+      }
+    });
+
+    setColumnWidths(widths);
+  }, [columns, data]);
 
   // Create selection column if selection is enabled
   const selectionColumn: ColumnDef<TData, any> = {
@@ -294,21 +309,32 @@ export function DataTable<TData extends Record<string, any>, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const columnId = header.column.id;
+                  const width = columnWidths[columnId] || "auto";
+
                   return (
                     <TableHead
                       key={header.id}
-                      className={
+                      className={cn(
                         header.column.getCanSort()
                           ? "cursor-pointer select-none"
-                          : ""
-                      }
+                          : "",
+                        "whitespace-nowrap"
+                      )}
                       onClick={header.column.getToggleSortingHandler()}
+                      style={{
+                        width,
+                        minWidth:
+                          columnId === "actions" || columnId === "select"
+                            ? "80px"
+                            : "100px",
+                      }}
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
@@ -345,14 +371,39 @@ export function DataTable<TData extends Record<string, any>, TValue>({
                   )}
                   onClick={() => handleRowClick(row.original as TData)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const columnId = cell.column.id;
+                    const width = columnWidths[columnId] || "auto";
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={{
+                          width,
+                          minWidth: columnId === "select" ? "80px" : "100px",
+                        }}
+                      >
+                        <div
+                          className={cn(
+                            columnId !== "select" &&
+                              columnId !== "actions" &&
+                              "truncate"
+                          )}
+                          style={{ maxWidth: "100%" }}
+                          title={
+                            typeof cell.getValue() === "string"
+                              ? (cell.getValue() as string)
+                              : undefined
+                          }
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </div>
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

@@ -50,24 +50,28 @@ import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { formatCellValue } from "@/lib/table-utils";
 import Pagination from "./pagination";
+import { calculateColumnWidth } from "./table-width-utils";
 
 interface EditableCellProps {
   value: any;
   row: any;
   column: any;
   field: FieldDefinition;
+  width?: string;
   onValueChange: (value: any) => void;
 }
 
-// This component renders different form controls based on the field type
+// Enhanced EditableCell component with better width handling and original value display
 const EditableCell: React.FC<EditableCellProps> = ({
   value,
-  //   row,
-  //   column,
+  // row,
+  // column,
   field,
+  width,
   onValueChange,
 }) => {
   const [editValue, setEditValue] = useState(value);
+  const originalValue = value; // Store the original value for reference
 
   useEffect(() => {
     setEditValue(value);
@@ -78,58 +82,120 @@ const EditableCell: React.FC<EditableCellProps> = ({
     onValueChange(newValue);
   };
 
+  // Format the original value based on field type for display
+  const getFormattedOriginalValue = () => {
+    switch (field.type) {
+      case "date":
+        return originalValue instanceof Date
+          ? format(new Date(originalValue), "PP")
+          : originalValue
+            ? format(new Date(originalValue), "PP")
+            : "N/A";
+      case "boolean":
+        return originalValue ? "Yes" : "No";
+      case "number":
+        return typeof originalValue === "number"
+          ? `${originalValue.toFixed(2)}${field.unit ? ` ${field.unit}` : ""}`
+          : "0";
+      case "percentage":
+        return typeof originalValue === "number"
+          ? `${(originalValue < 1 ? originalValue * 100 : originalValue).toFixed(2)}%`
+          : "0%";
+      case "text":
+      default:
+        return originalValue || "";
+    }
+  };
+
+  // Default width styles for all cell types
+  const cellStyle = {
+    width: width || "auto",
+    minWidth: "80px",
+    maxWidth: "100%",
+  };
+
+  // Small label for original value
+  const OriginalValueLabel = () => (
+    <div
+      className="text-xs text-muted-foreground mb-1 truncate"
+      title={getFormattedOriginalValue()}
+    >
+      Original: {getFormattedOriginalValue()}
+    </div>
+  );
+
   switch (field.type) {
     case "text":
       return (
-        <Input
-          value={editValue || ""}
-          onChange={(e) => handleValueChange(e.target.value)}
-          className="h-8 w-full"
-        />
+        <div style={cellStyle}>
+          <OriginalValueLabel />
+          <Input
+            value={editValue || ""}
+            onChange={(e) => handleValueChange(e.target.value)}
+            className="h-8 w-full"
+          />
+        </div>
       );
     case "number":
     case "percentage":
       return (
-        <Input
-          type="number"
-          value={editValue || 0}
-          onChange={(e) => handleValueChange(parseFloat(e.target.value))}
-          className="h-8 w-full"
-          step="any"
-          min={0}
-          max={field.type === "percentage" ? 100 : undefined}
-        />
+        <div style={cellStyle}>
+          <OriginalValueLabel />
+          <Input
+            type="number"
+            value={editValue ?? 0}
+            onChange={(e) => {
+              const val =
+                e.target.value === "" ? 0 : parseFloat(e.target.value);
+              handleValueChange(isNaN(val) ? 0 : val);
+            }}
+            className="h-8 w-full"
+            step="any"
+            min={0}
+            max={field.type === "percentage" ? 100 : undefined}
+          />
+        </div>
       );
     case "boolean":
       return (
-        <Checkbox
-          checked={editValue || false}
-          onCheckedChange={(checked) => handleValueChange(!!checked)}
-        />
+        <div style={cellStyle}>
+          <div className="text-xs text-muted-foreground mb-1 text-center">
+            Original: {originalValue ? "Yes" : "No"}
+          </div>
+          <div className="flex justify-center">
+            <Checkbox
+              checked={!!editValue}
+              onCheckedChange={(checked) => handleValueChange(!!checked)}
+            />
+          </div>
+        </div>
       );
     case "date":
       return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="h-8 w-full justify-start text-left font-normal"
-            >
-              {editValue ? format(new Date(editValue), "PP") : "Pick a date"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={editValue ? new Date(editValue) : undefined}
-              onSelect={(date) => handleValueChange(date)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
+        <div style={cellStyle}>
+          <OriginalValueLabel />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-8 w-full justify-start text-left font-normal"
+              >
+                {editValue ? format(new Date(editValue), "PP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={editValue ? new Date(editValue) : undefined}
+                onSelect={(date) => handleValueChange(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
       );
     default:
-      return <span>{value}</span>;
+      return <span style={cellStyle}>{value}</span>;
   }
 };
 
@@ -189,10 +255,24 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   const [editingRow, setEditingRow] = useState<string | null>(null);
   const [editedValues, setEditedValues] = useState<Record<string, any>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [columnWidths, setColumnWidths] = useState<Record<string, string>>({});
 
   // Create a field map for quick lookup
   const fieldMap = new Map<string, FieldDefinition>();
   fields.forEach((field) => fieldMap.set(field.key, field));
+
+  // Calculate column widths on initial render and when data changes
+  useEffect(() => {
+    const widths: Record<string, string> = {};
+
+    columns.forEach((column) => {
+      if (column.id) {
+        widths[column.id] = calculateColumnWidth(column, data);
+      }
+    });
+
+    setColumnWidths(widths);
+  }, [columns, data]);
 
   // Create selection column if selection is enabled
   const selectionColumn: ColumnDef<TData, any> = {
@@ -322,6 +402,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         const columnId = String(columnInfo.id);
         const isEditing = editingRow === row.original[dataKey];
         const value = getValue();
+        const width = columnWidths[columnId] || "auto";
 
         // If this row is being edited, render the editable cell
         if (isEditing) {
@@ -337,6 +418,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                 row={row}
                 column={columnInfo}
                 field={field}
+                width={width}
                 onValueChange={(newValue) =>
                   handleCellValueChange(columnId, newValue)
                 }
@@ -352,15 +434,27 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
         // Fallback to displaying the value with formatting
         const field = fieldMap.get(columnId);
-        return formatCellValue(
-          value,
-          field
-            ? {
-                type: field.type,
-                unit: field.unit,
-                description: field.description,
-              }
-            : undefined
+        return (
+          <div
+            className="truncate"
+            style={{ maxWidth: "100%" }}
+            title={
+              typeof value === "string" || typeof value === "number"
+                ? String(value)
+                : undefined
+            }
+          >
+            {formatCellValue(
+              value,
+              field
+                ? {
+                    type: field.type,
+                    unit: field.unit,
+                    description: field.description,
+                  }
+                : undefined
+            )}
+          </div>
         );
       },
     };
@@ -542,21 +636,34 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const columnId = header.column.id;
+                  const width = columnWidths[columnId] || "auto";
+
                   return (
                     <TableHead
                       key={header.id}
-                      className={
+                      className={cn(
                         header.column.getCanSort()
                           ? "cursor-pointer select-none"
-                          : ""
-                      }
+                          : "",
+                        "whitespace-nowrap"
+                      )}
                       onClick={header.column.getToggleSortingHandler()}
+                      style={{
+                        width,
+                        minWidth:
+                          columnId === "actions"
+                            ? "80px"
+                            : columnId === "select"
+                              ? "40px"
+                              : "100px",
+                      }}
                     >
                       <div className="flex items-center gap-1">
                         {header.isPlaceholder
@@ -599,14 +706,30 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                     }
                   }}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const columnId = cell.column.id;
+                    const width = columnWidths[columnId] || "auto";
+
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={{
+                          width,
+                          minWidth:
+                            columnId === "actions"
+                              ? "80px"
+                              : columnId === "select"
+                                ? "40px"
+                                : "100px",
+                        }}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
@@ -623,6 +746,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         </Table>
       </div>
 
+      {/* Pagination component */}
       <Pagination
         table={table}
         enableSelection={enableSelection}
