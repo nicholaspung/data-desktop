@@ -26,7 +26,7 @@ export default function DexaPage() {
       fields={dexaFields}
       title="DEXA Scans"
       description="Track and visualize your DEXA scan results over time."
-      addLabel="Add Scan"
+      addLabel="Add DEXA Scan"
       defaultTab="visualization"
       onDataChange={handleDataChange}
       customTabs={[

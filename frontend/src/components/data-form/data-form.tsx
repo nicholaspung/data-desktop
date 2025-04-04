@@ -1,5 +1,5 @@
 // src/components/data-form/data-form.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -23,11 +23,13 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, X } from "lucide-react";
+import { CalendarIcon, Loader2, UndoDot, X } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types";
 import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
+import { Badge } from "../ui/badge";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 
 interface DataFormProps {
   datasetId: string;
@@ -43,6 +45,7 @@ interface DataFormProps {
   persistKey?: string; // Optional key for local storage persistence
   onChange?: (values: Record<string, any>, isValid: boolean) => void; // New callback for form changes
   forceClear?: boolean; // Signal to clear all data including localStorage
+  title?: string; // Optional title for the form
 }
 
 export default function DataForm({
@@ -59,11 +62,43 @@ export default function DataForm({
   persistKey,
   onChange, // New callback for form changes
   forceClear = false, // Signal to clear all data including localStorage
+  title, // Optional title for the form
 }: DataFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSavedData, setHasSavedData] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasCheckedLocal = useRef(false);
 
   // Generate storage key for this form
   const storageKey = persistKey || `form_${datasetId}_data`;
+
+  // Helper function to check if form has meaningful data
+  const hasNonEmptyValues = (values: Record<string, any>) => {
+    // Check each field to see if it's been modified from default
+    for (const field of fields) {
+      const value = values[field.key];
+
+      switch (field.type) {
+        case "text":
+          if (value && value.trim() !== "") return true;
+          break;
+        case "number":
+        case "percentage":
+          // If the value is significantly different from 0, it's been changed
+          if (value !== 0 && value !== null && value !== undefined) return true;
+          break;
+        case "boolean":
+          // If boolean is true, it's been changed from default false
+          if (value === true) return true;
+          break;
+        case "date":
+          // Skip date fields for determining meaningful changes
+          break;
+      }
+    }
+
+    return false;
+  };
 
   // Utility function to create fresh default values
   const createFreshDefaultValues = () => {
@@ -91,6 +126,86 @@ export default function DataForm({
     return freshDefaults;
   };
 
+  // Function to load data from localStorage
+  const loadSavedData = () => {
+    // Only check localStorage in add mode
+    if (mode !== "add" || hasCheckedLocal.current) return null;
+
+    hasCheckedLocal.current = true;
+
+    try {
+      const savedData = localStorage.getItem(storageKey);
+      if (!savedData) return null;
+
+      const parsedData = JSON.parse(savedData);
+
+      // Process date fields
+      const processedData = { ...parsedData };
+      fields.forEach((field) => {
+        if (field.type === "date" && processedData[field.key]) {
+          processedData[field.key] = new Date(processedData[field.key]);
+        }
+      });
+
+      // Check if saved data has meaningful content
+      if (hasNonEmptyValues(processedData)) {
+        // Schedule this to avoid state updates during render
+        setTimeout(() => {
+          setHasSavedData(true);
+          toast.info("Restored your previously saved form data");
+        }, 0);
+        return processedData;
+      } else {
+        // Clean up localStorage if no meaningful data
+        localStorage.removeItem(storageKey);
+      }
+    } catch (error) {
+      console.error("Error loading localStorage data:", error);
+    }
+
+    return null;
+  };
+
+  // Function to save form data to localStorage with debounce
+  const saveToLocalStorage = (data: Record<string, any>) => {
+    // Only save in add mode
+    if (mode !== "add") return;
+
+    // Clear any previous save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Set a new timeout to save the data
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        // Check if there's meaningful data to save
+        if (hasNonEmptyValues(data)) {
+          // Process data for storage
+          const processedData = { ...data };
+
+          // Convert dates to ISO strings
+          fields.forEach((field) => {
+            if (
+              field.type === "date" &&
+              processedData[field.key] instanceof Date
+            ) {
+              processedData[field.key] = processedData[field.key].toISOString();
+            }
+          });
+
+          localStorage.setItem(storageKey, JSON.stringify(processedData));
+          setHasSavedData(true);
+        } else {
+          localStorage.removeItem(storageKey);
+          setHasSavedData(false);
+        }
+      } catch (error) {
+        console.error("Error saving to localStorage:", error);
+      }
+    }, 500); // Debounce delay
+  };
+
   // Utility function to completely reset the form
   const completeFormReset = () => {
     // Create fresh default values
@@ -109,6 +224,7 @@ export default function DataForm({
 
     // Clear localStorage
     localStorage.removeItem(storageKey);
+    setHasSavedData(false);
 
     // Report empty and invalid form state via onChange if provided
     if (onChange) {
@@ -116,106 +232,63 @@ export default function DataForm({
     }
   };
 
-  // Load persisted data from localStorage on initial render
-  const getInitialValues = () => {
+  // Calculate initial values for the form
+  const getInitialValues = useMemo(() => {
+    // For edit mode, use provided initialValues
     if (mode === "edit" && Object.keys(initialValues).length > 0) {
-      // For edit mode, prioritize passed initialValues
       return initialValues;
     }
 
-    // Get fresh default values
+    // Start with fresh defaults
     const freshDefaults = createFreshDefaultValues();
 
-    // For add mode, try to get saved form data from local storage
-    if (mode === "add") {
-      try {
-        const savedData = localStorage.getItem(storageKey);
-        if (savedData) {
-          const parsedData = JSON.parse(savedData);
+    // In add mode, try to load from localStorage
+    const savedData = loadSavedData();
 
-          // Convert date strings back to Date objects
-          fields.forEach((field) => {
-            if (
-              field.type === "date" &&
-              parsedData[field.key] &&
-              typeof parsedData[field.key] === "string"
-            ) {
-              parsedData[field.key] = new Date(parsedData[field.key]);
-            }
-          });
+    // Combine in order: defaults -> localStorage -> provided initialValues
+    return { ...freshDefaults, ...(savedData || {}), ...initialValues };
+  }, []);
 
-          return { ...freshDefaults, ...parsedData };
-        }
-      } catch (error) {
-        console.error("Error loading saved form data:", error);
-      }
-    }
-
-    // Merge the fresh defaults with any provided initialValues
-    return { ...freshDefaults, ...initialValues };
-  };
-
-  // Generate a dynamic schema from the field definitions
-  const { schema, defaultValues } = useMemo(() => {
-    // Create schema object and default values
+  // Generate schema from field definitions
+  const schema = useMemo(() => {
     const schemaObj: Record<string, z.ZodTypeAny> = {};
-    const defaults: Record<string, any> = getInitialValues();
 
-    // Process each field to build schema and defaults
     fields.forEach((field) => {
       switch (field.type) {
         case "date":
           schemaObj[field.key] = z.date({
             required_error: `${field.displayName} is required`,
           });
-
-          // Set default value for date if not already in defaults
-          if (!defaults[field.key]) {
-            defaults[field.key] = new Date();
-          } else if (typeof defaults[field.key] === "string") {
-            defaults[field.key] = new Date(defaults[field.key]);
-          }
           break;
-
         case "boolean":
           schemaObj[field.key] = z.boolean().default(false);
-          defaults[field.key] = defaults[field.key] ?? false;
           break;
-
         case "number":
           schemaObj[field.key] = z.coerce
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0");
-          defaults[field.key] = defaults[field.key] ?? 0;
           break;
-
         case "percentage":
           schemaObj[field.key] = z.coerce
             .number({ required_error: `${field.displayName} is required` })
             .min(0, "Must be at least 0")
             .max(100, "Must be less than 100");
-          defaults[field.key] = defaults[field.key] ?? 0;
           break;
-
         case "text":
           schemaObj[field.key] = z
             .string()
             .min(1, `${field.displayName} is required`);
-          defaults[field.key] = defaults[field.key] ?? "";
           break;
       }
     });
 
-    return {
-      schema: z.object(schemaObj),
-      defaultValues: defaults,
-    };
-  }, [fields, initialValues, mode, storageKey]);
+    return z.object(schemaObj);
+  }, [fields]);
 
   // Initialize the form with our schema and default values
   const form = useForm({
     resolver: zodResolver(schema),
-    defaultValues,
+    defaultValues: getInitialValues,
     mode: "onBlur",
   });
 
@@ -226,83 +299,39 @@ export default function DataForm({
     }
   }, [forceClear]);
 
-  // Add an effect specifically to watch validation state changes
+  // Add form watching with debounce for localStorage
   useEffect(() => {
-    // When form validation state changes, notify parent
-    if (onChange) {
-      const currentValues = form.getValues();
-      // Only consider the form valid if there are no errors AND it's actually changed
-      const hasChanges =
-        form.formState.isDirty ||
-        Object.keys(form.formState.dirtyFields).length > 0;
-      const isValid =
-        Object.keys(form.formState.errors).length === 0 && hasChanges;
-      onChange(currentValues, isValid);
-    }
-  }, [
-    form.formState.isValid,
-    form.formState.errors,
-    form.formState.isDirty,
-    form.formState.dirtyFields,
-    onChange,
-  ]);
-
-  // Save form values to localStorage whenever they change and call onChange if provided
-  useEffect(() => {
-    // Subscribe to all form value changes
-    const subscription = form.watch((values) => {
-      // Only save to localStorage in "add" mode
+    const subscription = form.watch((formValues) => {
       if (mode === "add") {
-        try {
-          // Convert Date objects to ISO strings for safe storage
-          const safeValues = { ...values };
-          Object.keys(safeValues).forEach((key) => {
-            if (safeValues[key] instanceof Date) {
-              safeValues[key] = safeValues[key].toISOString();
-            }
-          });
-
-          localStorage.setItem(storageKey, JSON.stringify(safeValues));
-        } catch (error) {
-          console.error("Error saving form data to localStorage:", error);
-        }
-      }
-
-      // Call onChange if provided, with current form validation state
-      if (onChange) {
-        // Check if there are any changes from the default values
-        let hasChanged = false;
-        Object.keys(defaultValues).forEach((key) => {
-          const defaultVal = defaultValues[key];
-          const currentVal = values[key];
-
-          // Special handling for dates
-          if (defaultVal instanceof Date && currentVal instanceof Date) {
-            hasChanged =
-              hasChanged || defaultVal.getTime() !== currentVal.getTime();
-          }
-          // Special handling for booleans
-          else if (
-            typeof defaultVal === "boolean" &&
-            typeof currentVal === "boolean"
-          ) {
-            hasChanged = hasChanged || defaultVal !== currentVal;
-          }
-          // Regular comparison
-          else {
-            hasChanged = hasChanged || defaultVal !== currentVal;
-          }
-        });
-
-        // Only consider the form valid if there are no errors AND there are actual changes
-        const isValid =
-          hasChanged && Object.keys(form.formState.errors).length === 0;
-        onChange(values as Record<string, any>, isValid);
+        saveToLocalStorage(formValues as Record<string, any>);
       }
     });
 
+    return () => {
+      subscription.unsubscribe();
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [form, mode]);
+
+  // Add effect for onChange callback
+  useEffect(() => {
+    if (!onChange) return;
+
+    const subscription = form.watch((formValues) => {
+      const timeoutId = setTimeout(() => {
+        const hasChanges = form.formState.isDirty;
+        const isValid =
+          Object.keys(form.formState.errors).length === 0 && hasChanges;
+        onChange(formValues as Record<string, any>, isValid);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    });
+
     return () => subscription.unsubscribe();
-  }, [form, mode, storageKey, onChange, defaultValues]);
+  }, [form, onChange]);
 
   // Handle form submission
   const onSubmit = async (values: Record<string, any>) => {
@@ -428,8 +457,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => {
               // Compare with default value to determine if it has changed
-              const defaultValue = defaultValues[field.key] === true;
-              const hasChanged = formField.value !== defaultValue;
+              const defaultValue = getInitialValues[field.key] === true;
 
               return (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
@@ -451,9 +479,6 @@ export default function DataForm({
                     <FormLabel>{field.displayName}</FormLabel>
                     {field.description && (
                       <FormDescription>{field.description}</FormDescription>
-                    )}
-                    {hasChanged && (
-                      <p className="text-xs text-blue-500">(Changed)</p>
                     )}
                   </div>
                 </FormItem>
@@ -537,9 +562,118 @@ export default function DataForm({
     }
   };
 
+  // Render the form with or without a title
+  if (title) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
+            <span className="flex-1">{title}</span>
+            {hasSavedData && mode === "add" && (
+              <Badge
+                variant="outline"
+                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
+              >
+                <span className="text-xs">Saved data</span>
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Date fields */}
+              {fieldsByType.date.length > 0 && (
+                <div className="space-y-4">
+                  {fieldsByType.date.map(renderField)}
+                </div>
+              )}
+
+              {/* Boolean fields */}
+              {fieldsByType.boolean.length > 0 && (
+                <div className="space-y-4">
+                  {fieldsByType.boolean.map(renderField)}
+                </div>
+              )}
+
+              {/* Numeric and text fields in a grid */}
+              {(fieldsByType.numeric.length > 0 ||
+                fieldsByType.text.length > 0) && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {fieldsByType.numeric.map(renderField)}
+                  {fieldsByType.text.map(renderField)}
+                </div>
+              )}
+
+              {!hideSubmitButton && (
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        submitLabel
+                      )}
+                    </Button>
+
+                    {mode === "add" && (
+                      <ConfirmResetDialog
+                        onConfirm={handleClearForm}
+                        title="Clear form data?"
+                        description="This will reset all form fields and delete any saved data. This action cannot be undone."
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="default"
+                            disabled={isSubmitting}
+                          >
+                            <UndoDot className="h-4 w-4 mr-2" />
+                            Reset
+                          </Button>
+                        }
+                      />
+                    )}
+                  </div>
+
+                  {onCancel && (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      onClick={handleCancel}
+                      className="sm:ml-2"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              )}
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Basic form without Card wrapper
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Show saved data badge if we have saved data in localStorage */}
+        {hasSavedData && mode === "add" && (
+          <div className="flex justify-end mb-2">
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
+            >
+              <span className="text-xs">Saved data</span>
+            </Badge>
+          </div>
+        )}
+
         {/* Date fields */}
         {fieldsByType.date.length > 0 && (
           <div className="space-y-4">{fieldsByType.date.map(renderField)}</div>
@@ -548,35 +682,7 @@ export default function DataForm({
         {/* Boolean fields */}
         {fieldsByType.boolean.length > 0 && (
           <div className="space-y-4">
-            {fieldsByType.boolean.map((field) => (
-              <FormField
-                key={field.key}
-                control={form.control}
-                name={field.key}
-                render={({ field: formField }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={formField.value}
-                        onCheckedChange={(checked) => {
-                          formField.onChange(checked);
-                          // Manually trigger form validation after checkbox change
-                          setTimeout(() => {
-                            form.trigger();
-                          }, 0);
-                        }}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>{field.displayName}</FormLabel>
-                      {field.description && (
-                        <FormDescription>{field.description}</FormDescription>
-                      )}
-                    </div>
-                  </FormItem>
-                )}
-              />
-            ))}
+            {fieldsByType.boolean.map(renderField)}
           </div>
         )}
 
@@ -603,7 +709,21 @@ export default function DataForm({
               </Button>
 
               {mode === "add" && (
-                <ConfirmResetDialog onConfirm={handleClearForm} />
+                <ConfirmResetDialog
+                  onConfirm={handleClearForm}
+                  title="Clear form data?"
+                  description="This will reset all form fields and delete any saved data. This action cannot be undone."
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="default"
+                      disabled={isSubmitting}
+                    >
+                      <UndoDot className="h-4 w-4 mr-2" />
+                      Reset
+                    </Button>
+                  }
+                />
               )}
             </div>
 

@@ -1,5 +1,5 @@
 // src/components/data-table/batch-entry-table.tsx
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Plus,
@@ -59,12 +59,14 @@ export function BatchEntryTable({
 }: BatchEntryTableProps & {
   onNavigateToTable?: () => void;
 }) {
+  // Create a storage key specific to this dataset
+  const storageKey = `batch_entry_${datasetId}`;
+
   // Main state for entries
-  const [entries, setEntries] = useState<Record<string, any>[]>([
-    getEmptyEntry(),
-  ]);
+  const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [hasSavedData, setHasSavedData] = useState(false);
 
   // Function to create a new empty entry
   function getEmptyEntry(): Record<string, any> {
@@ -91,6 +93,127 @@ export function BatchEntryTable({
     return entry;
   }
 
+  // Load entries from localStorage on initial render
+  useEffect(() => {
+    try {
+      const savedEntries = localStorage.getItem(storageKey);
+      if (savedEntries) {
+        const parsedEntries = JSON.parse(savedEntries);
+
+        // Process the entries to convert date strings back to Date objects
+        const processedEntries = parsedEntries.map(
+          (entry: Record<string, any>) => {
+            const processedEntry = { ...entry };
+
+            fields.forEach((field) => {
+              if (field.type === "date" && processedEntry[field.key]) {
+                processedEntry[field.key] = new Date(processedEntry[field.key]);
+              }
+            });
+
+            return processedEntry;
+          }
+        );
+
+        setEntries(processedEntries);
+
+        // Only set hasSavedData to true if there are meaningful entries
+        // (more than 1 entry or 1 entry that has some filled data)
+        const hasRealData = hasNonEmptyEntries(processedEntries);
+        setHasSavedData(hasRealData);
+
+        if (hasRealData) {
+          toast.info("Loaded saved entries from your previous session");
+        } else {
+          // If there's only empty data, remove it from storage to clean up
+          localStorage.removeItem(storageKey);
+          setEntries([getEmptyEntry()]);
+        }
+      } else {
+        // Initialize with a single empty entry if no saved data
+        setEntries([getEmptyEntry()]);
+      }
+    } catch (error) {
+      console.error("Error loading saved entries:", error);
+      setEntries([getEmptyEntry()]);
+    }
+  }, [datasetId, fields]);
+
+  // Helper function to check if entries have meaningful data
+  const hasNonEmptyEntries = (entriesArray: Record<string, any>[]) => {
+    // If there are multiple entries, we definitely have data
+    if (entriesArray.length > 1) return true;
+
+    // If there's only one entry, check if it has any non-default values
+    if (entriesArray.length === 1) {
+      const entry = entriesArray[0];
+
+      // Check each field to see if it's been modified from default
+      for (const field of fields) {
+        const value = entry[field.key];
+
+        switch (field.type) {
+          case "text":
+            if (value && value.trim() !== "") return true;
+            break;
+          case "number":
+          case "percentage":
+            // If the value is significantly different from 0, it's been changed
+            if (value !== 0 && value !== null && value !== undefined)
+              return true;
+            break;
+          case "boolean":
+            // If boolean is true, it's been changed from default false
+            if (value === true) return true;
+            break;
+          case "date":
+            // Date is more complex - most entries will have a date
+            // Here we could add special logic if needed
+            break;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Save entries to localStorage whenever they change
+  useEffect(() => {
+    if (entries.length > 0) {
+      try {
+        // Check if there's meaningful data worth saving
+        const hasData = hasNonEmptyEntries(entries);
+
+        if (hasData) {
+          // Convert Date objects to ISO strings for safe storage
+          const entriesToSave = entries.map((entry) => {
+            const entryCopy = { ...entry };
+
+            fields.forEach((field) => {
+              if (
+                field.type === "date" &&
+                entryCopy[field.key] instanceof Date
+              ) {
+                entryCopy[field.key] = entryCopy[field.key].toISOString();
+              }
+            });
+
+            return entryCopy;
+          });
+
+          localStorage.setItem(storageKey, JSON.stringify(entriesToSave));
+          setHasSavedData(true);
+        } else {
+          // No meaningful data, remove from storage and don't show badge
+          localStorage.removeItem(storageKey);
+          setHasSavedData(false);
+        }
+      } catch (error) {
+        console.error("Error handling entries localStorage:", error);
+      }
+    }
+  }, [entries, datasetId, fields]);
+
   // Add a new empty entry
   const addEntry = () => {
     if (entries.length >= maxBatchSize) {
@@ -106,6 +229,12 @@ export function BatchEntryTable({
   const removeEntry = (index: number) => {
     const newEntries = [...entries];
     newEntries.splice(index, 1);
+
+    // If removing the last entry, add an empty one
+    if (newEntries.length === 0) {
+      newEntries.push(getEmptyEntry());
+    }
+
     setEntries(newEntries);
   };
 
@@ -143,7 +272,11 @@ export function BatchEntryTable({
       if (count > 0) {
         toast.success(`Successfully added ${count} ${title} records`);
 
-        // Reset entries
+        // Clear entries from localStorage
+        localStorage.removeItem(storageKey);
+        setHasSavedData(false);
+
+        // Reset entries to a single empty one
         setEntries([getEmptyEntry()]);
 
         // Call the success callback if provided
@@ -169,6 +302,8 @@ export function BatchEntryTable({
   // Clear all entries
   const clearEntries = () => {
     setEntries([getEmptyEntry()]);
+    localStorage.removeItem(storageKey);
+    setHasSavedData(false);
     toast.info("All entries cleared");
   };
 
@@ -323,7 +458,14 @@ export function BatchEntryTable({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{title} Batch Entry</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>{title} Batch Entry</CardTitle>
+          {hasSavedData && (
+            <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">
+              Saved data
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {/* CSV Import Button with Tooltip */}
           <TooltipProvider>
@@ -411,11 +553,13 @@ export function BatchEntryTable({
               <ConfirmResetDialog
                 onConfirm={clearEntries}
                 trigger={
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" disabled={isSubmitting}>
                     <Trash className="h-4 w-4 mr-2" />
                     Reset
                   </Button>
                 }
+                title="Clear all entries?"
+                description="This will remove all current entries and cannot be undone. Your data will be removed from local storage."
               />
             </div>
           </div>
@@ -487,6 +631,7 @@ export function BatchEntryTable({
             <Button
               onClick={submitEntries}
               disabled={isSubmitting || entries.length === 0}
+              className="bg-primary hover:bg-primary/90"
             >
               {isSubmitting ? (
                 <>

@@ -1,7 +1,6 @@
 // src/components/data-page/generic-data-page.tsx
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlusCircle, Table, ListPlus } from "lucide-react";
 import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
@@ -90,21 +89,15 @@ export default function GenericDataPage({
           label: addLabel,
           icon: <PlusCircle className="h-4 w-4" />,
           content: (
-            <Card>
-              <CardHeader>
-                <CardTitle>{addLabel}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DataForm
-                  datasetId={datasetId}
-                  fields={fields}
-                  onSuccess={handleDataChange}
-                  submitLabel={addLabel}
-                  successMessage={`${title} data added successfully`}
-                  persistKey={`${datasetId}_add_form_data`}
-                />
-              </CardContent>
-            </Card>
+            <DataForm
+              title={addLabel}
+              datasetId={datasetId}
+              fields={fields}
+              onSuccess={handleDataChange}
+              submitLabel={addLabel}
+              successMessage={`${title} data added successfully`}
+              persistKey={`${datasetId}_add_form_data`}
+            />
           ),
         }
       : null,

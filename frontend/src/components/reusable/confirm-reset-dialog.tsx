@@ -1,4 +1,4 @@
-// src/components/common/confirm-delete-dialog.tsx
+// src/components/reusable/confirm-reset-dialog.tsx
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +30,7 @@ export function ConfirmResetDialog({
   onConfirm,
   trigger,
   variant = "outline",
-  size = "icon",
+  size = "default",
   loading = false,
   showTrigger = true,
 }: ConfirmResetDialogProps) {

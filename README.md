@@ -8,8 +8,6 @@
 
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
-- Add data form has a weird visual bug at the submit portion
-- Do I want the batch entry tab to also save data locally, until reset?
 - In generic-data-page, if there are more than 4 tabs, it looks weird
 
 ### IN PROGRESS
@@ -37,5 +35,7 @@
 - Add multiple data entries as an option [DONE 2025-04-03]
 - In "Import CSV" section, view the data preview first before importing the data [DONE 2025-04-03]
 - Somehow, the edit entries disappeared in "View data" [DONE 2025-04-03]
+- Add data form has a weird visual bug at the submit portion [DONE 2025-04-03]
+- Do I want the batch entry tab to also save data locally, until reset? [DONE 2025-04-03]
 
 ### GAVE UP
