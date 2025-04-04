@@ -34,6 +34,10 @@ export function GetRecords(arg1) {
   return window['go']['backend']['App']['GetRecords'](arg1);
 }
 
+export function GetRelatedRecords(arg1, arg2) {
+  return window['go']['backend']['App']['GetRelatedRecords'](arg1, arg2);
+}
+
 export function ImportRecords(arg1, arg2) {
   return window['go']['backend']['App']['ImportRecords'](arg1, arg2);
 }

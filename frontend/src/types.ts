@@ -24,6 +24,10 @@ export interface FieldDefinition {
   description?: string;
   unit?: string;
   isSearchable?: boolean;
+  // New relationship fields
+  isRelation?: boolean;
+  relatedDataset?: string;
+  relatedField?: string;
 }
 
 export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";

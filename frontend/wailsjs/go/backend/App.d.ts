@@ -18,6 +18,8 @@ export function GetRecord(arg1:string):Promise<Record<string, any>>;
 
 export function GetRecords(arg1:string):Promise<Array<Record<string, any>>>;
 
+export function GetRelatedRecords(arg1:string,arg2:string):Promise<Array<Record<string, any>>>;
+
 export function ImportRecords(arg1:string,arg2:string):Promise<number>;
 
 export function UpdateDataset(arg1:string,arg2:string,arg3:string,arg4:string):Promise<database.Dataset>;
