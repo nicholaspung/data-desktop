@@ -4,6 +4,7 @@ package backend
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"myproject/backend/database"
 	_ "myproject/backend/database/models" // Import for side effects to register field functions
@@ -253,4 +254,19 @@ func (a *App) ImportRecords(datasetID string, records string) (int, error) {
 	}
 
 	return len(dbRecords), nil
+}
+
+// GetRelatedRecords gets data with support for relations
+func (a *App) GetRelatedRecords(datasetID string, relationsJSON string) ([]map[string]interface{}, error) {
+	// Parse relations from JSON
+	var relations map[string]string
+	if relationsJSON != "" {
+		err := json.Unmarshal([]byte(relationsJSON), &relations)
+		if err != nil {
+			return nil, fmt.Errorf("invalid relations format: %w", err)
+		}
+	}
+
+	// Call the repository function
+	return database.GetDataRecordsWithRelations(datasetID, relations)
 }

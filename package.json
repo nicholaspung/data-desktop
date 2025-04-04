@@ -9,7 +9,7 @@
     "transform:comma": "node ./scripts/csv-transformer.js --comma"
   },
   "author": "nicholaspungdev@gmail.com",
-  "license": "MIT",
+  "license": "GNU AGPLv3",
   "dependencies": {
     "csv-parse": "^5.5.3",
     "csv-stringify": "^6.4.5"

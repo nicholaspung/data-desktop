@@ -4,3 +4,4 @@ frontend/dist
 app.db
 *.db
 *.csv
+output

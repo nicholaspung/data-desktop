@@ -4,6 +4,8 @@ package database
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -291,4 +293,173 @@ func ImportRecords(records []DataRecord) error {
 	}
 
 	return tx.Commit()
+}
+
+// GetDataRecordsWithRelations retrieves all records for a specific dataset and joins with related datasets
+func GetDataRecordsWithRelations(datasetID string, relations map[string]string) ([]map[string]interface{}, error) {
+	// Get the dataset to access its fields
+	dataset, err := GetDataset(datasetID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find relation fields in the dataset
+	var relationFields []FieldDefinition
+	for _, field := range dataset.Fields {
+		if field.IsRelation && field.RelatedDataset != "" && field.RelatedField != "" {
+			relationFields = append(relationFields, field)
+		}
+	}
+
+	// If no relation fields or no relations requested, fall back to regular GetDataRecords
+	if len(relationFields) == 0 || len(relations) == 0 {
+		records, err := GetDataRecords(datasetID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Convert to maps
+		result := make([]map[string]interface{}, len(records))
+		for i, record := range records {
+			var data map[string]interface{}
+			err = json.Unmarshal(record.Data, &data)
+			if err != nil {
+				return nil, err
+			}
+
+			// Add metadata
+			data["id"] = record.ID
+			data["datasetId"] = record.DatasetID
+			data["createdAt"] = record.CreatedAt
+			data["lastModified"] = record.LastModified
+
+			result[i] = data
+		}
+
+		return result, nil
+	}
+
+	// Build a query that joins the related datasets
+	// Start with the main dataset
+	mainTable := "data_records AS main"
+
+	// Build select clause with main record fields
+	selectClause := "main.id, main.dataset_id, main.data, main.created_at, main.last_modified"
+
+	// Join clauses for related datasets
+	var joinClauses []string
+
+	// For each relation that was requested
+	for relationField, alias := range relations {
+		// Find the field definition
+		var fieldDef FieldDefinition
+		found := false
+		for _, field := range relationFields {
+			if field.Key == relationField {
+				fieldDef = field
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			continue
+		}
+
+		// Add join clause
+		joinClause := fmt.Sprintf(
+			"LEFT JOIN data_records AS %s ON JSON_EXTRACT(main.data, '$.%s') = %s.id AND %s.dataset_id = '%s'",
+			alias, fieldDef.Key, alias, alias, fieldDef.RelatedDataset,
+		)
+		joinClauses = append(joinClauses, joinClause)
+
+		// Add fields from related dataset to select clause
+		selectClause += fmt.Sprintf(", %s.id AS %s_id, %s.data AS %s_data",
+			alias, alias, alias, alias)
+	}
+
+	// Build the full query
+	query := fmt.Sprintf(
+		"SELECT %s FROM %s %s WHERE main.dataset_id = ? ORDER BY main.created_at DESC",
+		selectClause,
+		mainTable,
+		strings.Join(joinClauses, " "),
+	)
+
+	// Execute the query
+	rows, err := DB.Query(query, datasetID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Process results
+	var result []map[string]interface{}
+	for rows.Next() {
+		// Create variables to scan into
+		var mainID, mainDatasetID string
+		var mainData []byte
+		var mainCreatedAt, mainLastModified time.Time
+
+		// Create list of pointers for scanning
+		scanArgs := []interface{}{
+			&mainID, &mainDatasetID, &mainData, &mainCreatedAt, &mainLastModified,
+		}
+
+		// Create a map to hold pointers to related data fields
+		relatedFields := make(map[string]struct {
+			ID   *string
+			Data *[]byte
+		})
+
+		// Add scan variables for related data
+		for _, alias := range relations {
+			var relID string
+			var relData []byte
+			scanArgs = append(scanArgs, &relID, &relData)
+
+			relatedFields[alias] = struct {
+				ID   *string
+				Data *[]byte
+			}{
+				ID:   &relID,
+				Data: &relData,
+			}
+		}
+
+		// Scan row into variables
+		err := rows.Scan(scanArgs...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Parse main data
+		var mainDataMap map[string]interface{}
+		err = json.Unmarshal(mainData, &mainDataMap)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add metadata
+		mainDataMap["id"] = mainID
+		mainDataMap["datasetId"] = mainDatasetID
+		mainDataMap["createdAt"] = mainCreatedAt
+		mainDataMap["lastModified"] = mainLastModified
+
+		// Process related data and add to main record
+		for alias, fields := range relatedFields {
+			if *fields.ID != "" && len(*fields.Data) > 0 {
+				var relDataMap map[string]interface{}
+				err = json.Unmarshal(*fields.Data, &relDataMap)
+				if err == nil {
+					// Add related data to main record
+					mainDataMap[alias+"_data"] = relDataMap
+				}
+			}
+		}
+
+		result = append(result, mainDataMap)
+	}
+
+	return result, nil
 }

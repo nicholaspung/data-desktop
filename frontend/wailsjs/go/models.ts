@@ -7,6 +7,9 @@ export namespace database {
 	    description?: string;
 	    unit?: string;
 	    isSearchable?: boolean;
+	    relatedDataset?: string;
+	    relatedField?: string;
+	    isRelation?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new FieldDefinition(source);
@@ -20,6 +23,9 @@ export namespace database {
 	        this.description = source["description"];
 	        this.unit = source["unit"];
 	        this.isSearchable = source["isSearchable"];
+	        this.relatedDataset = source["relatedDataset"];
+	        this.relatedField = source["relatedField"];
+	        this.isRelation = source["isRelation"];
 	    }
 	}
 	export class Dataset {

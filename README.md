@@ -8,6 +8,7 @@
 
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
 - PDF reports from data
+- Start working on bloodwork feature
 
 ### IN PROGRESS
 

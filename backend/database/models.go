@@ -4,6 +4,7 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -36,6 +37,11 @@ type FieldDefinition struct {
 	Description  string    `json:"description,omitempty"`
 	Unit         string    `json:"unit,omitempty"`
 	IsSearchable bool      `json:"isSearchable,omitempty"`
+
+	// New fields for relationships
+	RelatedDataset string `json:"relatedDataset,omitempty"` // ID of the related dataset
+	RelatedField   string `json:"relatedField,omitempty"`   // Field to join on in the related dataset
+	IsRelation     bool   `json:"isRelation,omitempty"`     // Whether this field is a relation
 }
 
 // Dataset represents a collection of data with its field definitions
@@ -56,6 +62,43 @@ type DataRecord struct {
 	Data         json.RawMessage `json:"data"`
 	CreatedAt    time.Time       `json:"createdAt"`
 	LastModified time.Time       `json:"lastModified"`
+}
+
+// InitializeRelationships creates tables and indices for relationship fields
+func InitializeRelationships(db *sql.DB) error {
+	// Create an index for improved join performance on dataset_id
+	_, err := db.Exec(`
+        CREATE INDEX IF NOT EXISTS idx_data_records_dataset_id ON data_records(dataset_id)
+    `)
+	if err != nil {
+		return err
+	}
+
+	// Go through all datasets and check for relation fields
+	datasets, err := ListDatasets()
+	if err != nil {
+		return err
+	}
+
+	for _, dataset := range datasets {
+		for _, field := range dataset.Fields {
+			if field.IsRelation && field.RelatedDataset != "" {
+				// Create an index on the JSON field that holds the foreign key
+				indexName := fmt.Sprintf("idx_%s_%s", dataset.ID, field.Key)
+				indexSQL := fmt.Sprintf(
+					"CREATE INDEX IF NOT EXISTS %s ON data_records((json_extract(data, '$.%s'))) WHERE dataset_id = '%s'",
+					indexName, field.Key, dataset.ID,
+				)
+
+				_, err = db.Exec(indexSQL)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // InitializeSchema creates the database tables
@@ -87,6 +130,12 @@ func InitializeSchema(db *sql.DB) error {
 			FOREIGN KEY (dataset_id) REFERENCES datasets (id)
 		)
 	`)
+	if err != nil {
+		return err
+	}
+
+	// Initialize relationship indices and tables
+	err = InitializeRelationships(db)
 	if err != nil {
 		return err
 	}
