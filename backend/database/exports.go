@@ -9,8 +9,10 @@ type FieldDefinitionFunc func() []FieldDefinition
 
 // These variables will be populated by the models package
 var (
-	GetDEXAFields      FieldDefinitionFunc
-	GetBloodworkFields FieldDefinitionFunc
-	GetPaycheckFields  FieldDefinitionFunc
-	GetHabitFields     FieldDefinitionFunc
+	GetDEXAFields        FieldDefinitionFunc
+	GetBloodworkFields   FieldDefinitionFunc
+	GetPaycheckFields    FieldDefinitionFunc
+	GetHabitFields       FieldDefinitionFunc
+	GetBloodMarkerFields FieldDefinitionFunc
+	GetBloodResultFields FieldDefinitionFunc
 )

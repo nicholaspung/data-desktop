@@ -17,4 +17,6 @@ func init() {
 	database.GetBloodworkFields = GetBloodworkFields
 	database.GetPaycheckFields = GetPaycheckFields
 	database.GetHabitFields = GetHabitFields
+	database.GetBloodMarkerFields = GetBloodMarkerFields
+	database.GetBloodResultFields = GetBloodResultFields
 }

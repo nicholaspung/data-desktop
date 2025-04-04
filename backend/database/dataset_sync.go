@@ -59,6 +59,30 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Habit dataset: %w", err)
 	}
 
+	// Sync Blood Markers dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDBloodMarker,
+		"Blood Markers",
+		"Definitions of blood markers with reference ranges",
+		DatasetTypeBloodwork, // Using the same type as bloodwork
+		GetBloodMarkerFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Blood Markers dataset: %w", err)
+	}
+
+	// Sync Blood Results dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDBloodResult,
+		"Blood Results",
+		"Individual blood marker results for tests",
+		DatasetTypeBloodwork, // Using the same type as bloodwork
+		GetBloodResultFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Blood Results dataset: %w", err)
+	}
+
 	fmt.Println("Dataset sync completed successfully")
 	return nil
 }
@@ -134,7 +158,10 @@ func FieldsEqual(a, b []FieldDefinition) bool {
 			fieldA.DisplayName != fieldB.DisplayName ||
 			fieldA.Description != fieldB.Description ||
 			fieldA.Unit != fieldB.Unit ||
-			fieldA.IsSearchable != fieldB.IsSearchable {
+			fieldA.IsSearchable != fieldB.IsSearchable ||
+			fieldA.IsRelation != fieldB.IsRelation ||
+			fieldA.RelatedDataset != fieldB.RelatedDataset ||
+			fieldA.RelatedField != fieldB.RelatedField {
 			return false
 		}
 	}
