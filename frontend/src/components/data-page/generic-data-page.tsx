@@ -7,6 +7,7 @@ import DataForm from "@/components/data-form/data-form";
 import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
 import { FieldDefinition } from "@/types";
 import React from "react";
+import { cn } from "@/lib/utils";
 
 interface CustomTab {
   id: string;
@@ -142,7 +143,9 @@ export default function GenericDataPage({
       {allTabs.length > 0 ? (
         <Tabs defaultValue={validDefaultTab} className="space-y-6">
           <TabsList
-            className={`grid w-full grid-cols-${Math.min(allTabs.length, 5)}`}
+            className={cn("w-full", {
+              "overflow-x-auto": allTabs.length > 4,
+            })}
           >
             {allTabs.map((tab) => (
               <TabsTrigger
