@@ -158,7 +158,7 @@ export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "value_text",
-      type: "number",
+      type: "text",
       displayName: "Value (Text)",
       description: "Measured text result value",
     },

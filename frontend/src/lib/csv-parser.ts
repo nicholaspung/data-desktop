@@ -1,6 +1,7 @@
 // src/lib/csv-parser.ts
 import { FieldDefinition } from "@/types/types";
 import Papa from "papaparse";
+import { ApiService } from "@/services/api";
 
 /**
  * Parses a CSV file and returns the processed data
@@ -16,6 +17,11 @@ export async function parseCSV(
       fieldMap.set(field.key, field);
     });
 
+    // Create a lookup for relation fields
+    const relationFields = fieldDefinitions.filter(
+      (field) => field.isRelation && field.relatedDataset
+    );
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
@@ -24,7 +30,7 @@ export async function parseCSV(
         // Standardize headers by trimming whitespace and lowercasing
         return header.trim().toLowerCase();
       },
-      complete: (results) => {
+      complete: async (results) => {
         if (results.errors && results.errors.length > 0) {
           // Log parsing errors
           console.error("CSV parsing errors:", results.errors);
@@ -55,6 +61,9 @@ export async function parseCSV(
         }
 
         try {
+          // Load relation data for all relation fields at once
+          const relationData = await loadRelationData(relationFields);
+
           // Process the data according to field definitions
           const processedData = (results.data as Record<string, any>[]).map(
             (row: Record<string, any>, index: number) => {
@@ -94,7 +103,56 @@ export async function parseCSV(
                     return; // Skip further processing for this field
                   }
 
-                  // Apply type conversions
+                  // Handle relation fields
+                  if (field.isRelation && field.relatedDataset) {
+                    // If the value is already a valid ID, keep it
+                    const relationInfo = relationData[field.key];
+                    if (relationInfo && relationInfo.idSet.has(value)) {
+                      processedRow[field.key] = value;
+                      return;
+                    }
+
+                    // Try to match the display value to an ID
+                    if (relationInfo && typeof value === "string") {
+                      const normalizedValue = value.toLowerCase().trim();
+                      const matchedId =
+                        relationInfo.displayToIdMap.get(normalizedValue);
+
+                      if (matchedId) {
+                        processedRow[field.key] = matchedId;
+                        return;
+                      }
+
+                      // If no exact match found, try partial matching
+                      for (const [
+                        displayValue,
+                        id,
+                      ] of relationInfo.displayToIdMap.entries()) {
+                        if (
+                          displayValue.includes(normalizedValue) ||
+                          normalizedValue.includes(displayValue)
+                        ) {
+                          processedRow[field.key] = id;
+                          console.log(
+                            `Found partial match for "${value}" with "${displayValue}"`
+                          );
+                          return;
+                        }
+                      }
+
+                      // No match found, keep as is (will be validated later)
+                      processedRow[field.key] = value;
+                      console.warn(
+                        `No relation match found for ${field.key}: "${value}"`
+                      );
+                    } else {
+                      // Keep the value as is
+                      processedRow[field.key] = value;
+                    }
+                    return;
+                  }
+
+                  // Apply type conversions for non-relation fields
                   switch (field.type) {
                     case "date":
                       if (value && !(value instanceof Date)) {
@@ -269,6 +327,131 @@ export async function parseCSV(
 }
 
 /**
+ * Load relation data for all relation fields at once
+ * @param relationFields List of relation fields to load data for
+ * @returns Mapping of field keys to relation data
+ */
+async function loadRelationData(relationFields: FieldDefinition[]): Promise<
+  Record<
+    string,
+    {
+      idSet: Set<string>;
+      displayToIdMap: Map<string, string>;
+    }
+  >
+> {
+  const result: Record<
+    string,
+    {
+      idSet: Set<string>;
+      displayToIdMap: Map<string, string>;
+    }
+  > = {};
+
+  // Process each relation field
+  for (const field of relationFields) {
+    if (!field.relatedDataset || !field.key) continue;
+
+    try {
+      // Get the related records
+      const records = await ApiService.getRecords(field.relatedDataset);
+
+      // Store all IDs for quick validation
+      const idSet = new Set<string>();
+
+      // Map display values to IDs
+      const displayToIdMap = new Map<string, string>();
+
+      // Process each record
+      records.forEach((record: any) => {
+        const id = record.id;
+        idSet.add(id);
+
+        // Determine the display value based on the dataset
+        // Bloodwork - date-based format
+        if (field.relatedDataset === "bloodwork" && record.date) {
+          const date = new Date(record.date);
+          const dateStr = date.toLocaleDateString();
+
+          // Add all variants of the display value
+          displayToIdMap.set(dateStr.toLowerCase(), id);
+
+          if (record.lab_name) {
+            const labName = record.lab_name.toLowerCase();
+            const combined = `${dateStr} - ${record.lab_name}`.toLowerCase();
+
+            displayToIdMap.set(labName, id);
+            displayToIdMap.set(combined, id);
+          }
+
+          // Add date in ISO format
+          displayToIdMap.set(
+            date.toISOString().split("T")[0].toLowerCase(),
+            id
+          );
+        }
+        // Blood markers - name + unit format
+        else if (field.relatedDataset === "blood_markers") {
+          if (record.name) {
+            displayToIdMap.set(record.name.toLowerCase(), id);
+
+            if (record.unit) {
+              const combined = `${record.name} (${record.unit})`.toLowerCase();
+              displayToIdMap.set(combined, id);
+              displayToIdMap.set(record.unit.toLowerCase(), id);
+            }
+          }
+        }
+        // Generic handling for other datasets
+        else {
+          // Use display fields if specified
+          if (field.displayField && record[field.displayField]) {
+            const displayValue = record[field.displayField].toLowerCase();
+            displayToIdMap.set(displayValue, id);
+
+            if (
+              field.secondaryDisplayField &&
+              record[field.secondaryDisplayField]
+            ) {
+              const secondaryValue =
+                record[field.secondaryDisplayField].toLowerCase();
+              const combined = `${displayValue} - ${secondaryValue}`;
+
+              displayToIdMap.set(secondaryValue, id);
+              displayToIdMap.set(combined, id);
+            }
+          }
+
+          // Add common fields that might be used for display
+          ["name", "title", "label", "displayName"].forEach((key) => {
+            if (record[key]) {
+              displayToIdMap.set(record[key].toLowerCase(), id);
+            }
+          });
+        }
+      });
+
+      // Store the relation data
+      result[field.key] = {
+        idSet,
+        displayToIdMap,
+      };
+    } catch (error) {
+      console.error(
+        `Error loading relation data for ${field.relatedDataset}:`,
+        error
+      );
+      result[field.key] = {
+        idSet: new Set(),
+        displayToIdMap: new Map(),
+      };
+    }
+  }
+
+  return result;
+}
+
+/**
  * Validates a CSV file against expected field definitions
  */
 export async function validateCSV(
@@ -335,29 +518,65 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
 
   // Create a row with example data based on field types
   const exampleRow: Record<string, any> = {};
+  const headerDesc: Record<string, string> = {};
+
   fields.forEach((field) => {
-    switch (field.type) {
-      case "date":
-        exampleRow[field.key] = new Date().toLocaleDateString();
-        break;
-      case "boolean":
-        exampleRow[field.key] = "Yes";
-        break;
-      case "number":
-        exampleRow[field.key] = "0";
-        break;
-      case "percentage":
-        exampleRow[field.key] = "0";
-        break;
-      case "text":
-        exampleRow[field.key] = "";
-        break;
+    // Add helpful header descriptions for all fields
+    headerDesc[field.key] =
+      field.displayName + (field.description ? ` - ${field.description}` : "");
+
+    // Add example values based on field type
+    if (field.isRelation && field.relatedDataset) {
+      // For relation fields, provide descriptive guidance
+      let example = "";
+
+      if (field.relatedDataset === "bloodwork") {
+        example = "MM/DD/YYYY - Lab Name";
+      } else if (field.relatedDataset === "blood_markers") {
+        example = "Marker Name";
+      } else if (field.displayField) {
+        example = `Enter ${field.displayName} name`;
+      } else {
+        example = "Enter name or ID";
+      }
+
+      exampleRow[field.key] = example;
+      headerDesc[field.key] += " (Enter name, the system will match to ID)";
+    } else {
+      switch (field.type) {
+        case "date":
+          exampleRow[field.key] = new Date().toLocaleDateString();
+          break;
+        case "boolean":
+          exampleRow[field.key] = "Yes";
+          headerDesc[field.key] += " (Yes/No, True/False, or 1/0)";
+          break;
+        case "number":
+          exampleRow[field.key] = "0";
+          if (field.unit) headerDesc[field.key] += ` (${field.unit})`;
+          break;
+        case "percentage":
+          exampleRow[field.key] = "0";
+          headerDesc[field.key] += " (%)";
+          break;
+        case "text":
+          exampleRow[field.key] = "";
+          break;
+      }
     }
   });
 
-  // Generate CSV with headers and one example row
-  return Papa.unparse({
-    fields: headers,
-    data: [exampleRow],
+  // Create a second row with field descriptions
+  const descriptionRow: Record<string, string> = {};
+  headers.forEach((header) => {
+    descriptionRow[header] = headerDesc[header] || "";
   });
+
+  // Generate CSV with headers, description row, and example row
+  const csvContent = Papa.unparse({
+    fields: headers,
+    data: [descriptionRow, exampleRow],
+  });
+
+  return csvContent;
 }

@@ -10,10 +10,6 @@ import {
   Loader2,
   InfoIcon,
 } from "lucide-react";
-import { FieldDefinition } from "@/types/types";
-import { ApiService } from "@/services/api";
-import { toast } from "sonner";
-import { parseCSV, createCSVTemplate } from "@/lib/csv-parser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -40,6 +36,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FieldDefinition } from "@/types/types";
+import {
+  fetchRelationOptions,
+  resolveRelationReferences,
+} from "@/lib/relation-utils";
+import { toast } from "sonner";
+import { ApiService } from "@/services/api";
+import { createCSVTemplate, parseCSV } from "@/lib/csv-parser";
 
 interface BatchEntryTableProps {
   datasetId: string;
@@ -68,6 +79,19 @@ export function BatchEntryTable({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
 
+  // State to hold relation field options
+  const [relationOptions, setRelationOptions] = useState<
+    Record<string, { id: string; label: string; displayValue: string }[]>
+  >({});
+  const [isLoadingRelations, setIsLoadingRelations] = useState<
+    Record<string, boolean>
+  >({});
+
+  // Find relation fields
+  const relationFields = fields.filter(
+    (field) => field.isRelation && field.relatedDataset
+  );
+
   // Function to create a new empty entry
   function getEmptyEntry(): Record<string, any> {
     const entry: Record<string, any> = { id: crypto.randomUUID() };
@@ -92,6 +116,50 @@ export function BatchEntryTable({
 
     return entry;
   }
+
+  // Load relation data for all relation fields using the utility function
+  const loadRelationOptions = async () => {
+    // Skip if no relation fields
+    if (relationFields.length === 0) return;
+
+    // Initialize loading states
+    const initialLoadingStates: Record<string, boolean> = {};
+    relationFields.forEach((field) => {
+      initialLoadingStates[field.key] = true;
+    });
+    setIsLoadingRelations(initialLoadingStates);
+
+    try {
+      // Use our utility function to fetch relation options
+      const relationData = await fetchRelationOptions(fields);
+
+      // Process the results
+      const newRelationOptions: Record<
+        string,
+        { id: string; label: string; displayValue: string }[]
+      > = {};
+      const newLoadingStates: Record<string, boolean> = {};
+
+      // Convert the data structure to match our state
+      Object.keys(relationData).forEach((key) => {
+        newRelationOptions[key] = relationData[key].options;
+        newLoadingStates[key] = relationData[key].loading;
+      });
+
+      // Update state
+      setRelationOptions(newRelationOptions);
+      setIsLoadingRelations(newLoadingStates);
+    } catch (error) {
+      console.error("Error loading relation options:", error);
+
+      // Reset loading states on error
+      const errorLoadingStates: Record<string, boolean> = {};
+      relationFields.forEach((field) => {
+        errorLoadingStates[field.key] = false;
+      });
+      setIsLoadingRelations(errorLoadingStates);
+    }
+  };
 
   // Load entries from localStorage on initial render
   useEffect(() => {
@@ -137,6 +205,9 @@ export function BatchEntryTable({
       console.error("Error loading saved entries:", error);
       setEntries([getEmptyEntry()]);
     }
+
+    // Load relation options
+    loadRelationOptions();
   }, [datasetId, fields]);
 
   // Helper function to check if entries have meaningful data
@@ -249,6 +320,21 @@ export function BatchEntryTable({
     setEntries(newEntries);
   };
 
+  // Resolve relation display values to IDs using our utility function
+  const resolveRelationRefs = async (entriesData: Record<string, any>[]) => {
+    // If no relation fields, just return the original data
+    if (relationFields.length === 0) return entriesData;
+
+    try {
+      // Use our utility function to resolve references
+      return await resolveRelationReferences(entriesData, fields);
+    } catch (error) {
+      console.error("Error resolving relation references:", error);
+      // Return the original data if there's an error
+      return entriesData;
+    }
+  };
+
   // Submit all entries to the backend
   const submitEntries = async () => {
     if (entries.length === 0) {
@@ -259,8 +345,11 @@ export function BatchEntryTable({
     setIsSubmitting(true);
 
     try {
+      // Resolve relation references before submission
+      const processedEntries = await resolveRelationRefs(entries);
+
       // Prepare entries for submission (remove temporary id)
-      const entriesToSubmit = entries.map((entry) => {
+      const entriesToSubmit = processedEntries.map((entry) => {
         const rest = { ...entry };
         delete rest.id; // Remove the temporary ID for submission
         return rest;
@@ -307,7 +396,7 @@ export function BatchEntryTable({
     toast.info("All entries cleared");
   };
 
-  // Handle CSV import
+  // Handle CSV import with relation field resolution
   const handleImportCSV = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -320,8 +409,11 @@ export function BatchEntryTable({
       // Parse the CSV file
       const parsedData = await parseCSV(file, fields);
 
+      // Process relation fields
+      const processedData = await resolveRelationRefs(parsedData);
+
       // Limit to max batch size
-      const limitedData = parsedData.slice(0, maxBatchSize);
+      const limitedData = processedData.slice(0, maxBatchSize);
 
       if (limitedData.length > 0) {
         // Add temporary IDs for React keys
@@ -378,6 +470,54 @@ export function BatchEntryTable({
     // Set a minimum width for all cell contents
     const cellStyle = { minWidth: "80px", width: "100%" };
 
+    // Handle relation fields with dropdown
+    if (field.isRelation && field.relatedDataset) {
+      const options = relationOptions[field.key] || [];
+      const isLoading = isLoadingRelations[field.key] || false;
+
+      // Convert empty string to placeholder value for display purposes
+      const displayValue = value === "" ? "_none_" : value || "_none_";
+
+      return (
+        <div style={cellStyle}>
+          <Select
+            value={displayValue}
+            onValueChange={(newValue) => {
+              // Convert placeholder value back to appropriate value when saving
+              const valueToSave = newValue === "_none_" ? "" : newValue;
+              updateEntryField(entryIndex, field.key, valueToSave);
+            }}
+            disabled={isLoading}
+          >
+            <SelectTrigger className="h-8 w-full">
+              <SelectValue
+                placeholder={
+                  isLoading ? "Loading..." : `Select ${field.displayName}`
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {options.length === 0 ? (
+                <SelectItem value="_no_options_" disabled>
+                  {isLoading ? "Loading options..." : "No options available"}
+                </SelectItem>
+              ) : (
+                <>
+                  <SelectItem value="_none_">Select...</SelectItem>
+                  {options.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    // Handle other field types
     switch (field.type) {
       case "text":
         return (
@@ -563,6 +703,15 @@ export function BatchEntryTable({
               />
             </div>
           </div>
+
+          {/* Relation field loading indicator */}
+          {relationFields.length > 0 &&
+            Object.values(isLoadingRelations).some((loading) => loading) && (
+              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading relation data...</span>
+              </div>
+            )}
 
           {/* Table of entries */}
           <div className="border rounded-md">

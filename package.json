@@ -6,12 +6,14 @@
     "release": "node ./scripts/release.js",
     "generate-field-definitions": "node ./scripts/field-sync-generator-2.js dexa bloodwork markers results",
     "transform": "node ./scripts/csv-transformer.js",
-    "transform:comma": "node ./scripts/csv-transformer.js --comma"
+    "transform:comma": "node ./scripts/csv-transformer.js --comma",
+    "transform:bloodwork": "node scripts/bloodtest-csv-transformer.js"
   },
   "author": "nicholaspungdev@gmail.com",
   "license": "GNU AGPLv3",
   "dependencies": {
     "csv-parse": "^5.5.3",
-    "csv-stringify": "^6.4.5"
+    "csv-stringify": "^6.4.5",
+    "papaparse": "^5.5.2"
   }
 }

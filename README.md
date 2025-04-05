@@ -7,9 +7,11 @@
 ### TODOS
 
 - PDF reports from data
-- Make relations work for batch entry
-- Creat a script to transform my current CSV with blood result data to fit with the relations in the app
-- In table filter, if there's a relational field, display field, make it search that instead
+- Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
+- Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit, 
+- In the bloodwork transform script, I need to include units in there, and add it to the secondary display field so that it imports correctly
+- I need the import CSV feature to work with the secondary display field is at the end of the name, the ending parentheses show up (probably a bigger change that I realize)
+- Create bloodwork visualization by grouping together blood marker categories, and display the blood results in a tiny graph, where if the marker is within the optimal reference, that it's green, otherwise, it's grey
 
 ### IN PROGRESS
 
@@ -46,5 +48,8 @@
 - In `index.tsx`, modify the url so that if a dataset.id has `blood`, it goes to `bloodwork` [DONE 2025-04-05]
 - Change bulk import into a button that opens a modal/ just made it an extra tab [DONE 2025-04-05]
 - Test if export CSV button works with the relations tables, and if it doesn't, make it work with the display field for the id [DONE 2025-04-05]
+- In table filter, if there's a relational field, display field, make it search that instead [DONE 2025-04-05]
+- Create a script to transform my current CSV with blood result data to fit with the relations in the app [DONE 2025-04-05]
+- Make relations work for batch entry [DONE 2025-04-05]
 
 ### GAVE UP
