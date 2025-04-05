@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Settings } from "lucide-react";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { Label } from "@/components/ui/label";
 import { Table } from "@tanstack/react-table";
 import { exportToCSV } from "@/lib/csv-export";

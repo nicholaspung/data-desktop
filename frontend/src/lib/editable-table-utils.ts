@@ -1,5 +1,5 @@
 // src/lib/editable-table-utils.ts
-import { FieldDefinition, FieldType } from "@/types";
+import { FieldDefinition, FieldType } from "@/types/types";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 

@@ -1,5 +1,5 @@
 // src/services/api.ts - Updated with GetRecordsWithRelations method
-import { DatasetType, FieldDefinition } from "@/types";
+import { DatasetType, FieldDefinition } from "@/types/types";
 import {
   AddRecord,
   CreateDataset,

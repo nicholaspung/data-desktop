@@ -1,6 +1,6 @@
 // src/lib/csv-export.ts
 import Papa from "papaparse";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 
 /**
  * Converts data to CSV format and triggers a download

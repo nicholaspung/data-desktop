@@ -11,7 +11,7 @@ import {
 import { Button } from "../ui/button";
 import { Download } from "lucide-react";
 import { exportToCSV } from "@/lib/csv-export";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { ExportColumnsDialog } from "./export-columns-dialog";
 
 interface FilterControlsProps {
@@ -37,6 +37,10 @@ export default function FilterControls({
   fields,
   datasetId,
 }: FilterControlsProps) {
+  // Get field map for looking up display names
+  const fieldMap = new Map<string, FieldDefinition>();
+  fields.forEach((field) => fieldMap.set(field.key, field));
+
   // Handle export button click
   const handleExport = () => {
     // Get filtered rows if there's a filter applied, otherwise use all data
@@ -67,6 +71,18 @@ export default function FilterControls({
     }
   };
 
+  // Get placeholder text based on selected field
+  const getPlaceholder = () => {
+    if (!filterColumn) return searchPlaceholder;
+
+    const field = fieldMap.get(filterColumn);
+    if (field?.isRelation) {
+      return `Search by ${field.displayName} values...`;
+    }
+
+    return searchPlaceholder;
+  };
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -83,16 +99,20 @@ export default function FilterControls({
                 <SelectValue placeholder="Select column" />
               </SelectTrigger>
               <SelectContent>
-                {filterableColumns.map((column) => (
-                  <SelectItem key={column} value={column}>
-                    {column}
-                  </SelectItem>
-                ))}
+                {filterableColumns.map((column) => {
+                  const field = fieldMap.get(column);
+                  const displayName = field?.displayName || column;
+                  return (
+                    <SelectItem key={column} value={column}>
+                      {displayName} {field?.isRelation ? "(Relation)" : ""}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
 
             <Input
-              placeholder={searchPlaceholder}
+              placeholder={getPlaceholder()}
               value={
                 (table.getColumn(filterColumn)?.getFilterValue() as string) ||
                 ""

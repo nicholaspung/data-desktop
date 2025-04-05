@@ -22,7 +22,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { formatCellValue } from "@/lib/table-utils";
@@ -387,6 +387,40 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       pagination,
       rowSelection,
     },
+    globalFilterFn: (row, columnId, filterValue) => {
+      // For relation fields, check the display values
+      const column = table.getColumn(columnId);
+      if (column?.columnDef?.meta?.isRelation) {
+        const relatedDataKey = `${columnId}_data`;
+        const relatedData = row.original[relatedDataKey];
+        if (relatedData) {
+          // Check common display fields
+          const displayFields = [
+            "name",
+            "title",
+            "displayName",
+            "date",
+            "label",
+          ];
+          for (const field of displayFields) {
+            if (relatedData[field]) {
+              const value = String(relatedData[field]).toLowerCase();
+              if (value.includes(String(filterValue).toLowerCase())) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+
+      // Default behavior for regular fields
+      const value = row.getValue(columnId);
+      return String(value)
+        .toLowerCase()
+        .includes(String(filterValue).toLowerCase());
+    },
+    enableFilters: true,
+    manualFiltering: false,
     onPaginationChange: (updater) => {
       const newPagination =
         typeof updater === "function" ? updater(pagination) : updater;

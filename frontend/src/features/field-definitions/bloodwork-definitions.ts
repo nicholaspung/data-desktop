@@ -1,5 +1,5 @@
 // src/features/field-definitions/bloodwork-fields.ts
-import { FieldDefinitionsDataset } from "@/types";
+import { FieldDefinitionsDataset } from "@/types/types";
 
 // Main bloodwork dataset definition
 export const BLOODWORK_FIELD_DEFINITIONS: FieldDefinitionsDataset = {

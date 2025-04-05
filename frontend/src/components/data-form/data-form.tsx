@@ -26,7 +26,7 @@ import { format } from "date-fns";
 import { CalendarIcon, Loader2, UndoDot, X } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";

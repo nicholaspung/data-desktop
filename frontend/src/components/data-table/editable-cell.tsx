@@ -1,4 +1,4 @@
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import {
   Popover,
   PopoverContent,

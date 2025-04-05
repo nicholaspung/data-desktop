@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import GenericDataPage from "@/components/data-page/generic-data-page";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 
 export interface DatasetConfig {
   id: string;

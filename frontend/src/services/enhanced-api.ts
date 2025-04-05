@@ -1,6 +1,6 @@
 // src/services/enhanced-api.ts
 import { ApiService as BaseApiService } from "./api";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 
 // Enhanced API service with methods for batch processing
 export const EnhancedApiService = {

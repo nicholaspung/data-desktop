@@ -1,4 +1,4 @@
-import { FieldDefinitionsDataset } from "@/types";
+import { FieldDefinitionsDataset } from "@/types/types";
 
 export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "dexa",

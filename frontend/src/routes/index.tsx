@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
-import { DatasetSummary } from "@/types";
+import { DatasetSummary } from "@/types/types";
 
 export const Route = createFileRoute("/")({
   component: Home,

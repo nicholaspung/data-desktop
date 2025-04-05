@@ -5,7 +5,7 @@ import { PlusCircle, Table, ListPlus } from "lucide-react";
 import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
 import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import React from "react";
 import { cn } from "@/lib/utils";
 

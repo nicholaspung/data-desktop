@@ -21,7 +21,7 @@ import { Upload, X, AlertTriangle, Check, Download } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { parseCSV, createCSVTemplate, validateCSV } from "@/lib/csv-parser";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 

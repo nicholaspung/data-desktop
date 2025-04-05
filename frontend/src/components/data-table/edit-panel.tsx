@@ -1,7 +1,7 @@
 import { Loader2, Save, UndoDot, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { useState, useEffect } from "react";
 import {
   Select,

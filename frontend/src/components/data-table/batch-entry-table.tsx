@@ -10,7 +10,7 @@ import {
   Loader2,
   InfoIcon,
 } from "lucide-react";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { parseCSV, createCSVTemplate } from "@/lib/csv-parser";

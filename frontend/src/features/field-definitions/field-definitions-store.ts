@@ -1,5 +1,5 @@
 // src/features/field-definitions/field-definitions-store.ts
-import { FieldDefinition, FieldDefinitionsState } from "@/types";
+import { FieldDefinition, FieldDefinitionsState } from "@/types/types";
 import { Store } from "@tanstack/react-store";
 import { DEXA_FIELD_DEFINITIONS } from "./dexa-definitions";
 import {

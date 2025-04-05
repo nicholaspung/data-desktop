@@ -15,6 +15,11 @@ export interface ColumnMeta {
   unit?: string;
   description?: string;
   isSearchable?: boolean;
+  // Add relation-specific properties
+  isRelation?: boolean;
+  relatedDataset?: string;
+  displayField?: string;
+  secondaryDisplayField?: string;
 }
 
 export interface FieldDefinition {

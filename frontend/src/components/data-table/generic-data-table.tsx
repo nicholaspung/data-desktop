@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { createColumn } from "@/lib/table-utils";
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import { Label } from "@/components/ui/label";
 import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 import { ConfirmChangesDialog } from "../reusable/confirm-changes-dialog";
@@ -96,7 +96,8 @@ export default function GenericDataTable({
           unit: field.unit,
           description: field.description,
           isSearchable: field.isSearchable,
-        }
+        },
+        field // Pass the full field definition for filtering and relation handling
       )
     );
 

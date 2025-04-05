@@ -1,5 +1,5 @@
 // src/lib/csv-parser.ts
-import { FieldDefinition } from "@/types";
+import { FieldDefinition } from "@/types/types";
 import Papa from "papaparse";
 
 /**
