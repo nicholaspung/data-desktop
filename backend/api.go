@@ -276,3 +276,29 @@ func (a *App) GetRelatedRecords(datasetID string, relationsJSON string) ([]map[s
 	// Call the repository function
 	return database.GetDataRecordsWithRelations(datasetID, relations)
 }
+
+// GetRecordsWithRelations returns all records for a dataset with related data included
+func (a *App) GetRecordsWithRelations(datasetID string) ([]map[string]interface{}, error) {
+	// Get the dataset to find relation fields
+	dataset, err := database.GetDataset(datasetID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build a map of relations
+	relations := make(map[string]string)
+	for _, field := range dataset.Fields {
+		if field.IsRelation && field.RelatedDataset != "" {
+			// Use the field key as both key and alias
+			relations[field.Key] = field.Key
+		}
+	}
+
+	// If no relations, just return regular records
+	if len(relations) == 0 {
+		return a.GetRecords(datasetID)
+	}
+
+	// Get records with relations
+	return database.GetDataRecordsWithRelations(datasetID, relations)
+}

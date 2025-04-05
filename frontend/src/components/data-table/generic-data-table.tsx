@@ -242,7 +242,13 @@ export default function GenericDataTable({
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const records = await ApiService.getRecords(datasetId);
+      // Check if this dataset has relation fields
+      const hasRelations = fields.some((field) => field.isRelation);
+
+      // Use the appropriate API method
+      const records = hasRelations
+        ? await ApiService.getRecordsWithRelations(datasetId)
+        : await ApiService.getRecords(datasetId);
 
       // Process dates to ensure they're Date objects
       const processedRecords = records.map((record) => {

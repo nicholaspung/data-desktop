@@ -244,7 +244,58 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
         // If this row is being edited, render the editable cell
         if (isEditing) {
+          // Check if this is a relation field and we have related data
           const field = fieldMap.get(columnId);
+          if (field?.isRelation && field?.relatedDataset) {
+            const relatedKey = `${columnId}_data`;
+            const relatedData = row.original[relatedKey];
+
+            if (relatedData) {
+              // Create a generic formatter for relation display
+              let displayValue = "";
+
+              // Use displayField from field definition if provided
+              if (field.displayField) {
+                // Single field display
+                displayValue =
+                  relatedData[field.displayField] || `ID: ${value}`;
+              } else {
+                // Smart fallback strategy - try common display fields
+                displayValue =
+                  relatedData.name ||
+                  relatedData.title ||
+                  relatedData.displayName ||
+                  relatedData.label ||
+                  // Date-based fallback for records with dates
+                  (relatedData.date
+                    ? new Date(relatedData.date).toLocaleDateString()
+                    : `ID: ${value}`);
+              }
+
+              // Add secondary information if specified in field definition
+              if (
+                field.secondaryDisplayField &&
+                relatedData[field.secondaryDisplayField]
+              ) {
+                displayValue += ` - ${relatedData[field.secondaryDisplayField]}`;
+              }
+
+              return (
+                <div
+                  className="truncate"
+                  style={{ maxWidth: "100%" }}
+                  title={displayValue}
+                >
+                  {displayValue}
+                </div>
+              );
+            } else {
+              // Fallback if related data isn't available
+              return (
+                <div className="truncate">{value ? `ID: ${value}` : "—"}</div>
+              );
+            }
+          }
           if (field) {
             return (
               <EditableCell

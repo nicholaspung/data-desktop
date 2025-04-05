@@ -134,6 +134,8 @@ export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       isRelation: true,
       relatedDataset: "bloodwork",
       relatedField: "id",
+      displayField: "date",
+      secondaryDisplayField: "lab_name",
     },
     {
       key: "blood_marker_id",
@@ -145,6 +147,8 @@ export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       isRelation: true,
       relatedDataset: "blood_markers",
       relatedField: "id",
+      displayField: "name",
+      secondaryDisplayField: "unit",
     },
     {
       key: "value_number",

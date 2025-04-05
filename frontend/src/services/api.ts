@@ -1,4 +1,4 @@
-// src/services/api.ts - Fixed version with complete error handling
+// src/services/api.ts - Updated with GetRecordsWithRelations method
 import { DatasetType, FieldDefinition } from "@/types";
 import {
   AddRecord,
@@ -9,6 +9,7 @@ import {
   GetDatasets,
   GetRecord,
   GetRecords,
+  GetRecordsWithRelations, // Add this new import
   ImportRecords,
   UpdateDataset,
   UpdateRecord,
@@ -97,6 +98,24 @@ export const ApiService = {
     } catch (error) {
       console.error(`Failed to get records for dataset ${datasetId}:`, error);
       toast.error("Failed to load records");
+      // Return empty array to prevent null reference errors
+      return [] as T[];
+    }
+  },
+
+  // New method to get records with relations included
+  async getRecordsWithRelations<T = Record<string, any>>(
+    datasetId: string
+  ): Promise<T[]> {
+    try {
+      const records = await GetRecordsWithRelations(datasetId);
+      return (records as T[]) || [];
+    } catch (error) {
+      console.error(
+        `Failed to get records with relations for dataset ${datasetId}:`,
+        error
+      );
+      toast.error("Failed to load records with related data");
       // Return empty array to prevent null reference errors
       return [] as T[];
     }

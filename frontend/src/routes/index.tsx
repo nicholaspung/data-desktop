@@ -66,7 +66,9 @@ function Home() {
               lastUpdated,
               // Assign icons based on dataset type
               icon: getDatasetIcon(dataset.type),
-              href: `/${dataset.id}`,
+              href: dataset.id.includes("blood")
+                ? "/bloodwork"
+                : `/${dataset.id}`,
             };
           } catch (error) {
             console.error(`Error getting records for ${dataset.id}:`, error);
@@ -76,7 +78,9 @@ function Home() {
               count: 0,
               lastUpdated: null,
               icon: getDatasetIcon(dataset.type),
-              href: `/${dataset.id}`,
+              href: dataset.id.includes("blood")
+                ? "/bloodwork"
+                : `/${dataset.id}`,
             };
           }
         });

@@ -29,6 +29,8 @@ export interface FieldDefinition {
   isRelation?: boolean;
   relatedDataset?: string;
   relatedField?: string;
+  displayField?: string;
+  secondaryDisplayField?: string;
 }
 
 export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";
