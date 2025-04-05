@@ -13,8 +13,8 @@ export const Route = createFileRoute("/bloodwork")({
 export default function BloodworkPage() {
   const { getDatasetFields } = useFieldDefinitions();
   const bloodworkFields = getDatasetFields("bloodwork");
-  const bloodmarkersFields = getDatasetFields("bloodmarkers");
-  const bloodresultsFields = getDatasetFields("bloodresults");
+  const bloodmarkersFields = getDatasetFields("blood_markers");
+  const bloodresultsFields = getDatasetFields("blood_results");
 
   const datasets: DatasetConfig[] = [
     {

@@ -10,6 +10,7 @@
 - PDF reports from data
 - Start working on bloodwork feature
 - Add an export CSV button
+- Make relations work for batch entry
 
 ### IN PROGRESS
 

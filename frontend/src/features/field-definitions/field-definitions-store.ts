@@ -13,8 +13,8 @@ const initialState: FieldDefinitionsState = {
   datasets: {
     dexa: DEXA_FIELD_DEFINITIONS,
     bloodwork: BLOODWORK_FIELD_DEFINITIONS,
-    bloodmarkers: BLOOD_MARKERS_FIELD_DEFINITIONS,
-    bloodresults: BLOOD_RESULTS_FIELD_DEFINITIONS,
+    blood_markers: BLOOD_MARKERS_FIELD_DEFINITIONS,
+    blood_results: BLOOD_RESULTS_FIELD_DEFINITIONS,
   },
 };
 

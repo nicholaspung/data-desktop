@@ -39,6 +39,12 @@ func (a *App) Startup(ctx context.Context) {
 	if err != nil {
 		log.Println("Error synchronizing datasets:", err.Error())
 	}
+
+	// Clean up unused tables (optional)
+	err = database.CleanupUnusedTables()
+	if err != nil {
+		log.Println("Error cleaning up unused tables:", err.Error())
+	}
 }
 
 // Shutdown is called when the app is about to quit
