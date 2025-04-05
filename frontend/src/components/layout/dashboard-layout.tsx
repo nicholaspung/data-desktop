@@ -224,10 +224,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto w-full">
         <div
           className={cn(
-            "container py-6 px-6",
+            "w-full px-4 py-6",
             // Add padding transition when sidebar state changes
             "transition-all duration-300 ease-in-out"
           )}

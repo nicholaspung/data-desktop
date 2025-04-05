@@ -1,10 +1,10 @@
 // src/routes/bloodwork.tsx
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import { HeartPulse } from "lucide-react";
-import GenericDataPage from "@/components/data-page/generic-data-page";
-import BloodworkVisualization from "@/features/bloodwork/bloodwork-visualization";
+import {
+  DatasetConfig,
+  DatasetSelector,
+} from "@/components/data-page/dataset-selector";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
@@ -13,31 +13,41 @@ export const Route = createFileRoute("/bloodwork")({
 export default function BloodworkPage() {
   const { getDatasetFields } = useFieldDefinitions();
   const bloodworkFields = getDatasetFields("bloodwork");
-  const [refreshKey, setRefreshKey] = useState(0);
+  const bloodmarkersFields = getDatasetFields("bloodmarkers");
+  const bloodresultsFields = getDatasetFields("bloodresults");
 
-  // Function to refresh data when changes are made
-  const handleDataChange = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+  const datasets: DatasetConfig[] = [
+    {
+      id: "bloodwork",
+      title: "Bloodwork",
+      description:
+        "Track and analyze your blood test results over time. Monitor important biomarkers and track your progress towards optimal health.",
+      fields: bloodworkFields,
+      addLabel: "Add Bloodwork Results",
+    },
+    {
+      id: "bloodmarkers",
+      title: "Bloodwork Markers",
+      fields: bloodmarkersFields,
+      addLabel: "Add Bloodwork Markers",
+    },
+    {
+      id: "bloodresults",
+      title: "Bloodwork Results",
+      fields: bloodresultsFields,
+      addLabel: "Add Bloodwork Results",
+    },
+  ];
 
   return (
-    <GenericDataPage
-      datasetId="bloodwork"
-      fields={bloodworkFields}
-      title="Bloodwork"
-      description="Track and analyze your blood test results over time. Monitor important biomarkers and track your progress towards optimal health."
-      addLabel="Add Bloodwork Results"
-      defaultTab="visualization"
-      onDataChange={handleDataChange}
-      customTabs={[
-        {
-          id: "visualization",
-          label: "Visualization",
-          icon: <HeartPulse className="h-4 w-4" />,
-          content: <BloodworkVisualization key={`viz-${refreshKey}`} />,
-          position: "before",
-        },
-      ]}
-    />
+    <div className="py-10">
+      <h1 className="text-3xl font-bold mb-6">Bloodwork Tracking</h1>
+
+      <DatasetSelector
+        datasets={datasets}
+        defaultDatasetId="bloodwork"
+        title="Select Category"
+      />
+    </div>
   );
 }

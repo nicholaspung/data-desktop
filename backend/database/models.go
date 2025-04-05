@@ -37,6 +37,7 @@ type FieldDefinition struct {
 	Description  string    `json:"description,omitempty"`
 	Unit         string    `json:"unit,omitempty"`
 	IsSearchable bool      `json:"isSearchable,omitempty"`
+	IsOptional   bool      `json:"isOptional,omitempty"`
 
 	// New fields for relationships
 	RelatedDataset string `json:"relatedDataset,omitempty"` // ID of the related dataset

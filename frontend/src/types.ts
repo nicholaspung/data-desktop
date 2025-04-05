@@ -24,6 +24,7 @@ export interface FieldDefinition {
   description?: string;
   unit?: string;
   isSearchable?: boolean;
+  isOptional?: boolean;
   // New relationship fields
   isRelation?: boolean;
   relatedDataset?: string;

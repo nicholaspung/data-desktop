@@ -33,10 +33,18 @@ func GetBloodResultFields() []database.FieldDefinition {
 			RelatedField:   "id",
 		},
 		{
-			Key:         "value",
+			Key:         "value_number",
 			Type:        database.FieldTypeNumber,
-			DisplayName: "Value",
-			Description: "Measured result value",
+			DisplayName: "Value (Number)",
+			Description: "Measured number result value",
+
+			IsSearchable: false,
+		},
+		{
+			Key:         "value_text",
+			Type:        database.FieldTypeText,
+			DisplayName: "Value (Text)",
+			Description: "Measured text result value",
 
 			IsSearchable: false,
 		},

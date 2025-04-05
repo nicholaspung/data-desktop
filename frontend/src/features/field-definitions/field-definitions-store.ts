@@ -2,54 +2,19 @@
 import { FieldDefinition, FieldDefinitionsState } from "@/types";
 import { Store } from "@tanstack/react-store";
 import { DEXA_FIELD_DEFINITIONS } from "./dexa-definitions";
+import {
+  BLOOD_MARKERS_FIELD_DEFINITIONS,
+  BLOOD_RESULTS_FIELD_DEFINITIONS,
+  BLOODWORK_FIELD_DEFINITIONS,
+} from "./bloodwork-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
   datasets: {
     dexa: DEXA_FIELD_DEFINITIONS,
-    bloodwork: {
-      id: "bloodwork",
-      name: "Bloodwork",
-      description: "Blood test results and markers",
-      fields: [
-        {
-          key: "date",
-          type: "date",
-          displayName: "Date",
-          description: "Date of the blood test",
-          isSearchable: true,
-        },
-        {
-          key: "fasted",
-          type: "boolean",
-          displayName: "Fasted",
-          description: "Whether the blood was drawn in a fasted state",
-        },
-        // Add blood work specific fields here
-      ],
-    },
-    paycheck: {
-      id: "paycheck",
-      name: "Paycheck",
-      description: "Paycheck and income information",
-      fields: [
-        {
-          key: "date",
-          type: "date",
-          displayName: "Date",
-          description: "Paycheck date",
-          isSearchable: true,
-        },
-        {
-          key: "gross_income",
-          type: "number",
-          displayName: "Gross Income",
-          unit: "$",
-          description: "Gross income before any deductions",
-        },
-        // Add paycheck specific fields here
-      ],
-    },
+    bloodwork: BLOODWORK_FIELD_DEFINITIONS,
+    bloodmarkers: BLOOD_MARKERS_FIELD_DEFINITIONS,
+    bloodresults: BLOOD_RESULTS_FIELD_DEFINITIONS,
   },
 };
 

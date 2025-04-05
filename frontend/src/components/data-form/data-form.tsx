@@ -30,6 +30,7 @@ import { FieldDefinition } from "@/types";
 import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { RelationField } from "./relation-field";
 
 interface DataFormProps {
   datasetId: string;
@@ -254,30 +255,53 @@ export default function DataForm({
     const schemaObj: Record<string, z.ZodTypeAny> = {};
 
     fields.forEach((field) => {
+      // Check if field should be optional
+      const isOptional = field.isOptional === true;
+
+      // Handle relation fields
+      if (field.isRelation) {
+        schemaObj[field.key] = isOptional
+          ? z.string().optional()
+          : z.string({
+              required_error: `${field.displayName} is required`,
+            });
+        return;
+      }
+
       switch (field.type) {
         case "date":
-          schemaObj[field.key] = z.date({
-            required_error: `${field.displayName} is required`,
-          });
+          schemaObj[field.key] = isOptional
+            ? z.date().optional()
+            : z.date({
+                required_error: `${field.displayName} is required`,
+              });
           break;
         case "boolean":
           schemaObj[field.key] = z.boolean().default(false);
           break;
         case "number":
-          schemaObj[field.key] = z.coerce
-            .number({ required_error: `${field.displayName} is required` })
-            .min(0, "Must be at least 0");
+          schemaObj[field.key] = isOptional
+            ? z.coerce.number().min(0, "Must be at least 0").optional()
+            : z.coerce
+                .number({ required_error: `${field.displayName} is required` })
+                .min(0, "Must be at least 0");
           break;
         case "percentage":
-          schemaObj[field.key] = z.coerce
-            .number({ required_error: `${field.displayName} is required` })
-            .min(0, "Must be at least 0")
-            .max(100, "Must be less than 100");
+          schemaObj[field.key] = isOptional
+            ? z.coerce
+                .number()
+                .min(0, "Must be at least 0")
+                .max(100, "Must be less than 100")
+                .optional()
+            : z.coerce
+                .number({ required_error: `${field.displayName} is required` })
+                .min(0, "Must be at least 0")
+                .max(100, "Must be less than 100");
           break;
         case "text":
-          schemaObj[field.key] = z
-            .string()
-            .min(1, `${field.displayName} is required`);
+          schemaObj[field.key] = isOptional
+            ? z.string().optional()
+            : z.string().min(1, `${field.displayName} is required`);
           break;
       }
     });
@@ -391,6 +415,37 @@ export default function DataForm({
 
   // Render a field based on its type
   const renderField = (field: FieldDefinition) => {
+    if (field.isRelation) {
+      return (
+        <FormField
+          key={field.key}
+          control={form.control}
+          name={field.key}
+          render={({
+            field: formField,
+          }: {
+            field: {
+              value: string;
+              onChange: (value: string) => void;
+              onBlur: () => void;
+              name: string;
+              ref: React.Ref<any>;
+            };
+          }) => (
+            <RelationField
+              field={formField}
+              fieldDef={field}
+              onChange={(value: string) => {
+                formField.onChange(value);
+                // Trigger validation
+                form.trigger(field.key);
+              }}
+            />
+          )}
+        />
+      );
+    }
+
     switch (field.type) {
       case "date":
         return (

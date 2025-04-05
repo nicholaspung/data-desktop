@@ -7,6 +7,7 @@ export namespace database {
 	    description?: string;
 	    unit?: string;
 	    isSearchable?: boolean;
+	    isOptional?: boolean;
 	    relatedDataset?: string;
 	    relatedField?: string;
 	    isRelation?: boolean;
@@ -23,6 +24,7 @@ export namespace database {
 	        this.description = source["description"];
 	        this.unit = source["unit"];
 	        this.isSearchable = source["isSearchable"];
+	        this.isOptional = source["isOptional"];
 	        this.relatedDataset = source["relatedDataset"];
 	        this.relatedField = source["relatedField"];
 	        this.isRelation = source["isRelation"];

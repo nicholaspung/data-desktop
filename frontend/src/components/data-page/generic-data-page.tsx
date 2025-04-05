@@ -130,7 +130,7 @@ export default function GenericDataPage({
       : "";
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
@@ -141,7 +141,7 @@ export default function GenericDataPage({
       </div>
 
       {allTabs.length > 0 ? (
-        <Tabs defaultValue={validDefaultTab} className="space-y-6">
+        <Tabs defaultValue={validDefaultTab} className="w-full space-y-6">
           <TabsList
             className={cn("w-full", {
               "overflow-x-auto": allTabs.length > 4,
@@ -160,13 +160,13 @@ export default function GenericDataPage({
           </TabsList>
 
           {allTabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id} className="mt-6">
+            <TabsContent key={tab.id} value={tab.id} className="mt-6 w-full">
               {tab.content}
             </TabsContent>
           ))}
         </Tabs>
       ) : (
-        <div className="text-center p-12 border rounded-md bg-muted/10">
+        <div className="text-center p-12 border rounded-md bg-muted/10 w-full">
           <p className="text-muted-foreground">
             No content configured for this page.
           </p>
