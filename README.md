@@ -8,10 +8,8 @@
 
 - PDF reports from data
 - Make relations work for batch entry
-- Test if export CSV button works with the relations tables
 - Creat a script to transform my current CSV with blood result data to fit with the relations in the app
 - In table filter, if there's a relational field, display field, make it search that instead
-- Change bulk import into a button that opens a modal
 
 ### IN PROGRESS
 
@@ -46,5 +44,7 @@
 - Add an export CSV button [DONE 2025-04-04]
 - Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing (looks like they are UUID dataset ids? so need to go into the datasets to find them in order to remove them) [DONE 2025-04-05]
 - In `index.tsx`, modify the url so that if a dataset.id has `blood`, it goes to `bloodwork` [DONE 2025-04-05]
+- Change bulk import into a button that opens a modal/ just made it an extra tab [DONE 2025-04-05]
+- Test if export CSV button works with the relations tables, and if it doesn't, make it work with the display field for the id [DONE 2025-04-05]
 
 ### GAVE UP

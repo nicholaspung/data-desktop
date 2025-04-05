@@ -1,4 +1,4 @@
-// Updated FilterControls with Export Button
+// src/components/data-table/filter-controls.tsx
 import { Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
 import {
@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Download } from "lucide-react";
 import { exportToCSV } from "@/lib/csv-export";
 import { FieldDefinition } from "@/types";
+import { ExportColumnsDialog } from "./export-columns-dialog";
 
 interface FilterControlsProps {
   filterableColumns: string[];
@@ -51,8 +52,14 @@ export default function FilterControls({
       .substring(0, 19);
     const filename = `${datasetId}_export_${timestamp}.csv`;
 
-    // Export to CSV
-    exportToCSV(rowsToExport, fields, filename);
+    // Get visible columns (excluding the action and select columns)
+    const visibleColumns = table
+      .getVisibleLeafColumns()
+      .filter((column) => column.id !== "actions" && column.id !== "select")
+      .map((column) => column.id);
+
+    // Export to CSV with visible columns
+    exportToCSV(rowsToExport, fields, filename, visibleColumns);
 
     // Call optional callback
     if (onExport) {
@@ -101,17 +108,27 @@ export default function FilterControls({
         )}
       </div>
 
-      {/* Export button */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="ml-auto"
-        onClick={handleExport}
-        disabled={data.length === 0}
-      >
-        <Download className="h-4 w-4 mr-2" />
-        Export CSV
-      </Button>
+      <div className="flex gap-2">
+        {/* Quick Export button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          disabled={data.length === 0}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Quick Export
+        </Button>
+
+        {/* Advanced Export Dialog */}
+        <ExportColumnsDialog
+          fields={fields}
+          data={data}
+          table={table}
+          datasetId={datasetId}
+          onExport={onExport}
+        />
+      </div>
     </div>
   );
 }
