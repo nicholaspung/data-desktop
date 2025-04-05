@@ -1,3 +1,4 @@
+// backend/database/cleaup_unused_tables.go
 package database
 
 import (
@@ -6,12 +7,17 @@ import (
 )
 
 func CleanupUnusedTables() error {
-	// List of tables to keep
-	activeTables := []string{
+	// Core tables that should always be kept
+	coreTables := []string{
 		"datasets",
 		"data_records",
-		// Add any other tables that should be kept
+		"sqlite_sequence", // SQLite internal table
 	}
+
+	// Add any dataset-specific tables based on constants
+	// Currently, your application uses a unified table structure with
+	// datasets and data_records tables only, so we don't need to add
+	// dataset-specific tables
 
 	// Get all tables in the database
 	rows, err := DB.Query("SELECT name FROM sqlite_master WHERE type='table'")
@@ -36,22 +42,24 @@ func CleanupUnusedTables() error {
 			continue
 		}
 
-		isActive := false
-		for _, activeTable := range activeTables {
-			if table == activeTable {
-				isActive = true
+		isCore := false
+		for _, coreTable := range coreTables {
+			if table == coreTable {
+				isCore = true
 				break
 			}
 		}
 
-		if !isActive {
+		if !isCore {
 			fmt.Printf("Dropping unused table: %s\n", table)
-			_, err := DB.Exec(fmt.Sprintf("DROP TABLE %s", table))
+			_, err := DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", table))
 			if err != nil {
 				return fmt.Errorf("error dropping table %s: %w", table, err)
 			}
 		}
 	}
 
+	// Log successful cleanup
+	fmt.Println("Database cleanup completed successfully")
 	return nil
 }

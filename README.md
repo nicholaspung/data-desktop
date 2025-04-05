@@ -6,13 +6,15 @@
 
 ### TODOS
 
-- Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing
+- Currently, database has duplicate datasets, probably because it was initialized with old datasets that need changing (looks like they are UUID dataset ids? so need to go into the datasets to find them in order to remove them)
 - PDF reports from data
-- Start working on bloodwork feature
-- Add an export CSV button
 - Make relations work for batch entry
+- In `index.tsx`, modify the url so that if a dataset.id has `blood`, it goes to `bloodwork`
+- Test if export CSV button works with the relations tables
 
 ### IN PROGRESS
+
+- Start working on bloodwork feature
 
 ### DONE
 
@@ -40,5 +42,6 @@
 - Add data form has a weird visual bug at the submit portion [DONE 2025-04-03]
 - Do I want the batch entry tab to also save data locally, until reset? [DONE 2025-04-03]
 - In generic-data-page, if there are more than 4 tabs, it looks weird [DONE 2025-04-03]
+- Add an export CSV button [DONE 2025-04-04]
 
 ### GAVE UP

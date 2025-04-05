@@ -433,13 +433,19 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
   return (
     <div className={cn("space-y-4", className)} key={datasetId}>
-      {/* Filter controls */}
+      {/* Filter controls with export button */}
       <FilterControls
         filterableColumns={filterableColumns}
         filterColumn={filterColumn}
         setFilterColumn={setFilterColumn}
         table={table}
         searchPlaceholder={searchPlaceholder}
+        data={data}
+        fields={fields}
+        datasetId={datasetId}
+        onExport={() => {
+          toast.success("Data exported to CSV");
+        }}
       />
 
       {/* Pagination component */}
