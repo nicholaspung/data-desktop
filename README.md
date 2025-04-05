@@ -10,6 +10,8 @@
 - Make relations work for batch entry
 - Test if export CSV button works with the relations tables
 - Creat a script to transform my current CSV with blood result data to fit with the relations in the app
+- In table filter, if there's a relational field, display field, make it search that instead
+- Change bulk import into a button that opens a modal
 
 ### IN PROGRESS
 

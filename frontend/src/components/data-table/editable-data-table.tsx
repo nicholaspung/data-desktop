@@ -26,6 +26,7 @@ import { FieldDefinition } from "@/types";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { formatCellValue } from "@/lib/table-utils";
+import { formatDate } from "@/lib/date-utils";
 import Pagination from "./pagination";
 import { calculateColumnWidth } from "./table-width-utils";
 import EditableCell from "./editable-cell";
@@ -241,61 +242,11 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         const isEditing = editingRow === row.original[dataKey];
         const value = getValue();
         const width = columnWidths[columnId] || "auto";
+        const field = fieldMap.get(columnId);
 
-        // If this row is being edited, render the editable cell
+        // If this row is being edited
         if (isEditing) {
-          // Check if this is a relation field and we have related data
-          const field = fieldMap.get(columnId);
-          if (field?.isRelation && field?.relatedDataset) {
-            const relatedKey = `${columnId}_data`;
-            const relatedData = row.original[relatedKey];
-
-            if (relatedData) {
-              // Create a generic formatter for relation display
-              let displayValue = "";
-
-              // Use displayField from field definition if provided
-              if (field.displayField) {
-                // Single field display
-                displayValue =
-                  relatedData[field.displayField] || `ID: ${value}`;
-              } else {
-                // Smart fallback strategy - try common display fields
-                displayValue =
-                  relatedData.name ||
-                  relatedData.title ||
-                  relatedData.displayName ||
-                  relatedData.label ||
-                  // Date-based fallback for records with dates
-                  (relatedData.date
-                    ? new Date(relatedData.date).toLocaleDateString()
-                    : `ID: ${value}`);
-              }
-
-              // Add secondary information if specified in field definition
-              if (
-                field.secondaryDisplayField &&
-                relatedData[field.secondaryDisplayField]
-              ) {
-                displayValue += ` - ${relatedData[field.secondaryDisplayField]}`;
-              }
-
-              return (
-                <div
-                  className="truncate"
-                  style={{ maxWidth: "100%" }}
-                  title={displayValue}
-                >
-                  {displayValue}
-                </div>
-              );
-            } else {
-              // Fallback if related data isn't available
-              return (
-                <div className="truncate">{value ? `ID: ${value}` : "—"}</div>
-              );
-            }
-          }
+          // For any field type, use the EditableCell component which now handles relations
           if (field) {
             return (
               <EditableCell
@@ -316,13 +267,84 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           }
         }
 
-        // Otherwise, use the original cell renderer if available
+        // NON-EDITING MODE BELOW
+
+        // Handle relation fields for view mode
+        if (field?.isRelation && field?.relatedDataset) {
+          // Look for the related data in xxx_id_data format
+          const relatedKey = `${columnId}_data`;
+          const relatedData = row.original[relatedKey];
+
+          if (relatedData) {
+            // Create a meaningful display value based on the relation type
+            let displayValue = "";
+
+            // Special handling for bloodwork date field
+            if (field.relatedDataset === "bloodwork" && relatedData.date) {
+              displayValue = formatDate(new Date(relatedData.date));
+              if (relatedData.lab_name && relatedData.lab_name.trim() !== "") {
+                displayValue += ` - ${relatedData.lab_name}`;
+              }
+            }
+            // Special handling for blood markers
+            else if (field.relatedDataset === "blood_markers") {
+              displayValue = relatedData.name || "Unnamed";
+              if (relatedData.unit && relatedData.unit.trim() !== "") {
+                displayValue += ` (${relatedData.unit})`;
+              }
+            }
+            // Use displayField from field definition if provided
+            else if (
+              field.displayField &&
+              relatedData[field.displayField] !== undefined
+            ) {
+              displayValue = relatedData[field.displayField] || "";
+
+              // Add secondary information if specified in field definition
+              if (
+                field.secondaryDisplayField &&
+                relatedData[field.secondaryDisplayField] !== undefined &&
+                relatedData[field.secondaryDisplayField] !== ""
+              ) {
+                displayValue += ` - ${relatedData[field.secondaryDisplayField]}`;
+              }
+            }
+            // Fallback options
+            else {
+              displayValue =
+                relatedData.name ||
+                relatedData.title ||
+                relatedData.displayName ||
+                relatedData.label ||
+                // Date-based fallback for records with dates
+                (relatedData.date
+                  ? formatDate(new Date(relatedData.date))
+                  : `ID: ${value}`);
+            }
+
+            return (
+              <div
+                className="truncate"
+                style={{ maxWidth: "100%" }}
+                title={displayValue}
+              >
+                {displayValue}
+              </div>
+            );
+          } else {
+            // No related data available, show the ID
+            return (
+              <div className="truncate">{value ? `ID: ${value}` : "—"}</div>
+            );
+          }
+        }
+
+        // If not a relation or not editing, use the original cell renderer if available
         if (column.cell) {
           return flexRender(column.cell, info);
         }
 
         // Fallback to displaying the value with formatting
-        const field = fieldMap.get(columnId);
         return (
           <div
             className="truncate"
