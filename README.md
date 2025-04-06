@@ -1,4 +1,4 @@
-# Journaling Desktop
+# Data Desktop
 
 - Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet.
 
@@ -9,9 +9,8 @@
 - PDF reports from data
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit, 
-- In the bloodwork transform script, I need to include units in there, and add it to the secondary display field so that it imports correctly
-- I need the import CSV feature to work with the secondary display field is at the end of the name, the ending parentheses show up (probably a bigger change that I realize)
 - Create bloodwork visualization by grouping together blood marker categories, and display the blood results in a tiny graph, where if the marker is within the optimal reference, that it's green, otherwise, it's grey
+- It seems like the input forms in single edit/multi edit in data-table isn't working
 
 ### IN PROGRESS
 
@@ -51,5 +50,7 @@
 - In table filter, if there's a relational field, display field, make it search that instead [DONE 2025-04-05]
 - Create a script to transform my current CSV with blood result data to fit with the relations in the app [DONE 2025-04-05]
 - Make relations work for batch entry [DONE 2025-04-05]
+- In the bloodwork transform script, I need to include units in there, and add it to the secondary display field so that it imports correctly [DONE 2025-04-05]
+- I need the import CSV feature to work with the secondary display field is at the end of the name, the ending parentheses show up (probably a bigger change that I realize) - seems like this is working now [DONE 2025-04-05]
 
 ### GAVE UP

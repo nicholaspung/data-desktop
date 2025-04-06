@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ApiService } from "@/services/api";
-import { formatDate } from "@/lib/date-utils";
+import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 
 export default function EditPanel({
   isSidebarOpen,
@@ -52,7 +52,7 @@ export default function EditPanel({
   const [relationOptions, setRelationOptions] = useState<
     Record<string, { id: string; label: string }[]>
   >({});
-  const [loadingRelations, setLoadingRelations] = useState<
+  const [loadingRelations, setIsLoadingRelations] = useState<
     Record<string, boolean>
   >({});
 
@@ -78,56 +78,13 @@ export default function EditPanel({
     if (!field.relatedDataset) return;
 
     // Set loading state for this field
-    setLoadingRelations((prev) => ({ ...prev, [field.key]: true }));
+    setIsLoadingRelations((prev) => ({ ...prev, [field.key]: true }));
 
     try {
       const records = await ApiService.getRecords(field.relatedDataset);
 
       // Transform records to options with id and label
-      const options = records.map((record: any) => {
-        let label = "";
-
-        // Special handling for bloodwork
-        if (field.relatedDataset === "bloodwork" && record.date) {
-          const testDate = formatDate(new Date(record.date));
-          label = testDate;
-          if (record.lab_name && record.lab_name.trim() !== "") {
-            label += ` - ${record.lab_name}`;
-          }
-        }
-        // Special handling for blood markers
-        else if (field.relatedDataset === "blood_markers") {
-          label = record.name || "Unnamed";
-          if (record.unit && record.unit.trim() !== "") {
-            label += ` (${record.unit})`;
-          }
-        }
-        // Use displayField from field definition if provided
-        else if (
-          field.displayField &&
-          record[field.displayField] !== undefined
-        ) {
-          label = record[field.displayField] || "";
-
-          // Add secondary field if available
-          if (
-            field.secondaryDisplayField &&
-            record[field.secondaryDisplayField] !== undefined &&
-            record[field.secondaryDisplayField] !== ""
-          ) {
-            label += ` - ${record[field.secondaryDisplayField]}`;
-          }
-        }
-        // Generic fallback
-        else {
-          label = record.name || record.title || `ID: ${record.id}`;
-        }
-
-        return {
-          id: record.id,
-          label,
-        };
-      });
+      const options = generateOptionsForLoadRelationOptions(records, field);
 
       // Update options for this field
       setRelationOptions((prev) => ({ ...prev, [field.key]: options }));
@@ -138,7 +95,7 @@ export default function EditPanel({
       );
     } finally {
       // Clear loading state
-      setLoadingRelations((prev) => ({ ...prev, [field.key]: false }));
+      setIsLoadingRelations((prev) => ({ ...prev, [field.key]: false }));
     }
   };
 
@@ -173,14 +130,7 @@ export default function EditPanel({
       // Get the current display label
       let currentLabel = "";
       if (relatedData) {
-        if (field.relatedDataset === "bloodwork" && relatedData.date) {
-          currentLabel = formatDate(new Date(relatedData.date));
-          if (relatedData.lab_name)
-            currentLabel += ` - ${relatedData.lab_name}`;
-        } else if (field.relatedDataset === "blood_markers") {
-          currentLabel = relatedData.name || "Unnamed";
-          if (relatedData.unit) currentLabel += ` (${relatedData.unit})`;
-        } else if (field.displayField && relatedData[field.displayField]) {
+        if (field.displayField && relatedData[field.displayField]) {
           currentLabel = relatedData[field.displayField];
           if (
             field.secondaryDisplayField &&

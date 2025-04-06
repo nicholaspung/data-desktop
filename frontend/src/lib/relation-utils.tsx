@@ -91,7 +91,7 @@ export async function fetchRelationOptions(
               record[field.secondaryDisplayField] !== undefined &&
               record[field.secondaryDisplayField] !== ""
             ) {
-              label += ` - ${record[field.secondaryDisplayField]}`;
+              label += ` (${record[field.secondaryDisplayField]})`;
             }
           }
           // Generic fallback
@@ -165,37 +165,77 @@ export async function resolveRelationReferences(
       const options = relationData[field.key]?.options || [];
       if (options.some((option) => option.id === value)) continue;
 
-      // Try to match by display value or label
-      const lowerValue =
-        typeof value === "string" ? value.toLowerCase().trim() : "";
+      // If it's a string, try to match by display value or label
+      if (typeof value === "string") {
+        const lowerValue = value.toLowerCase().trim();
 
-      // Look for exact match first
-      const exactMatch = options.find(
-        (option) =>
-          option.displayValue.toLowerCase() === lowerValue ||
-          option.label.toLowerCase() === lowerValue
-      );
+        // Handle parentheses pattern first - "PrimaryValue (SecondaryValue)"
+        if (field.secondaryDisplayField) {
+          // Find the last opening parenthesis
+          const openParenIndex = lowerValue.lastIndexOf("(");
 
-      if (exactMatch) {
-        record[field.key] = exactMatch.id;
-        continue;
-      }
+          // Check if we have both opening and closing parentheses
+          if (openParenIndex > 0 && lowerValue.endsWith(")")) {
+            // Extract primary and secondary values
+            const primaryValue = lowerValue.substring(0, openParenIndex).trim();
+            const secondaryValue = lowerValue
+              .substring(openParenIndex + 1, lowerValue.length - 1)
+              .trim();
 
-      // Try partial matching
-      const partialMatch = options.find(
-        (option) =>
-          option.displayValue.toLowerCase().includes(lowerValue) ||
-          lowerValue.includes(option.displayValue.toLowerCase()) ||
-          option.label.toLowerCase().includes(lowerValue) ||
-          lowerValue.includes(option.label.toLowerCase())
-      );
+            // Look for a record with matching primary and secondary values
+            const exactMatch = options.find((option) => {
+              // Check if label includes both primary and secondary in expected format
+              const optionLabel = option.label.toLowerCase();
+              const hasPrimary = optionLabel.includes(primaryValue);
+              const hasSecondary = optionLabel.includes(secondaryValue);
+              const hasParenFormat = optionLabel.includes(
+                `(${secondaryValue})`
+              );
+              const hasDashFormat = optionLabel.includes(`- ${secondaryValue}`);
 
-      if (partialMatch) {
-        record[field.key] = partialMatch.id;
-        console.log(
-          `Found partial match for "${value}" with "${partialMatch.label}"`
+              return (
+                hasPrimary && hasSecondary && (hasParenFormat || hasDashFormat)
+              );
+            });
+
+            if (exactMatch) {
+              record[field.key] = exactMatch.id;
+              console.log(
+                `Found combined match for "${value}" with "${exactMatch.label}"`
+              );
+              continue;
+            }
+          }
+        }
+
+        // Look for exact match if not a parentheses pattern or if no match found
+        const exactMatch = options.find(
+          (option) =>
+            option.displayValue.toLowerCase() === lowerValue ||
+            option.label.toLowerCase() === lowerValue
         );
-        continue;
+
+        if (exactMatch) {
+          record[field.key] = exactMatch.id;
+          continue;
+        }
+
+        // Try partial matching
+        const partialMatch = options.find(
+          (option) =>
+            option.displayValue.toLowerCase().includes(lowerValue) ||
+            lowerValue.includes(option.displayValue.toLowerCase()) ||
+            option.label.toLowerCase().includes(lowerValue) ||
+            lowerValue.includes(option.label.toLowerCase())
+        );
+
+        if (partialMatch) {
+          record[field.key] = partialMatch.id;
+          console.log(
+            `Found partial match for "${value}" with "${partialMatch.label}"`
+          );
+          continue;
+        }
       }
 
       // If no match found, leave as is (will be handled by validation later)
@@ -219,7 +259,30 @@ export function createRelationLookup(relationData: RelationDataMap) {
 
     const lowerValue = displayValue.toLowerCase().trim();
 
-    // Try exact matches first
+    // Check for parentheses pattern first - "PrimaryValue (SecondaryValue)"
+    const openParenIndex = lowerValue.lastIndexOf("(");
+    if (openParenIndex > 0 && lowerValue.endsWith(")")) {
+      // Extract primary and secondary values
+      const primaryValue = lowerValue.substring(0, openParenIndex).trim();
+      const secondaryValue = lowerValue
+        .substring(openParenIndex + 1, lowerValue.length - 1)
+        .trim();
+
+      // Look for a record with matching primary and secondary values
+      const exactMatch = data.options.find((option) => {
+        const optionLabel = option.label.toLowerCase();
+        return (
+          optionLabel.includes(primaryValue) &&
+          optionLabel.includes(secondaryValue) &&
+          (optionLabel.includes(`(${secondaryValue})`) ||
+            optionLabel.includes(`- ${secondaryValue}`))
+        );
+      });
+
+      if (exactMatch) return exactMatch.id;
+    }
+
+    // Try exact matches next
     const exactMatch = data.options.find(
       (option) =>
         option.displayValue.toLowerCase() === lowerValue ||
@@ -228,7 +291,7 @@ export function createRelationLookup(relationData: RelationDataMap) {
 
     if (exactMatch) return exactMatch.id;
 
-    // Try partial matches
+    // Try partial matches last
     const partialMatch = data.options.find(
       (option) =>
         option.displayValue.toLowerCase().includes(lowerValue) ||

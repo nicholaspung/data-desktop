@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 
 interface EditableCellProps {
   value: any;
@@ -64,50 +65,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
       const records = await ApiService.getRecords(field.relatedDataset);
 
       // Transform records to options with id and label
-      const options = records.map((record: any) => {
-        let label = "";
-
-        // Special handling for bloodwork
-        if (field.relatedDataset === "bloodwork" && record.date) {
-          const testDate = new Date(record.date).toLocaleDateString();
-          label = testDate;
-          if (record.lab_name && record.lab_name.trim() !== "") {
-            label += ` - ${record.lab_name}`;
-          }
-        }
-        // Special handling for blood markers
-        else if (field.relatedDataset === "blood_markers") {
-          label = record.name || "Unnamed";
-          if (record.unit && record.unit.trim() !== "") {
-            label += ` (${record.unit})`;
-          }
-        }
-        // Use displayField from field definition if provided
-        else if (
-          field.displayField &&
-          record[field.displayField] !== undefined
-        ) {
-          label = record[field.displayField] || "";
-
-          // Add secondary field if available
-          if (
-            field.secondaryDisplayField &&
-            record[field.secondaryDisplayField] !== undefined &&
-            record[field.secondaryDisplayField] !== ""
-          ) {
-            label += ` - ${record[field.secondaryDisplayField]}`;
-          }
-        }
-        // Generic fallback
-        else {
-          label = record.name || record.title || `ID: ${record.id}`;
-        }
-
-        return {
-          id: record.id,
-          label,
-        };
-      });
+      const options = generateOptionsForLoadRelationOptions(records, field);
 
       setRelationOptions(options);
     } catch (error) {
@@ -135,16 +93,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
       if (relatedData) {
         // Create a formatted label based on the relation type
-        if (field.relatedDataset === "bloodwork" && relatedData.date) {
-          const dateStr = new Date(relatedData.date).toLocaleDateString();
-          return relatedData.lab_name
-            ? `${dateStr} - ${relatedData.lab_name}`
-            : dateStr;
-        } else if (field.relatedDataset === "blood_markers") {
-          return relatedData.unit
-            ? `${relatedData.name || "Unnamed"} (${relatedData.unit})`
-            : relatedData.name || "Unnamed";
-        } else if (field.displayField) {
+        if (field.displayField) {
           const primary = relatedData[field.displayField] || "";
           const secondary = field.secondaryDisplayField
             ? relatedData[field.secondaryDisplayField]

@@ -115,6 +115,8 @@ export async function parseCSV(
                     // Try to match the display value to an ID
                     if (relationInfo && typeof value === "string") {
                       const normalizedValue = value.toLowerCase().trim();
+
+                      // First, check for exact match
                       const matchedId =
                         relationInfo.displayToIdMap.get(normalizedValue);
 
@@ -123,7 +125,77 @@ export async function parseCSV(
                         return;
                       }
 
-                      // If no exact match found, try partial matching
+                      // Check for parentheses pattern indicating a secondary display field
+                      // Format expected: "Primary Value (Secondary Value)"
+                      if (field.displayField && field.secondaryDisplayField) {
+                        // Find the last opening parenthesis
+                        const openParenIndex = normalizedValue.lastIndexOf("(");
+
+                        // Check if we have both opening and closing parentheses
+                        if (
+                          openParenIndex > 0 &&
+                          normalizedValue.endsWith(")")
+                        ) {
+                          // Extract primary and secondary values
+                          const primaryValue = normalizedValue
+                            .substring(0, openParenIndex)
+                            .trim();
+                          const secondaryValue = normalizedValue
+                            .substring(
+                              openParenIndex + 1,
+                              normalizedValue.length - 1
+                            )
+                            .trim();
+
+                          // Try to find a match with both primary and secondary values
+                          const combinedKey = `${primaryValue} - ${secondaryValue}`;
+                          const combinedParenKey = `${primaryValue} (${secondaryValue})`;
+
+                          // Check for combined patterns
+                          const combinedMatch =
+                            relationInfo.displayToIdMap.get(combinedKey) ||
+                            relationInfo.displayToIdMap.get(combinedParenKey);
+
+                          if (combinedMatch) {
+                            processedRow[field.key] = combinedMatch;
+                            console.log(
+                              `Found combined match for "${value}" with primary "${primaryValue}" and secondary "${secondaryValue}"`
+                            );
+                            return;
+                          }
+
+                          // Try looking up by primary value while checking for matching secondary value
+                          for (const [
+                            displayKey,
+                            id,
+                          ] of relationInfo.displayToIdMap.entries()) {
+                            // Check if this key contains the primary value
+                            if (displayKey.includes(primaryValue)) {
+                              // Look up the actual record to check secondary value
+                              const records = relationInfo.records || [];
+                              const matchingRecord = records.find(
+                                (record) => record.id === id
+                              );
+
+                              if (
+                                matchingRecord &&
+                                matchingRecord[field.secondaryDisplayField] &&
+                                matchingRecord[field.secondaryDisplayField]
+                                  .toString()
+                                  .toLowerCase() === secondaryValue
+                              ) {
+                                processedRow[field.key] = id;
+                                console.log(
+                                  `Found record match with primary "${primaryValue}" and confirmed secondary "${secondaryValue}"`
+                                );
+                                return;
+                              }
+                            }
+                          }
+                        }
+                      }
+
+                      // If no exact match or parentheses match found, try partial matching
                       for (const [
                         displayValue,
                         id,
@@ -337,6 +409,7 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
     {
       idSet: Set<string>;
       displayToIdMap: Map<string, string>;
+      records: Record<string, any>[];
     }
   >
 > {
@@ -345,6 +418,7 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
     {
       idSet: Set<string>;
       displayToIdMap: Map<string, string>;
+      records: Record<string, any>[];
     }
   > = {};
 
@@ -367,74 +441,44 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
         const id = record.id;
         idSet.add(id);
 
-        // Determine the display value based on the dataset
-        // Bloodwork - date-based format
-        if (field.relatedDataset === "bloodwork" && record.date) {
-          const date = new Date(record.date);
-          const dateStr = date.toLocaleDateString();
+        // Use display fields if specified
+        if (field.displayField && record[field.displayField]) {
+          const displayValue = record[field.displayField]
+            .toString()
+            .toLowerCase();
+          displayToIdMap.set(displayValue, id);
 
-          // Add all variants of the display value
-          displayToIdMap.set(dateStr.toLowerCase(), id);
+          if (
+            field.secondaryDisplayField &&
+            record[field.secondaryDisplayField]
+          ) {
+            const secondaryValue = record[field.secondaryDisplayField]
+              .toString()
+              .toLowerCase();
 
-          if (record.lab_name) {
-            const labName = record.lab_name.toLowerCase();
-            const combined = `${dateStr} - ${record.lab_name}`.toLowerCase();
+            // Create both combined formats: with dash and with parentheses
+            const combinedDash = `${displayValue} - ${secondaryValue}`;
+            const combinedParen = `${displayValue} (${secondaryValue})`;
 
-            displayToIdMap.set(labName, id);
-            displayToIdMap.set(combined, id);
-          }
-
-          // Add date in ISO format
-          displayToIdMap.set(
-            date.toISOString().split("T")[0].toLowerCase(),
-            id
-          );
-        }
-        // Blood markers - name + unit format
-        else if (field.relatedDataset === "blood_markers") {
-          if (record.name) {
-            displayToIdMap.set(record.name.toLowerCase(), id);
-
-            if (record.unit) {
-              const combined = `${record.name} (${record.unit})`.toLowerCase();
-              displayToIdMap.set(combined, id);
-              displayToIdMap.set(record.unit.toLowerCase(), id);
-            }
+            displayToIdMap.set(secondaryValue, id);
+            displayToIdMap.set(combinedDash, id);
+            displayToIdMap.set(combinedParen, id);
           }
         }
-        // Generic handling for other datasets
-        else {
-          // Use display fields if specified
-          if (field.displayField && record[field.displayField]) {
-            const displayValue = record[field.displayField].toLowerCase();
-            displayToIdMap.set(displayValue, id);
 
-            if (
-              field.secondaryDisplayField &&
-              record[field.secondaryDisplayField]
-            ) {
-              const secondaryValue =
-                record[field.secondaryDisplayField].toLowerCase();
-              const combined = `${displayValue} - ${secondaryValue}`;
-
-              displayToIdMap.set(secondaryValue, id);
-              displayToIdMap.set(combined, id);
-            }
+        // Add common fields that might be used for display
+        ["name", "title", "label", "displayName"].forEach((key) => {
+          if (record[key]) {
+            displayToIdMap.set(record[key].toString().toLowerCase(), id);
           }
-
-          // Add common fields that might be used for display
-          ["name", "title", "label", "displayName"].forEach((key) => {
-            if (record[key]) {
-              displayToIdMap.set(record[key].toLowerCase(), id);
-            }
-          });
-        }
+        });
       });
 
       // Store the relation data
       result[field.key] = {
         idSet,
         displayToIdMap,
+        records, // Store the full records for secondary field lookups
       };
     } catch (error) {
       console.error(
@@ -444,6 +488,7 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
       result[field.key] = {
         idSet: new Set(),
         displayToIdMap: new Map(),
+        records: [],
       };
     }
   }
@@ -530,18 +575,22 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
       // For relation fields, provide descriptive guidance
       let example = "";
 
-      if (field.relatedDataset === "bloodwork") {
-        example = "MM/DD/YYYY - Lab Name";
-      } else if (field.relatedDataset === "blood_markers") {
-        example = "Marker Name";
-      } else if (field.displayField) {
-        example = `Enter ${field.displayName} name`;
+      if (field.displayField) {
+        if (field.secondaryDisplayField) {
+          example = `Name (Secondary Value)`;
+          headerDesc[field.key] +=
+            ` (You can use format "Primary (Secondary)" to match by both fields)`;
+        } else {
+          example = `Enter ${field.displayName} name`;
+        }
       } else {
         example = "Enter name or ID";
       }
 
       exampleRow[field.key] = example;
-      headerDesc[field.key] += " (Enter name, the system will match to ID)";
+      if (!headerDesc[field.key].includes("(Enter name")) {
+        headerDesc[field.key] += " (Enter name, the system will match to ID)";
+      }
     } else {
       switch (field.type) {
         case "date":

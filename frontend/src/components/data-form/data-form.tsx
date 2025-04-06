@@ -31,6 +31,12 @@ import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RelationField } from "./relation-field";
+import SavedDataBadge from "../reusable/saved-data-badge";
+import {
+  createFreshDefaultValues,
+  getFieldsByType,
+  hasNonEmptyValues,
+} from "@/lib/form-utils";
 
 interface DataFormProps {
   datasetId: string;
@@ -73,60 +79,6 @@ export default function DataForm({
   // Generate storage key for this form
   const storageKey = persistKey || `form_${datasetId}_data`;
 
-  // Helper function to check if form has meaningful data
-  const hasNonEmptyValues = (values: Record<string, any>) => {
-    // Check each field to see if it's been modified from default
-    for (const field of fields) {
-      const value = values[field.key];
-
-      switch (field.type) {
-        case "text":
-          if (value && value.trim() !== "") return true;
-          break;
-        case "number":
-        case "percentage":
-          // If the value is significantly different from 0, it's been changed
-          if (value !== 0 && value !== null && value !== undefined) return true;
-          break;
-        case "boolean":
-          // If boolean is true, it's been changed from default false
-          if (value === true) return true;
-          break;
-        case "date":
-          // Skip date fields for determining meaningful changes
-          break;
-      }
-    }
-
-    return false;
-  };
-
-  // Utility function to create fresh default values
-  const createFreshDefaultValues = () => {
-    const freshDefaults: Record<string, any> = {};
-
-    // Set initial values for each field type
-    fields.forEach((field) => {
-      switch (field.type) {
-        case "date":
-          freshDefaults[field.key] = new Date();
-          break;
-        case "boolean":
-          freshDefaults[field.key] = false;
-          break;
-        case "number":
-        case "percentage":
-          freshDefaults[field.key] = 0;
-          break;
-        case "text":
-          freshDefaults[field.key] = "";
-          break;
-      }
-    });
-
-    return freshDefaults;
-  };
-
   // Function to load data from localStorage
   const loadSavedData = () => {
     // Only check localStorage in add mode
@@ -149,7 +101,7 @@ export default function DataForm({
       });
 
       // Check if saved data has meaningful content
-      if (hasNonEmptyValues(processedData)) {
+      if (hasNonEmptyValues(processedData, fields)) {
         // Schedule this to avoid state updates during render
         setTimeout(() => {
           setHasSavedData(true);
@@ -181,7 +133,7 @@ export default function DataForm({
     saveTimeoutRef.current = setTimeout(() => {
       try {
         // Check if there's meaningful data to save
-        if (hasNonEmptyValues(data)) {
+        if (hasNonEmptyValues(data, fields)) {
           // Process data for storage
           const processedData = { ...data };
 
@@ -210,7 +162,7 @@ export default function DataForm({
   // Utility function to completely reset the form
   const completeFormReset = () => {
     // Create fresh default values
-    const freshDefaults = createFreshDefaultValues();
+    const freshDefaults = createFreshDefaultValues(fields);
 
     // Reset the form with the fresh defaults
     form.reset(freshDefaults, {
@@ -241,7 +193,7 @@ export default function DataForm({
     }
 
     // Start with fresh defaults
-    const freshDefaults = createFreshDefaultValues();
+    const freshDefaults = createFreshDefaultValues(fields);
 
     // In add mode, try to load from localStorage
     const savedData = loadSavedData();
@@ -403,16 +355,6 @@ export default function DataForm({
     }
   };
 
-  // Group fields by type for consistent organization
-  const fieldsByType = {
-    date: fields.filter((field) => field.type === "date"),
-    boolean: fields.filter((field) => field.type === "boolean"),
-    numeric: fields.filter(
-      (field) => field.type === "number" || field.type === "percentage"
-    ),
-    text: fields.filter((field) => field.type === "text"),
-  };
-
   // Render a field based on its type
   const renderField = (field: FieldDefinition) => {
     if (field.isRelation) {
@@ -421,17 +363,7 @@ export default function DataForm({
           key={field.key}
           control={form.control}
           name={field.key}
-          render={({
-            field: formField,
-          }: {
-            field: {
-              value: string;
-              onChange: (value: string) => void;
-              onBlur: () => void;
-              name: string;
-              ref: React.Ref<any>;
-            };
-          }) => (
+          render={({ field: formField }) => (
             <RelationField
               field={formField}
               fieldDef={field}
@@ -617,115 +549,15 @@ export default function DataForm({
     }
   };
 
-  // Render the form with or without a title
-  if (title) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
-            <span className="flex-1">{title}</span>
-            {hasSavedData && mode === "add" && (
-              <Badge
-                variant="outline"
-                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
-              >
-                <span className="text-xs">Saved data</span>
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Date fields */}
-              {fieldsByType.date.length > 0 && (
-                <div className="space-y-4">
-                  {fieldsByType.date.map(renderField)}
-                </div>
-              )}
+  const fieldsByType = getFieldsByType(fields);
 
-              {/* Boolean fields */}
-              {fieldsByType.boolean.length > 0 && (
-                <div className="space-y-4">
-                  {fieldsByType.boolean.map(renderField)}
-                </div>
-              )}
-
-              {/* Numeric and text fields in a grid */}
-              {(fieldsByType.numeric.length > 0 ||
-                fieldsByType.text.length > 0) && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {fieldsByType.numeric.map(renderField)}
-                  {fieldsByType.text.map(renderField)}
-                </div>
-              )}
-
-              {!hideSubmitButton && (
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        submitLabel
-                      )}
-                    </Button>
-
-                    {mode === "add" && (
-                      <ConfirmResetDialog
-                        onConfirm={handleClearForm}
-                        title="Clear form data?"
-                        description="This will reset all form fields and delete any saved data. This action cannot be undone."
-                        trigger={
-                          <Button
-                            variant="outline"
-                            size="default"
-                            disabled={isSubmitting}
-                          >
-                            <UndoDot className="h-4 w-4 mr-2" />
-                            Reset
-                          </Button>
-                        }
-                      />
-                    )}
-                  </div>
-
-                  {onCancel && (
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      onClick={handleCancel}
-                      className="sm:ml-2"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              )}
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Basic form without Card wrapper
-  return (
+  const FormComponent = ({ noSavedBadge }: { noSavedBadge?: boolean }) => (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Show saved data badge if we have saved data in localStorage */}
-        {hasSavedData && mode === "add" && (
+        {!noSavedBadge && hasSavedData && mode === "add" && (
           <div className="flex justify-end mb-2">
-            <Badge
-              variant="outline"
-              className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
-            >
-              <span className="text-xs">Saved data</span>
-            </Badge>
+            <SavedDataBadge />
           </div>
         )}
 
@@ -798,4 +630,31 @@ export default function DataForm({
       </form>
     </Form>
   );
+
+  // Render the form with or without a title
+  if (title) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
+            <span className="flex-1">{title}</span>
+            {hasSavedData && mode === "add" && (
+              <Badge
+                variant="outline"
+                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
+              >
+                <span className="text-xs">Saved data</span>
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FormComponent noSavedBadge />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Basic form without Card wrapper
+  return <FormComponent />;
 }

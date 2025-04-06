@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { formatCellValue } from "@/lib/table-utils";
 import { formatDate } from "@/lib/date-utils";
 import Pagination from "./pagination";
-import { calculateColumnWidth } from "./table-width-utils";
+import { calculateColumnWidth } from "../../lib/table-width-utils";
 import EditableCell from "./editable-cell";
 import FilterControls from "./filter-controls";
 

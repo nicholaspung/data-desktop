@@ -47,21 +47,7 @@ export function RelationField({
       // Transform records to options with id and label
       const formattedOptions = records.map((record: any) => {
         // Create a meaningful label based on the dataset type
-        let label = "";
-
-        if (fieldDef.relatedDataset === "bloodwork") {
-          // For bloodwork tests, use date and lab name if available
-          const testDate = record.date
-            ? new Date(record.date).toLocaleDateString()
-            : "Unknown Date";
-          label = `${testDate} ${record.lab_name ? `- ${record.lab_name}` : ""}`;
-        } else if (fieldDef.relatedDataset === "blood_markers") {
-          // For blood markers, use name and unit
-          label = `${record.name || "Unnamed"} ${record.unit ? `(${record.unit})` : ""}`;
-        } else {
-          // Generic fallback for other relations
-          label = record.name || record.title || `ID: ${record.id}`;
-        }
+        const label = record.name || record.title || `ID: ${record.id}`;
 
         return {
           id: record.id,
@@ -94,11 +80,8 @@ export function RelationField({
         <Alert variant="destructive" className="mb-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            No {fieldDef.relatedDataset} records found. You need to create{" "}
-            {fieldDef.relatedDataset === "bloodwork"
-              ? "a blood test"
-              : "blood markers"}{" "}
-            first.
+            No {fieldDef.relatedDataset} records found. You need to create a
+            record first.
           </AlertDescription>
         </Alert>
         <Button
