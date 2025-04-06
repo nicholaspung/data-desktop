@@ -123,3 +123,83 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Highlight editable cells on hover */
+.editable-cell {
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.editable-cell:hover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 8px 8px 0;
+  border-color: transparent hsl(var(--primary) / 0.5) transparent transparent;
+}
+
+/* Animation for saving */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 5px hsl(var(--primary) / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+  }
+}
+
+.saving-animation {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Custom transitions for editing states */
+.cell-entering-edit {
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.cell-exiting-edit {
+  animation: fadeOut 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+/* Highlight newly updated rows */
+.row-highlight {
+  animation: highlightRow 2s ease-out;
+}
+
+@keyframes highlightRow {
+  0% {
+    background-color: hsl(var(--primary) / 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}

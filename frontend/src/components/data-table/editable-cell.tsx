@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import EditableCellConfirmButtons from "./editable-cell-confirm-buttons";
 
 interface EditableCellProps {
   value: any;
@@ -27,33 +30,128 @@ interface EditableCellProps {
   column: any;
   field: FieldDefinition;
   width?: string;
-  onValueChange: (value: any) => void;
+  datasetId: string;
+  onDataChange?: () => void;
 }
 
-// Enhanced EditableCell component with relation field support
 const EditableCell: React.FC<EditableCellProps> = ({
-  value,
+  value: initialValue,
   row,
   column,
   field,
   width,
-  onValueChange,
+  onDataChange,
 }) => {
-  const [editValue, setEditValue] = useState(value);
+  // State for editing mode and value
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(initialValue);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const originalValue = initialValue;
+  const cellRef = useRef<HTMLDivElement>(null);
+
+  // State for relation fields
   const [relationOptions, setRelationOptions] = useState<
     { id: string; label: string }[]
   >([]);
   const [isLoadingRelations, setIsLoadingRelations] = useState(false);
-  const originalValue = value; // Store the original value for reference
 
+  // Handle outside click to exit edit mode
   useEffect(() => {
-    setEditValue(value);
+    if (!isEditing) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cellRef.current && !cellRef.current.contains(event.target as Node)) {
+        if (editValue !== initialValue) {
+          // If value changed, save it
+          handleSave();
+        } else {
+          // Otherwise just cancel
+          setIsEditing(false);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isEditing, editValue, initialValue]);
+
+  // Reset edit value when initialValue changes or when entering edit mode
+  useEffect(() => {
+    setEditValue(initialValue);
+  }, [initialValue]);
+
+  // Enter edit mode
+  const handleEdit = () => {
+    setIsEditing(true);
 
     // Load relation options if this is a relation field
     if (field.isRelation && field.relatedDataset) {
       loadRelationOptions();
     }
-  }, [value, field]);
+  };
+
+  // Save changes
+  const handleSave = async () => {
+    if (editValue === initialValue) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Get the record ID
+      const recordId = row.original.id;
+      if (!recordId) {
+        throw new Error("Record ID not found");
+      }
+
+      // Get the current record data
+      const record = await ApiService.getRecord(recordId);
+      if (!record) {
+        throw new Error("Record not found");
+      }
+
+      // Update only the changed field
+      const updatedRecord = {
+        ...record,
+        [field.key]: editValue,
+      };
+
+      // Submit the update
+      await ApiService.updateRecord(recordId, updatedRecord);
+
+      // Notify success
+      toast.success("Cell updated successfully");
+
+      // Trigger data refresh
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (error) {
+      console.error("Error updating cell:", error);
+      toast.error("Failed to update cell");
+
+      // Revert to initial value
+      setEditValue(initialValue);
+    } finally {
+      setIsSubmitting(false);
+      setIsEditing(false);
+    }
+  };
+
+  // Cancel edit
+  const handleCancel = () => {
+    setEditValue(initialValue);
+    setIsEditing(false);
+  };
+
+  // Handle value change
+  const handleValueChange = (newValue: any) => {
+    setEditValue(newValue);
+  };
 
   // Load options for relation fields
   const loadRelationOptions = async () => {
@@ -78,14 +176,9 @@ const EditableCell: React.FC<EditableCellProps> = ({
     }
   };
 
-  const handleValueChange = (newValue: any) => {
-    setEditValue(newValue);
-    onValueChange(newValue);
-  };
-
   // Format the original value based on field type for display
-  const getFormattedOriginalValue = () => {
-    // If it's a relation field, we need special handling
+  const getFormattedDisplayValue = (value: any) => {
+    // Handle relation fields
     if (field.isRelation && field.relatedDataset) {
       // Look for this relation's data in the row
       const relatedDataKey = `${column.id}_data`;
@@ -102,33 +195,33 @@ const EditableCell: React.FC<EditableCellProps> = ({
           return secondary ? `${primary} - ${secondary}` : primary;
         }
 
-        return relatedData.name || relatedData.title || `ID: ${originalValue}`;
+        return relatedData.name || relatedData.title || `ID: ${value}`;
       }
 
-      return originalValue ? `ID: ${originalValue}` : "N/A";
+      return value ? `ID: ${value}` : "N/A";
     }
 
     // Regular field formatting
     switch (field.type) {
       case "date":
-        return originalValue instanceof Date
-          ? format(new Date(originalValue), "PP")
-          : originalValue
-            ? format(new Date(originalValue), "PP")
+        return value instanceof Date
+          ? format(new Date(value), "PP")
+          : value
+            ? format(new Date(value), "PP")
             : "N/A";
       case "boolean":
-        return originalValue ? "Yes" : "No";
+        return value ? "Yes" : "No";
       case "number":
-        return typeof originalValue === "number"
-          ? `${originalValue.toFixed(2)}${field.unit ? ` ${field.unit}` : ""}`
+        return typeof value === "number"
+          ? `${value.toFixed(2)}${field.unit ? ` ${field.unit}` : ""}`
           : "0";
       case "percentage":
-        return typeof originalValue === "number"
-          ? `${(originalValue < 1 ? originalValue * 100 : originalValue).toFixed(2)}%`
+        return typeof value === "number"
+          ? `${(value < 1 ? value * 100 : value).toFixed(2)}%`
           : "0%";
       case "text":
       default:
-        return originalValue || "";
+        return value || "-";
     }
   };
 
@@ -138,77 +231,66 @@ const EditableCell: React.FC<EditableCellProps> = ({
     minWidth: "80px",
     maxWidth: "100%",
   };
+  const cellClassName = "flex flex-row gap-1 align-center justify-center";
 
-  // Small label for original value
-  const OriginalValueLabel = () => (
-    <div
-      className="text-xs text-muted-foreground mb-1 truncate"
-      title={getFormattedOriginalValue()}
-    >
-      Original: {getFormattedOriginalValue()}
-    </div>
+  // Render edit mode for relation field
+  const renderRelationEditMode = () => (
+    <>
+      <Select
+        value={editValue?.toString() || ""}
+        onValueChange={handleValueChange}
+        disabled={isLoadingRelations || isSubmitting}
+      >
+        <SelectTrigger className="w-full h-8 text-left">
+          <SelectValue
+            placeholder={
+              isLoadingRelations ? "Loading..." : `Select ${field.displayName}`
+            }
+          />
+        </SelectTrigger>
+        <SelectContent>
+          {isLoadingRelations ? (
+            <div className="flex items-center justify-center p-2">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <span>Loading options...</span>
+            </div>
+          ) : relationOptions.length === 0 ? (
+            <div className="p-2 text-sm text-muted-foreground">
+              No options available
+            </div>
+          ) : (
+            relationOptions.map((option) => (
+              <SelectItem key={option.id} value={option.id}>
+                {option.label}
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+    </>
   );
 
-  // Render relation field dropdown
-  if (field.isRelation && field.relatedDataset) {
-    return (
-      <div style={cellStyle}>
-        <OriginalValueLabel />
-        <Select
-          value={editValue?.toString() || ""}
-          onValueChange={handleValueChange}
-          disabled={isLoadingRelations}
-        >
-          <SelectTrigger className="w-full h-8">
-            <SelectValue
-              placeholder={
-                isLoadingRelations
-                  ? "Loading..."
-                  : `Select ${field.displayName}`
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {isLoadingRelations ? (
-              <div className="flex items-center justify-center p-2">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Loading options...</span>
-              </div>
-            ) : relationOptions.length === 0 ? (
-              <div className="p-2 text-sm text-muted-foreground">
-                No options available
-              </div>
-            ) : (
-              relationOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.label}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  }
+  // Render edit mode based on field type
+  const renderEditMode = () => {
+    // Handle relation fields with dropdown
+    if (field.isRelation && field.relatedDataset) {
+      return renderRelationEditMode();
+    }
 
-  // Render appropriate editor based on field type
-  switch (field.type) {
-    case "text":
-      return (
-        <div style={cellStyle}>
-          <OriginalValueLabel />
+    switch (field.type) {
+      case "text":
+        return (
           <Input
             value={editValue || ""}
             onChange={(e) => handleValueChange(e.target.value)}
             className="h-8 w-full"
+            autoFocus
           />
-        </div>
-      );
-    case "number":
-    case "percentage":
-      return (
-        <div style={cellStyle}>
-          <OriginalValueLabel />
+        );
+
+      case "number":
+      case "percentage":
+        return (
           <Input
             type="number"
             value={editValue ?? 0}
@@ -221,27 +303,22 @@ const EditableCell: React.FC<EditableCellProps> = ({
             step="any"
             min={0}
             max={field.type === "percentage" ? 100 : undefined}
+            autoFocus
           />
-        </div>
-      );
-    case "boolean":
-      return (
-        <div style={cellStyle}>
-          <div className="text-xs text-muted-foreground mb-1 text-center">
-            Original: {originalValue ? "Yes" : "No"}
-          </div>
-          <div className="flex justify-center">
+        );
+
+      case "boolean":
+        return (
+          <div className="flex justify-center items-center w-full">
             <Checkbox
               checked={!!editValue}
               onCheckedChange={(checked) => handleValueChange(!!checked)}
             />
           </div>
-        </div>
-      );
-    case "date":
-      return (
-        <div style={cellStyle}>
-          <OriginalValueLabel />
+        );
+
+      case "date":
+        return (
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -260,11 +337,72 @@ const EditableCell: React.FC<EditableCellProps> = ({
               />
             </PopoverContent>
           </Popover>
+        );
+
+      default:
+        return <span>{initialValue}</span>;
+    }
+  };
+
+  // Render the display mode (clickable to edit)
+  const renderDisplayMode = () => {
+    const formattedValue = getFormattedDisplayValue(initialValue);
+
+    return (
+      <div
+        className={cn(
+          "truncate cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors",
+          "flex items-center justify-between",
+          "min-h-[30px]" // Ensure minimum height for empty values
+        )}
+        style={cellStyle}
+        onClick={handleEdit}
+        title={
+          typeof formattedValue === "string" && formattedValue
+            ? formattedValue
+            : "Click to edit"
+        }
+      >
+        <span className="truncate w-full min-h-[24px]">
+          {formattedValue || (
+            <span className="text-muted-foreground italic text-xs">
+              Empty - click to edit
+            </span>
+          )}
+        </span>
+      </div>
+    );
+  };
+
+  // Small label for original value
+  const OriginalValueLabel = () => (
+    <div
+      className="text-xs text-muted-foreground mb-1 truncate"
+      title={getFormattedDisplayValue(originalValue)}
+    >
+      Original: {getFormattedDisplayValue(originalValue)}
+    </div>
+  );
+
+  return (
+    <div ref={cellRef}>
+      {isEditing ? (
+        <div style={cellStyle} className="flex flex-col gap-1">
+          <OriginalValueLabel />
+          <div className={cellClassName}>
+            {renderEditMode()}
+            <EditableCellConfirmButtons
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              isSubmitting={isSubmitting}
+            />
+          </div>
         </div>
-      );
-    default:
-      return <span style={cellStyle}>{value}</span>;
-  }
+      ) : (
+        renderDisplayMode()
+      )}
+    </div>
+  );
 };
 
 export default EditableCell;

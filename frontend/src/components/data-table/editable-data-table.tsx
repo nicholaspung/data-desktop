@@ -1,4 +1,3 @@
-// src/components/data-table/editable-data-table.tsx
 import { useState, useEffect } from "react";
 import {
   ColumnDef,
@@ -11,26 +10,17 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import {
-  ChevronUp,
-  ChevronDown,
-  Pencil,
-  Check,
-  X,
-  Loader2,
-} from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import { FieldDefinition } from "@/types/types";
-import { ApiService } from "@/services/api";
-import { toast } from "sonner";
 import { formatCellValue } from "@/lib/table-utils";
 import { formatDate } from "@/lib/date-utils";
 import Pagination from "./pagination";
 import { calculateColumnWidth } from "../../lib/table-width-utils";
 import EditableCell from "./editable-cell";
 import FilterControls from "./filter-controls";
+import { toast } from "sonner";
 
 interface EditableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -50,9 +40,8 @@ interface EditableDataTableProps<TData, TValue> {
   initialPage?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
-  onDataChange?: () => void; // Callback when data changes
+  onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
   useInlineEditing?: boolean; // Flag to enable inline editing
-  showActionColumn?: boolean; // Flag to show/hide action column
 }
 
 export function EditableDataTable<TData extends Record<string, any>, TValue>({
@@ -75,7 +64,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onPageSizeChange,
   onDataChange,
   useInlineEditing = false,
-  showActionColumn = true,
 }: EditableDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -87,9 +75,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     pageIndex: initialPage,
     pageSize: pageSize,
   });
-  const [editingRow, setEditingRow] = useState<string | null>(null);
-  const [editedValues, setEditedValues] = useState<Record<string, any>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [columnWidths, setColumnWidths] = useState<Record<string, string>>({});
 
   // Create a field map for quick lookup
@@ -151,67 +136,16 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           }
         }}
         aria-label="Select row"
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()} // Prevent row click propagation
       />
     ),
     enableSorting: false,
   };
 
-  // Create action column for edit/save/cancel
-  const actionColumn: ColumnDef<TData, any> = {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }: { row: { original: Record<string, any> } }) => {
-      const isEditing = editingRow === row.original[dataKey];
-
-      return (
-        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-          {isEditing ? (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleSaveRow(row.original)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleCancelEdit()}
-                disabled={isSubmitting}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            useInlineEditing && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEditRow(row.original)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )
-          )}
-        </div>
-      );
-    },
-  };
-
-  // Add selection column if enabled and add action column
+  // Add selection column if enabled
   let tableColumns = [...columns];
   if (enableSelection) {
     tableColumns = [selectionColumn, ...tableColumns];
-  }
-  if (showActionColumn && (useInlineEditing || editingRow !== null)) {
-    tableColumns = [actionColumn, ...tableColumns];
   }
 
   // Update internal selection state when selectedRows prop changes
@@ -229,8 +163,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
   // Create enhanced column defs that support editing
   const editableColumns = tableColumns.map((column) => {
-    // Skip action and selection columns
-    if (column.id === "actions" || column.id === "select") {
+    // Skip selection column
+    if (column.id === "select") {
       return column;
     }
 
@@ -239,32 +173,27 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       cell: (info: any) => {
         const { row, column: columnInfo, getValue } = info;
         const columnId = String(columnInfo.id);
-        const isEditing = editingRow === row.original[dataKey];
         const value = getValue();
         const width = columnWidths[columnId] || "auto";
         const field = fieldMap.get(columnId);
 
-        // If this row is being edited
-        if (isEditing) {
-          // For any field type, use the EditableCell component which now handles relations
-          if (field) {
-            return (
-              <EditableCell
-                value={
-                  editedValues[columnId] !== undefined
-                    ? editedValues[columnId]
-                    : value
+        // For any editable field that has a field definition
+        if (useInlineEditing && field && field.key !== "id") {
+          return (
+            <EditableCell
+              value={value}
+              row={row}
+              column={columnInfo}
+              field={field}
+              width={width}
+              datasetId={datasetId}
+              onDataChange={() => {
+                if (onDataChange) {
+                  onDataChange(row.original[dataKey]);
                 }
-                row={row}
-                column={columnInfo}
-                field={field}
-                width={width}
-                onValueChange={(newValue) =>
-                  handleCellValueChange(columnId, newValue)
-                }
-              />
-            );
-          }
+              }}
+            />
+          );
         }
 
         // NON-EDITING MODE BELOW
@@ -427,69 +356,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     debugTable: process.env.NODE_ENV === "development",
   });
 
-  // Handle entering edit mode for a row
-  const handleEditRow = (row: Record<string, any>) => {
-    // Don't allow editing if already editing a row
-    if (editingRow !== null) return;
-
-    setEditingRow(row[dataKey]);
-    setEditedValues({});
-  };
-
-  // Handle saving a row
-  const handleSaveRow = async (row: Record<string, any>) => {
-    if (!editingRow) return;
-
-    setIsSubmitting(true);
-    try {
-      // Prepare the updated record
-      const updatedRecord = { ...row };
-
-      // Apply changes from editedValues
-      Object.keys(editedValues).forEach((key) => {
-        updatedRecord[key] = editedValues[key];
-      });
-
-      // Send update to API
-      await ApiService.updateRecord(editingRow, updatedRecord);
-
-      toast.success("Record updated successfully");
-
-      // Refresh data if needed
-      if (onDataChange) {
-        onDataChange();
-      }
-
-      // Exit editing mode
-      setEditingRow(null);
-      setEditedValues({});
-    } catch (error) {
-      console.error("Error updating record:", error);
-      toast.error("Failed to update record");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle cancelling edit mode
-  const handleCancelEdit = () => {
-    setEditingRow(null);
-    setEditedValues({});
-  };
-
-  // Handle cell value changes
-  const handleCellValueChange = (columnId: string, value: any) => {
-    setEditedValues((prev) => ({
-      ...prev,
-      [columnId]: value,
-    }));
-  };
-
   // Handle row click with logic to avoid editing if selection is enabled
   const handleRowClick = (row: TData) => {
-    // Don't trigger row click when already editing
-    if (editingRow !== null) return;
-
     // For selection mode, toggle selection
     if (enableSelection) {
       const rowId = String(row[dataKey]);
@@ -579,10 +447,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                           onClick={header.column.getToggleSortingHandler()}
                           style={{
                             width,
-                            minWidth:
-                              columnId === "actions" || columnId === "select"
-                                ? "80px"
-                                : "100px",
+                            minWidth: columnId === "select" ? "40px" : "100px",
                           }}
                         >
                           <div className="flex items-center gap-1">
@@ -605,29 +470,24 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                   </tr>
                 ))}
               </thead>
-              {/* Table Body with Sticky First Column */}
+              {/* Table Body */}
               <tbody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <tr
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
+                      data-row-id={row.original[dataKey]} // Add data attribute for row ID
                       className={cn(
                         "border-b",
-                        (onRowClick || enableSelection) &&
-                          editingRow !== row.original[dataKey]
+                        onRowClick || enableSelection
                           ? "cursor-pointer hover:bg-muted"
                           : "",
                         row.getIsSelected() ? "bg-muted/50" : "",
-                        editingRow === row.original[dataKey]
-                          ? "bg-muted/30"
-                          : "",
                         rowClassName ? rowClassName(row.original as TData) : ""
                       )}
                       onClick={() => {
-                        if (editingRow !== row.original[dataKey]) {
-                          handleRowClick(row.original as TData);
-                        }
+                        handleRowClick(row.original as TData);
                       }}
                     >
                       {row.getVisibleCells().map((cell, cellIndex) => {
@@ -641,14 +501,17 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                             className={cn(
                               "p-2 align-middle",
                               isFirstColumn &&
-                                "sticky left-0 z-10 bg-background border-r"
+                                "sticky left-0 z-10 bg-background border-r",
+                              // Add editable-cell class if in edit mode and not in select column
+                              useInlineEditing &&
+                                columnId !== "select" &&
+                                columnId !== "id" &&
+                                "editable-cell"
                             )}
                             style={{
                               width,
                               minWidth:
-                                columnId === "actions" || columnId === "select"
-                                  ? "80px"
-                                  : "100px",
+                                columnId === "select" ? "40px" : "100px",
                             }}
                           >
                             {flexRender(

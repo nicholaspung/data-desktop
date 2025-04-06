@@ -18,6 +18,7 @@ interface ConfirmDeleteDialogProps {
   description?: string;
   onConfirm: () => void;
   trigger?: React.ReactNode;
+  triggerText?: string;
   variant?: "destructive" | "outline" | "ghost" | "link" | "default";
   size?: "default" | "sm" | "lg" | "icon";
   loading?: boolean;
@@ -39,6 +40,7 @@ export function ConfirmDeleteDialog({
   description = "Are you sure you want to delete this item? This action cannot be undone.",
   onConfirm,
   trigger,
+  triggerText,
   variant = "destructive",
   size = "icon",
   loading = false,
@@ -49,7 +51,12 @@ export function ConfirmDeleteDialog({
       {showTrigger && (
         <AlertDialogTrigger asChild>
           {trigger || (
-            <Button variant={variant} size={size} disabled={loading}>
+            <Button
+              variant={variant}
+              size={triggerText ? "default" : size}
+              disabled={loading}
+            >
+              {triggerText ? triggerText : ""}
               <Trash className="h-4 w-4" />
             </Button>
           )}

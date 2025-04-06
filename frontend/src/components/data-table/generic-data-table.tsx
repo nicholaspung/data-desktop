@@ -1,17 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { EditableDataTable } from "@/components/data-table/editable-data-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Trash } from "lucide-react";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { createColumn } from "@/lib/table-utils";
 import { FieldDefinition } from "@/types/types";
-import { Label } from "@/components/ui/label";
-import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
-import { ConfirmChangesDialog } from "../reusable/confirm-changes-dialog";
-import EditPanel from "./edit-panel";
 import {
   Select,
   SelectContent,
@@ -19,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 
 interface GenericDataTableProps {
   datasetId: string;
@@ -52,28 +48,12 @@ export default function GenericDataTable({
 }: GenericDataTableProps) {
   const [data, setData] = useState<Record<string, any>[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<Record<
-    string,
-    any
-  > | null>(null);
-  const [originalRecord, setOriginalRecord] = useState<Record<
-    string,
-    any
-  > | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
-    useState(false);
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [tableMode, setTableMode] = useState<
-    "view" | "single-edit" | "multi-edit" | "delete"
-  >("view");
+  const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
+    "view"
+  );
+  const [updatedRowIds, setUpdatedRowIds] = useState<string[]>([]);
   const tableContainerRef = useRef<HTMLDivElement>(null);
-
-  // New state for form values
-  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -81,9 +61,6 @@ export default function GenericDataTable({
 
   // Generate local storage key for this specific dataset's pagination
   const paginationStorageKey = `${datasetId}_pagination_state`;
-
-  // Create local storage key for this specific dataset's editing
-  const editStorageKey = `${datasetId}_edit_data`;
 
   // Function to create columns for the data table with explicit type
   const createTableColumns = (): ColumnDef<Record<string, any>, any>[] => {
@@ -141,128 +118,6 @@ export default function GenericDataTable({
     }
   }, [currentPage, currentPageSize, persistState]);
 
-  // Check for unsaved changes when component unmounts
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = "";
-        return "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [hasUnsavedChanges]);
-
-  // Use a ref to track if we've already checked for saved data for the current record
-  const hasCheckedLocalStorage = useRef(false);
-  const currentRecordId = useRef<string | null>(null);
-
-  // Load any saved edit data only when first opening the sidebar
-  useEffect(() => {
-    // Reset the check flag if the record changes
-    if (selectedRecord && selectedRecord[dataKey] !== currentRecordId.current) {
-      hasCheckedLocalStorage.current = false;
-      currentRecordId.current = selectedRecord[dataKey] as string;
-    }
-
-    if (isSidebarOpen && selectedRecord && !hasCheckedLocalStorage.current) {
-      hasCheckedLocalStorage.current = true;
-
-      try {
-        const savedEditData = localStorage.getItem(editStorageKey);
-        if (savedEditData) {
-          const parsedData = JSON.parse(savedEditData);
-
-          // Only restore if the record ID matches
-          if (parsedData.id === selectedRecord[dataKey]) {
-            const processedData = { ...parsedData };
-
-            // Convert date strings back to Date objects
-            fields.forEach((field) => {
-              if (field.type === "date" && processedData[field.key]) {
-                processedData[field.key] = new Date(processedData[field.key]);
-              }
-            });
-
-            // Update formValues instead of selectedRecord
-            setFormValues(processedData);
-            setHasUnsavedChanges(true);
-            toast.info("Restored unsaved changes from previous edit session");
-          }
-        }
-      } catch (error) {
-        console.error("Error loading saved edit data:", error);
-      }
-    }
-
-    // Clean up function to reset the ref when the sidebar closes
-    return () => {
-      if (!isSidebarOpen) {
-        hasCheckedLocalStorage.current = false;
-        currentRecordId.current = null;
-      }
-    };
-  }, [isSidebarOpen, selectedRecord]);
-
-  // Initialize formValues when selectedRecord changes
-  useEffect(() => {
-    if (selectedRecord) {
-      setFormValues({ ...selectedRecord });
-    }
-  }, [selectedRecord]);
-
-  // Watch for changes in formValues to update hasUnsavedChanges
-  useEffect(() => {
-    if (selectedRecord && originalRecord) {
-      // Compare formValues with originalRecord to detect changes
-      let changed = false;
-
-      Object.keys(formValues).forEach((key) => {
-        const formValue = formValues[key];
-        const originalValue = originalRecord[key];
-
-        // Special handling for dates
-        if (formValue instanceof Date && originalValue instanceof Date) {
-          changed = changed || formValue.getTime() !== originalValue.getTime();
-        } else if (
-          JSON.stringify(formValue) !== JSON.stringify(originalValue)
-        ) {
-          changed = true;
-        }
-      });
-
-      setHasUnsavedChanges(changed);
-
-      // Save to localStorage if changed
-      if (changed) {
-        try {
-          // Ensure the record ID is included
-          const dataToSave = {
-            ...formValues,
-            [dataKey]: selectedRecord[dataKey], // Make sure ID is preserved
-          };
-
-          // Convert Date objects to ISO strings for safe storage
-          const storageData = { ...dataToSave };
-          Object.keys(storageData).forEach((key) => {
-            if (storageData[key] instanceof Date) {
-              storageData[key] = storageData[key].toISOString();
-            }
-          });
-
-          localStorage.setItem(editStorageKey, JSON.stringify(storageData));
-        } catch (error) {
-          console.error("Error saving edit data to localStorage:", error);
-        }
-      }
-    }
-  }, [formValues, selectedRecord, originalRecord]);
-
   // Scroll to highlighted row when data is loaded or highlightedRecordId changes
   useEffect(() => {
     if (highlightedRecordId && data.length > 0) {
@@ -295,6 +150,30 @@ export default function GenericDataTable({
       }
     }
   }, [data, highlightedRecordId]);
+
+  // Effect to animate updated rows
+  useEffect(() => {
+    if (updatedRowIds.length > 0 && tableContainerRef.current) {
+      // Add animation class to recently updated rows
+      const table = tableContainerRef.current.querySelector("table");
+      if (table) {
+        updatedRowIds.forEach((rowId) => {
+          // Find row by data attribute
+          const row = table.querySelector(`tr[data-row-id="${rowId}"]`);
+          if (row) {
+            row.classList.add("row-highlight");
+            // Remove the class after animation finishes
+            setTimeout(() => {
+              row.classList.remove("row-highlight");
+            }, 2000);
+          }
+        });
+      }
+
+      // Clear the updated rows array
+      setUpdatedRowIds([]);
+    }
+  }, [updatedRowIds]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -332,8 +211,22 @@ export default function GenericDataTable({
     }
   };
 
+  // Handle data change from inline editing
+  const handleDataUpdated = (updatedRowId?: string) => {
+    // Add the updated row ID to our list for animation
+    if (updatedRowId) {
+      setUpdatedRowIds((prev) => [...prev, updatedRowId]);
+    }
+
+    loadData();
+    if (onDataChange) {
+      onDataChange();
+    }
+  };
+
+  // Handle batch delete of selected records
   const handleDeleteSelectedRecords = async () => {
-    setIsSubmitting(true);
+    if (selectedRows.length === 0) return;
 
     try {
       let successCount = 0;
@@ -369,123 +262,13 @@ export default function GenericDataTable({
       if (onDataChange) {
         onDataChange();
       }
+
+      // Clear selection
+      setSelectedRows([]);
     } catch (error) {
       console.error("Error in batch delete:", error);
       toast.error("An error occurred during batch delete");
-    } finally {
-      setIsSubmitting(false);
-      setSelectedRows([]);
     }
-  };
-
-  const handleEditRecord = (record: Record<string, any>) => {
-    // Create a deep copy of the record to avoid modifying the original
-    const recordCopy = JSON.parse(JSON.stringify(record));
-
-    // Convert date strings back to Date objects for the form
-    fields.forEach((field) => {
-      if (field.type === "date" && recordCopy[field.key]) {
-        recordCopy[field.key] = new Date(recordCopy[field.key]);
-      }
-    });
-
-    // Save the original record for comparison
-    setOriginalRecord(recordCopy);
-    setSelectedRecord(recordCopy);
-    // Initialize formValues with the record
-    setFormValues(recordCopy);
-    setIsSidebarOpen(true);
-    setHasUnsavedChanges(false); // Reset unsaved changes flag when opening a new record
-  };
-
-  const handleSaveChanges = async () => {
-    if (!selectedRecord) return;
-
-    setIsSubmitting(true);
-
-    try {
-      // Submit the form values directly
-      if (selectedRecord && selectedRecord[dataKey]) {
-        const recordId = selectedRecord[dataKey].toString();
-        const updatedRecord = await ApiService.updateRecord(
-          recordId,
-          formValues
-        );
-        toast.success(`${title} data updated successfully`);
-
-        if (updatedRecord) {
-          // Clear localStorage
-          localStorage.removeItem(editStorageKey);
-          setIsSidebarOpen(false);
-          setSelectedRecord(null);
-          setOriginalRecord(null);
-          setFormValues({});
-          setHasUnsavedChanges(false);
-          await loadData();
-
-          if (onDataChange) {
-            onDataChange();
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Error updating record:", error);
-      toast.error("Failed to update record");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Function to reset the form to original values
-  const handleResetForm = () => {
-    if (originalRecord) {
-      setFormValues({ ...originalRecord });
-      localStorage.removeItem(editStorageKey);
-      setHasUnsavedChanges(false);
-      toast.info("Changes reverted to original values");
-    }
-  };
-
-  // Function to close edit sidebar with confirmation if needed
-  const handleCloseSidebar = (callback?: () => void) => {
-    if (hasUnsavedChanges) {
-      setShowUnsavedChangesDialog(true);
-      if (callback) {
-        setPendingAction(() => callback);
-      } else {
-        setPendingAction(() => () => {
-          setIsSidebarOpen(false);
-          setSelectedRecord(null);
-          setOriginalRecord(null);
-          setFormValues({});
-          localStorage.removeItem(editStorageKey);
-          setHasUnsavedChanges(false);
-        });
-      }
-    } else {
-      setIsSidebarOpen(false);
-      setSelectedRecord(null);
-      setOriginalRecord(null);
-      setFormValues({});
-      if (callback) {
-        callback();
-      }
-    }
-  };
-
-  // Handle confirmation dialog responses
-  const handleConfirmDiscard = () => {
-    setShowUnsavedChangesDialog(false);
-    localStorage.removeItem(editStorageKey);
-    if (pendingAction) {
-      pendingAction();
-      setPendingAction(null);
-    }
-  };
-
-  const handleCancelDiscard = () => {
-    setShowUnsavedChangesDialog(false);
-    setPendingAction(null);
   };
 
   // Get the searchable columns for the filter
@@ -495,141 +278,53 @@ export default function GenericDataTable({
       .map((field) => field.key);
   };
 
-  // Handle data change from inline editing
-  const handleDataUpdated = () => {
-    loadData();
-    if (onDataChange) {
-      onDataChange();
-    }
-  };
-
-  // Row click handler based on table mode
-  const handleRowClick = (row: Record<string, any>) => {
-    // Handle row click based on the current mode
-    if (tableMode === "single-edit" && !disableEdit) {
-      // In single edit mode, open edit sidebar
-      handleEditRecord(row);
-    } else if (tableMode === "delete") {
-      // In delete mode, selection is handled by the EditableDataTable component
-      // No additional action needed here
-    } else if (tableMode === "view") {
-      // In view mode, only trigger the external handler if provided
-      // Do not open edit panel
-    }
-
-    // Call external handler if provided
-    if (onRowClick) {
-      onRowClick(row);
-    }
-  };
-
   return (
-    <div className="flex flex-col md:flex-row gap-4">
-      <ConfirmChangesDialog
-        onCancel={handleCancelDiscard}
-        onConfirm={handleConfirmDiscard}
-        showTrigger={false}
-        open={showUnsavedChangesDialog}
-        onOpenChange={setShowUnsavedChangesDialog}
-      />
+    <div className="flex flex-col gap-4">
+      {/* Table Mode Selector */}
+      <div className="flex justify-between items-center">
+        <CardTitle>{title}</CardTitle>
 
-      {/* Updated EditPanel with new props */}
-      <EditPanel
-        isSidebarOpen={isSidebarOpen}
-        selectedRecord={selectedRecord}
-        handleCloseSidebar={handleCloseSidebar}
-        fields={fields}
-        hasUnsavedChanges={hasUnsavedChanges}
-        isSubmitting={isSubmitting}
-        handleResetForm={handleResetForm}
-        handleSaveChanges={handleSaveChanges}
-        formValues={formValues}
-        setFormValues={setFormValues}
-      />
+        <div className="flex items-center gap-3">
+          <Select
+            value={tableMode}
+            onValueChange={(value: "view" | "edit" | "delete") => {
+              setTableMode(value);
 
-      {/* Main Table Card - Always takes available space but maintains fixed width */}
-      <Card className="flex-1 min-w-0" ref={tableContainerRef}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex-1">
-            <CardTitle>{title}</CardTitle>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Table mode selector */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="table-mode" className="text-sm">
-                Mode
-              </Label>
-              <Select
-                value={tableMode}
-                onValueChange={(
-                  value: "view" | "single-edit" | "multi-edit" | "delete"
-                ) => {
-                  setTableMode(value);
-
-                  // Clear selected rows when switching modes
-                  if (selectedRows.length > 0) {
-                    setSelectedRows([]);
-                  }
-
-                  // Close sidebar if open and switching away from single-edit mode
-                  if (isSidebarOpen && value !== "single-edit") {
-                    handleCloseSidebar();
-                  }
-                }}
-              >
-                <SelectTrigger className="w-[150px]" id="table-mode">
-                  <SelectValue placeholder="Select mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="view">View Mode</SelectItem>
-                  {!disableEdit && (
-                    <SelectItem value="single-edit">
-                      Single Edit Mode
-                    </SelectItem>
-                  )}
-                  {!disableEdit && (
-                    <SelectItem value="multi-edit">Multi Edit Mode</SelectItem>
-                  )}
-                  {!disableDelete && (
-                    <SelectItem value="delete">Delete Mode</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Only show delete button when items are selected and in delete mode */}
-            {tableMode === "delete" &&
-              selectedRows.length > 0 &&
-              !disableDelete && (
-                <ConfirmDeleteDialog
-                  title="Delete Selected Items"
-                  description={`Are you sure you want to delete ${selectedRows.length} selected ${
-                    selectedRows.length === 1 ? "item" : "items"
-                  }? This action cannot be undone.`}
-                  onConfirm={handleDeleteSelectedRecords}
-                  trigger={
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Trash className="h-4 w-4 mr-2" />
-                      )}
-                      Delete{" "}
-                      {selectedRows.length === 1
-                        ? "Selected Item"
-                        : `${selectedRows.length} Items`}
-                    </Button>
-                  }
-                />
+              // Clear selected rows when switching modes
+              if (selectedRows.length > 0) {
+                setSelectedRows([]);
+              }
+            }}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="view">View Mode</SelectItem>
+              {!disableEdit && <SelectItem value="edit">Edit Mode</SelectItem>}
+              {!disableDelete && (
+                <SelectItem value="delete">Delete Mode</SelectItem>
               )}
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-auto">
+            </SelectContent>
+          </Select>
+
+          {/* Delete Button - Only visible in delete mode with selections */}
+          {tableMode === "delete" && selectedRows.length > 0 && (
+            <ConfirmDeleteDialog
+              title="Delete entry"
+              description={`Are you sure you want to delete ${selectedRows.length} selected ${
+                selectedRows.length === 1 ? "record" : "records"
+              }?`}
+              triggerText={`Delete ${selectedRows.length} ${selectedRows.length === 1 ? "Record" : "Records"}`}
+              onConfirm={handleDeleteSelectedRecords}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Main Table Card */}
+      <Card className="flex-1 min-w-0" ref={tableContainerRef}>
+        <CardContent className="overflow-auto p-4">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -643,7 +338,7 @@ export default function GenericDataTable({
               filterableColumns={getSearchableColumns()}
               searchPlaceholder="Search..."
               pageSize={currentPageSize}
-              onRowClick={handleRowClick}
+              onRowClick={onRowClick}
               rowClassName={(row) =>
                 highlightedRecordId && row[dataKey] === highlightedRecordId
                   ? "highlight-row"
@@ -652,11 +347,12 @@ export default function GenericDataTable({
               enableSelection={tableMode === "delete"}
               dataKey={dataKey}
               selectedRows={selectedRows}
+              onSelectedRowsChange={setSelectedRows}
               initialPage={currentPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setCurrentPageSize}
-              onDataChange={handleDataUpdated}
-              useInlineEditing={tableMode === "multi-edit" && !disableEdit}
+              onDataChange={(updatedRowId) => handleDataUpdated(updatedRowId)}
+              useInlineEditing={tableMode === "edit" && !disableEdit}
             />
           )}
         </CardContent>
