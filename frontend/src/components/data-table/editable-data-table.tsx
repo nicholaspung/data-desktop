@@ -279,22 +279,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
             // Create a meaningful display value based on the relation type
             let displayValue = "";
 
-            // Special handling for bloodwork date field
-            if (field.relatedDataset === "bloodwork" && relatedData.date) {
-              displayValue = formatDate(new Date(relatedData.date));
-              if (relatedData.lab_name && relatedData.lab_name.trim() !== "") {
-                displayValue += ` - ${relatedData.lab_name}`;
-              }
-            }
-            // Special handling for blood markers
-            else if (field.relatedDataset === "blood_markers") {
-              displayValue = relatedData.name || "Unnamed";
-              if (relatedData.unit && relatedData.unit.trim() !== "") {
-                displayValue += ` (${relatedData.unit})`;
-              }
-            }
-            // Use displayField from field definition if provided
-            else if (
+            if (
               field.displayField &&
               relatedData[field.displayField] !== undefined
             ) {

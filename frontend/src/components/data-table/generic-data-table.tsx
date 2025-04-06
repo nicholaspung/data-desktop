@@ -1,4 +1,3 @@
-// src/components/data-table/generic-data-table.tsx
 import React, { useState, useEffect, useRef } from "react";
 import { EditableDataTable } from "@/components/data-table/editable-data-table";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,9 @@ export default function GenericDataTable({
     "view" | "single-edit" | "multi-edit" | "delete"
   >("view");
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+
+  // New state for form values
+  const [formValues, setFormValues] = useState<Record<string, any>>({});
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -188,7 +189,8 @@ export default function GenericDataTable({
               }
             });
 
-            setSelectedRecord(processedData);
+            // Update formValues instead of selectedRecord
+            setFormValues(processedData);
             setHasUnsavedChanges(true);
             toast.info("Restored unsaved changes from previous edit session");
           }
@@ -206,6 +208,60 @@ export default function GenericDataTable({
       }
     };
   }, [isSidebarOpen, selectedRecord]);
+
+  // Initialize formValues when selectedRecord changes
+  useEffect(() => {
+    if (selectedRecord) {
+      setFormValues({ ...selectedRecord });
+    }
+  }, [selectedRecord]);
+
+  // Watch for changes in formValues to update hasUnsavedChanges
+  useEffect(() => {
+    if (selectedRecord && originalRecord) {
+      // Compare formValues with originalRecord to detect changes
+      let changed = false;
+
+      Object.keys(formValues).forEach((key) => {
+        const formValue = formValues[key];
+        const originalValue = originalRecord[key];
+
+        // Special handling for dates
+        if (formValue instanceof Date && originalValue instanceof Date) {
+          changed = changed || formValue.getTime() !== originalValue.getTime();
+        } else if (
+          JSON.stringify(formValue) !== JSON.stringify(originalValue)
+        ) {
+          changed = true;
+        }
+      });
+
+      setHasUnsavedChanges(changed);
+
+      // Save to localStorage if changed
+      if (changed) {
+        try {
+          // Ensure the record ID is included
+          const dataToSave = {
+            ...formValues,
+            [dataKey]: selectedRecord[dataKey], // Make sure ID is preserved
+          };
+
+          // Convert Date objects to ISO strings for safe storage
+          const storageData = { ...dataToSave };
+          Object.keys(storageData).forEach((key) => {
+            if (storageData[key] instanceof Date) {
+              storageData[key] = storageData[key].toISOString();
+            }
+          });
+
+          localStorage.setItem(editStorageKey, JSON.stringify(storageData));
+        } catch (error) {
+          console.error("Error saving edit data to localStorage:", error);
+        }
+      }
+    }
+  }, [formValues, selectedRecord, originalRecord]);
 
   // Scroll to highlighted row when data is loaded or highlightedRecordId changes
   useEffect(() => {
@@ -336,120 +392,39 @@ export default function GenericDataTable({
     // Save the original record for comparison
     setOriginalRecord(recordCopy);
     setSelectedRecord(recordCopy);
+    // Initialize formValues with the record
+    setFormValues(recordCopy);
     setIsSidebarOpen(true);
     setHasUnsavedChanges(false); // Reset unsaved changes flag when opening a new record
   };
 
-  const handleEditSuccess = async () => {
-    // Clear the local storage for this record
-    localStorage.removeItem(editStorageKey);
+  const handleSaveChanges = async () => {
+    if (!selectedRecord) return;
 
-    setIsSidebarOpen(false);
-    setSelectedRecord(null);
-    setOriginalRecord(null);
-    setHasUnsavedChanges(false);
-    await loadData();
-
-    if (onDataChange) {
-      onDataChange();
-    }
-  };
-
-  // Handle selection changes
-  const handleSelectedRowsChange = (newSelectedRows: string[]) => {
-    setSelectedRows(newSelectedRows);
-  };
-
-  // New function to handle form changes and save to local storage
-  const handleFormChange = (values: Record<string, any>) => {
-    if (!selectedRecord || !originalRecord) return;
-
-    // Check if values are different from original
-    let changed = false;
-    for (const key in values) {
-      if (JSON.stringify(values[key]) !== JSON.stringify(originalRecord[key])) {
-        changed = true;
-        break;
-      }
-    }
-
-    setHasUnsavedChanges(changed);
-
-    if (changed) {
-      // Save to local storage
-      try {
-        // Ensure the record ID is included
-        const dataToSave = {
-          ...values,
-          [dataKey]: selectedRecord[dataKey], // Make sure ID is preserved
-        };
-
-        // Convert Date objects to ISO strings for safe storage
-        const storageData = { ...dataToSave };
-        Object.keys(storageData).forEach((key) => {
-          if (storageData[key] instanceof Date) {
-            storageData[key] = storageData[key].toISOString();
-          }
-        });
-
-        localStorage.setItem(editStorageKey, JSON.stringify(storageData));
-      } catch (error) {
-        console.error("Error saving edit data to localStorage:", error);
-      }
-    }
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Submit the form programmatically
-      if (formRef.current) {
-        // Create FormData from form elements
-        const formData = new FormData(formRef.current);
-        const formValues: Record<string, any> = {};
+      // Submit the form values directly
+      if (selectedRecord && selectedRecord[dataKey]) {
+        const recordId = selectedRecord[dataKey].toString();
+        const updatedRecord = await ApiService.updateRecord(
+          recordId,
+          formValues
+        );
+        toast.success(`${title} data updated successfully`);
 
-        // Process form data
-        fields.forEach((field) => {
-          const value = formData.get(field.key);
+        if (updatedRecord) {
+          // Clear localStorage
+          localStorage.removeItem(editStorageKey);
+          setIsSidebarOpen(false);
+          setSelectedRecord(null);
+          setOriginalRecord(null);
+          setFormValues({});
+          setHasUnsavedChanges(false);
+          await loadData();
 
-          // Process based on field type
-          switch (field.type) {
-            case "number":
-            case "percentage":
-              formValues[field.key] = value ? parseFloat(value.toString()) : 0;
-              break;
-            case "boolean":
-              formValues[field.key] = value === "true";
-              break;
-            case "date":
-              if (value) {
-                // If it's already a Date object (from DataForm)
-                if (
-                  selectedRecord &&
-                  selectedRecord[field.key] instanceof Date
-                ) {
-                  formValues[field.key] = selectedRecord[field.key];
-                } else {
-                  formValues[field.key] = new Date(value.toString());
-                }
-              }
-              break;
-            default:
-              formValues[field.key] = value || "";
-          }
-        });
-
-        // Update the record
-        if (selectedRecord && selectedRecord[dataKey]) {
-          const updatedRecord = await ApiService.updateRecord(
-            selectedRecord[dataKey].toString(),
-            formValues
-          );
-          toast.success(`${title} data updated successfully`);
-          if (updatedRecord) {
-            handleEditSuccess();
+          if (onDataChange) {
+            onDataChange();
           }
         }
       }
@@ -464,7 +439,7 @@ export default function GenericDataTable({
   // Function to reset the form to original values
   const handleResetForm = () => {
     if (originalRecord) {
-      setSelectedRecord({ ...originalRecord });
+      setFormValues({ ...originalRecord });
       localStorage.removeItem(editStorageKey);
       setHasUnsavedChanges(false);
       toast.info("Changes reverted to original values");
@@ -482,6 +457,7 @@ export default function GenericDataTable({
           setIsSidebarOpen(false);
           setSelectedRecord(null);
           setOriginalRecord(null);
+          setFormValues({});
           localStorage.removeItem(editStorageKey);
           setHasUnsavedChanges(false);
         });
@@ -490,6 +466,7 @@ export default function GenericDataTable({
       setIsSidebarOpen(false);
       setSelectedRecord(null);
       setOriginalRecord(null);
+      setFormValues({});
       if (callback) {
         callback();
       }
@@ -556,19 +533,18 @@ export default function GenericDataTable({
         onOpenChange={setShowUnsavedChangesDialog}
       />
 
+      {/* Updated EditPanel with new props */}
       <EditPanel
         isSidebarOpen={isSidebarOpen}
         selectedRecord={selectedRecord}
         handleCloseSidebar={handleCloseSidebar}
-        formRef={formRef}
-        handleFormSubmit={handleFormSubmit}
         fields={fields}
-        handleFormChange={handleFormChange}
-        datasetId={datasetId}
-        dataKey={dataKey}
         hasUnsavedChanges={hasUnsavedChanges}
         isSubmitting={isSubmitting}
         handleResetForm={handleResetForm}
+        handleSaveChanges={handleSaveChanges}
+        formValues={formValues}
+        setFormValues={setFormValues}
       />
 
       {/* Main Table Card - Always takes available space but maintains fixed width */}
@@ -676,7 +652,6 @@ export default function GenericDataTable({
               enableSelection={tableMode === "delete"}
               dataKey={dataKey}
               selectedRows={selectedRows}
-              onSelectedRowsChange={handleSelectedRowsChange}
               initialPage={currentPage}
               onPageChange={setCurrentPage}
               onPageSizeChange={setCurrentPageSize}

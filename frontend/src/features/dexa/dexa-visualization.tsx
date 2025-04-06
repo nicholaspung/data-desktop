@@ -132,7 +132,7 @@ export default function DexaVisualization({
         break;
     }
 
-    return data.filter((item) => item.date >= startDate);
+    return data.filter((item) => item.date && item.date >= startDate);
   };
 
   if (isLoading) {

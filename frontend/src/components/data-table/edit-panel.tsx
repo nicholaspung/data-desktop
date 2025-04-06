@@ -21,38 +21,35 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { ApiService } from "@/services/api";
-import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 
 export default function EditPanel({
   isSidebarOpen,
   selectedRecord,
   handleCloseSidebar,
-  formRef,
-  handleFormSubmit,
   fields,
-  handleFormChange,
   hasUnsavedChanges,
   isSubmitting,
   handleResetForm,
+  handleSaveChanges,
+  formValues,
+  setFormValues,
 }: {
   isSidebarOpen: boolean;
   selectedRecord: Record<string, any> | null;
   handleCloseSidebar: () => void;
-  formRef: React.RefObject<HTMLFormElement | null>;
-  handleFormSubmit: (event: React.FormEvent) => void;
   fields: FieldDefinition[];
-  handleFormChange: (formValues: Record<string, any>) => void;
-  datasetId: string;
-  dataKey: string;
   hasUnsavedChanges: boolean;
   isSubmitting: boolean;
   handleResetForm: () => void;
+  handleSaveChanges: () => void;
+  formValues: Record<string, any>;
+  setFormValues: (values: Record<string, any>) => void;
 }) {
   // State to store relation options
   const [relationOptions, setRelationOptions] = useState<
     Record<string, { id: string; label: string }[]>
   >({});
-  const [loadingRelations, setIsLoadingRelations] = useState<
+  const [loadingRelations, setLoadingRelations] = useState<
     Record<string, boolean>
   >({});
 
@@ -78,13 +75,37 @@ export default function EditPanel({
     if (!field.relatedDataset) return;
 
     // Set loading state for this field
-    setIsLoadingRelations((prev) => ({ ...prev, [field.key]: true }));
+    setLoadingRelations((prev) => ({ ...prev, [field.key]: true }));
 
     try {
       const records = await ApiService.getRecords(field.relatedDataset);
 
       // Transform records to options with id and label
-      const options = generateOptionsForLoadRelationOptions(records, field);
+      const options = records.map((record: any) => {
+        let label = "";
+
+        if (field.displayField && record[field.displayField] !== undefined) {
+          label = record[field.displayField] || "";
+
+          // Add secondary field if available
+          if (
+            field.secondaryDisplayField &&
+            record[field.secondaryDisplayField] !== undefined &&
+            record[field.secondaryDisplayField] !== ""
+          ) {
+            label += ` - ${record[field.secondaryDisplayField]}`;
+          }
+        }
+        // Generic fallback
+        else {
+          label = record.name || record.title || `ID: ${record.id}`;
+        }
+
+        return {
+          id: record.id,
+          label,
+        };
+      });
 
       // Update options for this field
       setRelationOptions((prev) => ({ ...prev, [field.key]: options }));
@@ -95,8 +116,16 @@ export default function EditPanel({
       );
     } finally {
       // Clear loading state
-      setIsLoadingRelations((prev) => ({ ...prev, [field.key]: false }));
+      setLoadingRelations((prev) => ({ ...prev, [field.key]: false }));
     }
+  };
+
+  // Handle field value change
+  const handleFieldChange = (fieldKey: string, value: any) => {
+    setFormValues({
+      ...formValues,
+      [fieldKey]: value,
+    });
   };
 
   // Get the display value for a relation field
@@ -116,7 +145,7 @@ export default function EditPanel({
   const renderField = (field: FieldDefinition) => {
     if (!selectedRecord) return null;
 
-    const value = selectedRecord[field.key];
+    const value = formValues[field.key];
 
     // Handle relation fields
     if (field.isRelation && field.relatedDataset) {
@@ -158,24 +187,8 @@ export default function EditPanel({
 
           <Select
             name={field.key}
-            defaultValue={value}
-            onValueChange={(newValue) => {
-              // Update the form data with the ID value
-              if (formRef.current) {
-                const formData = new FormData(formRef.current);
-                const formValues: Record<string, any> = {};
-
-                fields.forEach((f) => {
-                  const fieldValue =
-                    f.key === field.key ? newValue : formData.get(f.key);
-
-                  formValues[f.key] = fieldValue;
-                });
-
-                // Call handleFormChange to trigger updates
-                handleFormChange(formValues);
-              }
-            }}
+            value={value || ""}
+            onValueChange={(newValue) => handleFieldChange(field.key, newValue)}
             disabled={isLoading}
           >
             <SelectTrigger className="w-full">
@@ -254,23 +267,7 @@ export default function EditPanel({
                 <Calendar
                   mode="single"
                   selected={value ? new Date(value) : undefined}
-                  onSelect={(date) => {
-                    // Update the form data
-                    if (formRef.current) {
-                      const formData = new FormData(formRef.current);
-                      const formValues: Record<string, any> = {};
-
-                      fields.forEach((f) => {
-                        const fieldValue =
-                          f.key === field.key ? date : formData.get(f.key);
-
-                        formValues[f.key] = fieldValue;
-                      });
-
-                      // Call handleFormChange to trigger updates
-                      handleFormChange(formValues);
-                    }
-                  }}
+                  onSelect={(date) => handleFieldChange(field.key, date)}
                   initialFocus
                 />
               </PopoverContent>
@@ -288,23 +285,9 @@ export default function EditPanel({
               id={field.key}
               name={field.key}
               checked={!!value}
-              onCheckedChange={(checked) => {
-                // Update the form data
-                if (formRef.current) {
-                  const formData = new FormData(formRef.current);
-                  const formValues: Record<string, any> = {};
-
-                  fields.forEach((f) => {
-                    const fieldValue =
-                      f.key === field.key ? checked : formData.get(f.key);
-
-                    formValues[f.key] = fieldValue;
-                  });
-
-                  // Call handleFormChange to trigger updates
-                  handleFormChange(formValues);
-                }
-              }}
+              onCheckedChange={(checked) =>
+                handleFieldChange(field.key, !!checked)
+              }
             />
             <div className="space-y-1 leading-none">
               <label
@@ -349,22 +332,7 @@ export default function EditPanel({
               onChange={(e) => {
                 const newValue =
                   e.target.value === "" ? 0 : parseFloat(e.target.value);
-
-                // Update the form data
-                if (formRef.current) {
-                  const formData = new FormData(formRef.current);
-                  const formValues: Record<string, any> = {};
-
-                  fields.forEach((f) => {
-                    const fieldValue =
-                      f.key === field.key ? newValue : formData.get(f.key);
-
-                    formValues[f.key] = fieldValue;
-                  });
-
-                  // Call handleFormChange to trigger updates
-                  handleFormChange(formValues);
-                }
+                handleFieldChange(field.key, newValue);
               }}
               step="any"
               min={0}
@@ -392,25 +360,7 @@ export default function EditPanel({
               id={field.key}
               name={field.key}
               value={value ?? ""}
-              onChange={(e) => {
-                const newValue = e.target.value;
-
-                // Update the form data
-                if (formRef.current) {
-                  const formData = new FormData(formRef.current);
-                  const formValues: Record<string, any> = {};
-
-                  fields.forEach((f) => {
-                    const fieldValue =
-                      f.key === field.key ? newValue : formData.get(f.key);
-
-                    formValues[f.key] = fieldValue;
-                  });
-
-                  // Call handleFormChange to trigger updates
-                  handleFormChange(formValues);
-                }
-              }}
+              onChange={(e) => handleFieldChange(field.key, e.target.value)}
             />
           </div>
         );
@@ -432,11 +382,7 @@ export default function EditPanel({
           </Button>
         </div>
 
-        <form
-          ref={formRef}
-          onSubmit={handleFormSubmit}
-          className="flex flex-col h-full"
-        >
+        <div className="flex flex-col h-full">
           <ScrollArea className="flex-1 p-4">
             {selectedRecord && fields.map(renderField)}
           </ScrollArea>
@@ -453,9 +399,10 @@ export default function EditPanel({
 
             <div className="flex gap-2">
               <Button
-                type="submit"
+                type="button"
                 className="flex-1"
                 disabled={isSubmitting || !hasUnsavedChanges}
+                onClick={handleSaveChanges}
               >
                 {isSubmitting ? (
                   <>
@@ -480,7 +427,7 @@ export default function EditPanel({
               </Button>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     )
   );

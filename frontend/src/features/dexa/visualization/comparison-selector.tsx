@@ -34,6 +34,10 @@ export const ComparisonSelector = ({
 }: ComparisonSelectorProps) => {
   // Create date options from the data
   const dateOptions = data
+    .filter(
+      (item) =>
+        item.date instanceof Date && item.date.toString() !== "Invalid Date"
+    )
     .map((scan) => ({
       value: scan.id,
       label: format(new Date(scan.date), "MMM d, yyyy"),

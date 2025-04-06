@@ -58,30 +58,7 @@ export async function fetchRelationOptions(
           let label = "";
           let displayValue = "";
 
-          // Special handling for bloodwork
-          if (field.relatedDataset === "bloodwork" && record.date) {
-            const testDate = new Date(record.date).toLocaleDateString();
-            displayValue = testDate;
-            label = testDate;
-
-            if (record.lab_name && record.lab_name.trim() !== "") {
-              label += ` - ${record.lab_name}`;
-            }
-          }
-          // Special handling for blood markers
-          else if (field.relatedDataset === "blood_markers") {
-            displayValue = record.name || "Unnamed";
-            label = record.name || "Unnamed";
-
-            if (record.unit && record.unit.trim() !== "") {
-              label += ` (${record.unit})`;
-            }
-          }
-          // Use displayField from field definition if provided
-          else if (
-            field.displayField &&
-            record[field.displayField] !== undefined
-          ) {
+          if (field.displayField && record[field.displayField] !== undefined) {
             displayValue = record[field.displayField] || "";
             label = record[field.displayField] || "";
 
