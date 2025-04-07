@@ -146,6 +146,47 @@ export async function resolveRelationReferences(
       if (typeof value === "string") {
         const lowerValue = value.toLowerCase().trim();
 
+        // Special handling for date-based relation fields
+        if (field.displayField && field.displayFieldType === "date") {
+          try {
+            // Try to parse the date from the string value
+            const dateObj = new Date(value);
+            if (!isNaN(dateObj.getTime())) {
+              // Format date in multiple formats for better matching
+              const isoDate = dateObj.toISOString().split("T")[0].toLowerCase();
+              const month = dateObj.getMonth() + 1;
+              const day = dateObj.getDate();
+              const year = dateObj.getFullYear();
+
+              // Try different date formats
+              const dateFormats = [
+                isoDate, // YYYY-MM-DD
+                `${month}/${day}/${year}`.toLowerCase(), // MM/DD/YYYY
+                `${month}-${day}-${year}`.toLowerCase(), // MM-DD-YYYY
+                value.toLowerCase().trim(), // Original value
+              ];
+
+              // Try to find a match using any of these formats
+              for (const dateFormat of dateFormats) {
+                const dateMatch = options.find(
+                  (option) => option.displayValue.toLowerCase() === dateFormat
+                );
+
+                if (dateMatch) {
+                  record[field.key] = dateMatch.id;
+                  console.log(
+                    `Found date match for "${value}" with format "${dateFormat}"`
+                  );
+                  continue;
+                }
+              }
+            }
+          } catch (e) {
+            console.log(`Error parsing date: ${e}`);
+            // Continue with normal matching if date parsing fails
+          }
+        }
+
         // Handle parentheses pattern first - "PrimaryValue (SecondaryValue)"
         if (field.secondaryDisplayField) {
           // Find the last opening parenthesis
@@ -230,11 +271,48 @@ export async function resolveRelationReferences(
  * @returns Function that resolves display values to IDs
  */
 export function createRelationLookup(relationData: RelationDataMap) {
-  return (fieldKey: string, displayValue: string): string | null => {
+  return (
+    fieldKey: string,
+    displayValue: string,
+    fieldDef?: FieldDefinition
+  ): string | null => {
     const data = relationData[fieldKey];
     if (!data || !data.options) return null;
 
     const lowerValue = displayValue.toLowerCase().trim();
+
+    // Special handling for date-based relation fields
+    if (fieldDef?.displayFieldType === "date") {
+      try {
+        // Try to parse the date
+        const dateObj = new Date(displayValue);
+        if (!isNaN(dateObj.getTime())) {
+          // Try different date formats for matching
+          const isoDate = dateObj.toISOString().split("T")[0].toLowerCase();
+          const month = dateObj.getMonth() + 1;
+          const day = dateObj.getDate();
+          const year = dateObj.getFullYear();
+
+          // MM/DD/YYYY format
+          const mmddyyyy = `${month}/${day}/${year}`.toLowerCase();
+
+          // Try matching with ISO format
+          const exactMatchIso = data.options.find(
+            (option) => option.displayValue.toLowerCase() === isoDate
+          );
+          if (exactMatchIso) return exactMatchIso.id;
+
+          // Try matching with MM/DD/YYYY format
+          const exactMatchMmDdYyyy = data.options.find(
+            (option) => option.displayValue.toLowerCase() === mmddyyyy
+          );
+          if (exactMatchMmDdYyyy) return exactMatchMmDdYyyy.id;
+        }
+      } catch (e) {
+        console.log(`Error parsing date for lookup: ${e}`);
+        // Continue with regular matching if date parsing fails
+      }
+    }
 
     // Check for parentheses pattern first - "PrimaryValue (SecondaryValue)"
     const openParenIndex = lowerValue.lastIndexOf("(");

@@ -43,7 +43,7 @@ export function RelationField({
       (state) => state[fieldDef.relatedDataset as DataStoreName]
     ) || false; // Get data from the store
   // Transform data to options with id and label
-  const options = generateOptionsForLoadRelationOptions(data, field);
+  const options = generateOptionsForLoadRelationOptions(data, fieldDef);
 
   // If there are no options and we're not loading, display an alert with guidance
   if (options.length === 0) {

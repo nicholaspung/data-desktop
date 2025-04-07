@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as DexaImport } from './routes/dexa'
+import { Route as DebugImport } from './routes/debug'
 import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
 
@@ -20,6 +21,12 @@ import { Route as IndexImport } from './routes/index'
 const DexaRoute = DexaImport.update({
   id: '/dexa',
   path: '/dexa',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DebugRoute = DebugImport.update({
+  id: '/debug',
+  path: '/debug',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -53,6 +60,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BloodworkImport
       parentRoute: typeof rootRoute
     }
+    '/debug': {
+      id: '/debug'
+      path: '/debug'
+      fullPath: '/debug'
+      preLoaderRoute: typeof DebugImport
+      parentRoute: typeof rootRoute
+    }
     '/dexa': {
       id: '/dexa'
       path: '/dexa'
@@ -68,12 +82,14 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
+  '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
+  '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
 }
 
@@ -81,27 +97,30 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/bloodwork': typeof BloodworkRoute
+  '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/bloodwork' | '/dexa'
+  fullPaths: '/' | '/bloodwork' | '/debug' | '/dexa'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/bloodwork' | '/dexa'
-  id: '__root__' | '/' | '/bloodwork' | '/dexa'
+  to: '/' | '/bloodwork' | '/debug' | '/dexa'
+  id: '__root__' | '/' | '/bloodwork' | '/debug' | '/dexa'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BloodworkRoute: typeof BloodworkRoute
+  DebugRoute: typeof DebugRoute
   DexaRoute: typeof DexaRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BloodworkRoute: BloodworkRoute,
+  DebugRoute: DebugRoute,
   DexaRoute: DexaRoute,
 }
 
@@ -117,6 +136,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/bloodwork",
+        "/debug",
         "/dexa"
       ]
     },
@@ -125,6 +145,9 @@ export const routeTree = rootRoute
     },
     "/bloodwork": {
       "filePath": "bloodwork.tsx"
+    },
+    "/debug": {
+      "filePath": "debug.tsx"
     },
     "/dexa": {
       "filePath": "dexa.tsx"

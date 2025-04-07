@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import EditableCellConfirmButtons from "./editable-cell-confirm-buttons";
 import dataStore, { DataStoreName, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
+import { getDisplayValue } from "@/lib/table-utils";
 
 interface EditableCellProps {
   value: any;
@@ -155,17 +156,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
       const relatedData = row.original[relatedDataKey];
 
       if (relatedData) {
-        // Create a formatted label based on the relation type
-        if (field.displayField) {
-          const primary = relatedData[field.displayField] || "";
-          const secondary = field.secondaryDisplayField
-            ? relatedData[field.secondaryDisplayField]
-            : "";
-
-          return secondary ? `${primary} - ${secondary}` : primary;
-        }
-
-        return relatedData.name || relatedData.title || `ID: ${value}`;
+        return getDisplayValue(field, relatedData);
       }
 
       return value ? `ID: ${value}` : "N/A";

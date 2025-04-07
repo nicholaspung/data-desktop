@@ -207,7 +207,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           const relatedKey = `${columnId}_data`;
           const relatedData = row.original[relatedKey];
           if (relatedData) {
-            const displayValue = getDisplayValue(field, row.original);
+            const displayValue = getDisplayValue(field, relatedData);
 
             return (
               <div

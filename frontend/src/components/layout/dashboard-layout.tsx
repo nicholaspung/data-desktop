@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MenuIcon,
+  Bug,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,6 +88,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     localStorage.setItem("sidebarExpanded", String(newState));
   };
 
+  const getFinalSidebarItems = () => {
+    const sidebarItemsCopy = [...sidebarItems];
+    if (import.meta.env.DEV) {
+      sidebarItemsCopy.push({
+        title: "Debugger",
+        icon: <Bug className="h-5 w-5" />,
+        href: "/debug",
+      });
+    }
+    return sidebarItemsCopy;
+  };
+  const finalSidebarItems = getFinalSidebarItems();
+
   return (
     <div className="flex h-[calc(100vh-5rem)] overflow-hidden">
       {/* Mobile sidebar toggle */}
@@ -138,7 +152,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             )}
           >
             <TooltipProvider delayDuration={100}>
-              {sidebarItems.map((item) =>
+              {finalSidebarItems.map((item) =>
                 isExpanded ? (
                   <Link
                     key={item.href}

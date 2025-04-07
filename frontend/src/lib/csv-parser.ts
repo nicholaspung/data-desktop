@@ -116,7 +116,54 @@ export async function parseCSV(
                     if (relationInfo && typeof value === "string") {
                       const normalizedValue = value.toLowerCase().trim();
 
-                      // First, check for exact match
+                      // If this is a date-based relation field, try to normalize the date format
+                      if (
+                        field.displayField &&
+                        field.displayFieldType === "date"
+                      ) {
+                        try {
+                          // Try to parse the date string
+                          const dateObj = new Date(normalizedValue);
+                          if (!isNaN(dateObj.getTime())) {
+                            // Add the ISO format for lookup
+                            const isoDate = dateObj
+                              .toISOString()
+                              .split("T")[0]
+                              .toLowerCase();
+                            const matchedIdFromIso =
+                              relationInfo.displayToIdMap.get(isoDate);
+                            if (matchedIdFromIso) {
+                              processedRow[field.key] = matchedIdFromIso;
+                              console.log(
+                                `Found date match using ISO format: "${value}" → "${isoDate}" → ID: ${matchedIdFromIso}`
+                              );
+                              return;
+                            }
+
+                            // Also try month/day/year format
+                            const month = dateObj.getMonth() + 1;
+                            const day = dateObj.getDate();
+                            const year = dateObj.getFullYear();
+                            const mmddyyyy =
+                              `${month}/${day}/${year}`.toLowerCase();
+                            const matchedIdFromMmDdYyyy =
+                              relationInfo.displayToIdMap.get(mmddyyyy);
+                            if (matchedIdFromMmDdYyyy) {
+                              processedRow[field.key] = matchedIdFromMmDdYyyy;
+                              console.log(
+                                `Found date match using MM/DD/YYYY format: "${value}" → "${mmddyyyy}" → ID: ${matchedIdFromMmDdYyyy}`
+                              );
+                              return;
+                            }
+                          }
+                        } catch (e: any) {
+                          // If date parsing fails, continue with the original value
+                          console.log(`Failed to parse date: "${value}"`);
+                          console.error(`Error: ${e}`);
+                        }
+                      }
+
+                      // First, check for exact match with the original normalized value
                       const matchedId =
                         relationInfo.displayToIdMap.get(normalizedValue);
 
@@ -443,18 +490,85 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
 
         // Use display fields if specified
         if (field.displayField && record[field.displayField]) {
-          const displayValue = record[field.displayField]
-            .toString()
-            .toLowerCase();
+          let displayValue;
+
+          // Special handling for date fields
+          if (field.displayFieldType === "date" && record[field.displayField]) {
+            // Format date consistently as YYYY-MM-DD
+            const dateObj = new Date(record[field.displayField]);
+            if (!isNaN(dateObj.getTime())) {
+              displayValue = dateObj.toISOString().split("T")[0].toLowerCase();
+
+              // Also add common date formats for better matching
+              const month = dateObj.getMonth() + 1;
+              const day = dateObj.getDate();
+              const year = dateObj.getFullYear();
+
+              // Add MM/DD/YYYY format
+              displayToIdMap.set(`${month}/${day}/${year}`.toLowerCase(), id);
+
+              // Add MM-DD-YYYY format
+              displayToIdMap.set(`${month}-${day}-${year}`.toLowerCase(), id);
+
+              // Add Month Day, Year format (e.g., "January 1, 2023")
+              const monthNames = [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+              ];
+              displayToIdMap.set(
+                `${monthNames[month - 1]} ${day}, ${year}`.toLowerCase(),
+                id
+              );
+            } else {
+              // Fallback if date parsing fails
+              displayValue = record[field.displayField]
+                .toString()
+                .toLowerCase();
+            }
+          } else {
+            // Regular non-date field
+            displayValue = record[field.displayField].toString().toLowerCase();
+          }
+
           displayToIdMap.set(displayValue, id);
 
           if (
             field.secondaryDisplayField &&
             record[field.secondaryDisplayField]
           ) {
-            const secondaryValue = record[field.secondaryDisplayField]
-              .toString()
-              .toLowerCase();
+            let secondaryValue;
+
+            // Special handling for secondary date fields
+            if (
+              field.secondaryDisplayFieldType === "date" &&
+              record[field.secondaryDisplayField]
+            ) {
+              const dateObj = new Date(record[field.secondaryDisplayField]);
+              if (!isNaN(dateObj.getTime())) {
+                secondaryValue = dateObj
+                  .toISOString()
+                  .split("T")[0]
+                  .toLowerCase();
+              } else {
+                secondaryValue = record[field.secondaryDisplayField]
+                  .toString()
+                  .toLowerCase();
+              }
+            } else {
+              secondaryValue = record[field.secondaryDisplayField]
+                .toString()
+                .toLowerCase();
+            }
 
             // Create both combined formats: with dash and with parentheses
             const combinedDash = `${displayValue} - ${secondaryValue}`;
@@ -576,20 +690,32 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
       let example = "";
 
       if (field.displayField) {
-        if (field.secondaryDisplayField) {
+        // Special handling for date-based relation fields
+        if (field.displayFieldType === "date") {
+          const today = new Date();
+          // Format the date in a way that will be recognized (YYYY-MM-DD)
+          const formattedDate = today.toISOString().split("T")[0];
+          example = `${formattedDate}`;
+
+          headerDesc[field.key] +=
+            ` (Enter date in YYYY-MM-DD format or MM/DD/YYYY, the system will match to the correct record)`;
+        } else if (field.secondaryDisplayField) {
           example = `Name (Secondary Value)`;
           headerDesc[field.key] +=
             ` (You can use format "Primary (Secondary)" to match by both fields)`;
         } else {
-          example = `Enter ${field.displayName} name`;
+          example = `Enter ${field.displayName} value`;
         }
       } else {
         example = "Enter name or ID";
       }
 
       exampleRow[field.key] = example;
-      if (!headerDesc[field.key].includes("(Enter name")) {
-        headerDesc[field.key] += " (Enter name, the system will match to ID)";
+      if (
+        !headerDesc[field.key].includes("(Enter") &&
+        !field.displayFieldType
+      ) {
+        headerDesc[field.key] += " (Enter value, the system will match to ID)";
       }
     } else {
       switch (field.type) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -325,7 +326,6 @@ func GetDataRecordsWithRelations(datasetID string, relations map[string]string) 
 	}
 
 	// Create a map to store relation fields by dataset
-	relationsByDataset := make(map[string][]string)
 	var relationFields []FieldDefinition
 
 	// Get the dataset to access its fields
@@ -334,16 +334,10 @@ func GetDataRecordsWithRelations(datasetID string, relations map[string]string) 
 		return nil, err
 	}
 
-	// Find relation fields and group by related dataset
+	// Find all relation fields
 	for _, field := range dataset.Fields {
 		if field.IsRelation && field.RelatedDataset != "" && field.RelatedField != "" {
 			relationFields = append(relationFields, field)
-
-			// Group by dataset for efficient fetching
-			if _, exists := relationsByDataset[field.RelatedDataset]; !exists {
-				relationsByDataset[field.RelatedDataset] = []string{}
-			}
-			relationsByDataset[field.RelatedDataset] = append(relationsByDataset[field.RelatedDataset], field.Key)
 		}
 	}
 
@@ -370,11 +364,19 @@ func GetDataRecordsWithRelations(datasetID string, relations map[string]string) 
 				continue
 			}
 
+			// Check if the relID is actually a valid UUID or ID format
+			// If it's not, log the issue but continue processing other relations
+			if !isValidID(relID) {
+				fmt.Printf("Warning: Invalid relation ID format for %s: %s\n", field.Key, relID)
+				continue
+			}
+
 			// Get the related record
 			relatedRecord, err := GetDataRecord(relID)
 			if err != nil {
-				// Just log the error and continue
-				fmt.Printf("Error fetching related record %s: %v\n", relID, err)
+				// More detailed error logging
+				fmt.Printf("Error fetching related record for field %s with ID %s: %v\n",
+					field.Key, relID, err)
 				continue
 			}
 
@@ -400,4 +402,11 @@ func GetDataRecordsWithRelations(datasetID string, relations map[string]string) 
 	}
 
 	return result, nil
+}
+
+// Helper function to check if a string looks like a valid ID
+func isValidID(id string) bool {
+	// Simple check for UUID format or numeric ID
+	// You can enhance this based on your ID format
+	return len(id) > 8 && !strings.Contains(id, "/")
 }
