@@ -96,7 +96,6 @@ export default function DexaVisualization({
   }
 
   const filteredData = getFilteredData();
-  console.log(filteredData);
 
   return (
     <div className={className}>

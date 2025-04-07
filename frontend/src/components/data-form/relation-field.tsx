@@ -40,8 +40,9 @@ export function RelationField({
     useStore(
       loadingStore,
       (state) => state[fieldDef.relatedDataset as DataStoreName]
-    ) || []; // Get data from the store
+    ) || false; // Get data from the store
   // Transform data to options with id and label
+  // TODO need to update how this is displayed
   const options = data.map((record: any) => {
     // Create a meaningful label based on the dataset type
     const label = record.name || record.title || `ID: ${record.id}`;

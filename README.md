@@ -13,6 +13,7 @@
 - when trying to edit a relational field in edit mode in data table, it doesn't work correctly - looks like regular date components also don't
 - refactor the data fetching code so that it all loads in one component, and also gets stored in TanStack store, and when there's modifications to data, it mostly just edits it on the client-side (still need to go through bloodwork components, and also updated `batch-entry-table` and `editable-cell` stuff with the relational fields) (might also try adding the TanStack store functions in the `ApiService`)
 - add a refresh button in each `generic-data-table.tsx` that will update TanStack store
+- add a refresh button on `index.tsx` to refresh the datasets there
 
 ### IN PROGRESS
 

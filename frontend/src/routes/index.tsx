@@ -49,10 +49,11 @@ function Home() {
           try {
             const records = await ApiService.getRecords(dataset.id);
             let lastUpdated = null;
+            let sortedRecords;
 
             if (records.length > 0) {
               // Find the most recent record
-              const sortedRecords = [...records].sort(
+              sortedRecords = [...records].sort(
                 (a, b) =>
                   new Date(b.lastModified).getTime() -
                   new Date(a.lastModified).getTime()
@@ -60,7 +61,15 @@ function Home() {
               lastUpdated = sortedRecords[0].lastModified;
             }
 
-            loadState(records, dataset.id as DataStoreName); // Load the records into the store
+            const transformedSortedRecords = sortedRecords?.map((record) => {
+              dataset.fields.forEach((field) => {
+                if (field.type === "date") {
+                  record[field.key] = new Date(record[field.key]);
+                }
+              });
+              return record;
+            });
+            loadState(transformedSortedRecords, dataset.id as DataStoreName); // Load the records into the store
 
             return {
               id: dataset.id,

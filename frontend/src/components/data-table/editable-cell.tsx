@@ -18,12 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import EditableCellConfirmButtons from "./editable-cell-confirm-buttons";
-import { DataStoreName, updateEntry } from "@/store/data-store";
+import dataStore, { DataStoreName, updateEntry } from "@/store/data-store";
+import { useStore } from "@tanstack/react-store";
 
 interface EditableCellProps {
   value: any;
@@ -44,18 +44,13 @@ const EditableCell: React.FC<EditableCellProps> = ({
   onDataChange,
   datasetId,
 }) => {
+  const allData = useStore(dataStore, (state) => state);
   // State for editing mode and value
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(initialValue);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const originalValue = initialValue;
   const cellRef = useRef<HTMLDivElement>(null);
-
-  // State for relation fields
-  const [relationOptions, setRelationOptions] = useState<
-    { id: string; label: string }[]
-  >([]);
-  const [isLoadingRelations, setIsLoadingRelations] = useState(false);
 
   // Handle outside click to exit edit mode
   useEffect(() => {
@@ -87,11 +82,6 @@ const EditableCell: React.FC<EditableCellProps> = ({
   // Enter edit mode
   const handleEdit = () => {
     setIsEditing(true);
-
-    // Load relation options if this is a relation field
-    if (field.isRelation && field.relatedDataset) {
-      loadRelationOptions();
-    }
   };
 
   // Save changes
@@ -156,29 +146,6 @@ const EditableCell: React.FC<EditableCellProps> = ({
     setEditValue(newValue);
   };
 
-  // Load options for relation fields
-  const loadRelationOptions = async () => {
-    if (!field.relatedDataset) return;
-
-    setIsLoadingRelations(true);
-
-    try {
-      const records = await ApiService.getRecords(field.relatedDataset);
-
-      // Transform records to options with id and label
-      const options = generateOptionsForLoadRelationOptions(records, field);
-
-      setRelationOptions(options);
-    } catch (error) {
-      console.error(
-        `Error loading relation options for ${field.relatedDataset}:`,
-        error
-      );
-    } finally {
-      setIsLoadingRelations(false);
-    }
-  };
-
   // Format the original value based on field type for display
   const getFormattedDisplayValue = (value: any) => {
     // Handle relation fields
@@ -237,32 +204,28 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const cellClassName = "flex flex-row gap-1 align-center justify-center";
 
   // Render edit mode for relation field
-  const renderRelationEditMode = () => (
+  const renderRelationEditMode = (
+    options: {
+      id: any;
+      label: string;
+    }[]
+  ) => (
     <>
       <Select
         value={editValue?.toString() || ""}
         onValueChange={handleValueChange}
-        disabled={isLoadingRelations || isSubmitting}
+        disabled={isSubmitting}
       >
         <SelectTrigger className="w-full h-8 text-left">
-          <SelectValue
-            placeholder={
-              isLoadingRelations ? "Loading..." : `Select ${field.displayName}`
-            }
-          />
+          <SelectValue placeholder={`Select ${field.displayName}`} />
         </SelectTrigger>
         <SelectContent>
-          {isLoadingRelations ? (
-            <div className="flex items-center justify-center p-2">
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-              <span>Loading options...</span>
-            </div>
-          ) : relationOptions.length === 0 ? (
+          {options.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
               No options available
             </div>
           ) : (
-            relationOptions.map((option) => (
+            options.map((option) => (
               <SelectItem key={option.id} value={option.id}>
                 {option.label}
               </SelectItem>
@@ -277,7 +240,11 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const renderEditMode = () => {
     // Handle relation fields with dropdown
     if (field.isRelation && field.relatedDataset) {
-      return renderRelationEditMode();
+      const options = generateOptionsForLoadRelationOptions(
+        allData[field.relatedDataset as DataStoreName],
+        field
+      );
+      return renderRelationEditMode(options);
     }
 
     switch (field.type) {

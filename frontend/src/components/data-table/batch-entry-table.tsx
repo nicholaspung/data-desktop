@@ -30,17 +30,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FieldDefinition } from "@/types/types";
-import {
-  fetchRelationOptions,
-  resolveRelationReferences,
-} from "@/lib/relation-utils";
+import { resolveRelationReferences } from "@/lib/relation-utils";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { createCSVTemplate, parseCSV } from "@/lib/csv-parser";
 import BatchEntryImportButtons from "./batch-entry-import-buttons";
 import SavedDataBadge from "../reusable/saved-data-badge";
 import useLoadData from "@/hooks/useLoadData";
-import { DataStoreName } from "@/store/data-store";
+import dataStore, { DataStoreName } from "@/store/data-store";
+import { useStore } from "@tanstack/react-store";
+import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 
 interface BatchEntryTableProps {
   datasetId: DataStoreName;
@@ -60,6 +59,7 @@ export function BatchEntryTable({
 }: BatchEntryTableProps & {
   onNavigateToTable?: () => void;
 }) {
+  const allData = useStore(dataStore, (state) => state);
   const { loadData } = useLoadData({
     fields,
     datasetId,
@@ -73,14 +73,6 @@ export function BatchEntryTable({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
-
-  // State to hold relation field options
-  const [relationOptions, setRelationOptions] = useState<
-    Record<string, { id: string; label: string; displayValue: string }[]>
-  >({});
-  const [isLoadingRelations, setIsLoadingRelations] = useState<
-    Record<string, boolean>
-  >({});
 
   // Find relation fields
   const relationFields = fields.filter(
@@ -111,50 +103,6 @@ export function BatchEntryTable({
 
     return entry;
   }
-
-  // Load relation data for all relation fields using the utility function
-  const loadRelationOptions = async () => {
-    // Skip if no relation fields
-    if (relationFields.length === 0) return;
-
-    // Initialize loading states
-    const initialLoadingStates: Record<string, boolean> = {};
-    relationFields.forEach((field) => {
-      initialLoadingStates[field.key] = true;
-    });
-    setIsLoadingRelations(initialLoadingStates);
-
-    try {
-      // Use our utility function to fetch relation options
-      const relationData = await fetchRelationOptions(fields);
-
-      // Process the results
-      const newRelationOptions: Record<
-        string,
-        { id: string; label: string; displayValue: string }[]
-      > = {};
-      const newLoadingStates: Record<string, boolean> = {};
-
-      // Convert the data structure to match our state
-      Object.keys(relationData).forEach((key) => {
-        newRelationOptions[key] = relationData[key].options;
-        newLoadingStates[key] = relationData[key].loading;
-      });
-
-      // Update state
-      setRelationOptions(newRelationOptions);
-      setIsLoadingRelations(newLoadingStates);
-    } catch (error) {
-      console.error("Error loading relation options:", error);
-
-      // Reset loading states on error
-      const errorLoadingStates: Record<string, boolean> = {};
-      relationFields.forEach((field) => {
-        errorLoadingStates[field.key] = false;
-      });
-      setIsLoadingRelations(errorLoadingStates);
-    }
-  };
 
   // Load entries from localStorage on initial render
   useEffect(() => {
@@ -200,9 +148,6 @@ export function BatchEntryTable({
       console.error("Error loading saved entries:", error);
       setEntries([getEmptyEntry()]);
     }
-
-    // Load relation options
-    loadRelationOptions();
   }, [datasetId, fields]);
 
   // Helper function to check if entries have meaningful data
@@ -469,8 +414,10 @@ export function BatchEntryTable({
 
     // Handle relation fields with dropdown
     if (field.isRelation && field.relatedDataset) {
-      const options = relationOptions[field.key] || [];
-      const isLoading = isLoadingRelations[field.key] || false;
+      const options = generateOptionsForLoadRelationOptions(
+        allData[field.relatedDataset as DataStoreName],
+        field
+      );
 
       // Convert empty string to placeholder value for display purposes
       const displayValue = value === "" ? "_none_" : value || "_none_";
@@ -484,19 +431,14 @@ export function BatchEntryTable({
               const valueToSave = newValue === "_none_" ? "" : newValue;
               updateEntryField(entryIndex, field.key, valueToSave);
             }}
-            disabled={isLoading}
           >
             <SelectTrigger className="h-8 w-full">
-              <SelectValue
-                placeholder={
-                  isLoading ? "Loading..." : `Select ${field.displayName}`
-                }
-              />
+              <SelectValue placeholder={`Select ${field.displayName}`} />
             </SelectTrigger>
             <SelectContent>
               {options.length === 0 ? (
                 <SelectItem value="_no_options_" disabled>
-                  {isLoading ? "Loading options..." : "No options available"}
+                  No options available
                 </SelectItem>
               ) : (
                 <>
@@ -641,15 +583,6 @@ export function BatchEntryTable({
               />
             </div>
           </div>
-
-          {/* Relation field loading indicator */}
-          {relationFields.length > 0 &&
-            Object.values(isLoadingRelations).some((loading) => loading) && (
-              <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Loading relation data...</span>
-              </div>
-            )}
 
           {/* Table of entries */}
           <div className="border rounded-md">
