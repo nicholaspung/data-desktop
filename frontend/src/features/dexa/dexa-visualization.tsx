@@ -17,6 +17,7 @@ import SymmetryTab from "./visualization/symmetry-tab";
 import GoalTab from "./goal/goal-tab"; // Import the new Goals tab
 import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
+import loadingStore from "@/store/loading-store";
 
 export interface DexaScan {
   id: string;
@@ -29,16 +30,17 @@ export interface DexaScan {
 interface DexaVisualizationProps {
   className?: string;
   datasetId: DataStoreName;
-  isLoading?: boolean;
 }
 
 export default function DexaVisualization({
   className = "",
   datasetId,
-  isLoading,
 }: DexaVisualizationProps) {
   const data =
     useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
+  const isLoading =
+    useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
+    false; // Get data from the store
   const [activeTab, setActiveTab] = useState("bodyComp");
   const [timeRange, setTimeRange] = useState("all");
 
@@ -94,6 +96,7 @@ export default function DexaVisualization({
   }
 
   const filteredData = getFilteredData();
+  console.log(filteredData);
 
   return (
     <div className={className}>

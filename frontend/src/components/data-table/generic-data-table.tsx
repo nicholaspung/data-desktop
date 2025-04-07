@@ -52,7 +52,8 @@ export default function GenericDataTable({
   const data =
     useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
   const isLoading =
-    useStore(loadingStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
+    useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
+    false; // Get data from the store
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
     "view"

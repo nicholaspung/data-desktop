@@ -1,4 +1,5 @@
 import { Store } from "@tanstack/react-store";
+import { DataStoreName } from "./data-store";
 
 const loadingStore = new Store({
   dexa: false,
@@ -7,7 +8,10 @@ const loadingStore = new Store({
   blood_results: false,
 });
 
-export const setLoadingState = (isLoading: boolean, datasetId: string) => {
+export const setLoadingState = (
+  isLoading: boolean,
+  datasetId: DataStoreName
+) => {
   loadingStore.setState((state) => {
     return {
       ...state,
