@@ -2,6 +2,7 @@
 import { ColumnMeta, FieldDefinition } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { getFilterFunctionForField } from "./table-filter-utils";
+import { formatDate } from "./date-utils";
 
 // Function to format cell values based on type
 export const formatCellValue = (value: any, meta?: ColumnMeta) => {
@@ -73,3 +74,34 @@ export function createColumn<TData, TValue = any>(
 
   return column;
 }
+
+export const getDisplayValue = (field: FieldDefinition, record: any) => {
+  let label = "";
+
+  if (field.displayField && record[field.displayField] !== undefined) {
+    if (field.displayFieldType === "date") {
+      label = formatDate(record[field.displayField]);
+    } else {
+      label = record[field.displayField] || "";
+    }
+
+    // Add secondary field if available
+    if (
+      field.secondaryDisplayField &&
+      record[field.secondaryDisplayField] !== undefined &&
+      record[field.secondaryDisplayField] !== ""
+    ) {
+      if (field.secondaryDisplayFieldType === "date") {
+        label += ` (${formatDate(record[field.secondaryDisplayField])})`;
+      } else {
+        label += ` (${record[field.secondaryDisplayField]})`;
+      }
+    }
+  }
+  // Generic fallback
+  else {
+    label = record.name || record.title || `ID: ${record.id}`;
+  }
+
+  return label;
+};

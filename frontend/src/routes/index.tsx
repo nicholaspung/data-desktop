@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
-import { DatasetSummary } from "@/types/types";
+import { DatasetSummary, FieldDefinition } from "@/types/types";
 import { DataStoreName, loadState } from "@/store/data-store";
+import { getProcessedRecords } from "@/lib/data-utils";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -47,35 +48,21 @@ function Home() {
         // Create a list of promises to get record counts for each dataset
         const countPromises = datasets.map(async (dataset) => {
           try {
-            const records = await ApiService.getRecords(dataset.id);
-            let lastUpdated = null;
-            let sortedRecords;
+            const processedRecords =
+              (await getProcessedRecords(
+                dataset.id as DataStoreName,
+                dataset.fields as FieldDefinition[]
+              )) || [];
 
-            if (records.length > 0) {
-              // Find the most recent record
-              sortedRecords = [...records].sort(
-                (a, b) =>
-                  new Date(b.lastModified).getTime() -
-                  new Date(a.lastModified).getTime()
-              );
-              lastUpdated = sortedRecords[0].lastModified;
-            }
-
-            const transformedSortedRecords = sortedRecords?.map((record) => {
-              dataset.fields.forEach((field) => {
-                if (field.type === "date") {
-                  record[field.key] = new Date(record[field.key]);
-                }
-              });
-              return record;
-            });
-            loadState(transformedSortedRecords, dataset.id as DataStoreName); // Load the records into the store
+            loadState(processedRecords, dataset.id as DataStoreName); // Load the records into the store
 
             return {
               id: dataset.id,
               name: dataset.name,
-              count: records.length,
-              lastUpdated,
+              count: processedRecords.length,
+              lastUpdated: processedRecords[0]
+                ? processedRecords[0].lastModified
+                : null,
               // Assign icons based on dataset type
               icon: getDatasetIcon(dataset.type),
               href: dataset.id.includes("blood")

@@ -415,7 +415,7 @@ export function BatchEntryTable({
     // Handle relation fields with dropdown
     if (field.isRelation && field.relatedDataset) {
       const options = generateOptionsForLoadRelationOptions(
-        allData[field.relatedDataset as DataStoreName],
+        allData[field.relatedDataset as DataStoreName] || [],
         field
       );
 
@@ -512,7 +512,7 @@ export function BatchEntryTable({
                   variant="outline"
                   className="h-8 w-full justify-start text-left font-normal"
                 >
-                  {value ? format(new Date(value), "PPP") : "Pick a date"}
+                  {value ? format(value, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -530,7 +530,7 @@ export function BatchEntryTable({
         );
 
       default:
-        return <span style={cellStyle}>{value}</span>;
+        return <span style={cellStyle}>{JSON.stringify(value)}</span>;
     }
   };
 

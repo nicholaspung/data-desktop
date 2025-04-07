@@ -1,4 +1,4 @@
-import { ApiService } from "@/services/api";
+import { getProcessedRecords } from "@/lib/data-utils";
 import { DataStoreName, loadState } from "@/store/data-store";
 import { setLoadingState } from "@/store/loading-store";
 import { FieldDefinition } from "@/types/types";
@@ -22,27 +22,7 @@ export default function useLoadData({
   const loadData = async () => {
     setLoadingState(true, datasetId);
     try {
-      // Check if this dataset has relation fields
-      const hasRelations = fields.some((field) => field.isRelation);
-
-      // Use the appropriate API method
-      const records = hasRelations
-        ? await ApiService.getRecordsWithRelations(datasetId)
-        : await ApiService.getRecords(datasetId);
-
-      // Process dates to ensure they're Date objects
-      const processedRecords = records.map((record) => {
-        const processed = { ...record };
-
-        // Convert dates
-        fields.forEach((field) => {
-          if (field.type === "date" && processed[field.key]) {
-            processed[field.key] = new Date(processed[field.key]);
-          }
-        });
-
-        return processed;
-      });
+      const processedRecords = getProcessedRecords(datasetId, fields);
 
       loadState(processedRecords, datasetId);
     } catch (error) {

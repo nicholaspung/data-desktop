@@ -35,7 +35,9 @@ export interface FieldDefinition {
   relatedDataset?: string;
   relatedField?: string;
   displayField?: string;
+  displayFieldType?: FieldType;
   secondaryDisplayField?: string;
+  secondaryDisplayFieldType?: FieldType;
 }
 
 export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";

@@ -19,6 +19,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { DataStoreName } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
+import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 
 interface RelationFieldProps {
   field: any; // React Hook Form field
@@ -42,16 +43,7 @@ export function RelationField({
       (state) => state[fieldDef.relatedDataset as DataStoreName]
     ) || false; // Get data from the store
   // Transform data to options with id and label
-  // TODO need to update how this is displayed
-  const options = data.map((record: any) => {
-    // Create a meaningful label based on the dataset type
-    const label = record.name || record.title || `ID: ${record.id}`;
-
-    return {
-      id: record.id,
-      label,
-    };
-  });
+  const options = generateOptionsForLoadRelationOptions(data, field);
 
   // If there are no options and we're not loading, display an alert with guidance
   if (options.length === 0) {

@@ -7,7 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
  */
 export const calculateColumnWidth = (
   column: ColumnDef<any, any>,
-  data: any[]
+  data: any[] = []
 ): string => {
   // Get header text length
   const headerText = String(column.header || column.id);

@@ -14,8 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { FieldDefinition } from "@/types/types";
-import { formatCellValue } from "@/lib/table-utils";
-import { formatDate } from "@/lib/date-utils";
+import { formatCellValue, getDisplayValue } from "@/lib/table-utils";
 import Pagination from "./pagination";
 import { calculateColumnWidth } from "../../lib/table-width-utils";
 import EditableCell from "./editable-cell";
@@ -88,7 +87,10 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
     columns.forEach((column) => {
       if (column.id) {
-        widths[column.id] = calculateColumnWidth(column, data);
+        widths[column.id] = calculateColumnWidth(
+          column,
+          !(data instanceof Promise) ? data : []
+        );
       }
     });
 
@@ -154,10 +156,12 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     if (!data || data.length === 0) return;
 
     const selectionMap: Record<string, boolean> = {};
-    data.forEach((row, index) => {
-      const rowId = String(row[dataKey]);
-      selectionMap[index] = selectedRows.includes(rowId);
-    });
+    if (!(data instanceof Promise)) {
+      data.forEach((row, index) => {
+        const rowId = String(row[dataKey]);
+        selectionMap[index] = selectedRows.includes(rowId);
+      });
+    }
 
     setRowSelection(selectionMap);
   }, [selectedRows, data, dataKey]);
@@ -202,38 +206,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           // Look for the related data in xxx_id_data format
           const relatedKey = `${columnId}_data`;
           const relatedData = row.original[relatedKey];
-
           if (relatedData) {
-            // Create a meaningful display value based on the relation type
-            let displayValue = "";
-
-            if (
-              field.displayField &&
-              relatedData[field.displayField] !== undefined
-            ) {
-              displayValue = relatedData[field.displayField] || "";
-
-              // Add secondary information if specified in field definition
-              if (
-                field.secondaryDisplayField &&
-                relatedData[field.secondaryDisplayField] !== undefined &&
-                relatedData[field.secondaryDisplayField] !== ""
-              ) {
-                displayValue += ` - ${relatedData[field.secondaryDisplayField]}`;
-              }
-            }
-            // Fallback options
-            else {
-              displayValue =
-                relatedData.name ||
-                relatedData.title ||
-                relatedData.displayName ||
-                relatedData.label ||
-                // Date-based fallback for records with dates
-                (relatedData.date
-                  ? formatDate(new Date(relatedData.date))
-                  : `ID: ${value}`);
-            }
+            const displayValue = getDisplayValue(field, row.original);
 
             return (
               <div
