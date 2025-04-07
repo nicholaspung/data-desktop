@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/select";
 import GenericDataPage from "@/components/data-page/generic-data-page";
 import { FieldDefinition } from "@/types/types";
+import { DataStoreName } from "@/store/data-store";
 
 export interface DatasetConfig {
-  id: string;
+  id: DataStoreName;
   title: string;
   description?: string;
   fields: FieldDefinition[];

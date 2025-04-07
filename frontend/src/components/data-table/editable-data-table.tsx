@@ -21,12 +21,13 @@ import { calculateColumnWidth } from "../../lib/table-width-utils";
 import EditableCell from "./editable-cell";
 import FilterControls from "./filter-controls";
 import { toast } from "sonner";
+import { DataStoreName } from "@/store/data-store";
 
 interface EditableDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   fields: FieldDefinition[]; // Added field definitions
-  datasetId: string; // Added dataset ID
+  datasetId: DataStoreName; // Added dataset ID
   filterableColumns?: string[];
   searchPlaceholder?: string;
   className?: string;
@@ -174,7 +175,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         const { row, column: columnInfo, getValue } = info;
         const columnId = String(columnInfo.id);
         const value = getValue();
-        const width = columnWidths[columnId] || "auto";
         const field = fieldMap.get(columnId);
 
         // For any editable field that has a field definition
@@ -185,7 +185,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
               row={row}
               column={columnInfo}
               field={field}
-              width={width}
               datasetId={datasetId}
               onDataChange={() => {
                 if (onDataChange) {
@@ -424,13 +423,30 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           {/* Custom table with sticky header and first column */}
           <div className="relative">
             <table className="w-full border-collapse">
+              {/* Add colgroup for column width control */}
+              <colgroup>
+                {table.getAllColumns().map((column) => {
+                  const columnId = column.id;
+                  const width =
+                    columnWidths[column.id] ||
+                    (columnId === "select" ? "40px" : "auto");
+
+                  return (
+                    <col
+                      key={columnId}
+                      style={{
+                        minWidth: width,
+                      }}
+                    />
+                  );
+                })}
+              </colgroup>
+
               {/* Sticky Header */}
               <thead className="sticky top-0 z-20 bg-background border-b">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header, headerIndex) => {
-                      const columnId = header.column.id;
-                      const width = columnWidths[columnId] || "auto";
                       const isFirstColumn = headerIndex === 0;
 
                       return (
@@ -445,10 +461,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                               "sticky left-0 z-10 bg-background border-r"
                           )}
                           onClick={header.column.getToggleSortingHandler()}
-                          style={{
-                            width,
-                            minWidth: columnId === "select" ? "40px" : "100px",
-                          }}
                         >
                           <div className="flex items-center gap-1">
                             {header.isPlaceholder
@@ -480,6 +492,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                       data-row-id={row.original[dataKey]} // Add data attribute for row ID
                       className={cn(
                         "border-b",
+                        !useInlineEditing && "hover:bg-muted",
                         onRowClick || enableSelection
                           ? "cursor-pointer hover:bg-muted"
                           : "",
@@ -492,7 +505,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                     >
                       {row.getVisibleCells().map((cell, cellIndex) => {
                         const columnId = cell.column.id;
-                        const width = columnWidths[columnId] || "auto";
                         const isFirstColumn = cellIndex === 0;
 
                         return (
@@ -508,11 +520,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                                 columnId !== "id" &&
                                 "editable-cell"
                             )}
-                            style={{
-                              width,
-                              minWidth:
-                                columnId === "select" ? "40px" : "100px",
-                            }}
                           >
                             {flexRender(
                               cell.column.columnDef.cell,

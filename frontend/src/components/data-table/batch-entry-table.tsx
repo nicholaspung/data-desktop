@@ -39,9 +39,11 @@ import { ApiService } from "@/services/api";
 import { createCSVTemplate, parseCSV } from "@/lib/csv-parser";
 import BatchEntryImportButtons from "./batch-entry-import-buttons";
 import SavedDataBadge from "../reusable/saved-data-badge";
+import useLoadData from "@/hooks/useLoadData";
+import { DataStoreName } from "@/store/data-store";
 
 interface BatchEntryTableProps {
-  datasetId: string;
+  datasetId: DataStoreName;
   fields: FieldDefinition[];
   title: string;
   onSuccess?: () => void;
@@ -58,6 +60,11 @@ export function BatchEntryTable({
 }: BatchEntryTableProps & {
   onNavigateToTable?: () => void;
 }) {
+  const { loadData } = useLoadData({
+    fields,
+    datasetId,
+    title,
+  });
   // Create a storage key specific to this dataset
   const storageKey = `batch_entry_${datasetId}`;
 
@@ -355,6 +362,8 @@ export function BatchEntryTable({
 
         // Reset entries to a single empty one
         setEntries([getEmptyEntry()]);
+
+        await loadData(); // Reload data to reflect changes
 
         // Call the success callback if provided
         if (onSuccess) {

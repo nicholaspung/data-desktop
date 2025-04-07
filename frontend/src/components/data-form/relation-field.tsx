@@ -1,6 +1,4 @@
 // src/components/data-form/relation-field.tsx
-import { useState, useEffect } from "react";
-import { ApiService } from "@/services/api";
 import {
   Select,
   SelectContent,
@@ -17,8 +15,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { FieldDefinition } from "@/types/types";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { DataStoreName } from "@/store/data-store";
+import loadingStore from "@/store/loading-store";
 
 interface RelationFieldProps {
   field: any; // React Hook Form field
@@ -31,49 +31,29 @@ export function RelationField({
   fieldDef,
   onChange,
 }: RelationFieldProps) {
-  const [options, setOptions] = useState<{ id: string; label: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const data =
+    useStore(
+      dataStore,
+      (state) => state[fieldDef.relatedDataset as DataStoreName]
+    ) || []; // Get data from the store
+  const isLoading =
+    useStore(
+      loadingStore,
+      (state) => state[fieldDef.relatedDataset as DataStoreName]
+    ) || []; // Get data from the store
+  // Transform data to options with id and label
+  const options = data.map((record: any) => {
+    // Create a meaningful label based on the dataset type
+    const label = record.name || record.title || `ID: ${record.id}`;
 
-  const fetchRelatedData = async () => {
-    if (!fieldDef.relatedDataset) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const records = await ApiService.getRecords(fieldDef.relatedDataset);
-
-      // Transform records to options with id and label
-      const formattedOptions = records.map((record: any) => {
-        // Create a meaningful label based on the dataset type
-        const label = record.name || record.title || `ID: ${record.id}`;
-
-        return {
-          id: record.id,
-          label,
-        };
-      });
-
-      setOptions(formattedOptions);
-    } catch (error) {
-      console.error(
-        `Error fetching related data for ${fieldDef.relatedDataset}:`,
-        error
-      );
-      setError(`Failed to load ${fieldDef.displayName} options`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch related data when component mounts
-  useEffect(() => {
-    fetchRelatedData();
-  }, [fieldDef.relatedDataset, fieldDef.displayName]);
+    return {
+      id: record.id,
+      label,
+    };
+  });
 
   // If there are no options and we're not loading, display an alert with guidance
-  if (!isLoading && options.length === 0) {
+  if (options.length === 0) {
     return (
       <FormItem>
         <FormLabel>{fieldDef.displayName}</FormLabel>
@@ -84,14 +64,6 @@ export function RelationField({
             record first.
           </AlertDescription>
         </Alert>
-        <Button
-          variant="outline"
-          type="button"
-          className="w-full"
-          onClick={fetchRelatedData}
-        >
-          Refresh
-        </Button>
         {fieldDef.description && (
           <FormDescription>{fieldDef.description}</FormDescription>
         )}
@@ -105,7 +77,7 @@ export function RelationField({
       <FormLabel>{fieldDef.displayName}</FormLabel>
       <FormControl>
         <Select
-          disabled={isLoading || options.length === 0}
+          disabled={options.length === 0}
           value={field.value || ""}
           onValueChange={onChange}
         >
@@ -114,9 +86,7 @@ export function RelationField({
               placeholder={
                 isLoading
                   ? "Loading options..."
-                  : error
-                    ? error
-                    : `Select ${fieldDef.displayName}`
+                  : `Select ${fieldDef.displayName}`
               }
             />
             {isLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}

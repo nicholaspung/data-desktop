@@ -38,6 +38,7 @@ export function createColumn<TData, TValue = any>(
   field?: FieldDefinition // Optional field definition for advanced features
 ): ColumnDef<TData, TValue> {
   const column: ColumnDef<TData, TValue> = {
+    id: field?.key,
     accessorKey: accessorKey as string,
     header,
     meta,

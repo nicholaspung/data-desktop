@@ -24,9 +24,11 @@ import { parseCSV, createCSVTemplate, validateCSV } from "@/lib/csv-parser";
 import { FieldDefinition } from "@/types/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { DataStoreName } from "@/store/data-store";
+import useLoadData from "@/hooks/useLoadData";
 
 interface CSVImportProcessorProps {
-  datasetId: string;
+  datasetId: DataStoreName;
   fields: FieldDefinition[];
   title: string;
   onSuccess?: () => void;
@@ -40,6 +42,11 @@ export function CSVImportProcessor({
   onSuccess,
   chunkSize = 100, // Default to 100 records per chunk
 }: CSVImportProcessorProps) {
+  const { loadData } = useLoadData({
+    fields,
+    datasetId,
+    title,
+  });
   const [isOpen, setIsOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -165,6 +172,8 @@ export function CSVImportProcessor({
     setIsProcessing(false);
 
     if (succeeded > 0) {
+      await loadData(); // Reload data to reflect changes
+
       toast.success("Import completed", {
         description: `Successfully imported ${succeeded} records${failed > 0 ? `, ${failed} failed` : ""}`,
       });

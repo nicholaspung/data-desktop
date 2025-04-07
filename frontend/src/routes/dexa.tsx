@@ -34,7 +34,9 @@ export default function DexaPage() {
           id: "visualization",
           label: "Visualization",
           icon: <BarChart className="h-4 w-4" />,
-          content: <DexaVisualization key={`viz-${refreshKey}`} />,
+          content: (
+            <DexaVisualization key={`viz-${refreshKey}`} datasetId="dexa" />
+          ),
           position: "before",
         },
       ]}

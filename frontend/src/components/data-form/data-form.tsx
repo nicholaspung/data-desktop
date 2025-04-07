@@ -37,9 +37,10 @@ import {
   getFieldsByType,
   hasNonEmptyValues,
 } from "@/lib/form-utils";
+import { addEntry, DataStoreName, updateEntry } from "@/store/data-store";
 
 interface DataFormProps {
-  datasetId: string;
+  datasetId: DataStoreName;
   fields: FieldDefinition[];
   onSuccess?: (recordId: string) => void;
   onCancel?: () => void;
@@ -317,11 +318,13 @@ export default function DataForm({
 
       if (mode === "add") {
         response = await ApiService.addRecord(datasetId, values);
+        addEntry(response, datasetId); // Update the store with the new entry
 
         // After successful submission, completely reset the form
         completeFormReset();
       } else if (mode === "edit" && recordId) {
         response = await ApiService.updateRecord(recordId, values);
+        updateEntry(recordId, response, datasetId); // Update the store with the edited entry
       }
 
       toast.success(successMessage);

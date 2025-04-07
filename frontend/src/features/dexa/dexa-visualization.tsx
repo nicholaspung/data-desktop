@@ -1,8 +1,7 @@
 // src/features/dexa/dexa-visualization.tsx - Update with goals
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ApiService } from "@/services/api";
 import { Loader2 } from "lucide-react";
 import {
   Select,
@@ -11,12 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import BodyCompositionTab from "./visualization/body-composition-tab";
 import TrendsTab from "./visualization/trends-tab";
 import RegionalAnalysisTab from "./visualization/regional-analysis-tab";
 import SymmetryTab from "./visualization/symmetry-tab";
 import GoalTab from "./goal/goal-tab"; // Import the new Goals tab
+import dataStore, { DataStoreName } from "@/store/data-store";
+import { useStore } from "@tanstack/react-store";
 
 export interface DexaScan {
   id: string;
@@ -28,87 +28,19 @@ export interface DexaScan {
 
 interface DexaVisualizationProps {
   className?: string;
+  datasetId: DataStoreName;
+  isLoading?: boolean;
 }
 
 export default function DexaVisualization({
   className = "",
+  datasetId,
+  isLoading,
 }: DexaVisualizationProps) {
-  const [data, setData] = useState<DexaScan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const data =
+    useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
   const [activeTab, setActiveTab] = useState("bodyComp");
   const [timeRange, setTimeRange] = useState("all");
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const records = await ApiService.getRecords<DexaScan>("dexa");
-
-      if (!records || records.length === 0) {
-        setData([]);
-        setError("No DEXA scan data available. Please add some records first.");
-        setIsLoading(false);
-        return;
-      }
-
-      // Process and sort the data
-      const processedRecords = records
-        .map((record) => {
-          // Ensure all numeric fields have at least a zero value
-          const processedRecord = { ...record };
-          // Check commonly used fields
-          const numericFields = [
-            "total_body_fat_percentage",
-            "fat_tissue_lbs",
-            "lean_tissue_lbs",
-            "total_mass_lbs",
-            "bone_mineral_content",
-            "arms_total_region_fat_percentage",
-            "legs_total_region_fat_percentage",
-            "trunk_total_region_fat_percentage",
-            "android_total_region_fat_percentage",
-            "gynoid_total_region_fat_percentage",
-            "right_arm_total_region_fat_percentage",
-            "left_arm_total_region_fat_percentage",
-            "right_leg_total_region_fat_percentage",
-            "left_leg_total_region_fat_percentage",
-            "right_arm_lean_tissue_lbs",
-            "left_arm_lean_tissue_lbs",
-            "right_leg_lean_tissue_lbs",
-            "left_leg_lean_tissue_lbs",
-            "vat_mass_lbs",
-          ];
-
-          numericFields.forEach((field) => {
-            if (
-              processedRecord[field] === undefined ||
-              processedRecord[field] === null
-            ) {
-              processedRecord[field] = 0;
-            }
-          });
-
-          return {
-            ...processedRecord,
-            date: new Date(record.date),
-          };
-        })
-        .sort((a, b) => a.date.getTime() - b.date.getTime());
-
-      setData(processedRecords);
-    } catch (error) {
-      console.error("Error loading DEXA data:", error);
-      setError("Failed to load DEXA scan data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Filter data based on time range
   const getFilteredData = () => {
@@ -132,7 +64,7 @@ export default function DexaVisualization({
         break;
     }
 
-    return data.filter((item) => item.date && item.date >= startDate);
+    return data.filter((item: any) => item.date && item.date >= startDate);
   };
 
   if (isLoading) {
@@ -145,19 +77,16 @@ export default function DexaVisualization({
     );
   }
 
-  if (error || data.length === 0) {
+  if (data.length === 0) {
     return (
       <Card className={className}>
         <CardContent className="py-10">
           <div className="text-center">
             <h3 className="text-lg font-medium">No Data Available</h3>
             <p className="text-muted-foreground mt-2">
-              {error ||
-                "No DEXA scan data has been added yet. Add your first scan to see visualizations."}
+              No DEXA scan data has been added yet. Add your first scan to see
+              visualizations.
             </p>
-            <Button onClick={loadData} variant="outline" className="mt-4">
-              Retry
-            </Button>
           </div>
         </CardContent>
       </Card>

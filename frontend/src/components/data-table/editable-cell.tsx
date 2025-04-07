@@ -23,6 +23,7 @@ import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import EditableCellConfirmButtons from "./editable-cell-confirm-buttons";
+import { DataStoreName, updateEntry } from "@/store/data-store";
 
 interface EditableCellProps {
   value: any;
@@ -30,7 +31,7 @@ interface EditableCellProps {
   column: any;
   field: FieldDefinition;
   width?: string;
-  datasetId: string;
+  datasetId: DataStoreName;
   onDataChange?: () => void;
 }
 
@@ -41,6 +42,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
   field,
   width,
   onDataChange,
+  datasetId,
 }) => {
   // State for editing mode and value
   const [isEditing, setIsEditing] = useState(false);
@@ -122,6 +124,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
       // Submit the update
       await ApiService.updateRecord(recordId, updatedRecord);
+      updateEntry(recordId, updatedRecord, datasetId);
 
       // Notify success
       toast.success("Cell updated successfully");

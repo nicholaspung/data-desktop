@@ -135,7 +135,6 @@ export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       relatedDataset: "bloodwork",
       relatedField: "id",
       displayField: "date",
-      secondaryDisplayField: "lab_name",
     },
     {
       key: "blood_marker_id",

@@ -15,9 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
+import loadingStore from "@/store/loading-store";
 
 interface GenericDataTableProps {
-  datasetId: string;
+  datasetId: DataStoreName;
   fields: FieldDefinition[];
   title: string;
   dataKey?: string; // Optional key for identifying records in the data array
@@ -46,8 +49,10 @@ export default function GenericDataTable({
   persistState = true,
   onRowClick,
 }: GenericDataTableProps) {
-  const [data, setData] = useState<Record<string, any>[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const data =
+    useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
+  const isLoading =
+    useStore(loadingStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
     "view"
@@ -84,8 +89,6 @@ export default function GenericDataTable({
 
   // Load data when the component mounts
   useEffect(() => {
-    loadData();
-
     // Load pagination state from localStorage if enabled
     if (persistState) {
       try {
@@ -175,42 +178,6 @@ export default function GenericDataTable({
     }
   }, [updatedRowIds]);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      // Check if this dataset has relation fields
-      const hasRelations = fields.some((field) => field.isRelation);
-
-      // Use the appropriate API method
-      const records = hasRelations
-        ? await ApiService.getRecordsWithRelations(datasetId)
-        : await ApiService.getRecords(datasetId);
-
-      // Process dates to ensure they're Date objects
-      const processedRecords = records.map((record) => {
-        const processed = { ...record };
-
-        // Convert dates
-        fields.forEach((field) => {
-          if (field.type === "date" && processed[field.key]) {
-            processed[field.key] = new Date(processed[field.key]);
-          }
-        });
-
-        return processed;
-      });
-
-      setData(processedRecords);
-      // Clear selection when data is reloaded
-      setSelectedRows([]);
-    } catch (error) {
-      console.error(`Error loading ${datasetId} data:`, error);
-      toast.error(`Failed to load ${title} data`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Handle data change from inline editing
   const handleDataUpdated = (updatedRowId?: string) => {
     // Add the updated row ID to our list for animation
@@ -218,7 +185,6 @@ export default function GenericDataTable({
       setUpdatedRowIds((prev) => [...prev, updatedRowId]);
     }
 
-    loadData();
     if (onDataChange) {
       onDataChange();
     }
@@ -236,6 +202,7 @@ export default function GenericDataTable({
       for (const id of selectedRows) {
         try {
           await ApiService.deleteRecord(id);
+          deleteEntry(id, datasetId);
           successCount++;
         } catch (error) {
           console.error(`Error deleting record ${id}:`, error);
@@ -255,9 +222,6 @@ export default function GenericDataTable({
           `Failed to delete ${errorCount} record${errorCount !== 1 ? "s" : ""}`
         );
       }
-
-      // Reload data
-      await loadData();
 
       if (onDataChange) {
         onDataChange();

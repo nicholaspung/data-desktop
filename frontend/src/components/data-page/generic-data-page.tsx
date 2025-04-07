@@ -8,6 +8,7 @@ import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
 import { FieldDefinition } from "@/types/types";
 import React from "react";
 import { cn } from "@/lib/utils";
+import { DataStoreName } from "@/store/data-store";
 
 interface CustomTab {
   id: string;
@@ -18,7 +19,7 @@ interface CustomTab {
 }
 
 interface GenericDataPageProps {
-  datasetId: string;
+  datasetId: DataStoreName;
   fields: FieldDefinition[];
   title: string;
   description?: string;

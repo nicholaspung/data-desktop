@@ -9,10 +9,6 @@ export const calculateColumnWidth = (
   column: ColumnDef<any, any>,
   data: any[]
 ): string => {
-  // Special handling for action and selection columns
-  if (column.id === "actions") return "80px";
-  if (column.id === "select") return "40px";
-
   // Get header text length
   const headerText = String(column.header || column.id);
   const headerLength = headerText.length;

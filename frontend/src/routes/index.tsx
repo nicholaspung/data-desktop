@@ -20,6 +20,7 @@ import {
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
 import { DatasetSummary } from "@/types/types";
+import { DataStoreName, loadState } from "@/store/data-store";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -58,6 +59,8 @@ function Home() {
               );
               lastUpdated = sortedRecords[0].lastModified;
             }
+
+            loadState(records, dataset.id as DataStoreName); // Load the records into the store
 
             return {
               id: dataset.id,
