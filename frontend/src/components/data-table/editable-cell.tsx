@@ -50,6 +50,8 @@ const EditableCell: React.FC<EditableCellProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(initialValue);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInteractingWithPopover, setIsInteractingWithPopover] =
+    useState(false);
   const originalValue = initialValue;
   const cellRef = useRef<HTMLDivElement>(null);
 
@@ -58,14 +60,30 @@ const EditableCell: React.FC<EditableCellProps> = ({
     if (!isEditing) return;
 
     const handleClickOutside = (event: MouseEvent) => {
+      // Skip if we're interacting with a popover or dropdown
+      if (isInteractingWithPopover) {
+        return;
+      }
+
       if (cellRef.current && !cellRef.current.contains(event.target as Node)) {
-        if (editValue !== initialValue) {
-          // If value changed, save it
-          handleSave();
-        } else {
-          // Otherwise just cancel
-          setIsEditing(false);
+        const isPopoverContent = !!document
+          .querySelector(".popover-content")
+          ?.contains(event.target as Node);
+        const isSelectContent =
+          !!document
+            .querySelector('[role="listbox"]')
+            ?.contains(event.target as Node) ||
+          !!document
+            .querySelector(".select-content")
+            ?.contains(event.target as Node);
+
+        // Don't close if clicking on popover content or select dropdown
+        if (isPopoverContent || isSelectContent) {
+          return;
         }
+
+        // Just cancel when clicking outside - let the confirm buttons handle saving
+        handleCancel();
       }
     };
 
@@ -73,7 +91,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isEditing, editValue, initialValue]);
+  }, [isEditing, isInteractingWithPopover]);
 
   // Reset edit value when initialValue changes or when entering edit mode
   useEffect(() => {
@@ -204,13 +222,24 @@ const EditableCell: React.FC<EditableCellProps> = ({
     <>
       <Select
         value={editValue?.toString() || ""}
-        onValueChange={handleValueChange}
+        onValueChange={(value) => {
+          handleValueChange(value);
+          // Add a slight delay before allowing outside clicks to close
+          setIsInteractingWithPopover(true);
+          setTimeout(() => setIsInteractingWithPopover(false), 100);
+        }}
         disabled={isSubmitting}
+        onOpenChange={(open) => {
+          setIsInteractingWithPopover(open);
+        }}
       >
-        <SelectTrigger className="w-full h-8 text-left">
+        <SelectTrigger
+          className="w-full h-8 text-left"
+          onClick={(e) => e.stopPropagation()}
+        >
           <SelectValue placeholder={`Select ${field.displayName}`} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent onClick={(e) => e.stopPropagation()}>
           {options.length === 0 ? (
             <div className="p-2 text-sm text-muted-foreground">
               No options available
@@ -246,6 +275,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
             onChange={(e) => handleValueChange(e.target.value)}
             className="h-8 w-full"
             autoFocus
+            onClick={(e) => e.stopPropagation()}
           />
         );
 
@@ -265,6 +295,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
             min={0}
             max={field.type === "percentage" ? 100 : undefined}
             autoFocus
+            onClick={(e) => e.stopPropagation()}
           />
         );
 
@@ -274,28 +305,111 @@ const EditableCell: React.FC<EditableCellProps> = ({
             <Checkbox
               checked={!!editValue}
               onCheckedChange={(checked) => handleValueChange(!!checked)}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         );
 
       case "date":
         return (
-          <Popover>
+          <Popover
+            open={isEditing && isInteractingWithPopover}
+            onOpenChange={(open) => {
+              setIsInteractingWithPopover(open);
+              // If popover is closing and we didn't explicitly save/cancel, it's an outside click
+              if (!open) {
+                // Keep the edit mode open even if popover closed
+                setIsInteractingWithPopover(false);
+              }
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className="h-8 w-full justify-start text-left font-normal"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Store a temp copy of the current edit value
+                  setIsInteractingWithPopover(true);
+                }}
               >
                 {editValue ? format(new Date(editValue), "PP") : "Pick a date"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={editValue ? new Date(editValue) : undefined}
-                onSelect={(date) => handleValueChange(date)}
-                initialFocus
-              />
+            <PopoverContent
+              className="w-auto p-0"
+              onClick={(e) => e.stopPropagation()}
+              sideOffset={5}
+              align="start"
+            >
+              <div className="flex flex-col">
+                <Calendar
+                  mode="single"
+                  selected={editValue ? new Date(editValue) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      // Update the date in the UI without closing
+                      handleValueChange(date);
+                    }
+                  }}
+                  initialFocus
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("1900-01-01")
+                  }
+                />
+                <div className="flex justify-end gap-2 p-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Reset to initial value or temp value if available
+                      handleValueChange(initialValue);
+                      // Close the popover
+                      setIsInteractingWithPopover(false);
+                      // Use a ref to access the PopoverClose component programmatically
+                      const closeButton = document.querySelector(
+                        "[data-radix-popover-close]"
+                      );
+                      if (closeButton instanceof HTMLElement) {
+                        closeButton.click();
+                      } else {
+                        // Fallback method
+                        const event = new KeyboardEvent("keydown", {
+                          key: "Escape",
+                        });
+                        document.dispatchEvent(event);
+                      }
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Ensure we're no longer blocking outside clicks
+                      setIsInteractingWithPopover(false);
+                      // Use a ref to access the PopoverClose component programmatically
+                      const closeButton = document.querySelector(
+                        "[data-radix-popover-close]"
+                      );
+                      if (closeButton instanceof HTMLElement) {
+                        closeButton.click();
+                      } else {
+                        // Fallback method
+                        const event = new KeyboardEvent("keydown", {
+                          key: "Escape",
+                        });
+                        document.dispatchEvent(event);
+                      }
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </div>
             </PopoverContent>
           </Popover>
         );

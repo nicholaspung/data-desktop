@@ -10,7 +10,6 @@
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit, 
 - Create bloodwork visualization by grouping together blood marker categories, and display the blood results in a tiny graph, where if the marker is within the optimal reference, that it's green, otherwise, it's grey
-- when trying to edit a relational field in edit mode in data table, it doesn't work correctly - looks like regular date components also don't
 - add a refresh button in each `generic-data-table.tsx` that will update TanStack store
 - add a refresh button on `index.tsx` to refresh the datasets there
 
@@ -56,5 +55,6 @@
 - I need the import CSV feature to work with the secondary display field is at the end of the name, the ending parentheses show up (probably a bigger change that I realize) - seems like this is working now [DONE 2025-04-05]
 - It seems like the input forms in single edit/multi edit in data-table isn't working [DONE 2025-04-06]
 - refactor the data fetching code so that it all loads in one component, and also gets stored in TanStack store, and when there's modifications to data, it mostly just edits it on the client-side (still need to go through bloodwork components, and also updated `batch-entry-table` and `editable-cell` stuff with the relational fields) (might also try adding the TanStack store functions in the `ApiService`) (it looks like the reason why it's not displaying correctly is because the loading of data is not working correctly) [DONE 2025-04-07]
+- when trying to edit a relational field in edit mode in data table, it doesn't work correctly - looks like regular date components also don't [DONE 2025-04-07]
 
 ### GAVE UP
