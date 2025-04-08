@@ -19,6 +19,7 @@ interface BloodMarkerChartProps {
   optimalHigh?: number;
   unit?: string;
   height?: number;
+  showOptimalRange?: boolean; // New prop to control whether to show the optimal range
 }
 
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
@@ -42,8 +43,10 @@ const BloodMarkerChart: React.FC<BloodMarkerChartProps> = ({
   optimalHigh,
   unit,
   height = 120,
+  showOptimalRange = true, // Default to showing the optimal range if it exists
 }) => {
-  const hasOptimalRange = optimalLow !== undefined && optimalHigh !== undefined;
+  const hasOptimalRange =
+    showOptimalRange && optimalLow !== undefined && optimalHigh !== undefined;
 
   // Calculate min and max values to set a good Y domain
   const values = data.map((point) => point.value);
@@ -65,7 +68,7 @@ const BloodMarkerChart: React.FC<BloodMarkerChartProps> = ({
           cursor={{ strokeDasharray: "3 3" }}
         />
 
-        {/* Add optimal range as colored area if available */}
+        {/* Add optimal range as colored area if available and should be shown */}
         {hasOptimalRange && (
           <ReferenceArea
             y1={optimalLow}

@@ -9,11 +9,14 @@ interface BloodworkSummaryProps {
     optimal: number;
     outOfRange: number;
     textValues: number;
+    noRange: number; // New property for markers with no range defined
     noData: number;
     total: number;
   };
-  statusFilter: "optimal" | "outOfRange" | "textValues" | null;
-  onFilterChange: (status: "optimal" | "outOfRange" | "textValues") => void;
+  statusFilter: "optimal" | "outOfRange" | "textValues" | "noRange" | null;
+  onFilterChange: (
+    status: "optimal" | "outOfRange" | "textValues" | "noRange"
+  ) => void;
   onClearFilter: () => void;
 }
 
@@ -78,6 +81,24 @@ const BloodworkSummary: React.FC<BloodworkSummaryProps> = ({
               />
               <span className="text-sm font-medium">
                 Text Values: {summary.textValues}
+              </span>
+            </div>
+
+            {/* New filter for markers with no range defined */}
+            <div
+              onClick={() => onFilterChange("noRange")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer transition-colors ${
+                statusFilter === "noRange"
+                  ? "bg-gray-200 dark:bg-gray-700 border-2 border-gray-500"
+                  : "border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800/50"
+              }`}
+            >
+              <Badge
+                variant="outline"
+                className="h-2 w-2 p-0 rounded-full bg-gray-500"
+              />
+              <span className="text-sm font-medium">
+                No Range: {summary.noRange}
               </span>
             </div>
 

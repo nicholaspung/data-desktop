@@ -10,6 +10,7 @@
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit, 
 - it would be nice if the options I chose for table view stayed when I updated a value
+- create a "body" diagram for DEXA where I can hover over a body part and it will tell me the details for that area
 
 ### IN PROGRESS
 

@@ -293,65 +293,6 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
       ) : (
         // Comparison view
         <div className="space-y-6">
-          {/* Body Composition Comparison */}
-          <BarChart
-            data={getComparisonData()}
-            bars={[
-              {
-                dataKey: selectedScan
-                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
-                  : "",
-                name: "Primary",
-                color: "#8884d8",
-              },
-              {
-                dataKey: comparisonScan
-                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
-                  : "",
-                name: "Comparison",
-                color: "#82ca9d",
-              },
-            ]}
-            xAxisKey="name"
-            layout="vertical"
-            title="Body Composition Comparison"
-            height={400}
-            tooltipFormatter={tooltipFormatter}
-          />
-
-          {/* Body Fat Distribution Comparison */}
-          <RadarChart
-            data={getRadarComparisonData()}
-            radars={[
-              {
-                dataKey: selectedScan
-                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
-                  : "",
-                name: selectedScan
-                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
-                  : "",
-                fill: "#8884d8",
-                stroke: "#8884d8",
-                fillOpacity: 0.6,
-              },
-              {
-                dataKey: comparisonScan
-                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
-                  : "",
-                name: comparisonScan
-                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
-                  : "",
-                fill: "#82ca9d",
-                stroke: "#82ca9d",
-                fillOpacity: 0.6,
-              },
-            ]}
-            title="Body Fat Distribution Comparison"
-            height={400}
-            outerRadius={150}
-            tooltipFormatter={tooltipFormatter}
-          />
-
           {/* Changes Summary */}
           <Card>
             <CardHeader>
@@ -424,6 +365,65 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
               )}
             </CardContent>
           </Card>
+
+          {/* Body Composition Comparison */}
+          <BarChart
+            data={getComparisonData()}
+            bars={[
+              {
+                dataKey: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                name: "Primary",
+                color: "#8884d8",
+              },
+              {
+                dataKey: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                name: "Comparison",
+                color: "#82ca9d",
+              },
+            ]}
+            xAxisKey="name"
+            layout="vertical"
+            title="Body Composition Comparison"
+            height={400}
+            tooltipFormatter={tooltipFormatter}
+          />
+
+          {/* Body Fat Distribution Comparison */}
+          <RadarChart
+            data={getRadarComparisonData()}
+            radars={[
+              {
+                dataKey: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                name: selectedScan
+                  ? format(new Date(selectedScan.date), "MMM d, yyyy")
+                  : "",
+                fill: "#8884d8",
+                stroke: "#8884d8",
+                fillOpacity: 0.6,
+              },
+              {
+                dataKey: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                name: comparisonScan
+                  ? format(new Date(comparisonScan.date), "MMM d, yyyy")
+                  : "",
+                fill: "#82ca9d",
+                stroke: "#82ca9d",
+                fillOpacity: 0.6,
+              },
+            ]}
+            title="Body Fat Distribution Comparison"
+            height={400}
+            outerRadius={150}
+            tooltipFormatter={tooltipFormatter}
+          />
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import BloodworkSummary from "./bloodwork-summary";
 import { BloodMarker, BloodResult } from "./bloodwork";
 import BloodMarkerCard from "./blood-marker-card";
+import { hasAnyRangeDefined } from "./bloodwork-utils";
 
 // Create the main visualization component
 const BloodworkVisualizations: React.FC = () => {
@@ -33,12 +34,12 @@ const BloodworkVisualizations: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<
-    "optimal" | "outOfRange" | "textValues" | null
+    "optimal" | "outOfRange" | "textValues" | "noRange" | null
   >(null);
 
   // Toggle status filter
   const toggleStatusFilter = (
-    status: "optimal" | "outOfRange" | "textValues"
+    status: "optimal" | "outOfRange" | "textValues" | "noRange"
   ) => {
     if (statusFilter === status) {
       setStatusFilter(null); // Clear filter if already selected
@@ -68,6 +69,7 @@ const BloodworkVisualizations: React.FC = () => {
     let optimal = 0;
     let outOfRange = 0;
     let textValues = 0;
+    let noRange = 0; // New counter for markers with no range defined
     let noData = 0;
 
     bloodMarkers.forEach((marker) => {
@@ -78,15 +80,21 @@ const BloodworkVisualizations: React.FC = () => {
         return;
       }
 
+      // Check if marker has any range defined
+      if (!hasAnyRangeDefined(marker)) {
+        noRange++;
+        return;
+      }
+
       // Get the latest result
       const sortedResults = [...results].sort((a, b) => {
         return (
-          new Date(a.blood_test_id_data?.date || 0).getTime() -
-          new Date(b.blood_test_id_data?.date || 0).getTime()
+          new Date(b.blood_test_id_data?.date || 0).getTime() -
+          new Date(a.blood_test_id_data?.date || 0).getTime()
         );
       });
 
-      const latestResult = sortedResults[sortedResults.length - 1];
+      const latestResult = sortedResults[0];
       const value = parseFloat(latestResult.value_number.toString()) || 0;
 
       // Check if it's a text-based range
@@ -112,6 +120,7 @@ const BloodworkVisualizations: React.FC = () => {
       optimal,
       outOfRange,
       textValues,
+      noRange,
       noData,
       total: bloodMarkers.length,
     };
@@ -146,7 +155,17 @@ const BloodworkVisualizations: React.FC = () => {
       if (statusFilter) {
         const results = markerResults[marker.id] || [];
 
-        // Skip markers with no results when filtering
+        // For "noRange" filter, check if the marker has any range defined
+        if (statusFilter === "noRange") {
+          return (
+            matchesSearch &&
+            matchesCategory &&
+            !hasAnyRangeDefined(marker) &&
+            results.length > 0
+          );
+        }
+
+        // Skip markers with no results when filtering for other statuses
         if (results.length === 0) {
           return false;
         }
@@ -154,12 +173,12 @@ const BloodworkVisualizations: React.FC = () => {
         // Get the latest result
         const sortedResults = [...results].sort((a, b) => {
           return (
-            new Date(a.blood_test_id_data?.date || 0).getTime() -
-            new Date(b.blood_test_id_data?.date || 0).getTime()
+            new Date(b.blood_test_id_data?.date || 0).getTime() -
+            new Date(a.blood_test_id_data?.date || 0).getTime()
           );
         });
 
-        const latestResult = sortedResults[sortedResults.length - 1];
+        const latestResult = sortedResults[0];
         const value = parseFloat(latestResult.value_number.toString()) || 0;
 
         if (statusFilter === "textValues") {
@@ -237,7 +256,7 @@ const BloodworkVisualizations: React.FC = () => {
         </div>
       </div>
 
-      {/* Summary Component */}
+      {/* Summary Component with updated props */}
       <BloodworkSummary
         summary={markerSummary}
         statusFilter={statusFilter}

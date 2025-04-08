@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 import { BloodMarker, BloodResult, ChartDataPoint } from "./bloodwork";
-import { isWithinOptimalRange, isWithinRange } from "./bloodwork-utils";
+import {
+  getBadgeInfo,
+  getLatestValue,
+  hasAnyRangeDefined as hasAnyRangeDefinedFunc,
+  isWithinOptimalRange,
+} from "./bloodwork-utils";
 import { formatDate } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -49,25 +54,14 @@ export default function BloodMarkerCard({
   }, [sortedResults, marker]);
 
   // Calculate whether latest result is in range
-  const latestValue = latestResult
-    ? parseFloat(latestResult.value_number.toString()) || 0
-    : null;
-  const isInRange =
-    latestValue !== null &&
-    isWithinRange(
-      latestValue,
-      marker.lower_reference,
-      marker.upper_reference,
-      marker.general_reference
-    );
-  const isInOptimalRange =
-    latestValue !== null &&
-    isWithinOptimalRange(
-      latestValue,
-      marker.optimal_low,
-      marker.optimal_high,
-      marker.optimal_general
-    );
+  const latestValue = getLatestValue(latestResult);
+  const badgeInfo = getBadgeInfo(latestValue, marker);
+
+  // Determine if this marker has any range defined
+  const hasAnyRangeDefined = useMemo(
+    () => hasAnyRangeDefinedFunc(marker),
+    [marker, hasAnyRangeDefinedFunc]
+  );
 
   // Determine range string to display
   const getRangeString = (): string => {
@@ -100,12 +94,13 @@ export default function BloodMarkerCard({
 
   // Check if we should show a chart (require numeric values and more than one point)
   const shouldShowChart = useMemo(() => {
-    return (
-      chartData.length > 1 &&
-      !marker.optimal_general &&
-      !marker.general_reference
-    );
-  }, [chartData, marker]);
+    // Always show a chart if we have more than one data point,
+    // regardless of whether the marker has ranges defined
+    return chartData.length > 1;
+  }, [chartData]);
+
+  // Determine if it has text-based ranges only
+  const hasTextBasedRanges = marker.optimal_general || marker.general_reference;
 
   return (
     <Card className="mb-4">
@@ -120,32 +115,38 @@ export default function BloodMarkerCard({
           {latestValue !== null && (
             <div className="flex flex-col items-end">
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{latestValue}</span>
-                <Badge
-                  variant={
-                    isInOptimalRange
-                      ? "success"
-                      : isInRange
-                        ? "warning"
-                        : "destructive"
-                  }
-                >
-                  {isInOptimalRange
-                    ? "Optimal"
-                    : isInRange
-                      ? "In Range"
-                      : "Out of Range"}
-                </Badge>
+                <span className="font-semibold">{latestValue.value}</span>
+                {hasAnyRangeDefined ? (
+                  <Badge variant={badgeInfo.variant}>{badgeInfo.text}</Badge>
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="bg-gray-100 dark:bg-gray-800"
+                  >
+                    No Range Set
+                  </Badge>
+                )}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                <span>Reference: {getRangeString()}</span>
-                {marker.optimal_low !== undefined &&
-                  marker.optimal_high !== undefined && (
+              {/* Only show reference values if they are defined */}
+              {hasAnyRangeDefined && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  {Boolean(marker.lower_reference || marker.upper_reference) ||
+                  marker.general_reference ? (
+                    <span>Reference: {getRangeString()}</span>
+                  ) : null}
+
+                  {marker.optimal_low || marker.optimal_high ? (
                     <span className="ml-2">
                       Optimal: {getOptimalRangeString()}
                     </span>
+                  ) : null}
+                  {marker.optimal_general && (
+                    <span className="ml-2">
+                      Optimal: {marker.optimal_general}
+                    </span>
                   )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </CardTitle>
@@ -157,7 +158,12 @@ export default function BloodMarkerCard({
           </p>
         )}
 
-        {shouldShowChart ? (
+        {hasTextBasedRanges ? (
+          <div className="text-sm text-center text-muted-foreground">
+            This marker uses text-based ranges and cannot be visualized in a
+            chart.
+          </div>
+        ) : shouldShowChart ? (
           <div className="h-32">
             <BloodMarkerChart
               data={chartData}
@@ -165,6 +171,10 @@ export default function BloodMarkerCard({
               optimalHigh={marker.optimal_high}
               unit={marker.unit}
               height={120}
+              // Don't show shaded area for optimal range if no range is defined
+              showOptimalRange={Boolean(
+                marker.optimal_low || marker.optimal_high
+              )}
             />
           </div>
         ) : chartData.length === 1 ? (
@@ -174,8 +184,7 @@ export default function BloodMarkerCard({
           </div>
         ) : (
           <div className="text-sm text-center text-muted-foreground">
-            This marker uses text-based ranges and cannot be visualized in a
-            chart.
+            No data available for this marker.
           </div>
         )}
       </CardContent>
