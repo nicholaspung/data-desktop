@@ -8,7 +8,6 @@ export const getProcessedRecords = async (
 ) => {
   // Use the appropriate API method
   const records = await ApiService.getRecordsWithRelations(datasetId);
-  console.log(records);
 
   const sortedRecords = [...records].sort(
     (a, b) =>

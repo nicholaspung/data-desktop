@@ -22,7 +22,7 @@ export default function useLoadData({
   const loadData = async () => {
     setLoadingState(true, datasetId);
     try {
-      const processedRecords = getProcessedRecords(datasetId, fields);
+      const processedRecords = await getProcessedRecords(datasetId, fields);
 
       loadState(processedRecords, datasetId);
     } catch (error) {

@@ -16,6 +16,7 @@ import {
   PieChart,
   ListTodo,
   Plus,
+  RefreshCcw,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
@@ -31,71 +32,71 @@ function Home() {
   const [summaries, setSummaries] = useState<DatasetSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadSummaries = async () => {
-      setIsLoading(true);
-      try {
-        // Get all datasets
-        const datasets = await ApiService.getDatasets();
+  const loadSummaries = async () => {
+    setIsLoading(true);
+    try {
+      // Get all datasets
+      const datasets = await ApiService.getDatasets();
 
-        // Add null check to handle case where datasets is null
-        if (!datasets || datasets.length === 0) {
-          setSummaries([]);
-          setIsLoading(false);
-          return;
-        }
-
-        // Create a list of promises to get record counts for each dataset
-        const countPromises = datasets.map(async (dataset) => {
-          try {
-            const processedRecords =
-              (await getProcessedRecords(
-                dataset.id as DataStoreName,
-                dataset.fields as FieldDefinition[]
-              )) || [];
-
-            loadState(processedRecords, dataset.id as DataStoreName); // Load the records into the store
-
-            return {
-              id: dataset.id,
-              name: dataset.name,
-              count: processedRecords.length,
-              lastUpdated: processedRecords[0]
-                ? processedRecords[0].lastModified
-                : null,
-              // Assign icons based on dataset type
-              icon: getDatasetIcon(dataset.type),
-              href: dataset.id.includes("blood")
-                ? "/bloodwork"
-                : `/${dataset.id}`,
-            };
-          } catch (error) {
-            console.error(`Error getting records for ${dataset.id}:`, error);
-            return {
-              id: dataset.id,
-              name: dataset.name,
-              count: 0,
-              lastUpdated: null,
-              icon: getDatasetIcon(dataset.type),
-              href: dataset.id.includes("blood")
-                ? "/bloodwork"
-                : `/${dataset.id}`,
-            };
-          }
-        });
-
-        // Wait for all promises to resolve
-        const results = await Promise.all(countPromises);
-        setSummaries(results);
-      } catch (error) {
-        console.error("Error loading dataset summaries:", error);
-        // In case of error, set empty summaries to prevent UI errors
+      // Add null check to handle case where datasets is null
+      if (!datasets || datasets.length === 0) {
         setSummaries([]);
-      } finally {
         setIsLoading(false);
+        return;
       }
-    };
 
+      // Create a list of promises to get record counts for each dataset
+      const countPromises = datasets.map(async (dataset) => {
+        try {
+          const processedRecords =
+            (await getProcessedRecords(
+              dataset.id as DataStoreName,
+              dataset.fields as FieldDefinition[]
+            )) || [];
+
+          loadState(processedRecords, dataset.id as DataStoreName); // Load the records into the store
+
+          return {
+            id: dataset.id,
+            name: dataset.name,
+            count: processedRecords.length,
+            lastUpdated: processedRecords[0]
+              ? processedRecords[0].lastModified
+              : null,
+            // Assign icons based on dataset type
+            icon: getDatasetIcon(dataset.type),
+            href: dataset.id.includes("blood")
+              ? "/bloodwork"
+              : `/${dataset.id}`,
+          };
+        } catch (error) {
+          console.error(`Error getting records for ${dataset.id}:`, error);
+          return {
+            id: dataset.id,
+            name: dataset.name,
+            count: 0,
+            lastUpdated: null,
+            icon: getDatasetIcon(dataset.type),
+            href: dataset.id.includes("blood")
+              ? "/bloodwork"
+              : `/${dataset.id}`,
+          };
+        }
+      });
+
+      // Wait for all promises to resolve
+      const results = await Promise.all(countPromises);
+      setSummaries(results);
+    } catch (error) {
+      console.error("Error loading dataset summaries:", error);
+      // In case of error, set empty summaries to prevent UI errors
+      setSummaries([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadSummaries();
   }, []);
 
@@ -119,6 +120,14 @@ function Home() {
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={isLoading}
+          onClick={async () => await loadSummaries()}
+        >
+          <RefreshCcw className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

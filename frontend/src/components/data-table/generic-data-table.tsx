@@ -18,6 +18,7 @@ import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
+import RefreshDatasetButton from "../reusable/refresh-dataset-button";
 
 interface GenericDataTableProps {
   datasetId: DataStoreName;
@@ -250,6 +251,11 @@ export default function GenericDataTable({
         <CardTitle>{title}</CardTitle>
 
         <div className="flex items-center gap-3">
+          <RefreshDatasetButton
+            fields={fields}
+            datasetId={datasetId}
+            title={title}
+          />
           <Select
             value={tableMode}
             onValueChange={(value: "view" | "edit" | "delete") => {
