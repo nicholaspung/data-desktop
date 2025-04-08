@@ -6,7 +6,8 @@ import {
   DatasetSelector,
 } from "@/components/data-page/dataset-selector";
 import { CSVImportProcessor } from "@/components/data-table/csv-import-processor";
-import { Import } from "lucide-react";
+import { Import, LineChart } from "lucide-react";
+import BloodworkVisualizations from "@/features/bloodwork/bloodwork-visualization";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
@@ -28,6 +29,7 @@ export default function BloodworkPage() {
         "Track and analyze your blood test results over time. Monitor important biomarkers and track your progress towards optimal health.",
       fields: bloodworkFields,
       addLabel: "Add Bloodwork Results",
+      defaultTab: "visualizations",
       customTabs: [
         {
           id: "batch_import",
@@ -42,6 +44,13 @@ export default function BloodworkPage() {
             />
           ),
           position: "after",
+        },
+        {
+          id: "visualizations",
+          label: "Visualizations",
+          icon: <LineChart className="h-4 w-4" />,
+          content: <BloodworkVisualizations />,
+          position: "before",
         },
       ],
     },
