@@ -10,6 +10,14 @@ import { formatDate } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BloodMarkerChart from "./bloodwork-chart";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Create a component for each blood marker with its chart
 export default function BloodMarkerCard({
@@ -19,8 +27,18 @@ export default function BloodMarkerCard({
   marker: BloodMarker;
   results: BloodResult[];
 }) {
-  // Sort results by date
+  // Sort results by date (newest first for display)
   const sortedResults = useMemo(() => {
+    return [...results].sort((a, b) => {
+      return (
+        new Date(b.blood_test_id_data?.date || 0).getTime() -
+        new Date(a.blood_test_id_data?.date || 0).getTime()
+      );
+    });
+  }, [results]);
+
+  // Sort results by date (oldest first for chart)
+  const chronologicalResults = useMemo(() => {
     return [...results].sort((a, b) => {
       return (
         new Date(a.blood_test_id_data?.date || 0).getTime() -
@@ -30,12 +48,11 @@ export default function BloodMarkerCard({
   }, [results]);
 
   // Get the latest result
-  const latestResult =
-    sortedResults.length > 0 ? sortedResults[sortedResults.length - 1] : null;
+  const latestResult = sortedResults.length > 0 ? sortedResults[0] : null;
 
   // Format data for chart
   const chartData: ChartDataPoint[] = useMemo(() => {
-    return sortedResults.map((result) => {
+    return chronologicalResults.map((result) => {
       const testDate = result.blood_test_id_data?.date;
       const value = parseFloat(result.value_number.toString()) || 0;
       const isInOptimalRange = isWithinOptimalRange(
@@ -51,7 +68,7 @@ export default function BloodMarkerCard({
         inOptimalRange: isInOptimalRange,
       };
     });
-  }, [sortedResults, marker]);
+  }, [chronologicalResults, marker]);
 
   // Calculate whether latest result is in range
   const latestValue = getLatestValue(latestResult);
@@ -60,7 +77,7 @@ export default function BloodMarkerCard({
   // Determine if this marker has any range defined
   const hasAnyRangeDefined = useMemo(
     () => hasAnyRangeDefinedFunc(marker),
-    [marker, hasAnyRangeDefinedFunc]
+    [marker]
   );
 
   // Determine range string to display
@@ -99,8 +116,13 @@ export default function BloodMarkerCard({
     return chartData.length > 1;
   }, [chartData]);
 
-  // Determine if it has text-based ranges only
+  // Determine if it has text-based ranges or text values
   const hasTextBasedRanges = marker.optimal_general || marker.general_reference;
+  const hasTextValues = useMemo(() => {
+    return results.some(
+      (result) => result.value_text && result.value_text.trim() !== ""
+    );
+  }, [results]);
 
   return (
     <Card className="mb-4">
@@ -158,10 +180,48 @@ export default function BloodMarkerCard({
           </p>
         )}
 
-        {hasTextBasedRanges ? (
-          <div className="text-sm text-center text-muted-foreground">
-            This marker uses text-based ranges and cannot be visualized in a
-            chart.
+        {hasTextBasedRanges || hasTextValues ? (
+          <div>
+            {results.length > 0 ? (
+              <div className="overflow-hidden rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px]">Date</TableHead>
+                      {hasTextValues && <TableHead>Text Result</TableHead>}
+                      {results.some((r) => r.notes) && (
+                        <TableHead>Notes</TableHead>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sortedResults.map((result) => (
+                      <TableRow key={result.id}>
+                        <TableCell className="font-medium">
+                          {result.blood_test_id_data?.date
+                            ? formatDate(
+                                new Date(result.blood_test_id_data.date)
+                              )
+                            : "Unknown"}
+                        </TableCell>
+                        {hasTextValues && (
+                          <TableCell>{result.value_text || "-"}</TableCell>
+                        )}
+                        {results.some((r) => r.notes) && (
+                          <TableCell className="text-sm text-muted-foreground">
+                            {result.notes || "-"}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-sm text-center text-muted-foreground">
+                No data available for this marker.
+              </div>
+            )}
           </div>
         ) : shouldShowChart ? (
           <div className="h-32">
@@ -178,9 +238,38 @@ export default function BloodMarkerCard({
             />
           </div>
         ) : chartData.length === 1 ? (
-          <div className="text-sm text-center text-muted-foreground">
-            Only one data point available. More data is needed to display a
-            chart.
+          // Show a simple table for single data point
+          <div className="overflow-hidden rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Date</TableHead>
+                  <TableHead>
+                    {marker.unit ? `Value (${marker.unit})` : "Value"}
+                  </TableHead>
+                  {results[0]?.notes && <TableHead>Notes</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">
+                    {results[0]?.blood_test_id_data?.date
+                      ? formatDate(new Date(results[0].blood_test_id_data.date))
+                      : "Unknown"}
+                  </TableCell>
+                  <TableCell>
+                    {typeof results[0]?.value_number === "number"
+                      ? results[0].value_number
+                      : "N/A"}
+                  </TableCell>
+                  {results[0]?.notes && (
+                    <TableCell className="text-sm text-muted-foreground">
+                      {results[0].notes}
+                    </TableCell>
+                  )}
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <div className="text-sm text-center text-muted-foreground">

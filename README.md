@@ -14,11 +14,6 @@
 
 ### IN PROGRESS
 
-- Start working on bloodwork feature
-- Create bloodwork visualization by grouping together blood marker categories, and display the blood results in a tiny graph, where if the marker is within the optimal reference, that it's green, otherwise, it's grey
-- If reference and optimal is 0 - 0, then that means value is just there (unsure of what to call it) - also add this as a filter
-- for text values, figure out a way to display them next to the graph cards looking nice
-
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
@@ -60,5 +55,9 @@
 - when trying to edit a relational field in edit mode in data table, it doesn't work correctly - looks like regular date components also don't [DONE 2025-04-07]
 - add a refresh button in each `generic-data-table.tsx` that will update TanStack store [DONE 2025-04-07]
 - add a refresh button on `index.tsx` to refresh the datasets there [DONE 2025-04-07]
+- Start working on bloodwork feature [DONE 2025-04-08]
+- Create bloodwork visualization by grouping together blood marker categories, and display the blood results in a tiny graph, where if the marker is within the optimal reference, that it's green, otherwise, it's grey
+- If reference and optimal is 0 - 0, then that means value is just there (unsure of what to call it) - also add this as a filter [DONE 2025-04-08]
+- for text values, figure out a way to display them next to the graph cards looking nice [DONE 2025-04-08]
 
 ### GAVE UP
