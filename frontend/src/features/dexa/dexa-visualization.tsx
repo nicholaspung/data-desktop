@@ -1,4 +1,4 @@
-// src/features/dexa/dexa-visualization.tsx - Update with goals
+// src/features/dexa/dexa-visualization.tsx
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +14,8 @@ import BodyCompositionTab from "./visualization/body-composition-tab";
 import TrendsTab from "./visualization/trends-tab";
 import RegionalAnalysisTab from "./visualization/regional-analysis-tab";
 import SymmetryTab from "./visualization/symmetry-tab";
-import GoalTab from "./goal/goal-tab"; // Import the new Goals tab
+import BodyAnatomyTab from "./visualization/body-anatomy-tab"; // Import the new Body Anatomy tab
+import GoalTab from "./goal/goal-tab";
 import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";
@@ -40,7 +41,7 @@ export default function DexaVisualization({
     useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
   const isLoading =
     useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
-    false; // Get data from the store
+    false; // Get data from the loading store
   const [activeTab, setActiveTab] = useState("bodyComp");
   const [timeRange, setTimeRange] = useState("all");
 
@@ -107,6 +108,8 @@ export default function DexaVisualization({
         >
           <TabsList>
             <TabsTrigger value="bodyComp">Body Composition</TabsTrigger>
+            <TabsTrigger value="bodyAnatomy">Body Anatomy</TabsTrigger>{" "}
+            {/* New Body Anatomy tab */}
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="regional">Regional Analysis</TabsTrigger>
             <TabsTrigger value="symmetry">Symmetry</TabsTrigger>
@@ -137,6 +140,9 @@ export default function DexaVisualization({
       <div className="space-y-6">
         {activeTab === "bodyComp" && <BodyCompositionTab data={filteredData} />}
 
+        {/* Render the new Body Anatomy tab */}
+        {activeTab === "bodyAnatomy" && <BodyAnatomyTab data={filteredData} />}
+
         {activeTab === "trends" && <TrendsTab data={filteredData} />}
 
         {activeTab === "regional" && (
@@ -145,7 +151,6 @@ export default function DexaVisualization({
 
         {activeTab === "symmetry" && <SymmetryTab data={filteredData} />}
 
-        {/* Add the Goals tab */}
         {activeTab === "goals" && <GoalTab data={filteredData} />}
       </div>
     </div>
