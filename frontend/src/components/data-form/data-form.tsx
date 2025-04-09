@@ -31,13 +31,8 @@ import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RelationField } from "./relation-field";
-import SavedDataBadge from "../reusable/saved-data-badge";
-import {
-  createFreshDefaultValues,
-  getFieldsByType,
-  hasNonEmptyValues,
-} from "@/lib/form-utils";
-import { addEntry, DataStoreName, updateEntry } from "@/store/data-store";
+import { createFreshDefaultValues, hasNonEmptyValues } from "@/lib/form-utils";
+import { DataStoreName } from "@/store/data-store";
 
 interface DataFormProps {
   datasetId: DataStoreName;
@@ -318,15 +313,11 @@ export default function DataForm({
 
       if (mode === "add") {
         response = await ApiService.addRecord(datasetId, values);
-        if (response) {
-          addEntry(response, datasetId); // Update the store with the new entry
 
-          // After successful submission, completely reset the form
-          completeFormReset();
-        }
+        // After successful submission, completely reset the form
+        completeFormReset();
       } else if (mode === "edit" && recordId) {
         response = await ApiService.updateRecord(recordId, values);
-        updateEntry(recordId, response, datasetId); // Update the store with the edited entry
       }
 
       toast.success(successMessage);
@@ -360,6 +351,16 @@ export default function DataForm({
     }
   };
 
+  // Group fields by type for consistent organization
+  const fieldsByType = {
+    date: fields.filter((field) => field.type === "date"),
+    boolean: fields.filter((field) => field.type === "boolean"),
+    numeric: fields.filter(
+      (field) => field.type === "number" || field.type === "percentage"
+    ),
+    text: fields.filter((field) => field.type === "text"),
+  };
+
   // Render a field based on its type
   const renderField = (field: FieldDefinition) => {
     if (field.isRelation) {
@@ -368,7 +369,17 @@ export default function DataForm({
           key={field.key}
           control={form.control}
           name={field.key}
-          render={({ field: formField }) => (
+          render={({
+            field: formField,
+          }: {
+            field: {
+              value: string;
+              onChange: (value: string) => void;
+              onBlur: () => void;
+              name: string;
+              ref: React.Ref<any>;
+            };
+          }) => (
             <RelationField
               field={formField}
               fieldDef={field}
@@ -426,7 +437,9 @@ export default function DataForm({
                         form.trigger(field.key);
                       }}
                       disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
+                        field.isOptional
+                          ? false
+                          : date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
                     />
@@ -554,15 +567,115 @@ export default function DataForm({
     }
   };
 
-  const fieldsByType = getFieldsByType(fields);
+  // Render the form with or without a title
+  if (title) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
+            <span className="flex-1">{title}</span>
+            {hasSavedData && mode === "add" && (
+              <Badge
+                variant="outline"
+                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
+              >
+                <span className="text-xs">Saved data</span>
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Date fields */}
+              {fieldsByType.date.length > 0 && (
+                <div className="space-y-4">
+                  {fieldsByType.date.map(renderField)}
+                </div>
+              )}
 
-  const FormComponent = ({ noSavedBadge }: { noSavedBadge?: boolean }) => (
+              {/* Boolean fields */}
+              {fieldsByType.boolean.length > 0 && (
+                <div className="space-y-4">
+                  {fieldsByType.boolean.map(renderField)}
+                </div>
+              )}
+
+              {/* Numeric and text fields in a grid */}
+              {(fieldsByType.numeric.length > 0 ||
+                fieldsByType.text.length > 0) && (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {fieldsByType.numeric.map(renderField)}
+                  {fieldsByType.text.map(renderField)}
+                </div>
+              )}
+
+              {!hideSubmitButton && (
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        submitLabel
+                      )}
+                    </Button>
+
+                    {mode === "add" && (
+                      <ConfirmResetDialog
+                        onConfirm={handleClearForm}
+                        title="Clear form data?"
+                        description="This will reset all form fields and delete any saved data. This action cannot be undone."
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="default"
+                            disabled={isSubmitting}
+                          >
+                            <UndoDot className="h-4 w-4 mr-2" />
+                            Reset
+                          </Button>
+                        }
+                      />
+                    )}
+                  </div>
+
+                  {onCancel && (
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      onClick={handleCancel}
+                      className="sm:ml-2"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel
+                    </Button>
+                  )}
+                </div>
+              )}
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Basic form without Card wrapper
+  return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Show saved data badge if we have saved data in localStorage */}
-        {!noSavedBadge && hasSavedData && mode === "add" && (
+        {hasSavedData && mode === "add" && (
           <div className="flex justify-end mb-2">
-            <SavedDataBadge />
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
+            >
+              <span className="text-xs">Saved data</span>
+            </Badge>
           </div>
         )}
 
@@ -635,31 +748,4 @@ export default function DataForm({
       </form>
     </Form>
   );
-
-  // Render the form with or without a title
-  if (title) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
-            <span className="flex-1">{title}</span>
-            {hasSavedData && mode === "add" && (
-              <Badge
-                variant="outline"
-                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
-              >
-                <span className="text-xs">Saved data</span>
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FormComponent noSavedBadge />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Basic form without Card wrapper
-  return <FormComponent />;
 }

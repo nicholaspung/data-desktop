@@ -1,79 +1,23 @@
 // src/features/experiments/daily-tracker-view.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Beaker,
-  Save,
-  ClipboardCheck,
-  Loader2,
-} from "lucide-react";
-import { format, addDays, subDays, isSameDay } from "date-fns";
+import { Plus, Save, Loader2 } from "lucide-react";
+import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import useLoadData from "@/hooks/useLoadData";
-import { FieldDefinition } from "@/types/types";
-
-// Type definitions
-interface Metric {
-  id: string;
-  name: string;
-  description: string;
-  type: "number" | "boolean" | "time" | "percentage" | "text";
-  unit?: string;
-  default_value: string;
-  category_id: string;
-  category_id_data?: {
-    name: string;
-    color: string;
-  };
-}
-
-interface MetricWithLog extends Metric {
-  log: DailyLog | null;
-  value: any;
-  notes: string;
-  hasChanged: boolean;
-}
-
-interface Experiment {
-  id: string;
-  name: string;
-  description: string;
-  start_date: Date;
-  end_date?: Date;
-  goal: string;
-  status: "active" | "completed" | "paused";
-}
-
-interface DailyLog {
-  id: string;
-  date: Date;
-  metric_id: string;
-  experiment_id?: string;
-  value: string;
-  notes?: string;
-}
+import { Experiment, Metric, MetricWithLog } from "./experiments";
+import TrackerControls from "./tracker-controls";
+import { parseMetricValue } from "./experiments-utils";
 
 export default function DailyTrackerView() {
   // State
@@ -96,32 +40,6 @@ export default function DailyTrackerView() {
     useStore(loadingStore, (state) => state.metrics) || false;
   const dailyLogsLoading =
     useStore(loadingStore, (state) => state.daily_logs) || false;
-
-  // Hooks for loading data
-  const { loadData: loadMetrics } = useLoadData({
-    datasetId: "metrics",
-    fields: [] as FieldDefinition[],
-    title: "Metrics",
-  });
-
-  const { loadData: loadExperiments } = useLoadData({
-    datasetId: "experiments",
-    fields: [] as FieldDefinition[],
-    title: "Experiments",
-  });
-
-  const { loadData: loadDailyLogs } = useLoadData({
-    datasetId: "daily_logs",
-    fields: [] as FieldDefinition[],
-    title: "Daily Logs",
-  });
-
-  // Load data initially
-  useEffect(() => {
-    loadMetrics();
-    loadExperiments();
-    loadDailyLogs();
-  }, []);
 
   // Process data when it changes
   useEffect(() => {
@@ -175,40 +93,6 @@ export default function DailyTrackerView() {
     setLogsChanged(false); // Reset changed flag when loading new date
   };
 
-  // Helper to parse metric values
-  const parseMetricValue = (value: string, type: string): any => {
-    if (!value) {
-      switch (type) {
-        case "boolean":
-          return false;
-        case "number":
-        case "percentage":
-        case "time":
-          return 0;
-        default:
-          return "";
-      }
-    }
-
-    try {
-      const parsed = JSON.parse(value);
-      return parsed;
-    } catch (e: any) {
-      console.error(e);
-      // If parsing fails, return appropriate defaults
-      switch (type) {
-        case "boolean":
-          return value === "true";
-        case "number":
-        case "percentage":
-        case "time":
-          return Number(value) || 0;
-        default:
-          return value;
-      }
-    }
-  };
-
   // Handle value changes
   const handleValueChange = (metricId: string, newValue: any) => {
     setMetricsWithLogs((prev) =>
@@ -229,16 +113,6 @@ export default function DailyTrackerView() {
       )
     );
     setLogsChanged(true);
-  };
-
-  // Navigate to previous day
-  const goToPreviousDay = () => {
-    setSelectedDate(subDays(selectedDate, 1));
-  };
-
-  // Navigate to next day
-  const goToNextDay = () => {
-    setSelectedDate(addDays(selectedDate, 1));
   };
 
   // Save changes
@@ -279,9 +153,6 @@ export default function DailyTrackerView() {
         }
       }
 
-      // Reload daily logs
-      await loadDailyLogs();
-
       toast.success("Daily logs saved successfully");
       setLogsChanged(false);
     } catch (error) {
@@ -310,157 +181,19 @@ export default function DailyTrackerView() {
   return (
     <div className="space-y-6">
       {/* Date Navigation and Controls */}
-      <div className="flex flex-col md:flex-row gap-6">
-        <Card className="flex-1">
-          <CardHeader>
-            <CardTitle>Date Selection</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={(date) => date && setSelectedDate(date)}
-              className="rounded-md border"
-            />
-          </CardContent>
-        </Card>
-
-        <Card className="flex-1">
-          <CardHeader>
-            <CardTitle>Tracking Controls</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Daily Navigation */}
-            <div className="flex justify-between items-center">
-              <Button variant="outline" onClick={goToPreviousDay}>
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous Day
-              </Button>
-              <div className="font-bold text-lg">
-                {format(selectedDate, "EEEE, MMMM d, yyyy")}
-              </div>
-              <Button variant="outline" onClick={goToNextDay}>
-                Next Day
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-
-            {/* Experiment Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="experiment-select">Experiment (Optional)</Label>
-              <Select
-                value={selectedExperiment}
-                onValueChange={setSelectedExperiment}
-              >
-                <SelectTrigger id="experiment-select" className="w-full">
-                  <SelectValue placeholder="Select experiment (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No Experiment</SelectItem>
-                  {experiments
-                    .filter((exp) => exp.status === "active")
-                    .map((experiment) => (
-                      <SelectItem key={experiment.id} value={experiment.id}>
-                        <div className="flex items-center">
-                          <Beaker className="h-4 w-4 mr-2" />
-                          {experiment.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Save Button */}
-            <Button
-              className="w-full"
-              disabled={!logsChanged || isSaving}
-              onClick={saveChanges}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-
-            {/* Quick Action Buttons */}
-            <div className="mt-4 space-y-2">
-              <Label>Quick Actions</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    // Mark all boolean metrics as completed
-                    setMetricsWithLogs((prev) =>
-                      prev.map((item) =>
-                        item.type === "boolean"
-                          ? { ...item, value: true, hasChanged: true }
-                          : item
-                      )
-                    );
-                    setLogsChanged(true);
-                  }}
-                >
-                  <ClipboardCheck className="h-4 w-4 mr-2" />
-                  Complete All
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    // Set today to use yesterday's values as starting point
-                    const yesterday = subDays(selectedDate, 1);
-                    const yesterdayLogs = dailyLogsData.filter((log: any) => {
-                      const logDate = new Date(log.date);
-                      return isSameDay(logDate, yesterday);
-                    });
-
-                    if (yesterdayLogs.length === 0) {
-                      toast.info("No logs found for yesterday");
-                      return;
-                    }
-
-                    // Copy yesterday's logs but mark them as changed
-                    setMetricsWithLogs((prev) =>
-                      prev.map((item) => {
-                        const yesterdayLog: any = yesterdayLogs.find(
-                          (log: any) => log.metric_id === item.id
-                        );
-                        if (!yesterdayLog) return item;
-
-                        return {
-                          ...item,
-                          value: parseMetricValue(
-                            yesterdayLog.value,
-                            item.type
-                          ),
-                          notes: yesterdayLog.notes || "",
-                          hasChanged: true,
-                        };
-                      })
-                    );
-                    setLogsChanged(true);
-                    toast.success("Copied yesterday's values");
-                  }}
-                >
-                  Copy Yesterday
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <TrackerControls
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        selectedExperiment={selectedExperiment}
+        setSelectedExperiment={setSelectedExperiment}
+        experiments={experiments}
+        logsChanged={logsChanged}
+        isSaving={isSaving}
+        saveChanges={saveChanges}
+        setMetricsWithLogs={setMetricsWithLogs}
+        setLogsChanged={setLogsChanged}
+        dailyLogsData={dailyLogsData as any[]}
+      />
 
       {/* Metrics Tracking Section */}
       <Card>

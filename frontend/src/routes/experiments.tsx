@@ -5,12 +5,10 @@ import {
   DatasetConfig,
   DatasetSelector,
 } from "@/components/data-page/dataset-selector";
-import { CSVImportProcessor } from "@/components/data-table/csv-import-processor";
 import {
   Activity,
   Beaker,
   ClipboardList,
-  Import,
   ListChecks,
   TagIcon,
 } from "lucide-react";
@@ -39,6 +37,7 @@ export default function ExperimentsPage() {
       icon: <Activity className="h-4 w-4" />,
       addLabel: "Add Daily Log",
       defaultTab: "tracker",
+      disableBatchEntry: true,
       customTabs: [
         {
           id: "tracker",
@@ -46,20 +45,6 @@ export default function ExperimentsPage() {
           icon: <ListChecks className="h-4 w-4" />,
           content: <DailyTrackerView />,
           position: "before",
-        },
-        {
-          id: "batch_import",
-          label: "Batch Import",
-          icon: <Import className="h-4 w-4" />,
-          content: (
-            <CSVImportProcessor
-              datasetId="daily_logs"
-              fields={dailyLogFields}
-              title="Daily Logs"
-              chunkSize={100}
-            />
-          ),
-          position: "after",
         },
       ],
     },

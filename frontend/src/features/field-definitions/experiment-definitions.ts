@@ -18,6 +18,7 @@ export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       type: "text",
       displayName: "Description",
       description: "Description of the experiment",
+      isOptional: true,
     },
     {
       key: "start_date",
@@ -65,6 +66,7 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       type: "text",
       displayName: "Description",
       description: "Description of the metric",
+      isOptional: true,
     },
     {
       key: "type",
