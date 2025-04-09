@@ -11,8 +11,10 @@ import {
   ClipboardList,
   ListChecks,
   TagIcon,
+  View,
 } from "lucide-react";
 import DailyTrackerView from "@/features/experiments/daily-tracker-view";
+import ExperimentList from "@/features/experiments/experiment-list";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
@@ -56,6 +58,15 @@ export default function ExperimentsPage() {
       fields: experimentFields,
       icon: <Beaker className="h-4 w-4" />,
       addLabel: "Create Experiment",
+      customTabs: [
+        {
+          id: "list_question",
+          label: "List Question",
+          icon: <View className="h-4 w-4" />,
+          content: <ExperimentList />,
+          position: "before",
+        },
+      ],
     },
     {
       id: "metrics",

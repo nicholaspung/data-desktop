@@ -47,10 +47,13 @@ export default function DailyTrackerView() {
       setExperiments(experimentsData as Experiment[]);
     }
 
-    if (dailyLogsData.length > 0) {
+    if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
     }
   }, [experimentsData, dailyLogsData, selectedDate]);
+
+  console.log(metricsData);
+  console.log(dailyLogsData);
 
   // Process logs for the selected date
   const processLogsForSelectedDate = (
