@@ -3,13 +3,6 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import BodyCompositionTab from "./visualization/body-composition-tab";
 import TrendsTab from "./visualization/trends-tab";
 import RegionalAnalysisTab from "./visualization/regional-analysis-tab";
@@ -19,6 +12,7 @@ import GoalTab from "./goal/goal-tab";
 import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";
+import ReusableSelect from "@/components/reusable/reusable-select";
 
 export interface DexaScan {
   id: string;
@@ -120,18 +114,19 @@ export default function DexaVisualization({
         {/* Only show time range selector for trends and regional analysis tabs */}
         {(activeTab === "trends" || activeTab === "regional") && (
           <div className="flex gap-2">
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Time Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="3m">Last 3 Months</SelectItem>
-                <SelectItem value="6m">Last 6 Months</SelectItem>
-                <SelectItem value="1y">Last Year</SelectItem>
-                <SelectItem value="2y">Last 2 Years</SelectItem>
-              </SelectContent>
-            </Select>
+            <ReusableSelect
+              options={[
+                { id: "all", label: "All Time" },
+                { id: "3m", label: "Last 3 Months" },
+                { id: "6m", label: "Last 6 Months" },
+                { id: "1y", label: "Last Year" },
+                { id: "2y", label: "Last 2 Years" },
+              ]}
+              value={timeRange}
+              onChange={setTimeRange}
+              placeholder={"Time Range"}
+              triggerClassName={"w-[180px]"}
+            />
           </div>
         )}
       </div>

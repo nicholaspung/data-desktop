@@ -1,15 +1,9 @@
 // src/features/dexa/visualization/comparison-selector.tsx
 import { useEffect } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { DexaScan } from "../dexa-visualization";
 import { format } from "date-fns";
+import ReusableSelect from "@/components/reusable/reusable-select";
 
 export type ViewMode = "single" | "comparison";
 
@@ -60,63 +54,47 @@ export const ComparisonSelector = ({
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">View:</span>
-            <Select
+            <ReusableSelect
+              options={[
+                { id: "single", label: "Single Date" },
+                { id: "comparison", label: "Compare Dates" },
+              ]}
               value={viewMode}
-              onValueChange={(value: ViewMode) => onViewModeChange(value)}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Select view" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="single">Single Date</SelectItem>
-                <SelectItem value="comparison">Compare Dates</SelectItem>
-              </SelectContent>
-            </Select>
+              onChange={(value: any) => onViewModeChange(value)}
+              title={"view"}
+              triggerClassName={"w-[160px]"}
+            />
           </div>
 
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">
               {viewMode === "comparison" ? "Primary" : "Date"}:
             </span>
-            <Select
+            <ReusableSelect
+              options={dateOptions.map((option) => ({
+                id: option.value,
+                label: option.label,
+              }))}
               value={selectedDate}
-              onValueChange={onSelectedDateChange}
-              disabled={dateOptions.length === 0}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select date" />
-              </SelectTrigger>
-              <SelectContent>
-                {dateOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={onSelectedDateChange}
+              title={"date"}
+              triggerClassName={"w-[180px]"}
+            />
           </div>
 
           {viewMode === "comparison" && (
             <div className="flex items-center gap-3">
               <span className="text-sm font-medium">Compare to:</span>
-              <Select
+              <ReusableSelect
+                options={dateOptions
+                  .filter((option) => option.value !== selectedDate)
+                  .map((el) => ({ id: el.value, label: el.label }))}
                 value={comparisonDate}
-                onValueChange={onComparisonDateChange}
+                onChange={onComparisonDateChange}
+                title={"comparison date"}
+                triggerClassName={"w-[180px]"}
                 disabled={dateOptions.length <= 1}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select comparison date" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dateOptions
-                    .filter((option) => option.value !== selectedDate)
-                    .map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
           )}
         </div>

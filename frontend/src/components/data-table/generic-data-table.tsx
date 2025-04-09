@@ -7,18 +7,12 @@ import { ApiService } from "@/services/api";
 import { ColumnDef } from "@tanstack/react-table";
 import { createColumn } from "@/lib/table-utils";
 import { FieldDefinition } from "@/types/types";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import RefreshDatasetButton from "../reusable/refresh-dataset-button";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface GenericDataTableProps {
   datasetId: DataStoreName;
@@ -256,9 +250,14 @@ export default function GenericDataTable({
             datasetId={datasetId}
             title={title}
           />
-          <Select
+          <ReusableSelect
+            options={[
+              { id: "view", label: "View Mode" },
+              !disableEdit && { id: "edit", label: "Edit Mode" },
+              !disableDelete && { id: "delete", label: "Delete Mode" },
+            ].filter((i) => i)}
             value={tableMode}
-            onValueChange={(value: "view" | "edit" | "delete") => {
+            onChange={(value: any) => {
               setTableMode(value);
 
               // Clear selected rows when switching modes
@@ -266,18 +265,9 @@ export default function GenericDataTable({
                 setSelectedRows([]);
               }
             }}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Select mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="view">View Mode</SelectItem>
-              {!disableEdit && <SelectItem value="edit">Edit Mode</SelectItem>}
-              {!disableDelete && (
-                <SelectItem value="delete">Delete Mode</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+            title={"mode"}
+            triggerClassName={"w-[150px]"}
+          />
 
           {/* Delete Button - Only visible in delete mode with selections */}
           {tableMode === "delete" && selectedRows.length > 0 && (

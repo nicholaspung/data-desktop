@@ -4,13 +4,6 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -18,6 +11,7 @@ import BloodworkSummary from "./bloodwork-summary";
 import { BloodMarker, BloodResult } from "./bloodwork";
 import BloodMarkerCard from "./blood-marker-card";
 import { hasAnyRangeDefined } from "./bloodwork-utils";
+import ReusableSelect from "@/components/reusable/reusable-select";
 
 // Create the main visualization component
 const BloodworkVisualizations: React.FC = () => {
@@ -240,19 +234,19 @@ const BloodworkVisualizations: React.FC = () => {
             />
           </div>
 
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ReusableSelect
+            options={[
+              { id: "all", label: "All Categories" },
+              ...categories.map((category) => ({
+                id: category,
+                label: category,
+              })),
+            ]}
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            placeholder={"All Categories"}
+            triggerClassName={"w-full sm:w-[180px]"}
+          />
         </div>
       </div>
 

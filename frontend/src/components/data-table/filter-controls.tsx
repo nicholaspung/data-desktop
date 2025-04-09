@@ -1,18 +1,12 @@
 // src/components/data-table/filter-controls.tsx
 import { Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { Button } from "../ui/button";
 import { Download } from "lucide-react";
 import { exportToCSV } from "@/lib/csv-export";
 import { FieldDefinition } from "@/types/types";
 import { ExportColumnsDialog } from "./export-columns-dialog";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface FilterControlsProps {
   filterableColumns: string[];
@@ -88,28 +82,24 @@ export default function FilterControls({
       <div className="flex flex-wrap items-center gap-2">
         {filterableColumns.length > 0 && (
           <>
-            <Select
+            <ReusableSelect
+              options={filterableColumns.map((column) => ({
+                id: column,
+                label: column,
+              }))}
               value={filterColumn}
-              onValueChange={(value) => {
+              onChange={(value) => {
                 setFilterColumn(value);
                 table.resetColumnFilters();
               }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select column" />
-              </SelectTrigger>
-              <SelectContent>
-                {filterableColumns.map((column) => {
-                  const field = fieldMap.get(column);
-                  const displayName = field?.displayName || column;
-                  return (
-                    <SelectItem key={column} value={column}>
-                      {displayName} {field?.isRelation ? "(Relation)" : ""}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              renderItem={(option) => {
+                const field = fieldMap.get(option.label);
+                const displayName = field?.displayName || option.label;
+                return `${displayName} ${field?.isRelation ? "(Relation)" : ""}`;
+              }}
+              title={"column"}
+              triggerClassName={"w-[180px]"}
+            />
 
             <Input
               placeholder={getPlaceholder()}

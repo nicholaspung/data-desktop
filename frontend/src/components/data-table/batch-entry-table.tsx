@@ -22,13 +22,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ConfirmResetDialog } from "@/components/reusable/confirm-reset-dialog";
 import { Badge } from "../ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { FieldDefinition } from "@/types/types";
 import { resolveRelationReferences } from "@/lib/relation-utils";
 import { toast } from "sonner";
@@ -40,6 +33,7 @@ import useLoadData from "@/hooks/useLoadData";
 import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface BatchEntryTableProps {
   datasetId: DataStoreName;
@@ -422,36 +416,22 @@ export function BatchEntryTable({
       // Convert empty string to placeholder value for display purposes
       const displayValue = value === "" ? "_none_" : value || "_none_";
 
+      const onValueChange = (newValue: string) => {
+        // Convert placeholder value back to appropriate value when saving
+        const valueToSave = newValue === "_none_" ? "" : newValue;
+        updateEntryField(entryIndex, field.key, valueToSave);
+      };
+
       return (
         <div style={cellStyle}>
-          <Select
+          <ReusableSelect
+            options={options}
             value={displayValue}
-            onValueChange={(newValue) => {
-              // Convert placeholder value back to appropriate value when saving
-              const valueToSave = newValue === "_none_" ? "" : newValue;
-              updateEntryField(entryIndex, field.key, valueToSave);
-            }}
-          >
-            <SelectTrigger className="h-8 w-full">
-              <SelectValue placeholder={`Select ${field.displayName}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.length === 0 ? (
-                <SelectItem value="_no_options_" disabled>
-                  No options available
-                </SelectItem>
-              ) : (
-                <>
-                  <SelectItem value="_none_">Select...</SelectItem>
-                  {options.map((option) => (
-                    <SelectItem key={option.id} value={option.id}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </>
-              )}
-            </SelectContent>
-          </Select>
+            onChange={onValueChange}
+            title={field.displayName}
+            triggerClassName={"h-8 w-full"}
+            noDefault={false}
+          />
         </div>
       );
     }

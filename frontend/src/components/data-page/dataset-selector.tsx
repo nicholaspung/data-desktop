@@ -1,16 +1,10 @@
 // src/components/data-page/dataset-selector.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import GenericDataPage from "@/components/data-page/generic-data-page";
 import { FieldDefinition } from "@/types/types";
 import { DataStoreName } from "@/store/data-store";
+import ReusableSelect from "../reusable/reusable-select";
 
 export interface DatasetConfig {
   id: DataStoreName;
@@ -62,24 +56,19 @@ export function DatasetSelector({
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Select
+          <ReusableSelect
+            options={datasets}
             value={selectedDatasetId}
-            onValueChange={setSelectedDatasetId}
-          >
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select a dataset" />
-            </SelectTrigger>
-            <SelectContent>
-              {datasets.map((dataset) => (
-                <SelectItem key={dataset.id} value={dataset.id}>
-                  <div className="flex items-center gap-2">
-                    {dataset.icon}
-                    <span>{dataset.title}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={setSelectedDatasetId}
+            renderItem={(option) => (
+              <div className="flex items-center gap-2">
+                {option.icon}
+                <span>{option.title}</span>
+              </div>
+            )}
+            placeholder={"Select a dataset"}
+            triggerClassName="w-full md:w-[300px]"
+          />
         </CardContent>
       </Card>
 

@@ -7,13 +7,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import {
@@ -25,6 +18,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { database } from "../../../wailsjs/go/models";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface Record {
   id: string;
@@ -248,21 +242,15 @@ const RelationDebugger: React.FC = () => {
                 <label className="text-sm font-medium mb-1 block">
                   Select Dataset:
                 </label>
-                <Select
+                <ReusableSelect
+                  options={datasets.map((dataset) => ({
+                    id: dataset.id,
+                    label: dataset.name,
+                  }))}
                   value={selectedDataset}
-                  onValueChange={handleDatasetChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a dataset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {datasets.map((dataset) => (
-                      <SelectItem key={dataset.id} value={dataset.id}>
-                        {dataset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={handleDatasetChange}
+                  title={" a dataset"}
+                />
               </div>
               <Button
                 variant="outline"

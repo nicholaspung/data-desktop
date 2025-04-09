@@ -6,13 +6,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +16,7 @@ import {
   GetRecordsWithRelations,
 } from "../../../wailsjs/go/backend/App";
 import { Search, RefreshCw } from "lucide-react";
+import ReusableSelect from "../reusable/reusable-select";
 
 const DatabaseTester = () => {
   const [datasets, setDatasets] = useState([]);
@@ -126,21 +120,16 @@ const DatabaseTester = () => {
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium">Select Dataset:</label>
               <div className="flex space-x-2">
-                <Select
+                <ReusableSelect
+                  options={datasets.map((dataset: any) => ({
+                    id: dataset.id,
+                    label: dataset.name,
+                  }))}
                   value={selectedDataset}
-                  onValueChange={handleDatasetChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a dataset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {datasets.map((dataset: any) => (
-                      <SelectItem key={dataset.id} value={dataset.id}>
-                        {dataset.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={handleDatasetChange}
+                  title={"a dataset"}
+                  triggerClassName={"w-full"}
+                />
                 <Button
                   variant="outline"
                   onClick={loadDatasets}

@@ -1,12 +1,5 @@
 // src/components/data-form/relation-field.tsx
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import {
   FormControl,
   FormDescription,
@@ -20,6 +13,7 @@ import { useStore } from "@tanstack/react-store";
 import dataStore, { DataStoreName } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface RelationFieldProps {
   field: any; // React Hook Form field
@@ -69,29 +63,13 @@ export function RelationField({
     <FormItem>
       <FormLabel>{fieldDef.displayName}</FormLabel>
       <FormControl>
-        <Select
-          disabled={options.length === 0}
-          value={field.value || ""}
-          onValueChange={onChange}
-        >
-          <SelectTrigger>
-            <SelectValue
-              placeholder={
-                isLoading
-                  ? "Loading options..."
-                  : `Select ${fieldDef.displayName}`
-              }
-            />
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ReusableSelect
+          options={options}
+          value={field.value}
+          onChange={onChange}
+          isLoading={isLoading}
+          title={fieldDef.displayName}
+        />
       </FormControl>
       {fieldDef.description && (
         <FormDescription>{fieldDef.description}</FormDescription>

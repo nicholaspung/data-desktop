@@ -1,13 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import { Table } from "@tanstack/react-table";
+import ReusableSelect from "../reusable/reusable-select";
 
 export default function Pagination({
   table,
@@ -46,23 +40,18 @@ export default function Pagination({
       {/* Controls - right aligned on desktop */}
       <div className="flex justify-start md:justify-end items-center gap-2">
         {/* Page size selector */}
-        <Select
-          value={`${pageSize}`}
-          onValueChange={(value) => {
+        <ReusableSelect
+          options={[5, 10, 20, 50, 100].map((size) => ({
+            id: size,
+            label: size,
+          }))}
+          value={pageSize}
+          onChange={(value) => {
             table.setPageSize(Number(value));
           }}
-        >
-          <SelectTrigger className="h-8 w-[70px]">
-            <SelectValue placeholder={pageSize} />
-          </SelectTrigger>
-          <SelectContent side="top">
-            {[5, 10, 20, 50, 100].map((size) => (
-              <SelectItem key={size} value={`${size}`}>
-                {size}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder={`${pageSize}`}
+          triggerClassName={"h-8 w-[70px]"}
+        />
 
         {/* Navigation buttons */}
         <div className="inline-flex items-center">
