@@ -20,7 +20,7 @@ export default function useLoadData({
   }, [datasetId]);
 
   const loadData = async () => {
-    setLoadingState(true, datasetId);
+    setLoadingState(datasetId, true);
     try {
       const processedRecords = await getProcessedRecords(datasetId, fields);
 
@@ -29,7 +29,7 @@ export default function useLoadData({
       console.error(`Error loading ${datasetId} data:`, error);
       toast.error(`Failed to load ${title} data`);
     } finally {
-      setLoadingState(false, datasetId);
+      setLoadingState(datasetId, false);
     }
   };
 

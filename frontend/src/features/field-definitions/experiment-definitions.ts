@@ -1,0 +1,221 @@
+// src/features/field-definitions/experiment-definitions.ts
+import { FieldDefinitionsDataset } from "@/types/types";
+
+export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "experiments",
+  name: "Experiments",
+  description: "Track experiments with specific metrics and goals",
+  fields: [
+    {
+      key: "name",
+      type: "text",
+      displayName: "Name",
+      description: "Name of the experiment",
+      isSearchable: true,
+    },
+    {
+      key: "description",
+      type: "text",
+      displayName: "Description",
+      description: "Description of the experiment",
+    },
+    {
+      key: "start_date",
+      type: "date",
+      displayName: "Start Date",
+      description: "When the experiment starts",
+      isSearchable: true,
+    },
+    {
+      key: "end_date",
+      type: "date",
+      displayName: "End Date",
+      description: "When the experiment ends (optional)",
+      isOptional: true,
+    },
+    {
+      key: "goal",
+      type: "text",
+      displayName: "Goal",
+      description: "The goal of this experiment",
+    },
+    {
+      key: "status",
+      type: "text",
+      displayName: "Status",
+      description: "Status of the experiment (active, completed, paused)",
+    },
+  ],
+};
+
+export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "metrics",
+  name: "Metrics",
+  description: "Define metrics to track daily",
+  fields: [
+    {
+      key: "name",
+      type: "text",
+      displayName: "Name",
+      description: "Name of the metric",
+      isSearchable: true,
+    },
+    {
+      key: "description",
+      type: "text",
+      displayName: "Description",
+      description: "Description of the metric",
+    },
+    {
+      key: "type",
+      type: "text",
+      displayName: "Type",
+      description: "Type of metric (number, boolean, time, percentage)",
+    },
+    {
+      key: "unit",
+      type: "text",
+      displayName: "Unit",
+      description: "Unit of measurement (if applicable)",
+      isOptional: true,
+    },
+    {
+      key: "default_value",
+      type: "text",
+      displayName: "Default Value",
+      description: "Default value for this metric",
+    },
+    {
+      key: "category_id",
+      type: "text",
+      displayName: "Category",
+      description: "Category of this metric",
+      isSearchable: true,
+      isRelation: true,
+      relatedDataset: "metric_categories",
+      relatedField: "id",
+      displayField: "name",
+    },
+  ],
+};
+
+export const DAILY_LOG_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "daily_logs",
+  name: "Daily Logs",
+  description: "Daily tracking of metrics",
+  fields: [
+    {
+      key: "date",
+      type: "date",
+      displayName: "Date",
+      description: "Date of the log",
+      isSearchable: true,
+    },
+    {
+      key: "metric_id",
+      type: "text",
+      displayName: "Metric",
+      description: "The metric being tracked",
+      isSearchable: true,
+      isRelation: true,
+      relatedDataset: "metrics",
+      relatedField: "id",
+      displayField: "name",
+    },
+    {
+      key: "experiment_id",
+      type: "text",
+      displayName: "Experiment",
+      description: "The experiment this log belongs to (if any)",
+      isOptional: true,
+      isRelation: true,
+      relatedDataset: "experiments",
+      relatedField: "id",
+      displayField: "name",
+    },
+    {
+      key: "value",
+      type: "text",
+      displayName: "Value",
+      description: "The value recorded for this metric",
+    },
+    {
+      key: "notes",
+      type: "text",
+      displayName: "Notes",
+      description: "Additional notes",
+      isOptional: true,
+    },
+  ],
+};
+
+export const METRIC_CATEGORY_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "metric_categories",
+  name: "Metric Categories",
+  description: "Categories for organizing metrics",
+  fields: [
+    {
+      key: "name",
+      type: "text",
+      displayName: "Name",
+      description: "Name of the category",
+      isSearchable: true,
+    },
+    {
+      key: "color",
+      type: "text",
+      displayName: "Color",
+      description: "Color for this category (hex code)",
+    },
+  ],
+};
+
+export const EXPERIMENT_METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "experiment_metrics",
+  name: "Experiment Metrics",
+  description: "Metrics and targets for experiments",
+  fields: [
+    {
+      key: "experiment_id",
+      type: "text",
+      displayName: "Experiment",
+      description: "The experiment this metric belongs to",
+      isSearchable: true,
+      isRelation: true,
+      relatedDataset: "experiments",
+      relatedField: "id",
+      displayField: "name",
+    },
+    {
+      key: "metric_id",
+      type: "text",
+      displayName: "Metric",
+      description: "The metric to track in this experiment",
+      isSearchable: true,
+      isRelation: true,
+      relatedDataset: "metrics",
+      relatedField: "id",
+      displayField: "name",
+    },
+    {
+      key: "target",
+      type: "text",
+      displayName: "Target",
+      description: "Target value for this metric",
+    },
+    {
+      key: "target_type",
+      type: "text",
+      displayName: "Target Type",
+      description:
+        "How to evaluate the target (atleast, atmost, exactly, boolean)",
+    },
+    {
+      key: "importance",
+      type: "number",
+      displayName: "Importance",
+      description:
+        "How important this metric is to the experiment (1-10 scale)",
+    },
+  ],
+};

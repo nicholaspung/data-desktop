@@ -1,70 +1,77 @@
+// src/store/data-store.ts
+// Updated with experiment-related data types
+
 import { Store } from "@tanstack/react-store";
 
+// Define the types for the data store
 export type DataStoreName =
   | "dexa"
   | "bloodwork"
   | "blood_markers"
-  | "blood_results";
+  | "blood_results"
+  | "paycheck"
+  | "habit"
+  | "experiments"
+  | "metrics"
+  | "daily_logs"
+  | "metric_categories"
+  | "experiment_metrics";
 
-const dataStore = new Store({
-  dexa: [] as any[],
-  bloodwork: [] as any[],
-  blood_markers: [] as any[],
-  blood_results: [] as any[],
-});
-
-export const loadState = (data: any, datasetId: DataStoreName) => {
-  dataStore.setState((state) => {
-    return {
-      ...state,
-      [datasetId]: data,
-    };
-  });
+// Initial state for the data store
+const initialState = {
+  dexa: [],
+  bloodwork: [],
+  blood_markers: [],
+  blood_results: [],
+  paycheck: [],
+  habit: [],
+  // Initialize experiment-related data arrays
+  experiments: [],
+  metrics: [],
+  daily_logs: [],
+  metric_categories: [],
+  experiment_metrics: [],
 };
 
-export const updateEntry = (
-  id: string,
-  data: any,
+// Create the data store
+const dataStore = new Store(initialState);
+
+// Helper function to load state into the store
+export function loadState(
+  data: Record<string, any>[],
   datasetId: DataStoreName
-) => {
-  dataStore.setState((state) => {
-    const datasetData = state[datasetId];
+) {
+  dataStore.setState((state) => ({
+    ...state,
+    [datasetId]: data,
+  }));
+}
 
-    const index = datasetData.findIndex((el) => el.id === id);
-    datasetData[index] = data;
+// Helper function to add a new entry to the store
+export function addEntry(entry: Record<string, any>, datasetId: DataStoreName) {
+  dataStore.setState((state) => ({
+    ...state,
+    [datasetId]: [...state[datasetId], entry],
+  }));
+}
 
-    return {
-      ...state,
-      [datasetId]: datasetData,
-    };
-  });
-};
+// Helper function to update an entry in the store
+export function updateEntry(id: string, entry: any, datasetId: DataStoreName) {
+  dataStore.setState((state) => ({
+    ...state,
+    [datasetId]: state[datasetId].map((item: any) =>
+      item.id === id ? { ...item, ...entry } : item
+    ),
+  }));
+}
 
-export const deleteEntry = (id: string, datasetId: DataStoreName) => {
-  dataStore.setState((state) => {
-    const datasetData = state[datasetId];
+// Helper function to delete an entry from the store
+export function deleteEntry(id: string, datasetId: DataStoreName) {
+  dataStore.setState((state) => ({
+    ...state,
+    [datasetId]: state[datasetId].filter((item: any) => item.id !== id),
+  }));
+}
 
-    const index = datasetData.findIndex((el) => el.id === id);
-    datasetData.splice(index, 1);
-
-    return {
-      ...state,
-      [datasetId]: datasetData,
-    };
-  });
-};
-
-export const addEntry = (data: any, datasetId: DataStoreName) => {
-  dataStore.setState((state) => {
-    const datasetData = state[datasetId];
-
-    datasetData.push(data);
-
-    return {
-      ...state,
-      [datasetId]: datasetData,
-    };
-  });
-};
-
+// Export the store
 export default dataStore;

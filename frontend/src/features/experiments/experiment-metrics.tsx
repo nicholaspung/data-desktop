@@ -1,0 +1,501 @@
+// src/features/experiments/experiment-metrics.tsx
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Plus, Trash2, Target, Edit, Save, Loader2 } from "lucide-react";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { addEntry, deleteEntry } from "@/store/data-store";
+import { ApiService } from "@/services/api";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+
+interface ExperimentMetricsProps {
+  experimentId: string;
+  showAddButton?: boolean;
+  editable?: boolean;
+}
+
+// Type for experiment metric
+interface ExperimentMetric {
+  id: string;
+  experiment_id: string;
+  metric_id: string;
+  metric_id_data?: any;
+  target: string; // JSON stringified target value
+  target_type: "atleast" | "atmost" | "exactly" | "boolean";
+  importance: number; // 1-10 scale
+}
+
+const ExperimentMetrics: React.FC<ExperimentMetricsProps> = ({
+  experimentId,
+  showAddButton = true,
+  editable = true,
+}) => {
+  // State
+  const [experimentMetrics, setExperimentMetrics] = useState<
+    ExperimentMetric[]
+  >([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingMetric, setEditingMetric] = useState<ExperimentMetric | null>(
+    null
+  );
+  const [selectedMetricId, setSelectedMetricId] = useState<string>("");
+  const [targetValue, setTargetValue] = useState<string | number | boolean>(
+    "0"
+  );
+  const [targetType, setTargetType] = useState<
+    "atleast" | "atmost" | "exactly" | "boolean"
+  >("atleast");
+  const [importance, setImportance] = useState<number>(5);
+  const [loading, setLoading] = useState(false);
+
+  // Get data from store
+  const metrics = useStore(dataStore, (state) => state.metrics) || [];
+  const experimentMetricsData =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
+
+  // Fetch experiment metrics on mount and when experimentId changes
+  useEffect(() => {
+    loadExperimentMetrics();
+  }, [experimentId, experimentMetricsData]);
+
+  // Load experiment metrics
+  const loadExperimentMetrics = async () => {
+    try {
+      // Filter experiment metrics for this experiment
+      const metricsForExperiment = experimentMetricsData.filter(
+        (m: any) => m.experiment_id === experimentId
+      );
+
+      setExperimentMetrics(metricsForExperiment as ExperimentMetric[]);
+    } catch (error) {
+      console.error("Error loading experiment metrics:", error);
+      toast.error("Failed to load experiment metrics");
+    }
+  };
+
+  // Add or update a metric to the experiment
+  const saveMetric = async () => {
+    setLoading(true);
+
+    try {
+      // Prepare the metric data
+      const metricData = {
+        experiment_id: experimentId,
+        metric_id: selectedMetricId,
+        target: JSON.stringify(targetValue),
+        target_type: targetType,
+        importance,
+      };
+
+      if (editingMetric) {
+        // Update existing metric
+        const response = await ApiService.updateRecord(editingMetric.id, {
+          ...editingMetric,
+          ...metricData,
+        });
+        if (response) {
+          addEntry(response, "experiment_metrics");
+
+          toast.success("Experiment metric updated");
+        }
+      } else {
+        // Add new metric
+        const response = await ApiService.addRecord(
+          "experiment_metrics",
+          metricData
+        );
+        if (response) {
+          addEntry(response, "experiment_metrics");
+
+          toast.success("Metric added to experiment");
+        }
+      }
+
+      // Reset form and close dialog
+      setDialogOpen(false);
+      resetForm();
+      await loadExperimentMetrics();
+    } catch (error) {
+      console.error("Error saving experiment metric:", error);
+      toast.error("Failed to save experiment metric");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete a metric from the experiment
+  const deleteMetric = async (metricId: string) => {
+    if (!editable) return;
+
+    try {
+      await ApiService.deleteRecord(metricId);
+      deleteEntry(metricId, "experiment_metrics");
+
+      toast.success("Metric removed from experiment");
+      await loadExperimentMetrics();
+    } catch (error) {
+      console.error("Error deleting experiment metric:", error);
+      toast.error("Failed to remove metric from experiment");
+    }
+  };
+
+  // Reset form fields
+  const resetForm = () => {
+    setSelectedMetricId("");
+    setTargetValue("0");
+    setTargetType("atleast");
+    setImportance(5);
+    setEditingMetric(null);
+  };
+
+  // Open dialog to edit a metric
+  const openEditDialog = (metric: ExperimentMetric) => {
+    if (!editable) return;
+
+    setEditingMetric(metric);
+    setSelectedMetricId(metric.metric_id);
+
+    // Parse target value based on metric type
+    const metricInfo: any = metrics.find((m: any) => m.id === metric.metric_id);
+    if (metricInfo) {
+      try {
+        setTargetValue(JSON.parse(metric.target));
+      } catch (e: any) {
+        console.error(e);
+        // If parsing fails, set a default based on type
+        if (metricInfo.type === "boolean") {
+          setTargetValue(true);
+        } else {
+          setTargetValue(0);
+        }
+      }
+    }
+
+    setTargetType(metric.target_type);
+    setImportance(metric.importance);
+    setDialogOpen(true);
+  };
+
+  // Format the target value for display
+  const formatTargetValue = (metric: ExperimentMetric): string => {
+    const metricInfo: any = metrics.find((m: any) => m.id === metric.metric_id);
+    if (!metricInfo) return "N/A";
+
+    try {
+      const targetVal = JSON.parse(metric.target);
+
+      if (metricInfo.type === "boolean") {
+        return targetVal ? "Complete" : "Skip";
+      } else {
+        const value =
+          typeof targetVal === "number" ? targetVal : Number(targetVal);
+        const formattedValue = isNaN(value) ? targetVal : value.toString();
+
+        switch (metric.target_type) {
+          case "atleast":
+            return `At least ${formattedValue}${metricInfo.unit ? ` ${metricInfo.unit}` : ""}`;
+          case "atmost":
+            return `At most ${formattedValue}${metricInfo.unit ? ` ${metricInfo.unit}` : ""}`;
+          case "exactly":
+            return `Exactly ${formattedValue}${metricInfo.unit ? ` ${metricInfo.unit}` : ""}`;
+          default:
+            return `${formattedValue}${metricInfo.unit ? ` ${metricInfo.unit}` : ""}`;
+        }
+      }
+    } catch (e: any) {
+      console.error(e);
+      return "Invalid target";
+    }
+  };
+
+  // Render the appropriate form field based on metric type
+  const renderTargetField = () => {
+    const metricInfo: any = metrics.find((m: any) => m.id === selectedMetricId);
+    if (!metricInfo) return null;
+
+    switch (metricInfo.type) {
+      case "boolean":
+        return (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="metric-target"
+              checked={!!targetValue}
+              onCheckedChange={(checked) => setTargetValue(!!checked)}
+            />
+            <Label htmlFor="metric-target">Complete this metric</Label>
+          </div>
+        );
+      case "number":
+      case "percentage":
+      case "time":
+        return (
+          <div className="space-y-2">
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="target-type">Target Type</Label>
+                <Select
+                  value={targetType}
+                  onValueChange={(value) => setTargetType(value as any)}
+                >
+                  <SelectTrigger id="target-type">
+                    <SelectValue placeholder="Select target type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="atleast">At least</SelectItem>
+                    <SelectItem value="atmost">At most</SelectItem>
+                    <SelectItem value="exactly">Exactly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex-1">
+                <Label htmlFor="target-value">
+                  Target Value {metricInfo.unit ? `(${metricInfo.unit})` : ""}
+                </Label>
+                <Input
+                  id="target-value"
+                  type="number"
+                  value={targetValue as number}
+                  onChange={(e) =>
+                    setTargetValue(parseFloat(e.target.value) || 0)
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="space-y-2">
+            <Label htmlFor="target-value">Target Value</Label>
+            <Input
+              id="target-value"
+              value={targetValue as string}
+              onChange={(e) => setTargetValue(e.target.value)}
+            />
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle>Metrics & Goals</CardTitle>
+          {showAddButton && editable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                resetForm();
+                setDialogOpen(true);
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Metric
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {experimentMetrics.length === 0 ? (
+            <div className="text-center p-8">
+              <p className="text-muted-foreground">
+                No metrics added to this experiment yet.
+              </p>
+              {showAddButton && editable && (
+                <Button
+                  variant="outline"
+                  className="mt-4"
+                  onClick={() => {
+                    resetForm();
+                    setDialogOpen(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Your First Metric
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {experimentMetrics.map((metric) => (
+                <Card key={metric.id} className="bg-accent/10">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium">
+                          {metric.metric_id_data?.name || "Unknown Metric"}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {metric.metric_id_data?.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-sm">
+                          Importance: {metric.importance}/10
+                        </Badge>
+
+                        {editable && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditDialog(metric)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive"
+                              onClick={() => deleteMetric(metric.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex items-center">
+                      <Target className="h-4 w-4 mr-2 text-primary" />
+                      <span className="text-sm font-medium">
+                        Goal: {formatTargetValue(metric)}
+                      </span>
+                    </div>
+
+                    {/* Display metric type and unit */}
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Type: {metric.metric_id_data?.type || "Unknown"}
+                      {metric.metric_id_data?.unit &&
+                        ` • Unit: ${metric.metric_id_data.unit}`}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Metric Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingMetric ? "Edit Metric Goal" : "Add Metric to Experiment"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingMetric
+                ? "Update the target for this metric"
+                : "Set a target for tracking this metric in your experiment"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Metric Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="metric-select">Metric</Label>
+              <Select
+                value={selectedMetricId}
+                onValueChange={setSelectedMetricId}
+                disabled={!!editingMetric}
+              >
+                <SelectTrigger id="metric-select">
+                  <SelectValue placeholder="Select a metric to track" />
+                </SelectTrigger>
+                <SelectContent>
+                  {metrics.map((metric: any) => (
+                    <SelectItem key={metric.id} value={metric.id}>
+                      {metric.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Target Configuration */}
+            {selectedMetricId && (
+              <>
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">Set Target</h3>
+
+                  {renderTargetField()}
+
+                  {/* Importance Slider */}
+                  <div className="space-y-2">
+                    <Label htmlFor="importance">
+                      Importance (1-10): {importance}
+                    </Label>
+                    <Input
+                      id="importance"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={importance}
+                      onChange={(e) => setImportance(parseInt(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Less important</span>
+                      <span>More important</span>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={saveMetric}
+              disabled={!selectedMetricId || loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {editingMetric ? "Update Metric" : "Add Metric"}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ExperimentMetrics;

@@ -9,12 +9,20 @@ import (
 func CleanupUnusedTables() error {
 	// Get all core dataset IDs from constants
 	coreDatasetIDs := []string{
+		// Existing datasets
 		DatasetIDDEXA,
 		DatasetIDBloodwork,
 		DatasetIDPaycheck,
 		DatasetIDHabit,
 		DatasetIDBloodMarker,
 		DatasetIDBloodResult,
+
+		// New experiment-related datasets
+		DatasetIDExperiment,
+		DatasetIDMetric,
+		DatasetIDDailyLog,
+		DatasetIDMetricCategory,
+		DatasetIDExperimentMetric,
 	}
 
 	// Get all datasets currently in the database

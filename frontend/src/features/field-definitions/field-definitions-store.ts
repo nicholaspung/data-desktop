@@ -1,4 +1,6 @@
 // src/features/field-definitions/field-definitions-store.ts
+// Updated to include experiment-related datasets
+
 import { FieldDefinition, FieldDefinitionsState } from "@/types/types";
 import { Store } from "@tanstack/react-store";
 import { DEXA_FIELD_DEFINITIONS } from "./dexa-definitions";
@@ -7,6 +9,13 @@ import {
   BLOOD_RESULTS_FIELD_DEFINITIONS,
   BLOODWORK_FIELD_DEFINITIONS,
 } from "./bloodwork-definitions";
+import {
+  EXPERIMENT_FIELD_DEFINITIONS,
+  METRIC_FIELD_DEFINITIONS,
+  DAILY_LOG_FIELD_DEFINITIONS,
+  METRIC_CATEGORY_FIELD_DEFINITIONS,
+  EXPERIMENT_METRIC_FIELD_DEFINITIONS,
+} from "./experiment-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
@@ -15,6 +24,12 @@ const initialState: FieldDefinitionsState = {
     bloodwork: BLOODWORK_FIELD_DEFINITIONS,
     blood_markers: BLOOD_MARKERS_FIELD_DEFINITIONS,
     blood_results: BLOOD_RESULTS_FIELD_DEFINITIONS,
+    // Add experiment-related datasets
+    experiments: EXPERIMENT_FIELD_DEFINITIONS,
+    metrics: METRIC_FIELD_DEFINITIONS,
+    daily_logs: DAILY_LOG_FIELD_DEFINITIONS,
+    metric_categories: METRIC_CATEGORY_FIELD_DEFINITIONS,
+    experiment_metrics: EXPERIMENT_METRIC_FIELD_DEFINITIONS,
   },
 };
 

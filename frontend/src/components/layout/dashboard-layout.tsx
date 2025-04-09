@@ -50,9 +50,9 @@ const sidebarItems: SidebarItem[] = [
     href: "/paychecks",
   },
   {
-    title: "Habits",
+    title: "Experiments",
     icon: <ListTodo className="h-5 w-5" />,
-    href: "/habits",
+    href: "/experiments",
   },
   {
     title: "Reports",

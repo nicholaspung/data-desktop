@@ -253,6 +253,51 @@ function main() {
         );
         break;
 
+      case "experiment":
+        processDataset(
+          "./frontend/src/features/field-definitions/experiment-definitions.ts",
+          "EXPERIMENT_FIELD_DEFINITIONS",
+          "GetExperimentFields",
+          "experiment_fields.go"
+        );
+        break;
+
+      case "metric":
+        processDataset(
+          "./frontend/src/features/field-definitions/experiment-definitions.ts",
+          "METRIC_FIELD_DEFINITIONS",
+          "GetMetricFields",
+          "metric_fields.go"
+        );
+        break;
+
+      case "daily_log":
+        processDataset(
+          "./frontend/src/features/field-definitions/experiment-definitions.ts",
+          "DAILY_LOG_FIELD_DEFINITIONS",
+          "GetDailyLogFields",
+          "daily_log_fields.go"
+        );
+        break;
+
+      case "metric_category":
+        processDataset(
+          "./frontend/src/features/field-definitions/experiment-definitions.ts",
+          "METRIC_CATEGORY_FIELD_DEFINITIONS",
+          "GetMetricCategoryFields",
+          "metric_category_fields.go"
+        );
+        break;
+
+      case "experiment_metric":
+        processDataset(
+          "./frontend/src/features/field-definitions/experiment-definitions.ts",
+          "EXPERIMENT_METRIC_FIELD_DEFINITIONS",
+          "GetExperimentMetricFields",
+          "experiment_metric_fields.go"
+        );
+        break;
+
       default:
         console.log(`Unknown dataset: ${dataset}`);
     }

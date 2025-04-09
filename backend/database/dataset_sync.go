@@ -83,6 +83,66 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Blood Results dataset: %w", err)
 	}
 
+	// Sync Experiments dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDExperiment,
+		"Experiments",
+		"Track experiments with goals and metrics",
+		DatasetTypeExperiment,
+		GetExperimentFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Experiments dataset: %w", err)
+	}
+
+	// Sync Metrics dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDMetric,
+		"Metrics",
+		"Define metrics to track",
+		DatasetTypeMetric,
+		GetMetricFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Metrics dataset: %w", err)
+	}
+
+	// Sync Daily Logs dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDDailyLog,
+		"Daily Logs",
+		"Daily tracking of metrics",
+		DatasetTypeDailyLog,
+		GetDailyLogFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Daily Logs dataset: %w", err)
+	}
+
+	// Sync Metric Categories dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDMetricCategory,
+		"Metric Categories",
+		"Categories for metrics",
+		DatasetTypeMetric, // Using the same type as metrics
+		GetMetricCategoryFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Metric Categories dataset: %w", err)
+	}
+
+	// Sync Experiment Metrics dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDExperimentMetric,
+		"Experiment Metrics",
+		"Metrics and targets for experiments",
+		DatasetTypeExperiment, // Using the same type as experiments
+		GetExperimentMetricFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Experiment Metrics dataset: %w", err)
+	}
+
 	fmt.Println("Dataset sync completed successfully")
 	return nil
 }
