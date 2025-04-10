@@ -1,17 +1,7 @@
-// src/components/common/confirm-delete-dialog.tsx
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+// src/components/reusable/confirm-delete-dialog.tsx
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import ReusableDialog from "./reusable-dialog";
 
 interface ConfirmDeleteDialogProps {
   title?: string;
@@ -42,41 +32,33 @@ export function ConfirmDeleteDialog({
   trigger,
   triggerText,
   variant = "destructive",
-  size = "icon",
+  size = triggerText ? "default" : "icon",
   loading = false,
   showTrigger = true,
 }: ConfirmDeleteDialogProps) {
+  const renderFooter = () => (
+    <>
+      <Button variant="outline">Cancel</Button>
+      <Button variant="destructive" onClick={onConfirm}>
+        Delete
+      </Button>
+    </>
+  );
+
   return (
-    <AlertDialog>
-      {showTrigger && (
-        <AlertDialogTrigger asChild>
-          {trigger || (
-            <Button
-              variant={variant}
-              size={triggerText ? "default" : size}
-              disabled={loading}
-            >
-              {triggerText ? triggerText : ""}
-              <Trash className="h-4 w-4" />
-            </Button>
-          )}
-        </AlertDialogTrigger>
-      )}
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground"
-          >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ReusableDialog
+      title={title}
+      description={description}
+      showTrigger={showTrigger}
+      trigger={
+        trigger || (
+          <Button variant={variant} size={size} disabled={loading}>
+            {triggerText ? triggerText : ""}
+            <Trash className={triggerText ? "ml-2 h-4 w-4" : "h-4 w-4"} />
+          </Button>
+        )
+      }
+      customFooter={renderFooter()}
+    />
   );
 }

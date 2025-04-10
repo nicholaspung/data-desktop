@@ -52,9 +52,6 @@ export default function DailyTrackerView() {
     }
   }, [experimentsData, dailyLogsData, selectedDate]);
 
-  console.log(metricsData);
-  console.log(dailyLogsData);
-
   // Process logs for the selected date
   const processLogsForSelectedDate = (
     date: Date,

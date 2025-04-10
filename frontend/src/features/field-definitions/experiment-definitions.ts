@@ -70,9 +70,15 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "type",
-      type: "text",
+      type: "select",
       displayName: "Type",
       description: "Type of metric (number, boolean, time, percentage)",
+      options: [
+        { id: "number", label: "number" },
+        { id: "boolean", label: "boolean" },
+        { id: "time", label: "time" },
+        { id: "percentage", label: "percentage" },
+      ],
     },
     {
       key: "unit",

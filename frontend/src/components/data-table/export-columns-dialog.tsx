@@ -1,14 +1,6 @@
 // src/components/data-table/export-columns-dialog.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Download, Settings } from "lucide-react";
 import { FieldDefinition } from "@/types/types";
@@ -16,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Table } from "@tanstack/react-table";
 import { exportToCSV } from "@/lib/csv-export";
 import { toast } from "sonner";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 
 interface ExportColumnsDialogProps {
   fields: FieldDefinition[];
@@ -107,6 +100,55 @@ export function ExportColumnsDialog({
     }
   };
 
+  // Render dialog content
+  const renderDialogContent = () => (
+    <div className="py-4">
+      <div className="flex items-center space-x-2 mb-4">
+        <Checkbox
+          id="select-all"
+          checked={selectAll}
+          onCheckedChange={toggleSelectAll}
+        />
+        <Label htmlFor="select-all" className="font-medium">
+          Select All
+        </Label>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
+        {fields.map((field) => (
+          <div key={field.key} className="flex items-center space-x-2">
+            <Checkbox
+              id={`col-${field.key}`}
+              checked={selectedColumns.includes(field.key)}
+              onCheckedChange={() => toggleColumn(field.key)}
+            />
+            <Label
+              htmlFor={`col-${field.key}`}
+              className="text-sm"
+              title={field.description || ""}
+            >
+              {field.displayName}
+              {field.isRelation && " (Relation)"}
+            </Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Render dialog footer
+  const renderDialogFooter = () => (
+    <div className="space-x-2">
+      <Button variant="outline" onClick={() => setOpen(false)}>
+        Cancel
+      </Button>
+      <Button onClick={handleExport} disabled={selectedColumns.length === 0}>
+        <Download className="h-4 w-4 mr-2" />
+        Export Selected
+      </Button>
+    </div>
+  );
+
   return (
     <>
       <Button
@@ -123,62 +165,15 @@ export function ExportColumnsDialog({
         Export Options
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Export Options</DialogTitle>
-            <DialogDescription>
-              Select the columns you want to include in the CSV export.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            <div className="flex items-center space-x-2 mb-4">
-              <Checkbox
-                id="select-all"
-                checked={selectAll}
-                onCheckedChange={toggleSelectAll}
-              />
-              <Label htmlFor="select-all" className="font-medium">
-                Select All
-              </Label>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
-              {fields.map((field) => (
-                <div key={field.key} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`col-${field.key}`}
-                    checked={selectedColumns.includes(field.key)}
-                    onCheckedChange={() => toggleColumn(field.key)}
-                  />
-                  <Label
-                    htmlFor={`col-${field.key}`}
-                    className="text-sm"
-                    title={field.description || ""}
-                  >
-                    {field.displayName}
-                    {field.isRelation && " (Relation)"}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleExport}
-              disabled={selectedColumns.length === 0}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Export Selected
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ReusableDialog
+        title="Export Options"
+        description="Select the columns you want to include in the CSV export."
+        open={open}
+        onOpenChange={setOpen}
+        showTrigger={false}
+        customContent={renderDialogContent()}
+        customFooter={renderDialogFooter()}
+      />
     </>
   );
 }

@@ -8,14 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, AlertTriangle, Check, Download } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { DataStoreName } from "@/store/data-store";
 import useLoadData from "@/hooks/useLoadData";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 
 interface CSVImportProcessorProps {
   datasetId: DataStoreName;
@@ -228,6 +221,141 @@ export function CSVImportProcessor({
     document.body.removeChild(link);
   };
 
+  // Render dialog content
+  const renderDialogContent = () => (
+    <div className="space-y-6 py-4">
+      {!parsedData ? (
+        <>
+          {/* File selection stage */}
+          <div
+            className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".csv"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+            />
+
+            <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+            {isUploading ? (
+              <p>Parsing file...</p>
+            ) : selectedFile ? (
+              <p>{selectedFile.name}</p>
+            ) : (
+              <>
+                <p className="font-medium">Click to upload CSV file</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  or drag and drop
+                </p>
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Processing stage */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium">Ready to import</h3>
+              <Badge variant="outline">{importStats.total} records</Badge>
+            </div>
+
+            <Progress value={progress} className="h-2" />
+
+            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+              <div className="p-2 rounded-md bg-muted">
+                <p className="text-muted-foreground">Processed</p>
+                <p className="font-medium">
+                  {importStats.processed} / {importStats.total}
+                </p>
+              </div>
+              <div className="p-2 rounded-md bg-muted">
+                <p className="text-muted-foreground">Succeeded</p>
+                <p className="font-medium text-green-600">
+                  {importStats.succeeded}
+                </p>
+              </div>
+              <div className="p-2 rounded-md bg-muted">
+                <p className="text-muted-foreground">Failed</p>
+                <p className="font-medium text-red-600">{importStats.failed}</p>
+              </div>
+            </div>
+
+            {importStats.errors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  {importStats.errors.length === 1 ? (
+                    importStats.errors[0]
+                  ) : (
+                    <details>
+                      <summary className="cursor-pointer">
+                        {importStats.errors.length} errors occurred
+                      </summary>
+                      <ul className="mt-2 text-sm list-disc pl-4">
+                        {importStats.errors.slice(0, 5).map((error, i) => (
+                          <li key={i}>{error}</li>
+                        ))}
+                        {importStats.errors.length > 5 && (
+                          <li>...and {importStats.errors.length - 5} more</li>
+                        )}
+                      </ul>
+                    </details>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {importStats.processed === importStats.total &&
+              importStats.succeeded > 0 && (
+                <Alert className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800">
+                  <Check className="h-4 w-4" />
+                  <AlertDescription>
+                    Import completed successfully!
+                  </AlertDescription>
+                </Alert>
+              )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // Render footer actions based on current state
+  const renderDialogFooter = () => {
+    if (!parsedData) {
+      return (
+        <Button variant="outline" onClick={handleClose}>
+          Cancel
+        </Button>
+      );
+    }
+
+    if (importStats.processed === importStats.total) {
+      return (
+        <Button onClick={handleClose} disabled={isProcessing}>
+          Close
+        </Button>
+      );
+    }
+
+    return (
+      <div className="flex justify-between w-full">
+        <Button variant="ghost" onClick={resetImport} disabled={isProcessing}>
+          <X className="mr-2 h-4 w-4" />
+          Reset
+        </Button>
+        <Button onClick={processData} disabled={isProcessing || !parsedData}>
+          {isProcessing ? "Processing..." : "Start Import"}
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <>
       <Card>
@@ -260,163 +388,21 @@ export function CSVImportProcessor({
         </CardContent>
       </Card>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent
-          className="sm:max-w-[600px]"
-          onInteractOutside={(e) => {
-            if (isProcessing) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>Import {title} Data</DialogTitle>
-            <DialogDescription>
-              Upload and process your CSV file with {title.toLowerCase()}{" "}
-              records.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {!parsedData ? (
-              <>
-                {/* File selection stage */}
-                <div
-                  className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                    disabled={isUploading}
-                  />
-
-                  <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                  {isUploading ? (
-                    <p>Parsing file...</p>
-                  ) : selectedFile ? (
-                    <p>{selectedFile.name}</p>
-                  ) : (
-                    <>
-                      <p className="font-medium">Click to upload CSV file</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        or drag and drop
-                      </p>
-                    </>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Processing stage */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium">Ready to import</h3>
-                    <Badge variant="outline">{importStats.total} records</Badge>
-                  </div>
-
-                  <Progress value={progress} className="h-2" />
-
-                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                    <div className="p-2 rounded-md bg-muted">
-                      <p className="text-muted-foreground">Processed</p>
-                      <p className="font-medium">
-                        {importStats.processed} / {importStats.total}
-                      </p>
-                    </div>
-                    <div className="p-2 rounded-md bg-muted">
-                      <p className="text-muted-foreground">Succeeded</p>
-                      <p className="font-medium text-green-600">
-                        {importStats.succeeded}
-                      </p>
-                    </div>
-                    <div className="p-2 rounded-md bg-muted">
-                      <p className="text-muted-foreground">Failed</p>
-                      <p className="font-medium text-red-600">
-                        {importStats.failed}
-                      </p>
-                    </div>
-                  </div>
-
-                  {importStats.errors.length > 0 && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        {importStats.errors.length === 1 ? (
-                          importStats.errors[0]
-                        ) : (
-                          <details>
-                            <summary className="cursor-pointer">
-                              {importStats.errors.length} errors occurred
-                            </summary>
-                            <ul className="mt-2 text-sm list-disc pl-4">
-                              {importStats.errors
-                                .slice(0, 5)
-                                .map((error, i) => (
-                                  <li key={i}>{error}</li>
-                                ))}
-                              {importStats.errors.length > 5 && (
-                                <li>
-                                  ...and {importStats.errors.length - 5} more
-                                </li>
-                              )}
-                            </ul>
-                          </details>
-                        )}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {importStats.processed === importStats.total &&
-                    importStats.succeeded > 0 && (
-                      <Alert className="bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-400 border-green-200 dark:border-green-800">
-                        <Check className="h-4 w-4" />
-                        <AlertDescription>
-                          Import completed successfully!
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter>
-            {parsedData ? (
-              <div className="flex justify-between w-full">
-                <Button
-                  variant="ghost"
-                  onClick={resetImport}
-                  disabled={isProcessing}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Reset
-                </Button>
-
-                {importStats.processed === importStats.total ? (
-                  <Button onClick={handleClose} disabled={isProcessing}>
-                    Close
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={processData}
-                    disabled={isProcessing || !parsedData}
-                  >
-                    {isProcessing ? "Processing..." : "Start Import"}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <Button variant="outline" onClick={handleClose}>
-                Cancel
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ReusableDialog
+        title={`Import ${title} Data`}
+        description={`Upload and process your CSV file with ${title.toLowerCase()} records.`}
+        open={isOpen}
+        onOpenChange={(open) => {
+          // Prevent closing when processing
+          if (isProcessing && !open) {
+            return;
+          }
+          setIsOpen(open);
+        }}
+        showTrigger={false}
+        customContent={renderDialogContent()}
+        customFooter={renderDialogFooter()}
+      />
     </>
   );
 }

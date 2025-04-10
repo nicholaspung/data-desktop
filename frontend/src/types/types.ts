@@ -8,7 +8,18 @@ export interface DatasetSummary {
 }
 
 // Define data types for our table
-export type FieldType = "date" | "boolean" | "number" | "percentage" | "text";
+export type FieldType =
+  | "date"
+  | "boolean"
+  | "number"
+  | "percentage"
+  | "text"
+  | "select";
+
+export interface SelectOption {
+  id: string;
+  label: string;
+}
 
 export interface ColumnMeta {
   type: FieldType;
@@ -38,6 +49,8 @@ export interface FieldDefinition {
   displayFieldType?: FieldType;
   secondaryDisplayField?: string;
   secondaryDisplayFieldType?: FieldType;
+  // New select field properties
+  options?: SelectOption[];
 }
 
 export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";

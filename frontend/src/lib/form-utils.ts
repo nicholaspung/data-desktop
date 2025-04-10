@@ -22,6 +22,18 @@ export const hasNonEmptyValues = (
         // If boolean is true, it's been changed from default false
         if (value === true) return true;
         break;
+      case "select":
+        // For select fields, check if a non-default option was selected
+        // If it has options and the first option is not selected (assuming first is default)
+        if (field.options && field.options.length > 0) {
+          const defaultValue = field.options[0].id;
+          if (value && value !== defaultValue) return true;
+        }
+        // If there's a value but no options defined (should be rare)
+        else if (value && value.trim() !== "") {
+          return true;
+        }
+        break;
       case "date":
         // Skip date fields for determining meaningful changes
         break;
@@ -51,18 +63,13 @@ export const createFreshDefaultValues = (fields: FieldDefinition[]) => {
       case "text":
         freshDefaults[field.key] = "";
         break;
+      case "select":
+        // For select, use the first option's value as default, or empty string if no options
+        freshDefaults[field.key] =
+          field.options && field.options.length > 0 ? field.options[0].id : "";
+        break;
     }
   });
 
   return freshDefaults;
 };
-
-// Group fields by type for consistent organization
-export const getFieldsByType = (fields: FieldDefinition[]) => ({
-  date: fields.filter((field) => field.type === "date"),
-  boolean: fields.filter((field) => field.type === "boolean"),
-  numeric: fields.filter(
-    (field) => field.type === "number" || field.type === "percentage"
-  ),
-  text: fields.filter((field) => field.type === "text"),
-});

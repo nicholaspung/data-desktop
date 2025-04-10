@@ -18,8 +18,10 @@ import {
   ListTodo,
 } from "lucide-react";
 import { LineChart, ComposedChart, PieChart } from "@/components/charts";
-import type { LineConfig, PieConfig, ChartElement } from "@/components/charts";
 import ExperimentMetrics from "./experiment-metrics";
+import { LineConfig } from "@/components/charts/charts";
+import { PieConfig } from "@/components/charts/pie-chart";
+import { ChartElement } from "@/components/charts/composed-chart";
 
 interface ExperimentDashboardProps {
   experimentId: string;

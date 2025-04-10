@@ -28,11 +28,12 @@ import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types/types";
 import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
-import { Badge } from "../ui/badge";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RelationField } from "./relation-field";
 import { createFreshDefaultValues, hasNonEmptyValues } from "@/lib/form-utils";
 import { DataStoreName } from "@/store/data-store";
+import SavedDataBadge from "../reusable/saved-data-badge";
+import ReusableSelect from "../reusable/reusable-select";
 
 interface DataFormProps {
   datasetId: DataStoreName;
@@ -216,6 +217,25 @@ export default function DataForm({
         return;
       }
 
+      // Handle select fields
+      if (field.type === "select" && field.options) {
+        // Create a schema that validates against the available options
+        const validOptions = field.options.map((option) => option.id);
+
+        if (isOptional) {
+          schemaObj[field.key] = z.string().optional();
+        } else {
+          schemaObj[field.key] = z
+            .string({
+              required_error: `${field.displayName} is required`,
+            })
+            .refine((val) => validOptions.includes(val), {
+              message: `Invalid option for ${field.displayName}`,
+            });
+        }
+        return;
+      }
+
       switch (field.type) {
         case "date":
           schemaObj[field.key] = isOptional
@@ -359,6 +379,7 @@ export default function DataForm({
       (field) => field.type === "number" || field.type === "percentage"
     ),
     text: fields.filter((field) => field.type === "text"),
+    select: fields.filter((field) => field.type === "select"),
   };
 
   // Render a field based on its type
@@ -389,6 +410,39 @@ export default function DataForm({
                 form.trigger(field.key);
               }}
             />
+          )}
+        />
+      );
+    }
+
+    // Add a new case for select fields
+    if (field.type === "select" && Array.isArray(field.options)) {
+      return (
+        <FormField
+          key={field.key}
+          control={form.control}
+          name={field.key}
+          render={({ field: formField }) => (
+            <FormItem>
+              <FormLabel>{field.displayName}</FormLabel>
+              <FormControl>
+                <ReusableSelect
+                  options={field.options || []}
+                  value={formField.value}
+                  onChange={(value) => {
+                    formField.onChange(value);
+                    // Trigger validation
+                    form.trigger(field.key);
+                  }}
+                  placeholder={`Select ${field.displayName}`}
+                  title={field.displayName}
+                />
+              </FormControl>
+              {field.description && (
+                <FormDescription>{field.description}</FormDescription>
+              )}
+              <FormMessage />
+            </FormItem>
           )}
         />
       );
@@ -567,135 +621,41 @@ export default function DataForm({
     }
   };
 
-  // Render the form with or without a title
-  if (title) {
-    return (
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
-            <span className="flex-1">{title}</span>
-            {hasSavedData && mode === "add" && (
-              <Badge
-                variant="outline"
-                className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
-              >
-                <span className="text-xs">Saved data</span>
-              </Badge>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Date fields */}
-              {fieldsByType.date.length > 0 && (
-                <div className="space-y-4">
-                  {fieldsByType.date.map(renderField)}
-                </div>
-              )}
-
-              {/* Boolean fields */}
-              {fieldsByType.boolean.length > 0 && (
-                <div className="space-y-4">
-                  {fieldsByType.boolean.map(renderField)}
-                </div>
-              )}
-
-              {/* Numeric and text fields in a grid */}
-              {(fieldsByType.numeric.length > 0 ||
-                fieldsByType.text.length > 0) && (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {fieldsByType.numeric.map(renderField)}
-                  {fieldsByType.text.map(renderField)}
-                </div>
-              )}
-
-              {!hideSubmitButton && (
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="flex gap-2">
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        submitLabel
-                      )}
-                    </Button>
-
-                    {mode === "add" && (
-                      <ConfirmResetDialog
-                        onConfirm={handleClearForm}
-                        title="Clear form data?"
-                        description="This will reset all form fields and delete any saved data. This action cannot be undone."
-                        trigger={
-                          <Button
-                            variant="outline"
-                            size="default"
-                            disabled={isSubmitting}
-                          >
-                            <UndoDot className="h-4 w-4 mr-2" />
-                            Reset
-                          </Button>
-                        }
-                      />
-                    )}
-                  </div>
-
-                  {onCancel && (
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      onClick={handleCancel}
-                      className="sm:ml-2"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              )}
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Basic form without Card wrapper
-  return (
+  const FormComponent = ({ noSavedData }: { noSavedData?: boolean }) => (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Show saved data badge if we have saved data in localStorage */}
-        {hasSavedData && mode === "add" && (
-          <div className="flex justify-end mb-2">
-            <Badge
-              variant="outline"
-              className="bg-blue-100 dark:bg-blue-900 px-2 py-1"
-            >
-              <span className="text-xs">Saved data</span>
-            </Badge>
-          </div>
-        )}
+        {noSavedData
+          ? null
+          : hasSavedData &&
+            mode === "add" && (
+              <div className="flex justify-end mb-2">
+                <SavedDataBadge />
+              </div>
+            )}
 
         {/* Date fields */}
         {fieldsByType.date.length > 0 && (
-          <div className="space-y-4">{fieldsByType.date.map(renderField)}</div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {fieldsByType.date.map(renderField)}
+          </div>
         )}
 
         {/* Boolean fields */}
         {fieldsByType.boolean.length > 0 && (
-          <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {fieldsByType.boolean.map(renderField)}
           </div>
         )}
 
         {/* Numeric and text fields in a grid */}
-        {(fieldsByType.numeric.length > 0 || fieldsByType.text.length > 0) && (
+        {(fieldsByType.numeric.length > 0 ||
+          fieldsByType.text.length > 0 ||
+          fieldsByType.select.length > 0) && (
           <div className="grid gap-4 md:grid-cols-2">
             {fieldsByType.numeric.map(renderField)}
             {fieldsByType.text.map(renderField)}
+            {fieldsByType.select.map(renderField)}
           </div>
         )}
 
@@ -747,5 +707,22 @@ export default function DataForm({
         )}
       </form>
     </Form>
+  );
+
+  // Render the form with or without a title
+  return title ? (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex flex-row justify-between items-center w-full mb-4">
+          <span className="flex-1">{title}</span>
+          {hasSavedData && mode === "add" && <SavedDataBadge />}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <FormComponent noSavedData />
+      </CardContent>
+    </Card>
+  ) : (
+    <FormComponent />
   );
 }

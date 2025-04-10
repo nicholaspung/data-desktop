@@ -13,7 +13,6 @@
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- add a "select" type visual if I want to include hard coded values for the select fields
 - add a private button where if I input a PIN, then I can see the values
 - add a pin/password in order to view private values
 - add a reset pin/password in order to change pin/password
@@ -25,7 +24,7 @@
     - adjust how the "complete" metric shows up
     - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function
 - add a large calendar view of the tracked metrics
-- in add form, also make the boolean values in a column view
+- refactor dialog components
 
 ### DONE
 
@@ -73,5 +72,7 @@
 - If reference and optimal is 0 - 0, then that means value is just there (unsure of what to call it) - also add this as a filter [DONE 2025-04-08]
 - for text values, figure out a way to display them next to the graph cards looking nice [DONE 2025-04-08]
 - create a "body" diagram for DEXA where I can hover over a body part and it will tell me the details for that area [DONE 2025-04-08]
+- in add form, also make the boolean values in a column view [DONE 2025-04-10]
+- add a "select" type visual if I want to include hard coded values for the select fields [DONE 2025-04-10]
 
 ### GAVE UP
