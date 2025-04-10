@@ -14,27 +14,9 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-export interface DataPoint {
-  [key: string]: any;
-}
-
-export interface LineConfig {
-  dataKey: string;
-  name?: string;
-  color?: string;
-  unit?: string;
-  strokeWidth?: number;
-  type?: "monotone" | "linear" | "step" | "basis" | "natural";
-  activeDot?: boolean | object;
-  connectNulls?: boolean;
-}
-
-export interface ReferenceLineConfig {
-  y: number;
-  label: string;
-  color?: string;
-}
+import { DataPoint, LineConfig, ReferenceLineConfig } from "./charts";
+import { CustomTooltip } from "./custom-tooltip";
+import { defaultFormatter } from "./chart-utils";
 
 export interface CustomLineChartProps {
   data: DataPoint[];
@@ -49,47 +31,6 @@ export interface CustomLineChartProps {
   referenceLines?: ReferenceLineConfig[];
   className?: string;
 }
-
-// Custom tooltip component with better styling
-const CustomTooltip = ({ active, payload, label, formatter }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background border p-2 rounded shadow-sm">
-        <p className="font-bold">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const displayValue = formatter
-            ? formatter(entry.value, entry.name, entry.payload)
-            : `${entry.value?.toFixed(2) || 0} ${entry.unit || ""}`;
-
-          return (
-            <p key={`item-${index}`} style={{ color: entry.color }}>
-              {entry.name}: {displayValue}
-            </p>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
-};
-
-// Default formatter for tooltip values
-const defaultFormatter = (value: any, name: string, props: any) => {
-  let displayValue = value?.toFixed(2) || 0;
-  const unit = props.unit || "";
-
-  // Special handling for percentage values
-  if (
-    name.toLowerCase().includes("percentage") ||
-    name.toLowerCase().includes("%")
-  ) {
-    displayValue = `${displayValue}%`;
-  } else if (unit) {
-    displayValue = `${displayValue} ${unit}`;
-  }
-
-  return displayValue;
-};
 
 export default function CustomLineChart({
   data,

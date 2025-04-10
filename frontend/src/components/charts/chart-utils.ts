@@ -174,3 +174,21 @@ export const getYAxisDomain = (
 
   return [min, max];
 };
+
+// Default formatter for tooltip values
+export const defaultFormatter = (value: any, name: string, props: any) => {
+  let displayValue = value?.toFixed(2) || 0;
+  const unit = props.unit || "";
+
+  // Special handling for percentage values
+  if (
+    name.toLowerCase().includes("percentage") ||
+    name.toLowerCase().includes("%")
+  ) {
+    displayValue = `${displayValue}%`;
+  } else if (unit) {
+    displayValue = `${displayValue} ${unit}`;
+  }
+
+  return displayValue;
+};

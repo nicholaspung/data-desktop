@@ -12,7 +12,20 @@
 
 ### IN PROGRESS
 
-- Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit, 
+- Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
+- add a "select" type visual if I want to include hard coded values for the select fields
+- add a private button where if I input a PIN, then I can see the values
+- add a pin/password in order to view private values
+- add a reset pin/password in order to change pin/password
+- add daily log view table component that I don't need to dig in order to view the data
+- in metrics, add a way to customize when the metric will show up (i.e. monday/wednesday)
+- in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
+- automatically disable private view after 1 minute
+- in daily tracker view, figure out a way to associate the metric with the experiment that is going on that has the metrics in it, without having to select the experiment to tie it too
+    - adjust how the "complete" metric shows up
+    - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function
+- add a large calendar view of the tracked metrics
+- in add form, also make the boolean values in a column view
 
 ### DONE
 

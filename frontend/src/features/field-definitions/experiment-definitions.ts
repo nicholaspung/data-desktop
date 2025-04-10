@@ -98,6 +98,18 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       relatedField: "id",
       displayField: "name",
     },
+    {
+      key: "active",
+      type: "boolean",
+      displayName: "Active",
+      description: "Is metric active?",
+    },
+    {
+      key: "private",
+      type: "boolean",
+      displayName: "Private",
+      description: "Is metric private?",
+    },
   ],
 };
 
@@ -162,12 +174,6 @@ export const METRIC_CATEGORY_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Name",
       description: "Name of the category",
       isSearchable: true,
-    },
-    {
-      key: "color",
-      type: "text",
-      displayName: "Color",
-      description: "Color for this category (hex code)",
     },
   ],
 };

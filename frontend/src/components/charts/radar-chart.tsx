@@ -13,6 +13,8 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { CustomTooltip } from "./custom-tooltip";
+import { defaultFormatter } from "./chart-utils";
 
 export interface DataPoint {
   subject: string;
@@ -43,44 +45,6 @@ export interface CustomRadarChartProps {
   };
   className?: string;
 }
-
-// Custom tooltip component with better styling
-const CustomTooltip = ({ active, payload, label, formatter }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background border p-2 rounded shadow-sm">
-        <p className="font-bold">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const displayValue = formatter
-            ? formatter(entry.value, entry.name, entry.payload)
-            : `${entry.value?.toFixed(2) || 0}`;
-
-          return (
-            <p key={`item-${index}`} style={{ color: entry.color }}>
-              {entry.name}: {displayValue}
-            </p>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
-};
-
-// Default formatter for tooltip values
-const defaultFormatter = (value: any, name: string) => {
-  let displayValue = value?.toFixed(2) || 0;
-
-  // Special handling for percentage values
-  if (
-    name.toLowerCase().includes("percentage") ||
-    name.toLowerCase().includes("%")
-  ) {
-    displayValue = `${displayValue}%`;
-  }
-
-  return displayValue;
-};
 
 export default function CustomRadarChart({
   data,

@@ -93,6 +93,18 @@ func GetMetricFields() []database.FieldDefinition {
 			RelatedDataset: "metric_categories",
 			RelatedField:   "id",
 		},
+		{
+			Key:         "active",
+			Type:        database.FieldTypeBoolean, // JSON encoded default value
+			DisplayName: "Active",
+			Description: "Is metric active?",
+		},
+		{
+			Key:         "private",
+			Type:        database.FieldTypeBoolean, // JSON encoded default value
+			DisplayName: "Private",
+			Description: "Is metric private?",
+		},
 	}
 }
 
@@ -149,12 +161,6 @@ func GetMetricCategoryFields() []database.FieldDefinition {
 			DisplayName:  "Name",
 			Description:  "Name of the category",
 			IsSearchable: true,
-		},
-		{
-			Key:         "color",
-			Type:        database.FieldTypeText,
-			DisplayName: "Color",
-			Description: "Color for this category",
 		},
 	}
 }

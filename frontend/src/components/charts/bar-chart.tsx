@@ -15,10 +15,9 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-export interface DataPoint {
-  [key: string]: any;
-}
+import { DataPoint, ReferenceLineConfig } from "./charts";
+import { CustomTooltip } from "./custom-tooltip";
+import { defaultFormatter } from "./chart-utils";
 
 export interface BarConfig {
   dataKey: string;
@@ -29,13 +28,6 @@ export interface BarConfig {
   barSize?: number;
   colorByValue?: boolean;
   getColorByValue?: (value: number) => string;
-}
-
-export interface ReferenceLineConfig {
-  y?: number;
-  x?: number | string;
-  label: string;
-  color?: string;
 }
 
 export interface CustomBarChartProps {
@@ -52,47 +44,6 @@ export interface CustomBarChartProps {
   referenceLines?: ReferenceLineConfig[];
   className?: string;
 }
-
-// Custom tooltip component with better styling
-const CustomTooltip = ({ active, payload, label, formatter }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-background border p-2 rounded shadow-sm">
-        <p className="font-bold">{label}</p>
-        {payload.map((entry: any, index: number) => {
-          const displayValue = formatter
-            ? formatter(entry.value, entry.name, entry.payload)
-            : `${entry.value?.toFixed(2) || 0} ${entry.unit || ""}`;
-
-          return (
-            <p key={`item-${index}`} style={{ color: entry.color }}>
-              {entry.name}: {displayValue}
-            </p>
-          );
-        })}
-      </div>
-    );
-  }
-  return null;
-};
-
-// Default formatter for tooltip values
-const defaultFormatter = (value: any, name: string, props: any) => {
-  let displayValue = value?.toFixed(2) || 0;
-  const unit = props.unit || "";
-
-  // Special handling for percentage values
-  if (
-    name.toLowerCase().includes("percentage") ||
-    name.toLowerCase().includes("%")
-  ) {
-    displayValue = `${displayValue}%`;
-  } else if (unit) {
-    displayValue = `${displayValue} ${unit}`;
-  }
-
-  return displayValue;
-};
 
 // Default function to get colors based on values (for heat maps and similar visualizations)
 const defaultGetColorByValue = (value: number) => {
