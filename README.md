@@ -24,7 +24,6 @@
     - adjust how the "complete" metric shows up
     - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function
 - add a large calendar view of the tracked metrics
-- refactor dialog components
 
 ### DONE
 
@@ -74,5 +73,6 @@
 - create a "body" diagram for DEXA where I can hover over a body part and it will tell me the details for that area [DONE 2025-04-08]
 - in add form, also make the boolean values in a column view [DONE 2025-04-10]
 - add a "select" type visual if I want to include hard coded values for the select fields [DONE 2025-04-10]
+- refactor dialog components [DONE 2025-04-10]
 
 ### GAVE UP

@@ -36,15 +36,6 @@ export function ConfirmDeleteDialog({
   loading = false,
   showTrigger = true,
 }: ConfirmDeleteDialogProps) {
-  const renderFooter = () => (
-    <>
-      <Button variant="outline">Cancel</Button>
-      <Button variant="destructive" onClick={onConfirm}>
-        Delete
-      </Button>
-    </>
-  );
-
   return (
     <ReusableDialog
       title={title}
@@ -58,7 +49,8 @@ export function ConfirmDeleteDialog({
           </Button>
         )
       }
-      customFooter={renderFooter()}
+      onConfirm={onConfirm}
+      confirmText="Delete"
     />
   );
 }

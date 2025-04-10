@@ -1,17 +1,7 @@
 // src/components/reusable/confirm-reset-dialog.tsx
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
+import ReusableDialog from "./reusable-dialog";
 
 interface ConfirmResetDialogProps {
   title?: string;
@@ -35,27 +25,20 @@ export function ConfirmResetDialog({
   showTrigger = true,
 }: ConfirmResetDialogProps) {
   return (
-    <AlertDialog>
-      {showTrigger && (
-        <AlertDialogTrigger asChild>
-          {trigger || (
-            <Button variant={variant} size={size} disabled={loading}>
-              <Trash className="mr-2 h-4 w-4" />
-              Reset
-            </Button>
-          )}
-        </AlertDialogTrigger>
-      )}
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Clear</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ReusableDialog
+      title={title}
+      description={description}
+      showTrigger={showTrigger}
+      trigger={
+        trigger || (
+          <Button variant={variant} size={size} disabled={loading}>
+            <Trash className="mr-2 h-4 w-4" />
+            Reset
+          </Button>
+        )
+      }
+      onConfirm={onConfirm}
+      confirmText="Clear"
+    />
   );
 }

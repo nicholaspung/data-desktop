@@ -7,6 +7,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 import { Toaster } from "./components/ui/sonner";
+import { PinProvider } from "./contexts/pin-context";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -22,12 +23,14 @@ const rootElement = document.getElementById("root");
 if (rootElement && !rootElement?.innerHTML) {
   createRoot(rootElement).render(
     <StrictMode>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <div className="min-h-screen bg-background text-foreground">
-          <RouterProvider router={router} />
-        </div>
-        <Toaster richColors />
-      </ThemeProvider>
+      <PinProvider>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <div className="min-h-screen bg-background text-foreground">
+            <RouterProvider router={router} />
+          </div>
+          <Toaster richColors />
+        </ThemeProvider>
+      </PinProvider>
     </StrictMode>
   );
 }

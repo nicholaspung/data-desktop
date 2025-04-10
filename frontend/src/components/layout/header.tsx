@@ -3,6 +3,7 @@ import ThemeToggle from "../reusable/theme-toggle";
 import { Badge } from "../ui/badge";
 import { VERSION_NUMBER } from "@/lib/version";
 import Logo from "@/assets/logo.svg";
+import { PinLockButton } from "../security/pin-lock-button";
 
 export default function Header() {
   return (
@@ -15,6 +16,7 @@ export default function Header() {
         </Badge>
       </Link>
       <div className="flex items-center space-x-4">
+        <PinLockButton />
         <ThemeToggle />
       </div>
     </header>

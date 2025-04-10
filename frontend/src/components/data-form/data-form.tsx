@@ -23,16 +23,16 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, UndoDot, X } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types/types";
-import { ConfirmResetDialog } from "../reusable/confirm-reset-dialog";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RelationField } from "./relation-field";
 import { createFreshDefaultValues, hasNonEmptyValues } from "@/lib/form-utils";
 import { DataStoreName } from "@/store/data-store";
 import SavedDataBadge from "../reusable/saved-data-badge";
+import DataFormContent from "./data-form-content";
 import ReusableSelect from "../reusable/reusable-select";
 
 interface DataFormProps {
@@ -621,94 +621,6 @@ export default function DataForm({
     }
   };
 
-  const FormComponent = ({ noSavedData }: { noSavedData?: boolean }) => (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Show saved data badge if we have saved data in localStorage */}
-        {noSavedData
-          ? null
-          : hasSavedData &&
-            mode === "add" && (
-              <div className="flex justify-end mb-2">
-                <SavedDataBadge />
-              </div>
-            )}
-
-        {/* Date fields */}
-        {fieldsByType.date.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {fieldsByType.date.map(renderField)}
-          </div>
-        )}
-
-        {/* Boolean fields */}
-        {fieldsByType.boolean.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {fieldsByType.boolean.map(renderField)}
-          </div>
-        )}
-
-        {/* Numeric and text fields in a grid */}
-        {(fieldsByType.numeric.length > 0 ||
-          fieldsByType.text.length > 0 ||
-          fieldsByType.select.length > 0) && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {fieldsByType.numeric.map(renderField)}
-            {fieldsByType.text.map(renderField)}
-            {fieldsByType.select.map(renderField)}
-          </div>
-        )}
-
-        {!hideSubmitButton && (
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  submitLabel
-                )}
-              </Button>
-
-              {mode === "add" && (
-                <ConfirmResetDialog
-                  onConfirm={handleClearForm}
-                  title="Clear form data?"
-                  description="This will reset all form fields and delete any saved data. This action cannot be undone."
-                  trigger={
-                    <Button
-                      variant="outline"
-                      size="default"
-                      disabled={isSubmitting}
-                    >
-                      <UndoDot className="h-4 w-4 mr-2" />
-                      Reset
-                    </Button>
-                  }
-                />
-              )}
-            </div>
-
-            {onCancel && (
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={handleCancel}
-                className="sm:ml-2"
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </Button>
-            )}
-          </div>
-        )}
-      </form>
-    </Form>
-  );
-
   // Render the form with or without a title
   return title ? (
     <Card>
@@ -719,10 +631,38 @@ export default function DataForm({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <FormComponent noSavedData />
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <DataFormContent
+              fieldsByType={fieldsByType}
+              hideSubmitButton={hideSubmitButton}
+              isSubmitting={isSubmitting}
+              submitLabel={submitLabel}
+              mode={mode}
+              handleClearForm={handleClearForm}
+              handleCancel={handleCancel}
+              onCancel={onCancel}
+              renderField={renderField}
+            />
+          </form>
+        </Form>
       </CardContent>
     </Card>
   ) : (
-    <FormComponent />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <DataFormContent
+          fieldsByType={fieldsByType}
+          hideSubmitButton={hideSubmitButton}
+          isSubmitting={isSubmitting}
+          submitLabel={submitLabel}
+          mode={mode}
+          handleClearForm={handleClearForm}
+          handleCancel={handleCancel}
+          onCancel={onCancel}
+          renderField={renderField}
+        />
+      </form>
+    </Form>
   );
 }

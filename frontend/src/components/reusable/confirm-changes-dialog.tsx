@@ -30,17 +30,6 @@ export function ConfirmChangesDialog({
   open = false,
   onOpenChange = () => {},
 }: ConfirmChangesDialogProps) {
-  const renderFooter = () => (
-    <div className="space-x-2">
-      <Button variant="outline" onClick={onCancel}>
-        Cancel
-      </Button>
-      <Button variant="default" onClick={onConfirm}>
-        Discard Changes
-      </Button>
-    </div>
-  );
-
   return (
     <ReusableDialog
       title={title}
@@ -55,7 +44,9 @@ export function ConfirmChangesDialog({
           </Button>
         )
       }
-      customFooter={renderFooter()}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      confirmText="Discard Changes"
     />
   );
 }
