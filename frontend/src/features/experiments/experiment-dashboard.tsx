@@ -1,10 +1,10 @@
 // src/features/experiments/experiment-dashboard.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { format, differenceInDays, isBefore, isAfter } from "date-fns";
+import { format, differenceInDays, isAfter } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import {
@@ -17,13 +17,18 @@ import {
   ListTodo,
 } from "lucide-react";
 import ExperimentMetrics from "./experiment-metrics";
-import { LineConfig, PieConfig } from "@/components/charts/charts";
-import CustomPieChart from "@/components/charts/pie-chart";
+import { LineConfig } from "@/components/charts/charts";
 import CustomLineChart from "@/components/charts/line-chart";
-import { getStatusBadge } from "./experiments-utils";
 import ReusableCard from "@/components/reusable/reusable-card";
+import { getStatusBadge } from "./experiments-utils";
 
-const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
+interface ExperimentDashboardProps {
+  experimentId: string;
+}
+
+const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
+  experimentId,
+}) => {
   // State
   const [experiment, setExperiment] = useState<any>(null);
   const [metrics, setMetrics] = useState<any[]>([]);
@@ -33,10 +38,16 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
     overall: number;
     byMetric: Record<string, number>;
     completionRate: Record<string, number>;
+    daysElapsed: number;
+    totalDays: number;
+    daysRemaining: number;
   }>({
     overall: 0,
     byMetric: {},
     completionRate: {},
+    daysElapsed: 0,
+    totalDays: 0,
+    daysRemaining: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -111,177 +122,95 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
     logs: any[],
     allMetrics: any[]
   ) => {
-    if (!experiment || expMetrics.length === 0) {
+    if (!experiment || !experiment.start_date) {
       setProgressData({
         overall: 0,
         byMetric: {},
         completionRate: {},
+        daysElapsed: 0,
+        totalDays: 0,
+        daysRemaining: 0,
       });
       return;
     }
 
-    // Initialize progress tracking
+    // Calculate days statistics
+    const startDate = new Date(experiment.start_date);
+    const today = new Date();
+    const endDate = experiment.end_date ? new Date(experiment.end_date) : today;
+
+    // Days calculation
+    const totalDays = differenceInDays(endDate, startDate) + 1;
+    const daysElapsed = isAfter(today, startDate)
+      ? Math.min(differenceInDays(today, startDate) + 1, totalDays)
+      : 0;
+    const daysRemaining = Math.max(0, totalDays - daysElapsed);
+
+    // Initialize metric tracking
     const metricProgress: Record<string, number> = {};
     const completionRate: Record<string, number> = {};
-    let totalImportance = 0;
-    let weightedProgress = 0;
+
+    // Get all boolean metrics (completable items)
+    const booleanMetrics = expMetrics.filter((metric) => {
+      const metricInfo = allMetrics.find((m) => m.id === metric.metric_id);
+      return metricInfo && metricInfo.type === "boolean";
+    });
 
     // Process each metric
-    expMetrics.forEach((expMetric) => {
+    booleanMetrics.forEach((expMetric) => {
       const metric = allMetrics.find((m) => m.id === expMetric.metric_id);
-      if (!metric) return;
+      if (!metric || metric.type !== "boolean") return;
 
       // Get logs for this metric
       const metricLogs = logs.filter(
         (log) => log.metric_id === expMetric.metric_id
       );
 
-      // Calculate progress based on metric type and target
-      let metricProgressValue = 0;
+      // Calculate expected logs so far (one per day since start or experiment creation)
+      const expectedCompletions = daysElapsed;
 
-      if (metricLogs.length > 0) {
-        // For boolean metrics (completion rate)
-        if (metric.type === "boolean") {
-          const totalDaysInRange = calculateExperimentDays(experiment);
-          const completedDays = metricLogs.filter((log) => {
-            try {
-              return JSON.parse(log.value) === true;
-            } catch (e: any) {
-              console.error(e);
-              return log.value === "true";
-            }
-          }).length;
-
-          // Calculate completion rate
-          const rate =
-            totalDaysInRange > 0 ? (completedDays / totalDaysInRange) * 100 : 0;
-          completionRate[expMetric.metric_id] = rate;
-
-          // Calculate progress toward target (if target is true, we want high completion rate)
-          try {
-            const targetValue = JSON.parse(expMetric.target);
-            if (targetValue === true) {
-              metricProgressValue = Math.min(100, rate);
-            } else {
-              // If target is false (skip), then lower completion is better
-              metricProgressValue = Math.min(100, 100 - rate);
-            }
-          } catch (e: any) {
-            console.error(e);
-            metricProgressValue = Math.min(100, rate);
-          }
+      // Count actual completions
+      const completedCount = metricLogs.filter((log) => {
+        try {
+          return JSON.parse(log.value) === true;
+        } catch (e) {
+          console.error(e);
+          return log.value === "true";
         }
-        // For numeric metrics (average vs target)
-        else if (
-          metric.type === "number" ||
-          metric.type === "percentage" ||
-          metric.type === "time"
-        ) {
-          // Calculate average value
-          const values = metricLogs.map((log) => {
-            try {
-              return parseFloat(JSON.parse(log.value));
-            } catch (e: any) {
-              console.error(e);
-              return parseFloat(log.value) || 0;
-            }
-          });
+      }).length;
 
-          const average =
-            values.reduce((sum, val) => sum + val, 0) / values.length;
+      // Calculate completion rate
+      const rate =
+        expectedCompletions > 0
+          ? (completedCount / expectedCompletions) * 100
+          : 0;
 
-          // Compare to target
-          try {
-            const targetValue = parseFloat(JSON.parse(expMetric.target));
-
-            // Progress increases as we get closer to target
-            const difference = Math.abs(average - targetValue);
-            const maxDiff = Math.max(targetValue, 100); // Use a reasonable max difference
-            switch (expMetric.target_type) {
-              case "atleast":
-                // Progress increases as we approach/exceed target
-                metricProgressValue = Math.min(
-                  100,
-                  (average / targetValue) * 100
-                );
-                break;
-              case "atmost":
-                // Progress increases as we stay below target
-                metricProgressValue = Math.min(
-                  100,
-                  average <= targetValue ? 100 : (targetValue / average) * 100
-                );
-                break;
-              case "exactly":
-                metricProgressValue = Math.min(
-                  100,
-                  100 - (difference / maxDiff) * 100
-                );
-                break;
-              default:
-                metricProgressValue = 50; // Default to 50% if unknown target type
-            }
-          } catch (e: any) {
-            console.error(e);
-            metricProgressValue = 0;
-          }
-        }
-      }
-
-      // Store progress for this metric
-      metricProgress[expMetric.metric_id] = Math.max(0, metricProgressValue);
-
-      // Add to weighted progress calculation
-      totalImportance += expMetric.importance;
-      weightedProgress += metricProgressValue * expMetric.importance;
+      completionRate[expMetric.metric_id] = rate;
+      metricProgress[expMetric.metric_id] = rate;
     });
 
-    // Calculate overall progress (weighted by importance)
-    const overall =
+    // Calculate overall metric completion rate (weighted by importance)
+    let totalImportance = 0;
+    let weightedProgress = 0;
+
+    booleanMetrics.forEach((expMetric) => {
+      const progress = metricProgress[expMetric.metric_id] || 0;
+      totalImportance += expMetric.importance;
+      weightedProgress += progress * expMetric.importance;
+    });
+
+    const overallCompletion =
       totalImportance > 0 ? weightedProgress / totalImportance : 0;
 
+    // Set progress data
     setProgressData({
-      overall,
+      overall: overallCompletion,
       byMetric: metricProgress,
       completionRate,
+      daysElapsed,
+      totalDays,
+      daysRemaining,
     });
-  };
-
-  // Calculate days in experiment (total or elapsed)
-  const calculateExperimentDays = (experiment: any) => {
-    if (!experiment || !experiment.start_date) return 0;
-
-    const startDate = new Date(experiment.start_date);
-    let endDate;
-
-    if (experiment.end_date) {
-      endDate = new Date(experiment.end_date);
-    } else {
-      // If no end date, use today
-      endDate = new Date();
-    }
-
-    // If experiment hasn't started yet, return 0
-    if (isAfter(startDate, new Date())) {
-      return 0;
-    }
-
-    // Return days elapsed so far
-    return differenceInDays(endDate, startDate) + 1; // +1 to include both start and end days
-  };
-
-  // Calculate days remaining in experiment
-  const calculateRemainingDays = (experiment: any) => {
-    if (!experiment || !experiment.end_date) return null;
-
-    const endDate = new Date(experiment.end_date);
-    const today = new Date();
-
-    if (isBefore(endDate, today)) {
-      return 0; // Experiment has ended
-    }
-
-    return differenceInDays(endDate, today);
   };
 
   // Generate chart data for completion trends
@@ -336,23 +265,6 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
       });
   };
 
-  // Generate data for pie chart
-  const generatePieChartData = () => {
-    if (!experiment || experimentMetrics.length === 0) return [];
-
-    return experimentMetrics.map((expMetric) => {
-      const metric = metrics.find((m) => m.id === expMetric.metric_id);
-      const progress = progressData.byMetric[expMetric.metric_id] || 0;
-
-      return {
-        name: metric?.name || "Unknown Metric",
-        value: progress,
-        color:
-          progress >= 75 ? "#4ade80" : progress >= 50 ? "#facc15" : "#f87171",
-      };
-    });
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -363,16 +275,16 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
 
   if (!experiment) {
     return (
-      <ReusableCard
-        contentClassName="p-8 text-center"
-        content={<p className="text-muted-foreground">Experiment not found</p>}
-      />
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-muted-foreground">Experiment not found</p>
+        </CardContent>
+      </Card>
     );
   }
 
   // Prepare chart configurations
   const completionChartData = generateCompletionChartData();
-  const pieChartData = generatePieChartData();
 
   const lineConfig: LineConfig[] = [
     {
@@ -384,22 +296,11 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
     },
   ];
 
-  const pieConfig: PieConfig = {
-    dataKey: "value",
-    nameKey: "name",
-    innerRadius: 60,
-    outerRadius: 90,
-    cornerRadius: 4,
-    paddingAngle: 2,
-  };
-
   return (
     <div className="space-y-6">
       {/* Experiment Header */}
-      <ReusableCard
-        contentClassName="p-6"
-        showHeader={false}
-        content={
+      <Card>
+        <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-2xl font-bold">{experiment.name}</h2>
@@ -408,13 +309,12 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
               </p>
 
               <div className="flex items-center gap-2 mt-2">
-                {experiment
-                  ? getStatusBadge(
-                      experiment.status,
-                      experiment.status.charAt(0).toUpperCase() +
-                        experiment.status.slice(1)
-                    )
-                  : null}
+                {experiment &&
+                  getStatusBadge(
+                    experiment.status,
+                    experiment.status.charAt(0).toUpperCase() +
+                      experiment.status.slice(1)
+                  )}
 
                 <div className="flex items-center text-sm">
                   <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -433,25 +333,38 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
 
             <div className="flex flex-col items-end gap-2">
               <div className="text-right">
-                <div className="text-sm text-muted-foreground">Progress</div>
+                <div className="text-sm text-muted-foreground">
+                  Time Progress
+                </div>
                 <div className="text-2xl font-bold">
-                  {Math.round(progressData.overall)}%
+                  {progressData.totalDays > 0
+                    ? Math.round(
+                        (progressData.daysElapsed / progressData.totalDays) *
+                          100
+                      )
+                    : 0}
+                  %
                 </div>
               </div>
 
-              <Progress value={progressData.overall} className="w-32 h-2" />
+              <Progress
+                value={
+                  progressData.totalDays > 0
+                    ? (progressData.daysElapsed / progressData.totalDays) * 100
+                    : 0
+                }
+                className="w-32 h-2"
+              />
 
-              {calculateRemainingDays(experiment) !== null && (
-                <div className="text-sm">
-                  {calculateRemainingDays(experiment) === 0
-                    ? "Experiment complete"
-                    : `${calculateRemainingDays(experiment)} days remaining`}
-                </div>
-              )}
+              <div className="text-sm">
+                {progressData.daysRemaining === 0
+                  ? "Experiment complete"
+                  : `${progressData.daysRemaining} days remaining`}
+              </div>
             </div>
           </div>
-        }
-      />
+        </CardContent>
+      </Card>
 
       {/* Tabs for different views */}
       <Tabs defaultValue="progress">
@@ -473,11 +386,83 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
         <TabsContent value="progress" className="space-y-6 mt-6">
           {/* Progress Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Overall Progress Card */}
-            <CustomPieChart
-              data={pieChartData}
-              pieConfig={pieConfig}
-              title="Overall Progress"
+            {/* Overall Progress Card - Replaced Pie Chart with Completion Stats */}
+            <ReusableCard
+              showHeader
+              title="Overall Completion"
+              content={
+                <div className="space-y-6">
+                  {/* Overall metric completion percentage */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Metric Completion</h3>
+                      <span className="text-2xl font-bold">
+                        {Math.round(progressData.overall)}%
+                      </span>
+                    </div>
+                    <Progress value={progressData.overall} className="h-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Based on {progressData.daysElapsed} days of tracking out
+                      of {progressData.totalDays} total days
+                    </p>
+                  </div>
+
+                  {/* Time progress section */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">Time Progress</h3>
+                      <span className="text-lg">
+                        {progressData.daysElapsed} of {progressData.totalDays}{" "}
+                        days
+                      </span>
+                    </div>
+                    <Progress
+                      value={
+                        progressData.totalDays > 0
+                          ? (progressData.daysElapsed /
+                              progressData.totalDays) *
+                            100
+                          : 0
+                      }
+                      className="h-2"
+                    />
+                  </div>
+
+                  {/* Per-metric completion rates */}
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-2">
+                      Metric Completion Rates
+                    </h3>
+                    <div className="space-y-4">
+                      {experimentMetrics
+                        .filter((expMetric) => {
+                          const metric = metrics.find(
+                            (m) => m.id === expMetric.metric_id
+                          );
+                          return metric && metric.type === "boolean";
+                        })
+                        .map((expMetric) => {
+                          const metric = metrics.find(
+                            (m) => m.id === expMetric.metric_id
+                          );
+                          const progress =
+                            progressData.completionRate[expMetric.metric_id] ||
+                            0;
+
+                          return (
+                            <div key={expMetric.id} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span>{metric?.name || "Unknown"}</span>
+                                <span>{Math.round(progress)}%</span>
+                              </div>
+                              <Progress value={progress} className="h-2" />
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              }
             />
 
             {/* Completion Rate Trend */}

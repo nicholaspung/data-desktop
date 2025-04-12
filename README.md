@@ -18,6 +18,7 @@
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
 - only show a metric log if the metric was created on the date of or after
 - in metrics, also add an "end" date which will archive that metric and the metric won't show up after that date
+- in daily-tracker-calendar-view.tsx, the savechanges function needs updating - sometimes the log attaches to an experiment, but sometimes it doesn't
 
 ### DONE
 

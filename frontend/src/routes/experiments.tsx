@@ -58,10 +58,11 @@ export default function ExperimentsPage() {
       fields: experimentFields,
       icon: <Beaker className="h-4 w-4" />,
       addLabel: "Create Experiment",
+      defaultTab: "experiment_status",
       customTabs: [
         {
-          id: "list_question",
-          label: "List Question",
+          id: "experiment_status",
+          label: "Experiment Status",
           icon: <View className="h-4 w-4" />,
           content: <ExperimentList />,
           position: "before",
