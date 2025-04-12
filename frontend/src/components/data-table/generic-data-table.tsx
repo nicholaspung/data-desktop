@@ -14,22 +14,6 @@ import loadingStore from "@/store/loading-store";
 import RefreshDatasetButton from "../reusable/refresh-dataset-button";
 import ReusableSelect from "../reusable/reusable-select";
 
-interface GenericDataTableProps {
-  datasetId: DataStoreName;
-  fields: FieldDefinition[];
-  title: string;
-  dataKey?: string; // Optional key for identifying records in the data array
-  disableImport?: boolean;
-  disableDelete?: boolean;
-  disableEdit?: boolean;
-  onDataChange?: () => void;
-  pageSize?: number;
-  highlightedRecordId?: string | null;
-  initialPage?: number; // Initial page index
-  persistState?: boolean; // Whether to persist pagination state
-  onRowClick?: (row: Record<string, any>) => void;
-}
-
 export default function GenericDataTable({
   datasetId,
   fields,
@@ -43,7 +27,21 @@ export default function GenericDataTable({
   initialPage = 0,
   persistState = true,
   onRowClick,
-}: GenericDataTableProps) {
+}: {
+  datasetId: DataStoreName;
+  fields: FieldDefinition[];
+  title: string;
+  dataKey?: string; // Optional key for identifying records in the data array
+  disableImport?: boolean;
+  disableDelete?: boolean;
+  disableEdit?: boolean;
+  onDataChange?: () => void;
+  pageSize?: number;
+  highlightedRecordId?: string | null;
+  initialPage?: number; // Initial page index
+  persistState?: boolean; // Whether to persist pagination state
+  onRowClick?: (row: Record<string, any>) => void;
+}) {
   const data =
     useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
   const isLoading =
@@ -122,7 +120,7 @@ export default function GenericDataTable({
     if (highlightedRecordId && data.length > 0) {
       // Find the highlighted record in the data
       const highlightedRecordIndex = data.findIndex(
-        (item) => item[dataKey] === highlightedRecordId
+        (item) => item[dataKey as keyof typeof item] === highlightedRecordId
       );
 
       if (highlightedRecordIndex !== -1) {

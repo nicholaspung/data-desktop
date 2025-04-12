@@ -12,13 +12,6 @@ import { Lock, Unlock, Shield, Settings, RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePin } from "@/hooks/usePin";
 
-interface PinLockButtonProps {
-  variant?: "default" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg" | "icon";
-  showLabel?: boolean;
-  className?: string;
-}
-
 /**
  * A button that shows the current lock state and allows interactions
  * with the PIN security system
@@ -28,7 +21,12 @@ export function PinLockButton({
   size = "icon",
   showLabel = false,
   className,
-}: PinLockButtonProps) {
+}: {
+  variant?: "default" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
+  showLabel?: boolean;
+  className?: string;
+}) {
   const {
     isConfigured,
     isUnlocked,

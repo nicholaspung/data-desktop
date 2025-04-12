@@ -8,18 +8,6 @@ import { FieldDefinition } from "@/types/types";
 import { ExportColumnsDialog } from "./export-columns-dialog";
 import ReusableSelect from "../reusable/reusable-select";
 
-interface FilterControlsProps {
-  filterableColumns: string[];
-  filterColumn: string;
-  setFilterColumn: React.Dispatch<React.SetStateAction<string>>;
-  table: Table<any>;
-  searchPlaceholder: string;
-  onExport?: () => void; // Optional callback for when export happens
-  data: any[]; // Full dataset for export
-  fields: FieldDefinition[]; // Field definitions for formatting
-  datasetId: string; // Dataset ID for naming export files
-}
-
 export default function FilterControls({
   filterableColumns,
   filterColumn,
@@ -30,7 +18,17 @@ export default function FilterControls({
   data,
   fields,
   datasetId,
-}: FilterControlsProps) {
+}: {
+  filterableColumns: string[];
+  filterColumn: string;
+  setFilterColumn: React.Dispatch<React.SetStateAction<string>>;
+  table: Table<any>;
+  searchPlaceholder: string;
+  onExport?: () => void; // Optional callback for when export happens
+  data: any[]; // Full dataset for export
+  fields: FieldDefinition[]; // Field definitions for formatting
+  datasetId: string; // Dataset ID for naming export files
+}) {
   // Get field map for looking up display names
   const fieldMap = new Map<string, FieldDefinition>();
   fields.forEach((field) => fieldMap.set(field.key, field));

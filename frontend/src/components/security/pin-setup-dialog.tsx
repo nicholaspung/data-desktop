@@ -43,12 +43,13 @@ const formSchema = z
     path: ["confirmPassword"],
   });
 
-interface PinSetupDialogProps {
+export function PinSetupDialog({
+  open,
+  onOpenChange,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-export function PinSetupDialog({ open, onOpenChange }: PinSetupDialogProps) {
+}) {
   const { setupPin, isConfigured } = usePin();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

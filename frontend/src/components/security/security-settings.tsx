@@ -50,8 +50,6 @@ export function SecuritySettings() {
     isConfigured,
     isUnlocked,
     openPinSetupDialog,
-    // changePin,
-    // changePassword,
     clearSecuritySettings,
     openPinEntryDialog,
   } = usePin();

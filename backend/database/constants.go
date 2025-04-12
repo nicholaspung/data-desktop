@@ -6,8 +6,6 @@ const (
 	// Existing datasets
 	DatasetIDDEXA        = "dexa"
 	DatasetIDBloodwork   = "bloodwork"
-	DatasetIDPaycheck    = "paycheck"
-	DatasetIDHabit       = "habit"
 	DatasetIDBloodMarker = "blood_markers"
 	DatasetIDBloodResult = "blood_results"
 

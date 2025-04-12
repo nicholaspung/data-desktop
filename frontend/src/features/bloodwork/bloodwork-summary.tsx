@@ -1,10 +1,14 @@
-import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface BloodworkSummaryProps {
+const BloodworkSummary = ({
+  summary,
+  statusFilter,
+  onFilterChange,
+  onClearFilter,
+}: {
   summary: {
     optimal: number;
     outOfRange: number;
@@ -18,13 +22,6 @@ interface BloodworkSummaryProps {
     status: "optimal" | "outOfRange" | "textValues" | "noRange"
   ) => void;
   onClearFilter: () => void;
-}
-
-const BloodworkSummary: React.FC<BloodworkSummaryProps> = ({
-  summary,
-  statusFilter,
-  onFilterChange,
-  onClearFilter,
 }) => {
   return (
     <Card>

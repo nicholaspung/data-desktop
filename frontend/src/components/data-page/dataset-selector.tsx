@@ -2,35 +2,18 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GenericDataPage from "@/components/data-page/generic-data-page";
-import { FieldDefinition } from "@/types/types";
-import { DataStoreName } from "@/store/data-store";
 import ReusableSelect from "../reusable/reusable-select";
-
-export interface DatasetConfig {
-  id: DataStoreName;
-  title: string;
-  description?: string;
-  fields: FieldDefinition[];
-  icon?: React.ReactNode;
-  addLabel?: string;
-  customTabs?: any[]; // Using any for brevity, but you can define the full type from GenericDataPage
-  disableBatchEntry?: boolean;
-  disableTableView?: boolean;
-  disableAddForm?: boolean;
-  defaultTab?: string;
-}
-
-interface DatasetSelectorProps {
-  datasets: DatasetConfig[];
-  defaultDatasetId?: string;
-  title?: string;
-}
+import { DatasetConfig } from "./data-page";
 
 export function DatasetSelector({
   datasets,
   defaultDatasetId,
   title = "Select Dataset",
-}: DatasetSelectorProps) {
+}: {
+  datasets: DatasetConfig[];
+  defaultDatasetId?: string;
+  title?: string;
+}) {
   const [selectedDatasetId, setSelectedDatasetId] = useState<string>(
     defaultDatasetId || (datasets.length > 0 ? datasets[0].id : "")
   );

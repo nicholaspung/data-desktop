@@ -35,30 +35,6 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Bloodwork dataset: %w", err)
 	}
 
-	// Sync Paycheck dataset
-	err = CreateOrUpdateDataset(
-		DatasetIDPaycheck,
-		"Paychecks",
-		"Paycheck and income information",
-		DatasetTypePaycheck,
-		GetPaycheckFields(),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to sync Paycheck dataset: %w", err)
-	}
-
-	// Sync Habit dataset
-	err = CreateOrUpdateDataset(
-		DatasetIDHabit,
-		"Habits",
-		"Track daily habits and routines",
-		DatasetTypeHabit,
-		GetHabitFields(),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to sync Habit dataset: %w", err)
-	}
-
 	// Sync Blood Markers dataset
 	err = CreateOrUpdateDataset(
 		DatasetIDBloodMarker,

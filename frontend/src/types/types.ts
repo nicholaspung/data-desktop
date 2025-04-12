@@ -53,7 +53,7 @@ export interface FieldDefinition {
   options?: SelectOption[];
 }
 
-export type DatasetType = "dexa" | "bloodwork" | "paycheck" | "habit";
+export type DatasetType = "dexa" | "bloodwork";
 
 // Interface for the store state
 export interface FieldDefinitionsState {

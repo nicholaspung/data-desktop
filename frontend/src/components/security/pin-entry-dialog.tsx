@@ -14,17 +14,15 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Lock, UnlockKeyhole } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 
-interface PinEntryDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
-}
-
 export function PinEntryDialog({
   open,
   onOpenChange,
   onSuccess,
-}: PinEntryDialogProps) {
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}) {
   const { unlock, openPinResetDialog } = usePin();
   const [pin, setPin] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

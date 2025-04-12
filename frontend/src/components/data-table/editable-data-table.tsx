@@ -22,28 +22,6 @@ import FilterControls from "./filter-controls";
 import { toast } from "sonner";
 import { DataStoreName } from "@/store/data-store";
 
-interface EditableDataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  fields: FieldDefinition[]; // Added field definitions
-  datasetId: DataStoreName; // Added dataset ID
-  filterableColumns?: string[];
-  searchPlaceholder?: string;
-  className?: string;
-  pageSize?: number;
-  onRowClick?: (row: TData) => void;
-  rowClassName?: (row: TData) => string;
-  enableSelection?: boolean;
-  dataKey?: string;
-  selectedRows?: string[];
-  onSelectedRowsChange?: (selectedRowIds: string[]) => void;
-  initialPage?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
-  useInlineEditing?: boolean; // Flag to enable inline editing
-}
-
 export function EditableDataTable<TData extends Record<string, any>, TValue>({
   columns,
   data,
@@ -64,7 +42,27 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onPageSizeChange,
   onDataChange,
   useInlineEditing = false,
-}: EditableDataTableProps<TData, TValue>) {
+}: {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  fields: FieldDefinition[]; // Added field definitions
+  datasetId: DataStoreName; // Added dataset ID
+  filterableColumns?: string[];
+  searchPlaceholder?: string;
+  className?: string;
+  pageSize?: number;
+  onRowClick?: (row: TData) => void;
+  rowClassName?: (row: TData) => string;
+  enableSelection?: boolean;
+  dataKey?: string;
+  selectedRows?: string[];
+  onSelectedRowsChange?: (selectedRowIds: string[]) => void;
+  initialPage?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
+  onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
+  useInlineEditing?: boolean; // Flag to enable inline editing
+}) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [filterColumn, setFilterColumn] = useState<string>(

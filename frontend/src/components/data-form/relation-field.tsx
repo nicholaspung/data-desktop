@@ -15,17 +15,15 @@ import loadingStore from "@/store/loading-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
 
-interface RelationFieldProps {
-  field: any; // React Hook Form field
-  fieldDef: FieldDefinition;
-  onChange: (value: string) => void;
-}
-
 export function RelationField({
   field,
   fieldDef,
   onChange,
-}: RelationFieldProps) {
+}: {
+  field: any; // React Hook Form field
+  fieldDef: FieldDefinition;
+  onChange: (value: string) => void;
+}) {
   const data =
     useStore(
       dataStore,

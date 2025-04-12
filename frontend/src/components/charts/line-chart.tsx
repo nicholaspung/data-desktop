@@ -18,20 +18,6 @@ import { DataPoint, LineConfig, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
 
-export interface CustomLineChartProps {
-  data: DataPoint[];
-  lines: LineConfig[];
-  xAxisKey: string;
-  yAxisUnit?: string;
-  yAxisDomain?: [number | string, number | string];
-  title?: string;
-  description?: string;
-  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
-  height?: number;
-  referenceLines?: ReferenceLineConfig[];
-  className?: string;
-}
-
 export default function CustomLineChart({
   data,
   lines,
@@ -44,7 +30,19 @@ export default function CustomLineChart({
   height = 400,
   referenceLines = [],
   className,
-}: CustomLineChartProps) {
+}: {
+  data: DataPoint[];
+  lines: LineConfig[];
+  xAxisKey: string;
+  yAxisUnit?: string;
+  yAxisDomain?: [number | string, number | string];
+  title?: string;
+  description?: string;
+  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
+  height?: number;
+  referenceLines?: ReferenceLineConfig[];
+  className?: string;
+}) {
   return (
     <Card className={cn("", className)}>
       {title && (

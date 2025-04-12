@@ -6,33 +6,9 @@ import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
 import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
 import { FieldDefinition } from "@/types/types";
-import React from "react";
 import { cn } from "@/lib/utils";
 import { DataStoreName } from "@/store/data-store";
-
-interface CustomTab {
-  id: string;
-  label: string;
-  icon?: React.ReactElement;
-  content: React.ReactNode;
-  position?: "before" | "after"; // Position relative to standard tabs
-}
-
-interface GenericDataPageProps {
-  datasetId: DataStoreName;
-  fields: FieldDefinition[];
-  title: string;
-  description?: string;
-  addLabel?: string;
-  disableBatchEntry?: boolean;
-  disableTableView?: boolean;
-  disableAddForm?: boolean;
-  defaultTab?: string;
-  customTabs?: CustomTab[];
-  onDataChange?: () => void;
-  tablePageSize?: number;
-  highlightedRecordId?: string | null;
-}
+import { CustomTab } from "./data-page";
 
 export default function GenericDataPage({
   datasetId,
@@ -48,7 +24,21 @@ export default function GenericDataPage({
   onDataChange,
   tablePageSize = 10,
   highlightedRecordId = null,
-}: GenericDataPageProps) {
+}: {
+  datasetId: DataStoreName;
+  fields: FieldDefinition[];
+  title: string;
+  description?: string;
+  addLabel?: string;
+  disableBatchEntry?: boolean;
+  disableTableView?: boolean;
+  disableAddForm?: boolean;
+  defaultTab?: string;
+  customTabs?: CustomTab[];
+  onDataChange?: () => void;
+  tablePageSize?: number;
+  highlightedRecordId?: string | null;
+}) {
   const [key, setKey] = useState(0); // Used to force refresh components
 
   // Function to refresh data when changes are made

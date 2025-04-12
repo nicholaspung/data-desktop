@@ -1,21 +1,10 @@
 // src/features/dexa/visualization/comparison-selector.tsx
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { DexaScan } from "../dexa-visualization";
 import { format } from "date-fns";
 import ReusableSelect from "@/components/reusable/reusable-select";
-
-export type ViewMode = "single" | "comparison";
-
-interface ComparisonSelectorProps {
-  data: DexaScan[];
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-  selectedDate: string;
-  comparisonDate: string;
-  onSelectedDateChange: (date: string) => void;
-  onComparisonDateChange: (date: string) => void;
-}
+import { ViewMode } from "../dexa";
+import { DEXAScan } from "@/store/dexa-definitions";
 
 export const ComparisonSelector = ({
   data,
@@ -25,7 +14,15 @@ export const ComparisonSelector = ({
   comparisonDate,
   onSelectedDateChange,
   onComparisonDateChange,
-}: ComparisonSelectorProps) => {
+}: {
+  data: DEXAScan[];
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  selectedDate: string;
+  comparisonDate: string;
+  onSelectedDateChange: (date: string) => void;
+  onComparisonDateChange: (date: string) => void;
+}) => {
   // Create date options from the data
   const dateOptions = data
     .filter((item) => item.date)
@@ -39,11 +36,11 @@ export const ComparisonSelector = ({
   // Set defaults when component loads or data changes
   useEffect(() => {
     if (dateOptions.length > 0 && !selectedDate) {
-      onSelectedDateChange(dateOptions[0].value);
+      onSelectedDateChange(dateOptions[0].value ?? "");
 
       // Set default comparison date to second most recent if available
       if (dateOptions.length > 1 && !comparisonDate) {
-        onComparisonDateChange(dateOptions[1].value);
+        onComparisonDateChange(dateOptions[1].value ?? "");
       }
     }
   }, [data, selectedDate, comparisonDate]);

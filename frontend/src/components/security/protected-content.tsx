@@ -5,13 +5,6 @@ import { Lock, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePin } from "@/hooks/usePin";
 
-interface ProtectedContentProps {
-  children: ReactNode;
-  placeholder?: ReactNode;
-  className?: string;
-  blur?: boolean;
-}
-
 /**
  * A component that protects content behind a PIN lock.
  * The content will be hidden or blurred until the user unlocks it.
@@ -26,7 +19,12 @@ export function ProtectedContent({
   placeholder,
   className,
   blur = true,
-}: ProtectedContentProps) {
+}: {
+  children: ReactNode;
+  placeholder?: ReactNode;
+  className?: string;
+  blur?: boolean;
+}) {
   const { isConfigured, isUnlocked, openPinEntryDialog } = usePin();
   const [wasEverUnlocked, setWasEverUnlocked] = useState(false);
 

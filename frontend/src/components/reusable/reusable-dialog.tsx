@@ -13,36 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ReactNode } from "react";
 
-interface ReusableDialogProps {
-  // Dialog content
-  title?: string;
-  description?: string;
-  customContent?: ReactNode;
-
-  // Actions
-  onConfirm?: () => void;
-  onCancel?: () => void;
-  confirmText?: string;
-  cancelText?: string;
-  customFooter?: ReactNode;
-
-  // Trigger element
-  trigger?: ReactNode;
-  triggerText?: string;
-  triggerIcon?: ReactNode;
-
-  // Styling
-  variant?: "default" | "destructive" | "outline" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
-  confirmVariant?: "default" | "destructive" | "outline" | "ghost" | "link";
-
-  // State
-  loading?: boolean;
-  showTrigger?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
 /**
  * An enhanced dialog component that supports custom content and footer
  *
@@ -56,34 +26,44 @@ interface ReusableDialogProps {
  * />
  */
 export default function ReusableDialog({
-  // Dialog content
   title = "Dialog",
   description,
   customContent,
-
-  // Actions
   onConfirm,
   onCancel,
   confirmText = "Confirm",
   cancelText = "Cancel",
   customFooter,
-
-  // Trigger
   trigger,
   triggerText,
   triggerIcon,
-
-  // Styling
   variant = "outline",
   size = triggerText ? "default" : "icon",
   confirmVariant = "default",
-
-  // State
   loading = false,
   showTrigger = true,
   open,
   onOpenChange,
-}: ReusableDialogProps) {
+}: {
+  title?: string;
+  description?: string;
+  customContent?: ReactNode;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  customFooter?: ReactNode;
+  trigger?: ReactNode;
+  triggerText?: string;
+  triggerIcon?: ReactNode;
+  variant?: "default" | "destructive" | "outline" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
+  confirmVariant?: "default" | "destructive" | "outline" | "ghost" | "link";
+  loading?: boolean;
+  showTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {showTrigger && (

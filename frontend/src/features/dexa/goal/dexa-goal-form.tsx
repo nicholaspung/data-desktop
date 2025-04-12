@@ -17,12 +17,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { DexaGoal, GoalStorageService } from "./goal-storage-service";
-
-interface DexaGoalFormProps {
-  onSuccess?: () => void;
-  existingGoal?: DexaGoal;
-}
+import { GoalStorageService } from "./goal-storage-service";
+import { DexaGoal } from "../dexa";
 
 const formSchema = z.object({
   bodyFatPercent: z.coerce
@@ -42,7 +38,10 @@ const formSchema = z.object({
 export default function DexaGoalForm({
   onSuccess,
   existingGoal,
-}: DexaGoalFormProps) {
+}: {
+  onSuccess?: () => void;
+  existingGoal?: DexaGoal;
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({

@@ -9,20 +9,15 @@
 - PDF reports from data
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
+- bloodwork graphs, when I click "out of range", it still shows the "no range set" values
+- start putting all the datasets into a single tab, and then putting all the visuals I can about into their own place
 
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- add a private button where if I input a PIN, then I can see the values
-- add a pin/password in order to view private values
-- add a reset pin/password in order to change pin/password
 - add daily log view table component that I don't need to dig in order to view the data
 - in metrics, add a way to customize when the metric will show up (i.e. monday/wednesday)
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
-- automatically disable private view after 1 minute
-- in daily tracker view, figure out a way to associate the metric with the experiment that is going on that has the metrics in it, without having to select the experiment to tie it too
-    - adjust how the "complete" metric shows up
-    - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function
 - add a large calendar view of the tracked metrics
 
 ### DONE
@@ -74,5 +69,13 @@
 - in add form, also make the boolean values in a column view [DONE 2025-04-10]
 - add a "select" type visual if I want to include hard coded values for the select fields [DONE 2025-04-10]
 - refactor dialog components [DONE 2025-04-10]
+- add a private button where if I input a PIN, then I can see the values [DONE 2025-04-10]
+- add a pin/password in order to view private values [DONE 2025-04-10]
+- add a reset pin/password in order to change pin/password [DONE 2025-04-10]
+- automatically disable private view after 1 minute [DONE 2025-04-10]
+- remove "habits" from the backend and frontend [DONE 2025-04-11]
+- in daily tracker view, figure out a way to associate the metric with the experiment that is going on that has the metrics in it, without having to select the experiment to tie it too [DONE 2025-04-11]
+- adjust how the "complete" metric shows up [DONE 2025-04-11]
+- adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function [DONE 2025-04-11]
 
 ### GAVE UP

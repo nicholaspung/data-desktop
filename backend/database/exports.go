@@ -12,8 +12,6 @@ var (
 	// Existing fields
 	GetDEXAFields        FieldDefinitionFunc
 	GetBloodworkFields   FieldDefinitionFunc
-	GetPaycheckFields    FieldDefinitionFunc
-	GetHabitFields       FieldDefinitionFunc
 	GetBloodMarkerFields FieldDefinitionFunc
 	GetBloodResultFields FieldDefinitionFunc
 

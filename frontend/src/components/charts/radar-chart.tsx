@@ -15,36 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
-
-export interface DataPoint {
-  subject: string;
-  [key: string]: any;
-}
-
-export interface RadarConfig {
-  dataKey: string;
-  name?: string;
-  fill?: string;
-  stroke?: string;
-  fillOpacity?: number;
-}
-
-export interface CustomRadarChartProps {
-  data: DataPoint[];
-  radars: RadarConfig[];
-  title?: string;
-  description?: string;
-  tooltipFormatter?: (value: any, name: string, props?: any) => React.ReactNode;
-  height?: number;
-  width?: number;
-  outerRadius?: number;
-  polarRadiusProps?: {
-    angle?: number;
-    domain?: [number | string, number | string];
-    orientation?: "left" | "right" | "middle";
-  };
-  className?: string;
-}
+import { RadarConfig, RadarDataPoint } from "./charts";
 
 export default function CustomRadarChart({
   data,
@@ -61,7 +32,22 @@ export default function CustomRadarChart({
     orientation: "left",
   },
   className,
-}: CustomRadarChartProps) {
+}: {
+  data: RadarDataPoint[];
+  radars: RadarConfig[];
+  title?: string;
+  description?: string;
+  tooltipFormatter?: (value: any, name: string, props?: any) => React.ReactNode;
+  height?: number;
+  width?: number;
+  outerRadius?: number;
+  polarRadiusProps?: {
+    angle?: number;
+    domain?: [number | string, number | string];
+    orientation?: "left" | "right" | "middle";
+  };
+  className?: string;
+}) {
   return (
     <Card className={cn("", className)}>
       {title && (

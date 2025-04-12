@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { DexaScan } from "../dexa-visualization";
-import { ComparisonSelector, ViewMode } from "./comparison-selector";
+import { ComparisonSelector } from "./comparison-selector";
 import BodyRepresentation from "./body-representation";
 import { formatDate } from "@/lib/date-utils";
+import { ViewMode } from "../dexa";
+import { DEXAScan } from "@/store/dexa-definitions";
 
-const BodyAnatomyTab = ({ data }: { data: DexaScan[] }) => {
+const BodyAnatomyTab = ({ data }: { data: DEXAScan[] }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
@@ -87,8 +88,8 @@ const ComparisonSummary = ({
   primaryDate,
   compareDate,
 }: {
-  primaryScan: DexaScan;
-  compareScan: DexaScan;
+  primaryScan: DEXAScan;
+  compareScan: DEXAScan;
   primaryDate: string;
   compareDate: string;
 }) => {

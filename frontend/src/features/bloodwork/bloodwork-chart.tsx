@@ -1,4 +1,3 @@
-import React from "react";
 import {
   LineChart,
   Line,
@@ -8,19 +7,6 @@ import {
   ResponsiveContainer,
   ReferenceArea,
 } from "recharts";
-
-interface BloodMarkerChartProps {
-  data: {
-    date: string;
-    value: number;
-    inOptimalRange?: boolean;
-  }[];
-  optimalLow?: number;
-  optimalHigh?: number;
-  unit?: string;
-  height?: number;
-  showOptimalRange?: boolean; // New prop to control whether to show the optimal range
-}
 
 const CustomTooltip = ({ active, payload, label, unit }: any) => {
   if (active && payload && payload.length) {
@@ -37,13 +23,24 @@ const CustomTooltip = ({ active, payload, label, unit }: any) => {
   return null;
 };
 
-const BloodMarkerChart: React.FC<BloodMarkerChartProps> = ({
+const BloodMarkerChart = ({
   data,
   optimalLow,
   optimalHigh,
   unit,
   height = 120,
   showOptimalRange = true, // Default to showing the optimal range if it exists
+}: {
+  data: {
+    date: string;
+    value: number;
+    inOptimalRange?: boolean;
+  }[];
+  optimalLow?: number;
+  optimalHigh?: number;
+  unit?: string;
+  height?: number;
+  showOptimalRange?: boolean; // New prop to control whether to show the optimal range
 }) => {
   const hasOptimalRange =
     showOptimalRange && optimalLow !== undefined && optimalHigh !== undefined;

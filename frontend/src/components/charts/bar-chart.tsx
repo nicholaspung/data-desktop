@@ -15,44 +15,9 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { DataPoint, ReferenceLineConfig } from "./charts";
+import { BarConfig, DataPoint, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
-import { defaultFormatter } from "./chart-utils";
-
-export interface BarConfig {
-  dataKey: string;
-  name?: string;
-  color?: string;
-  unit?: string;
-  stackId?: string;
-  barSize?: number;
-  colorByValue?: boolean;
-  getColorByValue?: (value: number) => string;
-}
-
-export interface CustomBarChartProps {
-  data: DataPoint[];
-  bars: BarConfig[];
-  xAxisKey: string;
-  yAxisUnit?: string;
-  yAxisDomain?: [number | string, number | string];
-  title?: string;
-  description?: string;
-  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
-  height?: number;
-  layout?: "horizontal" | "vertical";
-  referenceLines?: ReferenceLineConfig[];
-  className?: string;
-}
-
-// Default function to get colors based on values (for heat maps and similar visualizations)
-const defaultGetColorByValue = (value: number) => {
-  if (value < 10) return "#82ca9d"; // Low - Green
-  if (value < 20) return "#8884d8"; // Medium-Low - Purple
-  if (value < 30) return "#ffc658"; // Medium - Yellow
-  if (value < 40) return "#ff8042"; // Medium-High - Orange
-  return "#d32f2f"; // High - Red
-};
+import { defaultFormatter, defaultGetColorByValue } from "./chart-utils";
 
 export default function CustomBarChart({
   data,
@@ -67,7 +32,20 @@ export default function CustomBarChart({
   layout = "horizontal",
   referenceLines = [],
   className,
-}: CustomBarChartProps) {
+}: {
+  data: DataPoint[];
+  bars: BarConfig[];
+  xAxisKey: string;
+  yAxisUnit?: string;
+  yAxisDomain?: [number | string, number | string];
+  title?: string;
+  description?: string;
+  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
+  height?: number;
+  layout?: "horizontal" | "vertical";
+  referenceLines?: ReferenceLineConfig[];
+  className?: string;
+}) {
   return (
     <Card className={cn("", className)}>
       {title && (

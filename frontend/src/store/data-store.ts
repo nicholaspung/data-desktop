@@ -2,6 +2,19 @@
 // Updated with experiment-related data types
 
 import { Store } from "@tanstack/react-store";
+import { DEXAScan } from "./dexa-definitions";
+import {
+  BloodMarker,
+  BloodResult,
+  BloodworkTest,
+} from "./bloodwork-definitions";
+import {
+  DailyLog,
+  Experiment,
+  ExperimentMetric,
+  Metric,
+  MetricCategory,
+} from "./experiment-definitions";
 
 // Define the types for the data store
 export type DataStoreName =
@@ -9,22 +22,30 @@ export type DataStoreName =
   | "bloodwork"
   | "blood_markers"
   | "blood_results"
-  | "paycheck"
-  | "habit"
   | "experiments"
   | "metrics"
   | "daily_logs"
   | "metric_categories"
   | "experiment_metrics";
 
+type DataStoreType = {
+  dexa: DEXAScan[];
+  bloodwork: BloodworkTest[];
+  blood_markers: BloodMarker[];
+  blood_results: BloodResult[];
+  experiments: Experiment[];
+  metrics: Metric[];
+  daily_logs: DailyLog[];
+  metric_categories: MetricCategory[];
+  experiment_metrics: ExperimentMetric[];
+};
+
 // Initial state for the data store
-const initialState = {
+const initialState: DataStoreType = {
   dexa: [],
   bloodwork: [],
   blood_markers: [],
   blood_results: [],
-  paycheck: [],
-  habit: [],
   // Initialize experiment-related data arrays
   experiments: [],
   metrics: [],
@@ -34,7 +55,7 @@ const initialState = {
 };
 
 // Create the data store
-const dataStore = new Store(initialState);
+const dataStore = new Store<DataStoreType>(initialState);
 
 // Helper function to load state into the store
 export function loadState(

@@ -4,7 +4,6 @@ import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import {
   BarChart,
-  FileSpreadsheet,
   HeartPulse,
   Home,
   ListTodo,
@@ -45,11 +44,6 @@ const sidebarItems: SidebarItem[] = [
     href: "/bloodwork",
   },
   {
-    title: "Paychecks",
-    icon: <FileSpreadsheet className="h-5 w-5" />,
-    href: "/paychecks",
-  },
-  {
     title: "Experiments",
     icon: <ListTodo className="h-5 w-5" />,
     href: "/experiments",
@@ -61,11 +55,11 @@ const sidebarItems: SidebarItem[] = [
   },
 ];
 
-interface DashboardLayoutProps {
+export default function DashboardLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+}) {
   const matches = useMatches();
   const currentPath =
     matches.length > 0 ? matches[matches.length - 1].pathname : "";

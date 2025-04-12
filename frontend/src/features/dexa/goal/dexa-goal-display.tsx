@@ -10,10 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Loader2, Trash } from "lucide-react";
 import DexaGoalForm from "./dexa-goal-form";
-import { DexaGoal, GoalStorageService } from "./goal-storage-service";
+import { GoalStorageService } from "./goal-storage-service";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import { DexaGoal } from "../dexa";
 
-interface DexaGoalDisplayProps {
+export default function DexaGoalDisplay({
+  latestScan,
+  onGoalChange,
+}: {
   latestScan?: {
     total_body_fat_percentage: number;
     total_mass_lbs: number;
@@ -21,12 +25,7 @@ interface DexaGoalDisplayProps {
     date: Date;
   };
   onGoalChange?: () => void;
-}
-
-export default function DexaGoalDisplay({
-  latestScan,
-  onGoalChange,
-}: DexaGoalDisplayProps) {
+}) {
   const [goal, setGoal] = useState<DexaGoal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

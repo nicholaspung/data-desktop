@@ -17,11 +17,15 @@ import {
   ListChecks,
   ListTodo,
 } from "lucide-react";
-import { LineChart, ComposedChart, PieChart } from "@/components/charts";
 import ExperimentMetrics from "./experiment-metrics";
-import { LineConfig } from "@/components/charts/charts";
-import { PieConfig } from "@/components/charts/pie-chart";
-import { ChartElement } from "@/components/charts/composed-chart";
+import {
+  ChartElement,
+  LineConfig,
+  PieConfig,
+} from "@/components/charts/charts";
+import CustomPieChart from "@/components/charts/pie-chart";
+import CustomLineChart from "@/components/charts/line-chart";
+import CustomComposedChart from "@/components/charts/composed-chart";
 
 interface ExperimentDashboardProps {
   experimentId: string;
@@ -578,7 +582,7 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
               <CardContent>
                 <div className="flex items-center justify-center p-4">
                   <div className="relative w-48 h-48 flex items-center justify-center">
-                    <PieChart
+                    <CustomPieChart
                       data={pieChartData}
                       pieConfig={pieConfig}
                       useCustomColors={true}
@@ -634,7 +638,7 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <LineChart
+                  <CustomLineChart
                     data={completionChartData}
                     lines={lineConfig}
                     xAxisKey="displayDate"
@@ -658,7 +662,7 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <ComposedChart
+                  <CustomComposedChart
                     data={metricChartData}
                     elements={metricChartElements}
                     xAxisKey="displayDate"

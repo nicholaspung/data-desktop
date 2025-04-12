@@ -3,36 +3,32 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Save, Loader2 } from "lucide-react";
-import { isSameDay } from "date-fns";
+import { Plus, Loader2, ClipboardCheck } from "lucide-react";
+import { isSameDay, subDays } from "date-fns";
 import { useStore } from "@tanstack/react-store";
-import dataStore, { addEntry } from "@/store/data-store";
+import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
-import { toast } from "sonner";
-import { ApiService } from "@/services/api";
-import { Experiment, Metric, MetricWithLog } from "./experiments";
-import TrackerControls from "./tracker-controls";
+import { Metric, MetricWithLog } from "./experiments";
 import { parseMetricValue } from "./experiments-utils";
+import { toast } from "sonner";
+import DailyTrackerNavigation from "./daily-tracker-navigation";
+import { ApiService } from "@/services/api";
+import DailyTrackerViewCard from "./daily-tracker-view-card";
 
 export default function DailyTrackerView() {
   // State
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedExperiment, setSelectedExperiment] = useState<string>("");
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [metricsWithLogs, setMetricsWithLogs] = useState<MetricWithLog[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [logsChanged, setLogsChanged] = useState(false);
   const [selectedTab, setSelectedTab] = useState("all");
+  const [showNotes, setShowNotes] = useState(false);
 
   // Access data from the store
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
-  const experimentsData =
-    useStore(dataStore, (state) => state.experiments) || [];
+  const experimentMetricsData =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   // Loading state
@@ -43,14 +39,10 @@ export default function DailyTrackerView() {
 
   // Process data when it changes
   useEffect(() => {
-    if (experimentsData.length > 0) {
-      setExperiments(experimentsData as Experiment[]);
-    }
-
     if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
     }
-  }, [experimentsData, dailyLogsData, selectedDate]);
+  }, [dailyLogsData, selectedDate]);
 
   // Process logs for the selected date
   const processLogsForSelectedDate = (
@@ -74,7 +66,6 @@ export default function DailyTrackerView() {
           ? parseMetricValue(log.value, metric.type)
           : parseMetricValue(metric.default_value, metric.type),
         notes: log?.notes || "",
-        hasChanged: false,
       };
     });
 
@@ -90,60 +81,45 @@ export default function DailyTrackerView() {
     });
 
     setMetricsWithLogs(metricsWithLogsArray as MetricWithLog[]);
-    setLogsChanged(false); // Reset changed flag when loading new date
   };
 
-  // Handle value changes
-  const handleValueChange = (metricId: string, newValue: any) => {
-    setMetricsWithLogs((prev) =>
-      prev.map((item) =>
-        item.id === metricId
-          ? { ...item, value: newValue, hasChanged: true }
-          : item
-      )
-    );
-    setLogsChanged(true);
-  };
-
-  // Handle notes changes
-  const handleNotesChange = (metricId: string, notes: string) => {
-    setMetricsWithLogs((prev) =>
-      prev.map((item) =>
-        item.id === metricId ? { ...item, notes, hasChanged: true } : item
-      )
-    );
-    setLogsChanged(true);
-  };
-
-  // Save changes
-  const saveChanges = async () => {
-    setIsSaving(true);
-
+  const saveChanges = async (
+    metricId: string,
+    key: "value" | "notes",
+    value: any
+  ) => {
     try {
-      const updatedMetrics = metricsWithLogs.filter(
-        (metric) => metric.hasChanged
-      );
-
-      for (const metric of updatedMetrics) {
-        const value = JSON.stringify(metric.value);
-
-        if (metric.log) {
+      const metricWithLogs = metricsWithLogs.find((el) => el.id === metricId);
+      if (metricWithLogs) {
+        const experimentMetric = experimentMetricsData.filter(
+          (el) => el.metric_id === metricId
+        );
+        if (metricWithLogs.log) {
           // Update existing log
-          await ApiService.updateRecord(metric.log.id, {
-            ...metric.log,
-            value,
-            notes: metric.notes,
-            experiment_id:
-              selectedExperiment || metric.log.experiment_id || null,
-          });
+          const response = await ApiService.updateRecord(
+            metricWithLogs.log.id,
+            {
+              ...metricWithLogs.log,
+              value:
+                key === "value" ? JSON.stringify(value) : metricWithLogs.value,
+              notes: key === "notes" ? value : metricWithLogs.notes,
+              experiment_id: experimentMetric.length
+                ? experimentMetric[0].experiment_id
+                : null,
+            }
+          );
+
+          updateEntry(metricWithLogs.log.id, response, "daily_logs");
         } else {
-          // Create new log
           const newLog = {
             date: selectedDate,
-            metric_id: metric.id,
-            experiment_id: selectedExperiment || null,
-            value,
-            notes: metric.notes || "",
+            metric_id: metricId,
+            experiment_id: experimentMetric.length
+              ? experimentMetric[0].experiment_id
+              : null,
+            value:
+              key === "value" ? JSON.stringify(value) : metricWithLogs.value,
+            notes: key === "notes" ? value : metricWithLogs.notes,
           };
 
           const response = await ApiService.addRecord("daily_logs", newLog);
@@ -153,13 +129,10 @@ export default function DailyTrackerView() {
         }
       }
 
-      toast.success("Daily logs saved successfully");
-      setLogsChanged(false);
+      toast.success("Daily log saved successfully");
     } catch (error) {
-      console.error("Error saving daily logs:", error);
-      toast.error("Failed to save daily logs");
-    } finally {
-      setIsSaving(false);
+      console.error("Error saving daily log:", error);
+      toast.error("Failed to save daily log");
     }
   };
 
@@ -179,244 +152,163 @@ export default function DailyTrackerView() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Date Navigation and Controls */}
-      <TrackerControls
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        selectedExperiment={selectedExperiment}
-        setSelectedExperiment={setSelectedExperiment}
-        experiments={experiments}
-        logsChanged={logsChanged}
-        isSaving={isSaving}
-        saveChanges={saveChanges}
-        setMetricsWithLogs={setMetricsWithLogs}
-        setLogsChanged={setLogsChanged}
-        dailyLogsData={dailyLogsData as any[]}
-      />
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <div className="flex flex-row justify-between">
+            <span>Daily Tracking</span>
+            {/* Quick Action Buttons */}
+            <div className="flex gap-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={showNotes}
+                  onCheckedChange={(checked) => setShowNotes(!!checked)}
+                />
+                <Label>Show notes</Label>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  // Mark all boolean metrics as completed
+                  setMetricsWithLogs((prev) =>
+                    prev.map((item) =>
+                      item.type === "boolean" ? { ...item, value: true } : item
+                    )
+                  );
+                }}
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                Complete All
+              </Button>
 
-      {/* Metrics Tracking Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daily Tracking</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {metricsLoading || dailyLogsLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : metricsWithLogs.length === 0 ? (
-            <div className="text-center p-8">
-              <p className="text-muted-foreground">No metrics defined yet.</p>
-              <Button variant="outline" className="mt-4" asChild>
-                <a href="/experiments?tab=metrics">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Metrics
-                </a>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  // Set today to use yesterday's values as starting point
+                  const yesterday = subDays(selectedDate, 1);
+                  const yesterdayLogs = dailyLogsData.filter((log: any) => {
+                    const logDate = new Date(log.date);
+                    return isSameDay(logDate, yesterday);
+                  });
+
+                  if (yesterdayLogs.length === 0) {
+                    toast.info("No logs found for yesterday");
+                    return;
+                  }
+
+                  // Copy yesterday's logs but mark them as changed
+                  setMetricsWithLogs((prev) =>
+                    prev.map((item) => {
+                      const yesterdayLog: any = yesterdayLogs.find(
+                        (log: any) => log.metric_id === item.id
+                      );
+                      if (!yesterdayLog) return item;
+
+                      return {
+                        ...item,
+                        value: parseMetricValue(yesterdayLog.value, item.type),
+                        notes: yesterdayLog.notes || "",
+                      };
+                    })
+                  );
+                  toast.success("Copied yesterday's values");
+                }}
+              >
+                Copy Yesterday
               </Button>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Category Tabs */}
-              <Tabs
-                defaultValue="all"
-                value={selectedTab}
-                onValueChange={setSelectedTab}
-              >
-                <TabsList className="mb-4 flex flex-wrap h-auto">
-                  <TabsTrigger value="all" className="rounded-full">
-                    All
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DailyTrackerNavigation
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+        />
+        {metricsLoading || dailyLogsLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : metricsWithLogs.length === 0 ? (
+          <div className="text-center p-8">
+            <p className="text-muted-foreground">No metrics defined yet.</p>
+            <Button variant="outline" className="mt-4" asChild>
+              <a href="/experiments?tab=metrics">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Metrics
+              </a>
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Category Tabs */}
+            <Tabs
+              defaultValue="all"
+              value={selectedTab}
+              onValueChange={setSelectedTab}
+            >
+              <TabsList className="mb-4 flex flex-wrap h-auto">
+                <TabsTrigger value="all" className="rounded-full">
+                  All
+                </TabsTrigger>
+                {categories.map((category) => (
+                  <TabsTrigger
+                    key={category}
+                    value={category}
+                    className="rounded-full"
+                  >
+                    {category}
                   </TabsTrigger>
-                  {categories.map((category) => (
-                    <TabsTrigger
-                      key={category}
-                      value={category}
-                      className="rounded-full"
-                    >
-                      {category}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                ))}
+              </TabsList>
 
-                <TabsContent value={selectedTab} className="mt-0">
-                  <div className="space-y-8">
-                    {/* Group metrics by category */}
-                    {categories
-                      .filter(
-                        (category) =>
-                          selectedTab === "all" || category === selectedTab
-                      )
-                      .map((category) => (
-                        <div key={category} className="space-y-4">
-                          {selectedTab === "all" && (
-                            <>
-                              <h3 className="text-lg font-semibold">
-                                {category}
-                              </h3>
-                              <Separator />
-                            </>
-                          )}
+              <TabsContent value={selectedTab} className="mt-0">
+                <div className="space-y-8">
+                  {/* Group metrics by category */}
+                  {categories
+                    .filter(
+                      (category) =>
+                        selectedTab === "all" || category === selectedTab
+                    )
+                    .map((category) => (
+                      <div key={category} className="space-y-4">
+                        {selectedTab === "all" && (
+                          <>
+                            <h3 className="text-lg font-semibold">
+                              {category}
+                            </h3>
+                            <Separator />
+                          </>
+                        )}
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {filteredMetrics
-                              .filter(
-                                (m) =>
-                                  (m.category_id_data?.name ||
-                                    "Uncategorized") === category
-                              )
-                              .map((metric) => (
-                                <Card
-                                  key={metric.id}
-                                  className={
-                                    metric.hasChanged
-                                      ? "border-primary border-2"
-                                      : metric.log
-                                        ? "border-green-500 border"
-                                        : ""
-                                  }
-                                >
-                                  <CardContent className="p-4">
-                                    <div className="flex justify-between items-start mb-2">
-                                      <div>
-                                        <h4 className="font-medium">
-                                          {metric.name}
-                                        </h4>
-                                        <p className="text-sm text-muted-foreground">
-                                          {metric.description}
-                                        </p>
-                                      </div>
-                                      {metric.log && (
-                                        <Badge
-                                          variant="outline"
-                                          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                        >
-                                          Logged
-                                        </Badge>
-                                      )}
-                                      {metric.hasChanged && (
-                                        <Badge
-                                          variant="outline"
-                                          className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                        >
-                                          Changed
-                                        </Badge>
-                                      )}
-                                    </div>
-
-                                    {/* Render appropriate input based on metric type */}
-                                    <div className="mt-4">
-                                      {metric.type === "boolean" ? (
-                                        <div className="flex items-center space-x-2">
-                                          <Checkbox
-                                            id={`metric-${metric.id}`}
-                                            checked={!!metric.value}
-                                            onCheckedChange={(checked) =>
-                                              handleValueChange(
-                                                metric.id,
-                                                !!checked
-                                              )
-                                            }
-                                          />
-                                          <Label
-                                            htmlFor={`metric-${metric.id}`}
-                                          >
-                                            Completed
-                                          </Label>
-                                        </div>
-                                      ) : metric.type === "number" ||
-                                        metric.type === "percentage" ||
-                                        metric.type === "time" ? (
-                                        <div className="space-y-2">
-                                          <Label
-                                            htmlFor={`metric-${metric.id}`}
-                                          >
-                                            Value{" "}
-                                            {metric.unit
-                                              ? `(${metric.unit})`
-                                              : ""}
-                                          </Label>
-                                          <Input
-                                            id={`metric-${metric.id}`}
-                                            type="number"
-                                            value={metric.value}
-                                            onChange={(e) =>
-                                              handleValueChange(
-                                                metric.id,
-                                                parseFloat(e.target.value) || 0
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          <Label
-                                            htmlFor={`metric-${metric.id}`}
-                                          >
-                                            Value
-                                          </Label>
-                                          <Input
-                                            id={`metric-${metric.id}`}
-                                            value={metric.value}
-                                            onChange={(e) =>
-                                              handleValueChange(
-                                                metric.id,
-                                                e.target.value
-                                              )
-                                            }
-                                          />
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    {/* Notes field */}
-                                    <div className="mt-4 space-y-2">
-                                      <Label htmlFor={`notes-${metric.id}`}>
-                                        Notes (Optional)
-                                      </Label>
-                                      <Input
-                                        id={`notes-${metric.id}`}
-                                        value={metric.notes || ""}
-                                        onChange={(e) =>
-                                          handleNotesChange(
-                                            metric.id,
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="Add notes..."
-                                      />
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              ))}
-                          </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          {filteredMetrics
+                            .filter(
+                              (m) =>
+                                (m.category_id_data?.name ||
+                                  "Uncategorized") === category
+                            )
+                            .map((metric) => (
+                              <DailyTrackerViewCard
+                                key={metric.id}
+                                metric={metric}
+                                showNotes={showNotes}
+                                saveChanges={saveChanges}
+                              />
+                            ))}
                         </div>
-                      ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              {/* Save button at bottom too for convenience */}
-              {logsChanged && (
-                <div className="mt-6 flex justify-end">
-                  <Button disabled={isSaving} onClick={saveChanges}>
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </>
-                    )}
-                  </Button>
+                      </div>
+                    ))}
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,10 +1,13 @@
 // src/features/dexa/visualization/body-composition-tab.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DexaScan } from "../dexa-visualization";
-import { ComparisonSelector, ViewMode } from "./comparison-selector";
+import { ComparisonSelector } from "./comparison-selector";
 import { format } from "date-fns";
-import { PieChart, BarChart, RadarChart } from "@/components/charts";
+import { ViewMode } from "../dexa";
+import CustomPieChart from "@/components/charts/pie-chart";
+import CustomBarChart from "@/components/charts/bar-chart";
+import CustomRadarChart from "@/components/charts/radar-chart";
+import { DEXAScan } from "@/store/dexa-definitions";
 
 // Mapping percentage values to different semantic colors
 const getColorForPercentage = (value: number) => {
@@ -15,7 +18,7 @@ const getColorForPercentage = (value: number) => {
   return "#d32f2f"; // Higher body fat - Red
 };
 
-const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
+const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
@@ -25,7 +28,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
   // Generate the body composition data for the pie chart
-  const getBodyCompData = (scan: DexaScan | undefined) => {
+  const getBodyCompData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
     const fatMass = scan.fat_tissue_lbs || 0;
@@ -56,7 +59,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
   };
 
   // Create data for the body fat distribution comparison
-  const getBodyFatDistributionData = (scan: DexaScan | undefined) => {
+  const getBodyFatDistributionData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
     const compareMetrics = [
@@ -87,11 +90,14 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
       },
     ];
 
-    return compareMetrics.map((metric) => ({
-      name: metric.name,
-      value: scan[metric.key] * 100 || 0,
-      fill: getColorForPercentage(scan[metric.key] * 100 || 0),
-    }));
+    return compareMetrics.map((metric) => {
+      const value = scan[metric.key as keyof DEXAScan] as number;
+      return {
+        name: metric.name,
+        value: value * 100 || 0,
+        fill: getColorForPercentage(value * 100 || 0),
+      };
+    });
   };
 
   // Generate data for comparison view
@@ -114,16 +120,24 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
       { key: "vat_mass_lbs", name: "VAT Mass (lbs)", unit: "lbs" },
     ];
 
-    return compareMetrics.map((metric) => ({
-      name: metric.name,
-      [primaryDate]: metric.multiplier
-        ? selectedScan[metric.key] * metric.multiplier
-        : selectedScan[metric.key] || 0,
-      [secondaryDate]: metric.multiplier
-        ? comparisonScan[metric.key] * metric.multiplier
-        : comparisonScan[metric.key] || 0,
-      unit: metric.unit,
-    }));
+    return compareMetrics.map((metric) => {
+      const selectedScanValue = selectedScan[
+        metric.key as keyof DEXAScan
+      ] as number;
+      const comparisonScanValue = comparisonScan[
+        metric.key as keyof DEXAScan
+      ] as number;
+      return {
+        name: metric.name,
+        [primaryDate]: metric.multiplier
+          ? selectedScanValue * metric.multiplier
+          : selectedScanValue || 0,
+        [secondaryDate]: metric.multiplier
+          ? comparisonScanValue * metric.multiplier
+          : comparisonScanValue || 0,
+        unit: metric.unit,
+      };
+    });
   };
 
   // Generate radar chart data for body fat distribution comparison
@@ -166,21 +180,26 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
       },
     ];
 
-    return metrics.map((metric) => ({
-      subject: metric.name,
-      [primaryDate]: metric.multiplier
-        ? selectedScan[metric.key] * metric.multiplier
-        : selectedScan[metric.key] || 0,
-      [secondaryDate]: metric.multiplier
-        ? comparisonScan[metric.key] * metric.multiplier
-        : comparisonScan[metric.key] || 0,
-      fullMark:
-        Math.max(
-          selectedScan[metric.key] || 0,
-          comparisonScan[metric.key] || 0
-        ) * 1.2, // To leave some space at the edge
-      unit: metric.unit,
-    }));
+    return metrics.map((metric) => {
+      const selectedScanValue = selectedScan[
+        metric.key as keyof DEXAScan
+      ] as number;
+      const comparisonScanValue = comparisonScan[
+        metric.key as keyof DEXAScan
+      ] as number;
+      return {
+        subject: metric.name,
+        [primaryDate]: metric.multiplier
+          ? selectedScanValue * metric.multiplier
+          : selectedScanValue || 0,
+        [secondaryDate]: metric.multiplier
+          ? comparisonScanValue * metric.multiplier
+          : comparisonScanValue || 0,
+        fullMark:
+          Math.max(selectedScanValue || 0, comparisonScanValue || 0) * 1.2, // To leave some space at the edge
+        unit: metric.unit,
+      };
+    });
   };
 
   // Custom tooltip formatter for charts
@@ -257,7 +276,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
 
           <div className="grid gap-6 md:grid-cols-2">
             {/* Current Body Composition */}
-            <PieChart
+            <CustomPieChart
               data={getBodyCompData(selectedScan)}
               pieConfig={{
                 dataKey: "value",
@@ -273,7 +292,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
             />
 
             {/* Body Fat Distribution */}
-            <BarChart
+            <CustomBarChart
               data={getBodyFatDistributionData(selectedScan)}
               bars={[
                 {
@@ -367,7 +386,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
           </Card>
 
           {/* Body Composition Comparison */}
-          <BarChart
+          <CustomBarChart
             data={getComparisonData()}
             bars={[
               {
@@ -393,7 +412,7 @@ const BodyCompositionTab = ({ data }: { data: DexaScan[] }) => {
           />
 
           {/* Body Fat Distribution Comparison */}
-          <RadarChart
+          <CustomRadarChart
             data={getRadarComparisonData()}
             radars={[
               {

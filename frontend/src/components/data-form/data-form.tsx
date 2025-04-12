@@ -35,23 +35,6 @@ import SavedDataBadge from "../reusable/saved-data-badge";
 import DataFormContent from "./data-form-content";
 import ReusableSelect from "../reusable/reusable-select";
 
-interface DataFormProps {
-  datasetId: DataStoreName;
-  fields: FieldDefinition[];
-  onSuccess?: (recordId: string) => void;
-  onCancel?: () => void;
-  initialValues?: Record<string, any>;
-  submitLabel?: string;
-  successMessage?: string;
-  mode?: "add" | "edit";
-  recordId?: string;
-  hideSubmitButton?: boolean;
-  persistKey?: string; // Optional key for local storage persistence
-  onChange?: (values: Record<string, any>, isValid: boolean) => void; // New callback for form changes
-  forceClear?: boolean; // Signal to clear all data including localStorage
-  title?: string; // Optional title for the form
-}
-
 export default function DataForm({
   datasetId,
   fields,
@@ -67,7 +50,22 @@ export default function DataForm({
   onChange, // New callback for form changes
   forceClear = false, // Signal to clear all data including localStorage
   title, // Optional title for the form
-}: DataFormProps) {
+}: {
+  datasetId: DataStoreName;
+  fields: FieldDefinition[];
+  onSuccess?: (recordId: string) => void;
+  onCancel?: () => void;
+  initialValues?: Record<string, any>;
+  submitLabel?: string;
+  successMessage?: string;
+  mode?: "add" | "edit";
+  recordId?: string;
+  hideSubmitButton?: boolean;
+  persistKey?: string; // Optional key for local storage persistence
+  onChange?: (values: Record<string, any>, isValid: boolean) => void; // New callback for form changes
+  forceClear?: boolean; // Signal to clear all data including localStorage
+  title?: string; // Optional title for the form
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSavedData, setHasSavedData] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);

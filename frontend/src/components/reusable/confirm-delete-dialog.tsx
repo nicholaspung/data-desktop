@@ -3,18 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";
 
-interface ConfirmDeleteDialogProps {
-  title?: string;
-  description?: string;
-  onConfirm: () => void;
-  trigger?: React.ReactNode;
-  triggerText?: string;
-  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
-  size?: "default" | "sm" | "lg" | "icon";
-  loading?: boolean;
-  showTrigger?: boolean;
-}
-
 /**
  * A reusable delete confirmation dialog
  *
@@ -35,7 +23,17 @@ export function ConfirmDeleteDialog({
   size = triggerText ? "default" : "icon",
   loading = false,
   showTrigger = true,
-}: ConfirmDeleteDialogProps) {
+}: {
+  title?: string;
+  description?: string;
+  onConfirm: () => void;
+  trigger?: React.ReactNode;
+  triggerText?: string;
+  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
+  size?: "default" | "sm" | "lg" | "icon";
+  loading?: boolean;
+  showTrigger?: boolean;
+}) {
   return (
     <ReusableDialog
       title={title}

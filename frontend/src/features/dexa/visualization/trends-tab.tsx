@@ -1,11 +1,12 @@
 // src/features/dexa/visualization/trends-tab.tsx
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DexaScan } from "../dexa-visualization";
 import { formatDate } from "@/lib/date-utils";
-import { LineChart, ComposedChart } from "@/components/charts";
+import CustomLineChart from "@/components/charts/line-chart";
+import CustomComposedChart from "@/components/charts/composed-chart";
+import { DEXAScan } from "@/store/dexa-definitions";
 
-const TrendsTab = ({ data }: { data: DexaScan[] }) => {
+const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
   const [activeTab, setActiveTab] = useState("bodyFat");
 
   // Get body weight trend data
@@ -81,7 +82,7 @@ const TrendsTab = ({ data }: { data: DexaScan[] }) => {
 
         <TabsContent value="bodyFat" className="mt-6">
           <div className="space-y-6">
-            <LineChart
+            <CustomLineChart
               data={data
                 .map((item) => ({
                   date: formatDate(item.date),
@@ -106,7 +107,7 @@ const TrendsTab = ({ data }: { data: DexaScan[] }) => {
               height={400}
             />
 
-            <LineChart
+            <CustomLineChart
               data={data
                 .map((item) => ({
                   date: formatDate(item.date),
@@ -133,7 +134,7 @@ const TrendsTab = ({ data }: { data: DexaScan[] }) => {
         </TabsContent>
 
         <TabsContent value="bodyWeight" className="mt-6">
-          <LineChart
+          <CustomLineChart
             data={getBodyWeightTrendData()}
             lines={[
               {
@@ -153,7 +154,7 @@ const TrendsTab = ({ data }: { data: DexaScan[] }) => {
         </TabsContent>
 
         <TabsContent value="leanFat" className="mt-6">
-          <ComposedChart
+          <CustomComposedChart
             data={getLeanVsFatTrendData()}
             elements={[
               {
@@ -183,7 +184,7 @@ const TrendsTab = ({ data }: { data: DexaScan[] }) => {
         </TabsContent>
 
         <TabsContent value="symmetry" className="mt-6">
-          <LineChart
+          <CustomLineChart
             data={getSymmetryTrendData()}
             lines={[
               {

@@ -9,15 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import {
-  BarChart,
-  FileSpreadsheet,
-  HeartPulse,
-  PieChart,
-  ListTodo,
-  Plus,
-  RefreshCcw,
-} from "lucide-react";
+import { BarChart, HeartPulse, PieChart, Plus, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
 import { DatasetSummary, FieldDefinition } from "@/types/types";
@@ -107,10 +99,6 @@ function Home() {
         return <PieChart className="h-5 w-5" />;
       case "bloodwork":
         return <HeartPulse className="h-5 w-5" />;
-      case "paycheck":
-        return <FileSpreadsheet className="h-5 w-5" />;
-      case "habit":
-        return <ListTodo className="h-5 w-5" />;
       default:
         return <BarChart className="h-5 w-5" />;
     }

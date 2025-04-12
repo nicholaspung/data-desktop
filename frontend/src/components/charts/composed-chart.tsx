@@ -16,42 +16,25 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { DataPoint, ReferenceLineConfig } from "./charts";
+import { ChartElement, DataPoint, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
 
-// Define the curve types accepted by Recharts
-type CurveType =
-  | "basis"
-  | "basisClosed"
-  | "basisOpen"
-  | "linear"
-  | "linearClosed"
-  | "natural"
-  | "monotoneX"
-  | "monotoneY"
-  | "monotone"
-  | "step"
-  | "stepBefore"
-  | "stepAfter";
-
-export interface ChartElement {
-  type: "line" | "bar" | "area";
-  dataKey: string;
-  name?: string;
-  color?: string;
-  unit?: string;
-  stackId?: string;
-  barSize?: number;
-  opacity?: number;
-  strokeWidth?: number;
-  activeDot?: boolean | object;
-  connectNulls?: boolean;
-  yAxisId?: string;
-  curveType?: CurveType;
-}
-
-export interface CustomComposedChartProps {
+export default function CustomComposedChart({
+  data,
+  elements,
+  xAxisKey,
+  yAxisUnit = "",
+  yAxisDomain = [0, "auto"],
+  title,
+  description,
+  tooltipFormatter = defaultFormatter,
+  height = 400,
+  referenceLines = [],
+  secondYAxis,
+  syncId,
+  className,
+}: {
   data: DataPoint[];
   elements: ChartElement[];
   xAxisKey: string;
@@ -70,23 +53,7 @@ export interface CustomComposedChartProps {
   };
   syncId?: string;
   className?: string;
-}
-
-export default function CustomComposedChart({
-  data,
-  elements,
-  xAxisKey,
-  yAxisUnit = "",
-  yAxisDomain = [0, "auto"],
-  title,
-  description,
-  tooltipFormatter = defaultFormatter,
-  height = 400,
-  referenceLines = [],
-  secondYAxis,
-  syncId,
-  className,
-}: CustomComposedChartProps) {
+}) {
   const renderElement = (element: ChartElement, index: number) => {
     const commonProps = {
       key: `element-${element.dataKey}`,

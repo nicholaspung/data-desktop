@@ -1,13 +1,16 @@
 // src/features/dexa/visualization/regional-analysis-tab.tsx
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DexaScan } from "../dexa-visualization";
 import { COLORS, formatDate } from "@/lib/date-utils";
-import { LineChart, RadarChart, BarChart } from "@/components/charts";
-import { ComparisonSelector, ViewMode } from "./comparison-selector";
+import { ComparisonSelector } from "./comparison-selector";
 import { format } from "date-fns";
+import { ViewMode } from "../dexa";
+import CustomLineChart from "@/components/charts/line-chart";
+import CustomRadarChart from "@/components/charts/radar-chart";
+import CustomBarChart from "@/components/charts/bar-chart";
+import { DEXAScan } from "@/store/dexa-definitions";
 
-const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
+const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
   const [activeTab, setActiveTab] = useState("percentage");
   const [selectedScan, setSelectedScan] = useState<string>("");
 
@@ -55,13 +58,13 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
   // Set default scan when component loads
   if (dateOptions.length > 0) {
     if (!selectedScan) {
-      setSelectedScan(dateOptions[0].value);
+      setSelectedScan(dateOptions[0].value ?? "");
     }
     if (!primaryDate) {
-      setPrimaryDate(dateOptions[0].value);
+      setPrimaryDate(dateOptions[0].value ?? "");
     }
     if (!comparisonDate && dateOptions.length > 1) {
-      setComparisonDate(dateOptions[1].value);
+      setComparisonDate(dateOptions[1].value ?? "");
     }
   }
 
@@ -75,7 +78,8 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         };
 
         percentageMetrics.forEach((metric) => {
-          result[metric.name] = item[metric.key] * 100 || 0;
+          result[metric.name] =
+            (item[metric.key as keyof DEXAScan] as number) * 100 || 0;
         });
 
         return result;
@@ -93,7 +97,8 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         };
 
         absoluteMetrics.forEach((metric) => {
-          result[metric.name] = item[metric.key] || 0;
+          result[metric.name] =
+            (item[metric.key as keyof DEXAScan] as number) || 0;
         });
 
         return result;
@@ -111,7 +116,8 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         };
 
         leanMassMetrics.forEach((metric) => {
-          result[metric.name] = item[metric.key] || 0;
+          result[metric.name] =
+            (item[metric.key as keyof DEXAScan] as number) || 0;
         });
 
         return result;
@@ -120,14 +126,14 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
   };
 
   // Get current scan data for radar chart
-  const getScanDataForRadar = (scan: DexaScan | undefined) => {
+  const getScanDataForRadar = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
     // For percentage data
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         subject: metric.name,
-        value: scan[metric.key] * 100 || 0,
+        value: (scan[metric.key as keyof DEXAScan] as number) * 100 || 0,
         fullMark: 40, // Typical max for body fat percentage in most regions
       }));
     }
@@ -136,8 +142,11 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     if (activeTab === "absolute") {
       return [...absoluteMetrics, ...leanMassMetrics].map((metric) => ({
         subject: metric.name,
-        value: scan[metric.key] || 0,
-        fullMark: Math.max(...data.map((s) => s[metric.key] || 0)) * 1.2, // Scale based on max values
+        value: (scan[metric.key as keyof DEXAScan] as number) || 0,
+        fullMark:
+          Math.max(
+            ...data.map((s) => (s[metric.key as keyof DEXAScan] as number) || 0)
+          ) * 1.2, // Scale based on max values
       }));
     }
 
@@ -158,8 +167,10 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         subject: metric.name,
-        [primaryLabel]: primaryScan[metric.key] * 100 || 0,
-        [comparisonLabel]: comparisonScan[metric.key] * 100 || 0,
+        [primaryLabel]:
+          (primaryScan[metric.key as keyof DEXAScan] as number) * 100 || 0,
+        [comparisonLabel]:
+          (comparisonScan[metric.key as keyof DEXAScan] as number) * 100 || 0,
       }));
     }
 
@@ -167,8 +178,10 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     if (activeTab === "absolute") {
       return [...absoluteMetrics, ...leanMassMetrics].map((metric) => ({
         subject: metric.name,
-        [primaryLabel]: primaryScan[metric.key] || 0,
-        [comparisonLabel]: comparisonScan[metric.key] || 0,
+        [primaryLabel]:
+          (primaryScan[metric.key as keyof DEXAScan] as number) || 0,
+        [comparisonLabel]:
+          (comparisonScan[metric.key as keyof DEXAScan] as number) || 0,
       }));
     }
 
@@ -183,8 +196,10 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         name: metric.name,
-        Primary: primaryScan[metric.key] * 100 || 0,
-        Comparison: comparisonScan[metric.key] * 100 || 0,
+        Primary:
+          (primaryScan[metric.key as keyof DEXAScan] as number) * 100 || 0,
+        Comparison:
+          (comparisonScan[metric.key as keyof DEXAScan] as number) * 100 || 0,
       }));
     }
 
@@ -193,8 +208,9 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
       const metrics = [...absoluteMetrics, ...leanMassMetrics];
       return metrics.map((metric) => ({
         name: metric.name,
-        Primary: primaryScan[metric.key] || 0,
-        Comparison: comparisonScan[metric.key] || 0,
+        Primary: (primaryScan[metric.key as keyof DEXAScan] as number) || 0,
+        Comparison:
+          (comparisonScan[metric.key as keyof DEXAScan] as number) || 0,
       }));
     }
 
@@ -306,7 +322,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         <TabsContent value="percentage" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Regional Fat % Comparison Over Time */}
-            <LineChart
+            <CustomLineChart
               data={getPercentageComparisonData()}
               lines={getPercentageLineConfigs()}
               xAxisKey="date"
@@ -333,7 +349,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
             {viewMode === "single" ? (
               <>
                 {/* Current Scan Regional Distribution - Single Mode */}
-                <RadarChart
+                <CustomRadarChart
                   data={getScanDataForRadar(primaryScan)}
                   radars={[
                     {
@@ -351,7 +367,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
                 />
 
                 {/* Current Scan Bar Chart - Single Mode */}
-                <BarChart
+                <CustomBarChart
                   data={getScanDataForRadar(primaryScan)}
                   bars={getCurrentScanBars()}
                   xAxisKey="subject"
@@ -364,7 +380,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
             ) : (
               <>
                 {/* Current Scan Regional Distribution - Comparison Mode */}
-                <RadarChart
+                <CustomRadarChart
                   data={getComparisonRadarData()}
                   radars={getRadarComparisonConfigs()}
                   title="Distribution Comparison"
@@ -374,7 +390,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
                 />
 
                 {/* Current Scan Bar Chart - Comparison Mode */}
-                <BarChart
+                <CustomBarChart
                   data={getBarChartComparisonData()}
                   bars={getComparisonBars()}
                   xAxisKey="name"
@@ -391,7 +407,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
         <TabsContent value="absolute" className="mt-6">
           <div className="grid gap-6 md:grid-cols-2">
             {/* Regional Fat Mass Comparison Over Time */}
-            <LineChart
+            <CustomLineChart
               data={getAbsoluteComparisonData()}
               lines={getAbsoluteLineConfigs()}
               xAxisKey="date"
@@ -403,7 +419,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
             />
 
             {/* Regional Lean Mass Comparison Over Time */}
-            <LineChart
+            <CustomLineChart
               data={getLeanMassComparisonData()}
               lines={getLeanMassLineConfigs()}
               xAxisKey="date"
@@ -429,7 +445,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
 
             {viewMode === "single" ? (
               /* Single scan view */
-              <BarChart
+              <CustomBarChart
                 data={getScanDataForRadar(primaryScan)}
                 bars={getCurrentScanBars()}
                 xAxisKey="subject"
@@ -441,7 +457,7 @@ const RegionalAnalysisTab = ({ data }: { data: DexaScan[] }) => {
               />
             ) : (
               /* Comparison view */
-              <BarChart
+              <CustomBarChart
                 data={getBarChartComparisonData()}
                 bars={getComparisonBars()}
                 xAxisKey="name"

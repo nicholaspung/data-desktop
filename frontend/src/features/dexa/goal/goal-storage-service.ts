@@ -1,13 +1,6 @@
 // src/features/dexa/goal/goal-storage-service.ts
 
-export interface DexaGoal {
-  id: string;
-  bodyFatPercent: number;
-  totalWeightLbs: number;
-  vatMassLbs: number;
-  createdAt: string; // ISO string
-  lastModified: string; // ISO string
-}
+import { DexaGoal } from "../dexa";
 
 export const GoalStorageService = {
   /**

@@ -1,13 +1,11 @@
 // src/routes/bloodwork.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import {
-  DatasetConfig,
-  DatasetSelector,
-} from "@/components/data-page/dataset-selector";
+import { DatasetSelector } from "@/components/data-page/dataset-selector";
 import { CSVImportProcessor } from "@/components/data-table/csv-import-processor";
 import { Import, LineChart } from "lucide-react";
 import BloodworkVisualizations from "@/features/bloodwork/bloodwork-visualization";
+import { DatasetConfig } from "@/components/data-page/data-page";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,

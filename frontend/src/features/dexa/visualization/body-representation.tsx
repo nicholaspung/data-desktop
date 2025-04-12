@@ -6,35 +6,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { DexaScan } from "../dexa-visualization";
-
-// Define the props for the component
-interface BodyRepresentationProps {
-  // DexaScan data with body composition metrics
-  data: DexaScan;
-  title?: string;
-  className?: string;
-}
-
-// Define the body parts and their data points
-interface BodyPart {
-  id: string;
-  name: string;
-  x: number;
-  y: number;
-  dataPoints: {
-    label: string;
-    value: number | undefined;
-    unit: string;
-    color?: string;
-  }[];
-}
+import { BodyPart } from "../dexa";
+import { DEXAScan } from "@/store/dexa-definitions";
 
 export default function BodyRepresentation({
   data,
   title = "Body Composition",
   className = "",
-}: BodyRepresentationProps) {
+}: {
+  data: DEXAScan;
+  title?: string;
+  className?: string;
+}) {
   const [hoveredPart, setHoveredPart] = useState<string | null>(null);
 
   // Function to format percentages properly

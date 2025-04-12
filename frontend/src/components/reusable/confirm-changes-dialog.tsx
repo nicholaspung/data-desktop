@@ -3,20 +3,6 @@ import { Button } from "@/components/ui/button";
 import { CircleX } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";
 
-interface ConfirmChangesDialogProps {
-  title?: string;
-  description?: string;
-  onConfirm: () => void;
-  onCancel: () => void;
-  trigger?: React.ReactNode;
-  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
-  size?: "default" | "sm" | "lg" | "icon";
-  loading?: boolean;
-  showTrigger?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
-
 export function ConfirmChangesDialog({
   title = "Unsaved changes",
   description = "You have unsaved changes that will be lost. Do you want to continue?",
@@ -29,7 +15,19 @@ export function ConfirmChangesDialog({
   showTrigger = true,
   open = false,
   onOpenChange = () => {},
-}: ConfirmChangesDialogProps) {
+}: {
+  title?: string;
+  description?: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  trigger?: React.ReactNode;
+  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
+  size?: "default" | "sm" | "lg" | "icon";
+  loading?: boolean;
+  showTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   return (
     <ReusableDialog
       title={title}

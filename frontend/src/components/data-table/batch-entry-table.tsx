@@ -35,14 +35,6 @@ import { useStore } from "@tanstack/react-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
 
-interface BatchEntryTableProps {
-  datasetId: DataStoreName;
-  fields: FieldDefinition[];
-  title: string;
-  onSuccess?: () => void;
-  maxBatchSize?: number;
-}
-
 export function BatchEntryTable({
   datasetId,
   fields,
@@ -50,7 +42,13 @@ export function BatchEntryTable({
   onSuccess,
   maxBatchSize = 50,
   onNavigateToTable,
-}: BatchEntryTableProps & {
+}: {
+  datasetId: DataStoreName;
+  fields: FieldDefinition[];
+  title: string;
+  onSuccess?: () => void;
+  maxBatchSize?: number;
+} & {
   onNavigateToTable?: () => void;
 }) {
   const allData = useStore(dataStore, (state) => state);

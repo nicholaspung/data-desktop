@@ -20,21 +20,19 @@ import { DataStoreName } from "@/store/data-store";
 import useLoadData from "@/hooks/useLoadData";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 
-interface CSVImportProcessorProps {
-  datasetId: DataStoreName;
-  fields: FieldDefinition[];
-  title: string;
-  onSuccess?: () => void;
-  chunkSize?: number; // Number of records to process in each batch
-}
-
 export function CSVImportProcessor({
   datasetId,
   fields,
   title,
   onSuccess,
   chunkSize = 100, // Default to 100 records per chunk
-}: CSVImportProcessorProps) {
+}: {
+  datasetId: DataStoreName;
+  fields: FieldDefinition[];
+  title: string;
+  onSuccess?: () => void;
+  chunkSize?: number; // Number of records to process in each batch
+}) {
   const { loadData } = useLoadData({
     fields,
     datasetId,

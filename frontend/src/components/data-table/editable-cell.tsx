@@ -26,17 +26,7 @@ import dataStore, { DataStoreName, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { getDisplayValue } from "@/lib/table-utils";
 
-interface EditableCellProps {
-  value: any;
-  row: any;
-  column: any;
-  field: FieldDefinition;
-  width?: string;
-  datasetId: DataStoreName;
-  onDataChange?: () => void;
-}
-
-const EditableCell: React.FC<EditableCellProps> = ({
+const EditableCell = ({
   value: initialValue,
   row,
   column,
@@ -44,6 +34,14 @@ const EditableCell: React.FC<EditableCellProps> = ({
   width,
   onDataChange,
   datasetId,
+}: {
+  value: any;
+  row: any;
+  column: any;
+  field: FieldDefinition;
+  width?: string;
+  datasetId: DataStoreName;
+  onDataChange?: () => void;
 }) => {
   const allData = useStore(dataStore, (state) => state);
   // State for editing mode and value

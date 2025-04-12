@@ -10,8 +10,6 @@ const initialState = {
   bloodwork: false,
   blood_markers: false,
   blood_results: false,
-  paycheck: false,
-  habit: false,
   // Add experiment-related loading states
   experiments: false,
   metrics: false,

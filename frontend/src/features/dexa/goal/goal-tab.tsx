@@ -1,12 +1,12 @@
 // src/features/dexa/goal/goal-tab.tsx
 import { useEffect, useState } from "react";
-import { DexaScan } from "../dexa-visualization";
 import DexaGoalDisplay from "./dexa-goal-display";
 import { GoalStorageService } from "./goal-storage-service";
 import { formatDate } from "@/lib/date-utils";
-import { LineChart } from "@/components/charts";
+import CustomLineChart from "@/components/charts/line-chart";
+import { DEXAScan } from "@/store/dexa-definitions";
 
-export default function GoalTab({ data }: { data: DexaScan[] }) {
+export default function GoalTab({ data }: { data: DEXAScan[] }) {
   const [goal, setGoal] = useState<any>(null);
   const [refresh, setRefresh] = useState(0);
 
@@ -158,7 +158,7 @@ export default function GoalTab({ data }: { data: DexaScan[] }) {
 
       {goal && data.length > 0 && (
         <div className="grid gap-6 md:grid-cols-2">
-          <LineChart
+          <CustomLineChart
             data={getBodyFatChartData()}
             lines={bodyFatLineConfig}
             xAxisKey="date"
@@ -169,7 +169,7 @@ export default function GoalTab({ data }: { data: DexaScan[] }) {
             className="md:col-span-2"
           />
 
-          <LineChart
+          <CustomLineChart
             data={getWeightChartData()}
             lines={weightLineConfig}
             xAxisKey="date"
@@ -179,7 +179,7 @@ export default function GoalTab({ data }: { data: DexaScan[] }) {
             height={300}
           />
 
-          <LineChart
+          <CustomLineChart
             data={getVatChartData()}
             lines={vatLineConfig}
             xAxisKey="date"

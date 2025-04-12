@@ -10,21 +10,19 @@ import { exportToCSV } from "@/lib/csv-export";
 import { toast } from "sonner";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 
-interface ExportColumnsDialogProps {
-  fields: FieldDefinition[];
-  data: Record<string, any>[];
-  table: Table<any>;
-  datasetId: string;
-  onExport?: () => void;
-}
-
 export function ExportColumnsDialog({
   fields,
   data,
   table,
   datasetId,
   onExport,
-}: ExportColumnsDialogProps) {
+}: {
+  fields: FieldDefinition[];
+  data: Record<string, any>[];
+  table: Table<any>;
+  datasetId: string;
+  onExport?: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(true);

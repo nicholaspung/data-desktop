@@ -192,3 +192,12 @@ export const defaultFormatter = (value: any, name: string, props: any) => {
 
   return displayValue;
 };
+
+// Default function to get colors based on values (for heat maps and similar visualizations)
+export const defaultGetColorByValue = (value: number) => {
+  if (value < 10) return "#82ca9d"; // Low - Green
+  if (value < 20) return "#8884d8"; // Medium-Low - Purple
+  if (value < 30) return "#ffc658"; // Medium - Yellow
+  if (value < 40) return "#ff8042"; // Medium-High - Orange
+  return "#d32f2f"; // High - Red
+};

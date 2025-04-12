@@ -12,8 +12,6 @@ func CleanupUnusedTables() error {
 		// Existing datasets
 		DatasetIDDEXA,
 		DatasetIDBloodwork,
-		DatasetIDPaycheck,
-		DatasetIDHabit,
 		DatasetIDBloodMarker,
 		DatasetIDBloodResult,
 

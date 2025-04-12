@@ -3,17 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";
 
-interface ConfirmResetDialogProps {
-  title?: string;
-  description?: string;
-  onConfirm: () => void;
-  trigger?: React.ReactNode;
-  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
-  size?: "default" | "sm" | "lg" | "icon";
-  loading?: boolean;
-  showTrigger?: boolean;
-}
-
 export function ConfirmResetDialog({
   title = "Clear form data?",
   description = "This will reset all form fields and delete any saved data. This action cannot be undone.",
@@ -23,7 +12,16 @@ export function ConfirmResetDialog({
   size = "default",
   loading = false,
   showTrigger = true,
-}: ConfirmResetDialogProps) {
+}: {
+  title?: string;
+  description?: string;
+  onConfirm: () => void;
+  trigger?: React.ReactNode;
+  variant?: "destructive" | "outline" | "ghost" | "link" | "default";
+  size?: "default" | "sm" | "lg" | "icon";
+  loading?: boolean;
+  showTrigger?: boolean;
+}) {
   return (
     <ReusableDialog
       title={title}

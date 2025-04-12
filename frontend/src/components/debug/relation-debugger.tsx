@@ -19,27 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { database } from "../../../wailsjs/go/models";
 import ReusableSelect from "../reusable/reusable-select";
-
-interface Record {
-  id: string;
-  [key: string]: any;
-}
-
-interface RelationStat {
-  total: number;
-  resolved: number;
-  failed: number;
-  relatedDataset: string;
-  values: Set<string>;
-}
-
-interface RelationStats {
-  [fieldKey: string]: RelationStat;
-}
-
-interface RelatedData {
-  [fieldKey: string]: Record | null;
-}
+import { Record, RelatedData, RelationStats } from "./debug";
 
 const RelationDebugger: React.FC = () => {
   const [datasets, setDatasets] = useState<database.Dataset[]>([]);

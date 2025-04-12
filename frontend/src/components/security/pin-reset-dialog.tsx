@@ -37,12 +37,13 @@ const formSchema = z
     path: ["confirmNewPin"],
   });
 
-interface PinResetDialogProps {
+export function PinResetDialog({
+  open,
+  onOpenChange,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-export function PinResetDialog({ open, onOpenChange }: PinResetDialogProps) {
+}) {
   const { resetPin } = usePin();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

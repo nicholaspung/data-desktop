@@ -12,39 +12,7 @@ import {
 import { COLORS } from "@/lib/date-utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-
-export interface DataPoint {
-  name: string;
-  value: number;
-  color?: string;
-  [key: string]: any;
-}
-
-export interface PieConfig {
-  dataKey: string;
-  nameKey: string;
-  innerRadius?: number;
-  outerRadius?: number;
-  cornerRadius?: number;
-  startAngle?: number;
-  endAngle?: number;
-  paddingAngle?: number;
-  minAngle?: number;
-  label?: boolean | React.ReactElement | ((props: any) => React.ReactNode);
-}
-
-export interface CustomPieChartProps {
-  data: DataPoint[];
-  pieConfig: PieConfig;
-  title?: string;
-  description?: string;
-  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
-  height?: number;
-  width?: number;
-  valueUnit?: string;
-  useCustomColors?: boolean;
-  className?: string;
-}
+import { PieDataPoint, PieConfig } from "./charts";
 
 // Custom tooltip component with better styling
 const CustomTooltip = ({ active, payload, formatter, valueUnit }: any) => {
@@ -120,7 +88,18 @@ export default function CustomPieChart({
   valueUnit = "",
   useCustomColors = false,
   className,
-}: CustomPieChartProps) {
+}: {
+  data: PieDataPoint[];
+  pieConfig: PieConfig;
+  title?: string;
+  description?: string;
+  tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
+  height?: number;
+  width?: number;
+  valueUnit?: string;
+  useCustomColors?: boolean;
+  className?: string;
+}) {
   // Default formatter that includes the value unit if provided
   const defaultFormatterWithUnit = (value: any, name: string) =>
     defaultFormatter(value, name);

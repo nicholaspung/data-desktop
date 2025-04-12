@@ -13,26 +13,20 @@ import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";
 import ReusableSelect from "@/components/reusable/reusable-select";
-
-export interface DexaScan {
-  id: string;
-  date: Date;
-  createdAt: string;
-  lastModified: string;
-  [key: string]: any;
-}
-
-interface DexaVisualizationProps {
-  className?: string;
-  datasetId: DataStoreName;
-}
+import { DEXAScan } from "@/store/dexa-definitions";
 
 export default function DexaVisualization({
   className = "",
   datasetId,
-}: DexaVisualizationProps) {
+}: {
+  className?: string;
+  datasetId: DataStoreName;
+}) {
   const data =
-    useStore(dataStore, (state) => state[datasetId as DataStoreName]) || []; // Get data from the store
+    useStore(
+      dataStore,
+      (state) => state[datasetId as DataStoreName] as DEXAScan[]
+    ) || []; // Get data from the store
   const isLoading =
     useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
     false; // Get data from the loading store

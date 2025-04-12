@@ -15,8 +15,6 @@ func init() {
 	// Register existing field definition functions with the database package
 	database.GetDEXAFields = GetDEXAFields
 	database.GetBloodworkFields = GetBloodworkFields
-	database.GetPaycheckFields = GetPaycheckFields
-	database.GetHabitFields = GetHabitFields
 	database.GetBloodMarkerFields = GetBloodMarkerFields
 	database.GetBloodResultFields = GetBloodResultFields
 

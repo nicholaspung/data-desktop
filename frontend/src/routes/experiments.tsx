@@ -1,20 +1,19 @@
 // src/routes/experiments.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import {
-  DatasetConfig,
-  DatasetSelector,
-} from "@/components/data-page/dataset-selector";
+import { DatasetSelector } from "@/components/data-page/dataset-selector";
 import {
   Activity,
   Beaker,
   ClipboardList,
+  FileDiff,
   ListChecks,
   TagIcon,
   View,
 } from "lucide-react";
 import DailyTrackerView from "@/features/experiments/daily-tracker-view";
 import ExperimentList from "@/features/experiments/experiment-list";
+import { DatasetConfig } from "@/components/data-page/data-page";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
@@ -25,6 +24,7 @@ export default function ExperimentsPage() {
 
   // Get field definitions
   const experimentFields = getDatasetFields("experiments");
+  const experimentMetricFields = getDatasetFields("experiment_metrics");
   const metricFields = getDatasetFields("metrics");
   const dailyLogFields = getDatasetFields("daily_logs");
   const categoryFields = getDatasetFields("metric_categories");
@@ -67,6 +67,14 @@ export default function ExperimentsPage() {
           position: "before",
         },
       ],
+    },
+    {
+      id: "experiment_metrics",
+      title: "Experiment Metrics",
+      description: "Create and manage experiments metrics.",
+      fields: experimentMetricFields,
+      icon: <FileDiff className="h-4 w-4" />,
+      addLabel: "Create Experiment Metric",
     },
     {
       id: "metrics",
