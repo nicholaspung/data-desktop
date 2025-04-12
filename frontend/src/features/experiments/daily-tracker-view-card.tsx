@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@radix-ui/react-checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MetricWithLog } from "./experiments";
 import { useState } from "react";
 import EditableCellConfirmButtons from "@/components/data-table/editable-cell-confirm-buttons";

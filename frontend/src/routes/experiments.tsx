@@ -8,11 +8,9 @@ import {
   Calendar,
   ClipboardList,
   FileDiff,
-  ListChecks,
   TagIcon,
   View,
 } from "lucide-react";
-import DailyTrackerView from "@/features/experiments/daily-tracker-view";
 import ExperimentList from "@/features/experiments/experiment-list";
 import { DatasetConfig } from "@/components/data-page/data-page";
 import DailyTrackerCalendarView from "@/features/experiments/daily-tracker-calendar-view";
@@ -43,13 +41,6 @@ export default function ExperimentsPage() {
       defaultTab: "tracker",
       disableBatchEntry: true,
       customTabs: [
-        {
-          id: "tracker",
-          label: "Daily Tracker",
-          icon: <ListChecks className="h-4 w-4" />,
-          content: <DailyTrackerView />,
-          position: "before",
-        },
         {
           id: "calendar",
           label: "Calendar",

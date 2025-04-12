@@ -1,58 +1,34 @@
 // src/features/experiments/daily-tracker-calendar-view.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-  CheckCircle,
-  Beaker,
-} from "lucide-react";
-import {
-  addMonths,
-  subMonths,
-  format,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-  isToday,
-  isSameMonth,
-} from "date-fns";
+import { Beaker } from "lucide-react";
+import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
-import dataStore from "@/store/data-store";
+import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import DailyTrackerNavigation from "./daily-tracker-navigation";
 import DailyTrackerViewCard from "./daily-tracker-view-card";
 import { parseMetricValue } from "./experiments-utils";
 import { MetricWithLog } from "./experiments";
-import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import DailyTrackerCalendarGrid from "./daily-tracker-calendar-grid";
 
 export default function DailyTrackerCalendarView() {
   // State for calendar navigation
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [metricsWithLogs, setMetricsWithLogs] = useState<MetricWithLog[]>([]);
-  const [view, setView] = useState<"calendar" | "list">("calendar");
+  const [selectedTab, setSelectedTab] = useState("all");
+  const [showNotes, setShowNotes] = useState(false);
 
   // Access data from the store
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
-  const experimentsData =
-    useStore(dataStore, (state) => state.experiments) || [];
   const experimentMetricsData =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
@@ -62,14 +38,6 @@ export default function DailyTrackerCalendarView() {
     useStore(loadingStore, (state) => state.metrics) || false;
   const dailyLogsLoading =
     useStore(loadingStore, (state) => state.daily_logs) || false;
-
-  // Navigation functions
-  const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const goToToday = () => {
-    setCurrentMonth(new Date());
-    setSelectedDate(new Date());
-  };
 
   // Effect to process logs for selected date
   useEffect(() => {
@@ -149,6 +117,7 @@ export default function DailyTrackerCalendarView() {
 
           // Update store with response
           if (response) {
+            updateEntry(metricWithLogs.log.id, response, "daily_logs");
             processLogsForSelectedDate(selectedDate);
             toast.success("Log updated successfully");
           }
@@ -169,6 +138,7 @@ export default function DailyTrackerCalendarView() {
           const response = await ApiService.addRecord("daily_logs", newLog);
           if (response) {
             processLogsForSelectedDate(selectedDate);
+            addEntry(response, "daily_logs");
             toast.success("Log created successfully");
           }
         }
@@ -179,117 +149,25 @@ export default function DailyTrackerCalendarView() {
     }
   };
 
-  // Calculate metrics stats for a day
-  const getDayMetricsStats = (day: Date) => {
-    const logsForDay = dailyLogsData.filter((log: any) => {
-      const logDate = new Date(log.date);
-      return isSameDay(logDate, day);
-    });
+  // Get unique categories for tabs
+  const categories = [
+    ...new Set(
+      metricsWithLogs.map((m) => m.category_id_data?.name || "Uncategorized")
+    ),
+  ];
 
-    // Calculate logged metrics count vs total metrics
-    const loggedMetricsCount = new Set(
-      logsForDay.map((log: any) => log.metric_id)
-    ).size;
-    const totalMetricsCount = metricsData.length;
-
-    // Get active experiments for this day
-    const activeExperiments = experimentsData.filter((exp: any) => {
-      const startDate = new Date(exp.start_date);
-      const endDate = exp.end_date ? new Date(exp.end_date) : new Date();
-      return startDate <= day && endDate >= day && exp.status === "active";
-    });
-
-    // Calculate completion percentage for boolean metrics
-    const booleanMetrics = metricsData.filter((m: any) => m.type === "boolean");
-    const loggedBooleanMetrics = logsForDay.filter((log: any) => {
-      const metric = metricsData.find((m: any) => m.id === log.metric_id);
-      return metric && metric.type === "boolean";
-    });
-
-    // For boolean metrics, check how many are marked as true
-    const completedBooleanCount = loggedBooleanMetrics.filter((log: any) => {
-      try {
-        return JSON.parse(log.value) === true;
-      } catch {
-        return false;
-      }
-    }).length;
-
-    // Calculate completion percentage
-    const completionPercentage =
-      booleanMetrics.length > 0
-        ? (completedBooleanCount / booleanMetrics.length) * 100
-        : 0;
-
-    return {
-      loggedMetricsCount,
-      totalMetricsCount,
-      activeExperiments,
-      completionPercentage,
-      logsExist: logsForDay.length > 0,
-    };
-  };
-
-  // Generate days for the current month
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth),
+  // Filter metrics based on selected tab
+  const filteredMetrics = metricsWithLogs.filter((metric) => {
+    if (selectedTab === "all") return true;
+    return (
+      metric.category_id_data?.name.toLowerCase() === selectedTab.toLowerCase()
+    );
   });
-
-  // Determine class for each day cell
-  const getDayClass = (day: Date) => {
-    const stats = getDayMetricsStats(day);
-    let className =
-      "h-14 w-full rounded-md flex flex-col items-center justify-start p-1 relative border ";
-
-    // Base styling depending on whether the day is in the current month
-    if (!isSameMonth(day, currentMonth)) {
-      className += "text-muted-foreground opacity-50 ";
-    }
-
-    // Today styling
-    if (isToday(day)) {
-      className += "bg-primary/10 font-bold ";
-    }
-
-    // Selected day styling
-    if (isSameDay(day, selectedDate)) {
-      className += "border-primary border-2 ";
-    } else {
-      className += "hover:bg-accent/50 cursor-pointer ";
-    }
-
-    // Styling based on logs
-    if (stats.logsExist) {
-      className += "border-primary/50 ";
-    }
-
-    return className;
-  };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle>Daily Tracking Calendar</CardTitle>
-          <div className="flex gap-2">
-            <Tabs
-              defaultValue={view}
-              onValueChange={(v) => setView(v as "calendar" | "list")}
-            >
-              <TabsList>
-                <TabsTrigger value="calendar">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  Calendar
-                </TabsTrigger>
-                <TabsTrigger value="list">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Details
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </div>
+        <CardTitle>Daily Tracking</CardTitle>
       </CardHeader>
       <CardContent>
         {metricsLoading || dailyLogsLoading ? (
@@ -298,168 +176,94 @@ export default function DailyTrackerCalendarView() {
           </div>
         ) : (
           <div className="space-y-4">
-            {view === "calendar" ? (
-              <>
-                {/* Calendar navigation */}
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={goToPreviousMonth}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" onClick={goToToday}>
-                      Today
-                    </Button>
-                    <Button variant="outline" onClick={goToNextMonth}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <h2 className="text-xl font-semibold">
-                    {format(currentMonth, "MMMM yyyy")}
-                  </h2>
+            {/* Detail view for the selected day */}
+            <DailyTrackerNavigation
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              currentMonth={currentMonth}
+              setCurrentMonth={setCurrentMonth}
+            />
+
+            <DailyTrackerCalendarGrid
+              currentMonth={currentMonth}
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+            />
+
+            {/* Legend */}
+            <div className="flex flex-row justify-between">
+              <div className="flex gap-4 text-sm text-muted-foreground pt-2">
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-primary/10 border border-primary rounded-sm mr-1"></div>
+                  <span>Today</span>
                 </div>
-
-                {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {/* Weekday headers */}
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                    (day) => (
-                      <div key={day} className="py-1 font-medium w-full">
-                        {day}
-                      </div>
-                    )
-                  )}
-
-                  {/* Days of the month */}
-                  {daysInMonth.map((day) => {
-                    const stats = getDayMetricsStats(day);
-
-                    return (
-                      <TooltipProvider key={day.toString()}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={getDayClass(day)}
-                              onClick={() => {
-                                setSelectedDate(day);
-                              }}
-                            >
-                              {/* Day number */}
-                              <span className="text-sm">
-                                {format(day, "d")}
-                              </span>
-
-                              {/* Metrics completion indicator */}
-                              {stats.logsExist && (
-                                <div className="mt-1 w-full">
-                                  <Progress
-                                    value={stats.completionPercentage}
-                                    className="h-1"
-                                    indicatorClassName={cn(
-                                      stats.completionPercentage >= 75
-                                        ? "bg-green-500"
-                                        : stats.completionPercentage >= 50
-                                          ? "bg-yellow-500"
-                                          : stats.completionPercentage > 0
-                                            ? "bg-orange-500"
-                                            : "bg-red-500"
-                                    )}
-                                  />
-                                </div>
-                              )}
-
-                              {/* Active experiments indicator */}
-                              {stats.activeExperiments.length > 0 && (
-                                <div className="absolute bottom-0.5 right-0.5">
-                                  <Badge
-                                    variant="outline"
-                                    className="h-4 w-4 p-0 flex items-center justify-center bg-primary/20"
-                                  >
-                                    <Beaker className="h-3 w-3" />
-                                  </Badge>
-                                </div>
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="space-y-1">
-                              <p className="font-medium">
-                                {format(day, "EEEE, MMMM d, yyyy")}
-                              </p>
-                              <p>
-                                {stats.logsExist
-                                  ? `${stats.loggedMetricsCount} of ${stats.totalMetricsCount} metrics logged`
-                                  : "No logs for this day"}
-                              </p>
-
-                              {stats.activeExperiments.length > 0 && (
-                                <div className="pt-1">
-                                  <p className="font-medium flex items-center">
-                                    <Beaker className="h-3 w-3 mr-1" />
-                                    Active Experiments:
-                                  </p>
-                                  <ul className="pl-4 text-sm">
-                                    {stats.activeExperiments.map((exp: any) => (
-                                      <li key={exp.id}>{exp.name}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  })}
+                <div className="flex items-center">
+                  <div className="w-3 h-3 border border-primary/50 rounded-sm mr-1"></div>
+                  <span>Has Logs</span>
                 </div>
-
-                {/* Legend */}
-                <div className="flex gap-4 text-sm text-muted-foreground pt-2">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-primary/10 border border-primary rounded-sm mr-1"></div>
-                    <span>Today</span>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 border flex items-center justify-center rounded-sm mr-1">
+                    <Beaker className="h-2 w-2" />
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 border border-primary/50 rounded-sm mr-1"></div>
-                    <span>Has Logs</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 border flex items-center justify-center rounded-sm mr-1">
-                      <Beaker className="h-2 w-2" />
-                    </div>
-                    <span>Active Experiment</span>
-                  </div>
+                  <span>Active Experiment</span>
                 </div>
-              </>
-            ) : (
-              <>
-                {/* Detail view for the selected day */}
-                <DailyTrackerNavigation
-                  selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
+              </div>
+              {/* Quick Action Buttons */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={showNotes}
+                  onCheckedChange={(checked) => setShowNotes(!!checked)}
                 />
+                <Label>Show notes</Label>
+              </div>
+            </div>
 
-                {/* Group metrics by category */}
-                <ScrollArea className="h-[600px] pr-4">
-                  {metricsWithLogs.length === 0 ? (
-                    <div className="text-center p-8">
-                      <p className="text-muted-foreground">
-                        No metrics defined yet.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Group metrics by category */}
-                      {Array.from(
-                        new Set(
-                          metricsWithLogs.map(
-                            (m) => m.category_id_data?.name || "Uncategorized"
-                          )
-                        )
-                      ).map((category) => (
+            <Separator />
+
+            {/* Group metrics by category */}
+            <div className="space-y-4">
+              {/* Category Tabs */}
+              <Tabs
+                defaultValue="all"
+                value={selectedTab}
+                onValueChange={setSelectedTab}
+              >
+                <TabsList className="mb-4 flex flex-wrap h-auto">
+                  <TabsTrigger value="all" className="rounded-full">
+                    All
+                  </TabsTrigger>
+                  {categories.map((category) => (
+                    <TabsTrigger
+                      key={category}
+                      value={category}
+                      className="rounded-full"
+                    >
+                      {category}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <TabsContent value={selectedTab} className="mt-0">
+                  <div className="space-y-8">
+                    {/* Group metrics by category */}
+                    {categories
+                      .filter(
+                        (category) =>
+                          selectedTab === "all" || category === selectedTab
+                      )
+                      .map((category) => (
                         <div key={category} className="space-y-4">
-                          <h3 className="text-lg font-semibold">{category}</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {metricsWithLogs
+                          {selectedTab === "all" && (
+                            <>
+                              <h3 className="text-lg font-semibold">
+                                {category}
+                              </h3>
+                              <Separator />
+                            </>
+                          )}
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            {filteredMetrics
                               .filter(
                                 (m) =>
                                   (m.category_id_data?.name ||
@@ -469,18 +273,17 @@ export default function DailyTrackerCalendarView() {
                                 <DailyTrackerViewCard
                                   key={metric.id}
                                   metric={metric}
-                                  showNotes={true}
+                                  showNotes={showNotes}
                                   saveChanges={saveChanges}
                                 />
                               ))}
                           </div>
                         </div>
                       ))}
-                    </div>
-                  )}
-                </ScrollArea>
-              </>
-            )}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         )}
       </CardContent>

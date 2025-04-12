@@ -1,13 +1,8 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { BodyPart } from "../dexa";
 import { DEXAScan } from "@/store/dexa-definitions";
+import ReusableTooltip from "@/components/reusable/reusable-tooltip";
 
 export default function BodyRepresentation({
   data,
@@ -268,49 +263,52 @@ export default function BodyRepresentation({
 
             {/* Interactive dots for each body part */}
             {bodyParts.map((part) => (
-              <TooltipProvider key={part.id}>
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <circle
-                      cx={part.x}
-                      cy={part.y}
-                      r={hoveredPart === part.id ? 10 : 8}
-                      fill={part.dataPoints[0].color || "#8884d8"}
-                      opacity={hoveredPart === part.id ? 0.9 : 0.7}
-                      stroke="#fff"
-                      strokeWidth="2"
-                      style={{
-                        cursor: "pointer",
-                        transition: "r 0.2s, opacity 0.2s",
-                      }}
-                      onMouseEnter={() => setHoveredPart(part.id)}
-                      onMouseLeave={() => setHoveredPart(null)}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="center" className="p-0">
-                    <div className="bg-background border rounded-md shadow-md p-3 min-w-[150px]">
-                      <h4 className="font-medium text-sm mb-2 text-foreground">
-                        {part.name}
-                      </h4>
-                      <div className="space-y-1">
-                        {part.dataPoints.map((dataPoint, i) => (
-                          <div key={i} className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              {dataPoint.label}:
-                            </span>
-                            <span className="font-medium text-foreground">
-                              {dataPoint.label.includes("Fat %")
-                                ? formatPercentage(dataPoint.value)
-                                : formatWeight(dataPoint.value)}
-                              {dataPoint.unit}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+              <ReusableTooltip
+                key={part.id}
+                delayDuration={0}
+                renderTrigger={
+                  <circle
+                    cx={part.x}
+                    cy={part.y}
+                    r={hoveredPart === part.id ? 10 : 8}
+                    fill={part.dataPoints[0].color || "#8884d8"}
+                    opacity={hoveredPart === part.id ? 0.9 : 0.7}
+                    stroke="#fff"
+                    strokeWidth="2"
+                    style={{
+                      cursor: "pointer",
+                      transition: "r 0.2s, opacity 0.2s",
+                    }}
+                    onMouseEnter={() => setHoveredPart(part.id)}
+                    onMouseLeave={() => setHoveredPart(null)}
+                  />
+                }
+                renderContent={
+                  <div className="bg-background border rounded-md shadow-md p-3 min-w-[150px]">
+                    <h4 className="font-medium text-sm mb-2 text-foreground">
+                      {part.name}
+                    </h4>
+                    <div className="space-y-1">
+                      {part.dataPoints.map((dataPoint, i) => (
+                        <div key={i} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">
+                            {dataPoint.label}:
+                          </span>
+                          <span className="font-medium text-foreground">
+                            {dataPoint.label.includes("Fat %")
+                              ? formatPercentage(dataPoint.value)
+                              : formatWeight(dataPoint.value)}
+                            {dataPoint.unit}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </div>
+                }
+                contentClassName="p-0"
+                side="right"
+                align="center"
+              />
             ))}
           </svg>
 
