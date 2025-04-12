@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 // Helper to parse metric values
 export const parseMetricValue = (value: string, type: string): any => {
   if (!value) {
@@ -30,4 +32,23 @@ export const parseMetricValue = (value: string, type: string): any => {
         return value;
     }
   }
+};
+
+// Function to get status badge
+export const getStatusBadge = (status: string, text: string) => {
+  const statusColor = {
+    active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    completed: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    paused:
+      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  };
+
+  return (
+    <Badge
+      variant="outline"
+      className={statusColor[status as keyof typeof statusColor] || ""}
+    >
+      {text}
+    </Badge>
+  );
 };

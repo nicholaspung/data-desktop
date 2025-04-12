@@ -9,7 +9,6 @@
 - PDF reports from data
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
-- bloodwork graphs, when I click "out of range", it still shows the "no range set" values
 - start putting all the datasets into a single tab, and then putting all the visuals I can about into their own place
 
 ### IN PROGRESS
@@ -79,5 +78,6 @@
 - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function [DONE 2025-04-11]
 - add daily log view table component that I don't need to dig in order to view the data [DONE 2025-04-11]
 - add a large calendar view of the tracked metrics [DONE 2025-04-11]
+- bloodwork graphs, when I click "out of range", it still shows the "no range set" values [DONE 2025-04-12]
 
 ### GAVE UP

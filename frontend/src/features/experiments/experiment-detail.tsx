@@ -1,23 +1,6 @@
 // src/features/experiments/experiment-detail.tsx
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { format } from "date-fns";
 import { useStore } from "@tanstack/react-store";
@@ -33,6 +16,10 @@ import {
   Loader2,
 } from "lucide-react";
 import ExperimentDashboard from "./experiment-dashboard";
+import { getStatusBadge } from "./experiments-utils";
+import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
+import ReusableCard from "@/components/reusable/reusable-card";
 
 interface ExperimentDetailProps {
   experimentId: string;
@@ -135,41 +122,22 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
 
   if (!experiment) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">Experiment not found</p>
-          {onClose && (
-            <Button variant="outline" className="mt-4" onClick={onClose}>
-              Go Back
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <ReusableCard
+        showHeader={false}
+        contentClassName="p-8 text-center"
+        content={
+          <>
+            <p className="text-muted-foreground">Experiment not found</p>
+            {onClose && (
+              <Button variant="outline" className="mt-4" onClick={onClose}>
+                Go Back
+              </Button>
+            )}
+          </>
+        }
+      />
     );
   }
-
-  // Format status for display
-  const getStatusBadge = () => {
-    const statusColor = {
-      active:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      completed:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      paused:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    };
-
-    return (
-      <Badge
-        variant="outline"
-        className={
-          statusColor[experiment.status as keyof typeof statusColor] || ""
-        }
-      >
-        {experiment.status.charAt(0).toUpperCase() + experiment.status.slice(1)}
-      </Badge>
-    );
-  };
 
   return (
     <div className="space-y-6">
@@ -178,18 +146,84 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
         <div className="flex items-center gap-2">
           <Beaker className="h-5 w-5 text-primary" />
           <h1 className="text-2xl font-bold">{experiment.name}</h1>
-          {getStatusBadge()}
+          {getStatusBadge(
+            experiment.status,
+            experiment.status.charAt(0).toUpperCase() +
+              experiment.status.slice(1)
+          )}
         </div>
 
         <div className="flex gap-2">
-          <Button
+          <ReusableDialog
+            open={statusDialogOpen}
+            onOpenChange={setStatusDialogOpen}
             variant="outline"
-            size="sm"
-            onClick={() => setStatusDialogOpen(true)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Change Status
-          </Button>
+            triggerIcon={<Edit className="h-4 w-4 mr-2" />}
+            triggerText="Change Status"
+            title="Change Experiment Status"
+            description="Update the status of this experiment."
+            customContent={
+              <div className="py-4">
+                <ReusableSelect
+                  options={[
+                    { id: "active", label: "Active" },
+                    { id: "paused", label: "Paused" },
+                    { id: "completed", label: "Completed" },
+                  ]}
+                  value={newStatus}
+                  onChange={(value) =>
+                    setNewStatus(value as "active" | "completed" | "paused")
+                  }
+                  title={"status"}
+                  renderItem={(option) => (
+                    <div className="flex items-center">
+                      {option.id === "active" && (
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                      )}
+                      {option.id === "paused" && (
+                        <XCircle className="h-4 w-4 mr-2 text-yellow-600" />
+                      )}
+                      {option.id === "completed" && (
+                        <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
+                      )}
+                      {option.label}
+                    </div>
+                  )}
+                />
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {newStatus === "active" &&
+                    "Mark this experiment as active and in progress."}
+                  {newStatus === "paused" &&
+                    "Temporarily pause this experiment."}
+                  {newStatus === "completed" &&
+                    "Mark this experiment as completed."}
+                </div>
+              </div>
+            }
+            customFooter={
+              <div className="flex flex-row gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setStatusDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStatusChange}
+                  disabled={isSubmitting || newStatus === experiment.status}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Status"
+                  )}
+                </Button>
+              </div>
+            }
+          />
 
           <ConfirmDeleteDialog
             title="Delete Experiment"
@@ -207,11 +241,9 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
       </div>
 
       {/* Experiment Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Experiment Details</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <ReusableCard
+        title="Experiment Details"
+        content={
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 className="font-medium">Goal</h3>
@@ -239,86 +271,11 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* Experiment Dashboard */}
       <ExperimentDashboard experimentId={experimentId} />
-
-      {/* Status Change Dialog */}
-      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Experiment Status</DialogTitle>
-            <DialogDescription>
-              Update the status of this experiment.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            <Select
-              value={newStatus}
-              onValueChange={(value) =>
-                setNewStatus(value as "active" | "completed" | "paused")
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">
-                  <div className="flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                    Active
-                  </div>
-                </SelectItem>
-                <SelectItem value="paused">
-                  <div className="flex items-center">
-                    <XCircle className="h-4 w-4 mr-2 text-yellow-600" />
-                    Paused
-                  </div>
-                </SelectItem>
-                <SelectItem value="completed">
-                  <div className="flex items-center">
-                    <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
-                    Completed
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="mt-2 text-sm text-muted-foreground">
-              {newStatus === "active" &&
-                "Mark this experiment as active and in progress."}
-              {newStatus === "paused" && "Temporarily pause this experiment."}
-              {newStatus === "completed" &&
-                "Mark this experiment as completed."}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setStatusDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStatusChange}
-              disabled={isSubmitting || newStatus === experiment.status}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                "Update Status"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

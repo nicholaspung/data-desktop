@@ -10,9 +10,8 @@ import {
   PieLabel,
 } from "recharts";
 import { COLORS } from "@/lib/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { PieDataPoint, PieConfig } from "./charts";
+import ReusableCard from "../reusable/reusable-card";
 
 // Custom tooltip component with better styling
 const CustomTooltip = ({ active, payload, formatter, valueUnit }: any) => {
@@ -124,16 +123,12 @@ export default function CustomPieChart({
   };
 
   return (
-    <Card className={cn("", className)}>
-      {title && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
-        </CardHeader>
-      )}
-      <CardContent>
+    <ReusableCard
+      cardClassName={className}
+      showHeader={Boolean(title)}
+      title={title}
+      description={<p className="text-muted-foreground">{description}</p>}
+      content={
         <div
           style={{
             height: `${height}px`,
@@ -181,7 +176,7 @@ export default function CustomPieChart({
             </RechartsPieChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

@@ -9,14 +9,18 @@ export default function useLoadData({
   fields,
   datasetId,
   title,
+  fetchDataNow = false,
 }: {
   fields: FieldDefinition[]; // Replace with actual type for fields
   datasetId: DataStoreName;
   title: string;
+  fetchDataNow?: boolean;
 }) {
   // Load data when the component mounts
   useEffect(() => {
-    loadData();
+    if (fetchDataNow) {
+      loadData();
+    }
   }, [datasetId]);
 
   const loadData = async () => {

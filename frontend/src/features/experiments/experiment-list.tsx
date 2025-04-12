@@ -22,15 +22,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import AddExperimentForm from "./add-experiment-form";
 import ExperimentDetail from "./experiment-detail";
+import { getStatusBadge } from "./experiments-utils";
 
-interface ExperimentListProps {
-  onSelectExperiment?: (experimentId: string) => void;
-}
-
-const ExperimentList: React.FC<ExperimentListProps> = ({
+const ExperimentList = ({
   onSelectExperiment,
+}: {
+  onSelectExperiment?: (experimentId: string) => void;
 }) => {
   // State
   const [selectedExperimentId, setSelectedExperimentId] = useState<
@@ -102,27 +100,6 @@ const ExperimentList: React.FC<ExperimentListProps> = ({
     };
   };
 
-  // Function to get status badge
-  const getStatusBadge = (status: string) => {
-    const statusColor = {
-      active:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      completed:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      paused:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    };
-
-    return (
-      <Badge
-        variant="outline"
-        className={statusColor[status as keyof typeof statusColor] || ""}
-      >
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
   // Handle experiment selection
   const handleSelectExperiment = (experimentId: string) => {
     setSelectedExperimentId(experimentId);
@@ -176,17 +153,8 @@ const ExperimentList: React.FC<ExperimentListProps> = ({
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="new">
-              <PlusCircle className="h-4 w-4 mr-2" />
-              New Experiment
-            </TabsTrigger>
           </TabsList>
         </div>
-
-        {/* New Experiment Tab */}
-        <TabsContent value="new" className="mt-6">
-          <AddExperimentForm />
-        </TabsContent>
 
         {/* Experiment Lists for each status */}
         {["active", "paused", "completed"].map((status) => (
@@ -241,7 +209,11 @@ const ExperimentList: React.FC<ExperimentListProps> = ({
                                     {experiment.name}
                                   </h3>
                                 </div>
-                                {getStatusBadge(experiment.status)}
+                                {getStatusBadge(
+                                  experiment.status,
+                                  status.charAt(0).toUpperCase() +
+                                    status.slice(1)
+                                )}
                               </div>
 
                               <CollapsibleTrigger className="w-full">
@@ -253,16 +225,11 @@ const ExperimentList: React.FC<ExperimentListProps> = ({
                                         new Date(experiment.start_date),
                                         "MMM d, yyyy"
                                       )}
-                                      {experiment.end_date && (
-                                        <>
-                                          {" "}
-                                          -{" "}
-                                          {format(
-                                            new Date(experiment.end_date),
-                                            "MMM d, yyyy"
-                                          )}
-                                        </>
-                                      )}
+                                      {experiment.end_date &&
+                                        ` - ${format(
+                                          new Date(experiment.end_date),
+                                          "MMM d, yyyy"
+                                        )}`}
                                     </span>
                                   </div>
                                   <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform ui-expanded:rotate-180" />

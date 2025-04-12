@@ -432,7 +432,6 @@ export default function DataForm({
                     // Trigger validation
                     form.trigger(field.key);
                   }}
-                  placeholder={`Select ${field.displayName}`}
                   title={field.displayName}
                 />
               </FormControl>

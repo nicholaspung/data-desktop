@@ -1,8 +1,7 @@
 // src/features/experiments/experiment-dashboard.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { format, differenceInDays, isBefore, isAfter } from "date-fns";
@@ -18,22 +17,13 @@ import {
   ListTodo,
 } from "lucide-react";
 import ExperimentMetrics from "./experiment-metrics";
-import {
-  ChartElement,
-  LineConfig,
-  PieConfig,
-} from "@/components/charts/charts";
+import { LineConfig, PieConfig } from "@/components/charts/charts";
 import CustomPieChart from "@/components/charts/pie-chart";
 import CustomLineChart from "@/components/charts/line-chart";
-import CustomComposedChart from "@/components/charts/composed-chart";
+import { getStatusBadge } from "./experiments-utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 
-interface ExperimentDashboardProps {
-  experimentId: string;
-}
-
-const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
-  experimentId,
-}) => {
+const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
   // State
   const [experiment, setExperiment] = useState<any>(null);
   const [metrics, setMetrics] = useState<any[]>([]);
@@ -294,31 +284,6 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
     return differenceInDays(endDate, today);
   };
 
-  // Format experiment status
-  const getStatusBadge = () => {
-    if (!experiment) return null;
-
-    const statusColor = {
-      active:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-      completed:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-      paused:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    };
-
-    return (
-      <Badge
-        variant="outline"
-        className={
-          statusColor[experiment.status as keyof typeof statusColor] || ""
-        }
-      >
-        {experiment.status.charAt(0).toUpperCase() + experiment.status.slice(1)}
-      </Badge>
-    );
-  };
-
   // Generate chart data for completion trends
   const generateCompletionChartData = () => {
     if (!experiment || dailyLogs.length === 0) return [];
@@ -371,64 +336,6 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
       });
   };
 
-  // Generate metric performance chart data
-  const generateMetricChartData = () => {
-    if (!experiment || dailyLogs.length === 0) return [];
-
-    // Create a map of metric IDs to names
-    const metricNames: Record<string, string> = {};
-    metrics.forEach((metric) => {
-      metricNames[metric.id] = metric.name;
-    });
-
-    // Group logs by date
-    const logsByDate = dailyLogs.reduce(
-      (acc: Record<string, Record<string, any>>, log) => {
-        const dateStr = format(new Date(log.date), "yyyy-MM-dd");
-        if (!acc[dateStr]) acc[dateStr] = {};
-
-        // Only include numeric metrics
-        const metric = metrics.find((m) => m.id === log.metric_id);
-        if (
-          metric &&
-          (metric.type === "number" ||
-            metric.type === "percentage" ||
-            metric.type === "time")
-        ) {
-          try {
-            acc[dateStr][log.metric_id] = parseFloat(JSON.parse(log.value));
-          } catch (e: any) {
-            console.error(e);
-            acc[dateStr][log.metric_id] = parseFloat(log.value) || 0;
-          }
-        }
-
-        return acc;
-      },
-      {}
-    );
-
-    // Generate data points
-    return Object.keys(logsByDate)
-      .sort()
-      .map((dateStr) => {
-        const metricValues = logsByDate[dateStr];
-        const dateObj = new Date(dateStr);
-
-        const dataPoint: Record<string, any> = {
-          date: dateStr,
-          displayDate: format(dateObj, "MMM d"),
-        };
-
-        // Add each metric value to the data point
-        Object.keys(metricValues).forEach((metricId) => {
-          dataPoint[metricNames[metricId] || metricId] = metricValues[metricId];
-        });
-
-        return dataPoint;
-      });
-  };
-
   // Generate data for pie chart
   const generatePieChartData = () => {
     if (!experiment || experimentMetrics.length === 0) return [];
@@ -456,17 +363,15 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
 
   if (!experiment) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <p className="text-muted-foreground">Experiment not found</p>
-        </CardContent>
-      </Card>
+      <ReusableCard
+        contentClassName="p-8 text-center"
+        content={<p className="text-muted-foreground">Experiment not found</p>}
+      />
     );
   }
 
   // Prepare chart configurations
   const completionChartData = generateCompletionChartData();
-  const metricChartData = generateMetricChartData();
   const pieChartData = generatePieChartData();
 
   const lineConfig: LineConfig[] = [
@@ -488,25 +393,13 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
     paddingAngle: 2,
   };
 
-  // Generate chart elements for metric values
-  const metricChartElements: ChartElement[] = metrics
-    .filter(
-      (m) => m.type === "number" || m.type === "percentage" || m.type === "time"
-    )
-    .map((metric) => ({
-      type: "line",
-      dataKey: metric.name,
-      name: metric.name,
-      color: undefined, // Let the chart assign colors
-      strokeWidth: 2,
-      curveType: "monotone",
-    }));
-
   return (
     <div className="space-y-6">
       {/* Experiment Header */}
-      <Card>
-        <CardContent className="p-6">
+      <ReusableCard
+        contentClassName="p-6"
+        showHeader={false}
+        content={
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-2xl font-bold">{experiment.name}</h2>
@@ -515,7 +408,13 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
               </p>
 
               <div className="flex items-center gap-2 mt-2">
-                {getStatusBadge()}
+                {experiment
+                  ? getStatusBadge(
+                      experiment.status,
+                      experiment.status.charAt(0).toUpperCase() +
+                        experiment.status.slice(1)
+                    )
+                  : null}
 
                 <div className="flex items-center text-sm">
                   <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -551,8 +450,8 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* Tabs for different views */}
       <Tabs defaultValue="progress">
@@ -575,103 +474,34 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
           {/* Progress Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Overall Progress Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Overall Progress</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center p-4">
-                  <div className="relative w-48 h-48 flex items-center justify-center">
-                    <CustomPieChart
-                      data={pieChartData}
-                      pieConfig={pieConfig}
-                      useCustomColors={true}
-                      height={200}
-                      width={200}
-                    />
-                    <div className="absolute flex flex-col items-center justify-center">
-                      <div className="text-3xl font-bold">
-                        {Math.round(progressData.overall)}%
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Complete
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <h3 className="font-medium mb-2">Metric Progress</h3>
-                  <div className="space-y-4">
-                    {experimentMetrics.map((expMetric) => {
-                      const metric = metrics.find(
-                        (m) => m.id === expMetric.metric_id
-                      );
-                      const progress =
-                        progressData.byMetric[expMetric.metric_id] || 0;
-
-                      return (
-                        <div key={expMetric.id} className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>{metric?.name || "Unknown"}</span>
-                            <span>{Math.round(progress)}%</span>
-                          </div>
-                          <Progress value={progress} className="h-2" />
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <CustomPieChart
+              data={pieChartData}
+              pieConfig={pieConfig}
+              title="Overall Progress"
+            />
 
             {/* Completion Rate Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Daily Completion Trend</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {completionChartData.length === 0 ? (
+            {completionChartData.length === 0 ? (
+              <ReusableCard
+                title="Daily Completion Trend"
+                showHeader
+                content={
                   <div className="flex items-center justify-center p-8">
                     <p className="text-muted-foreground">
                       No data available yet
                     </p>
                   </div>
-                ) : (
-                  <CustomLineChart
-                    data={completionChartData}
-                    lines={lineConfig}
-                    xAxisKey="displayDate"
-                    title=""
-                    height={300}
-                  />
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Metric Trends */}
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Metric Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {metricChartData.length === 0 ? (
-                  <div className="flex items-center justify-center p-8">
-                    <p className="text-muted-foreground">
-                      No data available yet
-                    </p>
-                  </div>
-                ) : (
-                  <CustomComposedChart
-                    data={metricChartData}
-                    elements={metricChartElements}
-                    xAxisKey="displayDate"
-                    title=""
-                    height={300}
-                  />
-                )}
-              </CardContent>
-            </Card>
+                }
+              />
+            ) : (
+              <CustomLineChart
+                data={completionChartData}
+                lines={lineConfig}
+                xAxisKey="displayDate"
+                title="Daily Completion Trend"
+                height={300}
+              />
+            )}
           </div>
         </TabsContent>
 

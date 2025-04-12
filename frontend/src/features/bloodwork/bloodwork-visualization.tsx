@@ -164,6 +164,14 @@ const BloodworkVisualizations: React.FC = () => {
           return false;
         }
 
+        // Skip markers with no range defined when filtering for "optimal" or "outOfRange"
+        if (
+          (statusFilter === "optimal" || statusFilter === "outOfRange") &&
+          !hasAnyRangeDefined(marker)
+        ) {
+          return false;
+        }
+
         // Get the latest result
         const sortedResults = [...results].sort((a, b) => {
           return (
@@ -186,13 +194,43 @@ const BloodworkVisualizations: React.FC = () => {
             value >= marker.optimal_low &&
             value <= marker.optimal_high;
         } else if (statusFilter === "outOfRange") {
-          matchesStatus =
-            !marker.optimal_general &&
-            !marker.general_reference &&
-            (marker.optimal_low === undefined ||
-              marker.optimal_high === undefined ||
-              value < marker.optimal_low ||
-              value > marker.optimal_high);
+          // First check if we have a text-based value
+          if (
+            latestResult.value_text &&
+            latestResult.value_text.trim() !== ""
+          ) {
+            // For text-based values, we should only consider "out of range" if it's explicitly
+            // different from the reference/optimal and not "Unsure" or similar ambiguous values
+            const valueText = latestResult.value_text.toLowerCase();
+            const isUnsureValue =
+              valueText.includes("unsure") ||
+              valueText.includes("undetermined") ||
+              valueText.includes("unknown") ||
+              valueText === "n/a";
+
+            // Don't count "unsure" values as out of range
+            if (isUnsureValue) {
+              matchesStatus = false;
+            } else {
+              // Check if the text value doesn't match either optimal or reference range
+              const referenceText =
+                marker.general_reference?.toLowerCase() || "";
+              const optimalText = marker.optimal_general?.toLowerCase() || "";
+              matchesStatus =
+                hasAnyRangeDefined(marker) &&
+                !valueText.includes(referenceText) &&
+                !referenceText.includes(valueText) &&
+                !valueText.includes(optimalText) &&
+                !optimalText.includes(valueText);
+            }
+          } else {
+            // For numeric values, check if they're outside the defined ranges
+            matchesStatus =
+              hasAnyRangeDefined(marker) &&
+              marker.optimal_low !== undefined &&
+              marker.optimal_high !== undefined &&
+              (value < marker.optimal_low || value > marker.optimal_high);
+          }
         }
       }
 
