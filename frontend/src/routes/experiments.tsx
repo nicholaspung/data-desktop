@@ -5,6 +5,7 @@ import { DatasetSelector } from "@/components/data-page/dataset-selector";
 import {
   Activity,
   Beaker,
+  Calendar,
   ClipboardList,
   FileDiff,
   ListChecks,
@@ -14,6 +15,7 @@ import {
 import DailyTrackerView from "@/features/experiments/daily-tracker-view";
 import ExperimentList from "@/features/experiments/experiment-list";
 import { DatasetConfig } from "@/components/data-page/data-page";
+import DailyTrackerCalendarView from "@/features/experiments/daily-tracker-calendar-view";
 
 export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
@@ -46,6 +48,13 @@ export default function ExperimentsPage() {
           label: "Daily Tracker",
           icon: <ListChecks className="h-4 w-4" />,
           content: <DailyTrackerView />,
+          position: "before",
+        },
+        {
+          id: "calendar",
+          label: "Calendar",
+          icon: <Calendar className="h-4 w-4" />,
+          content: <DailyTrackerCalendarView />,
           position: "before",
         },
       ],

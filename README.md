@@ -15,7 +15,6 @@
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- add daily log view table component that I don't need to dig in order to view the data
 - in metrics, add a way to customize when the metric will show up (i.e. monday/wednesday)
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
 - add a large calendar view of the tracked metrics
@@ -77,5 +76,6 @@
 - in daily tracker view, figure out a way to associate the metric with the experiment that is going on that has the metrics in it, without having to select the experiment to tie it too [DONE 2025-04-11]
 - adjust how the "complete" metric shows up [DONE 2025-04-11]
 - adjust how the card "saves", rather than clicking an overall save button, have the save button either in the card or automatically do it via a debounced function [DONE 2025-04-11]
+- add daily log view table component that I don't need to dig in order to view the data [DONE 2025-04-11]
 
 ### GAVE UP

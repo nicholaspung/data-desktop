@@ -2,7 +2,10 @@ import { Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -18,6 +21,8 @@ export default function ReusableSelect({
   triggerClassName,
   disabled,
   noDefault = true,
+  groupByKey = "group",
+  useGroups = false,
 }: {
   options: any[];
   value: any;
@@ -29,7 +34,51 @@ export default function ReusableSelect({
   triggerClassName?: string;
   disabled?: boolean;
   noDefault?: boolean;
+  groupByKey?: string;
+  useGroups?: boolean;
 }) {
+  // Only perform grouping if useGroups is true
+  const renderOptions = () => {
+    if (!useGroups) {
+      // Render flat list of options (original behavior)
+      return options.map((option) => (
+        <SelectItem key={option.id} value={option.id}>
+          {renderItem ? renderItem(option) : option.label}
+        </SelectItem>
+      ));
+    }
+
+    // Group options by the groupByKey property
+    const groupedOptions = options.reduce(
+      (groups: Record<string, any[]>, option) => {
+        const group = (option[groupByKey as keyof any] as string) || "Other";
+        if (!groups[group]) {
+          groups[group] = [];
+        }
+        groups[group].push(option);
+        return groups;
+      },
+      {}
+    );
+
+    // Render grouped options
+    return Object.entries(groupedOptions).map(
+      ([group, groupOptions], groupIndex) => (
+        <div key={group}>
+          {groupIndex > 0 && <SelectSeparator />}
+          <SelectGroup>
+            <SelectLabel>{group}</SelectLabel>
+            {groupOptions.map((option) => (
+              <SelectItem key={option.id} value={option.id}>
+                {renderItem ? renderItem(option) : option.label}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </div>
+      )
+    );
+  };
+
   return (
     <Select
       disabled={disabled ? disabled : options.length === 0}
@@ -58,11 +107,7 @@ export default function ReusableSelect({
             {noDefault ? null : (
               <SelectItem value="_none_">Select...</SelectItem>
             )}
-            {options.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {renderItem ? renderItem(option) : option.label}
-              </SelectItem>
-            ))}
+            {renderOptions()}
           </>
         )}
       </SelectContent>
