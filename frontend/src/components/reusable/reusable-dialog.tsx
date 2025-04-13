@@ -11,6 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2, Save } from "lucide-react";
 import { ReactNode } from "react";
 
 /**
@@ -44,6 +45,9 @@ export default function ReusableDialog({
   showTrigger = true,
   open,
   onOpenChange,
+  confirmIcon,
+  footerActionDisabled,
+  footerActionLoadingText,
 }: {
   title?: string;
   description?: string;
@@ -63,6 +67,9 @@ export default function ReusableDialog({
   showTrigger?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  confirmIcon?: ReactNode;
+  footerActionDisabled?: boolean;
+  footerActionLoadingText?: string;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -104,8 +111,21 @@ export default function ReusableDialog({
                   ? "bg-destructive text-destructive-foreground"
                   : ""
               }
+              disabled={footerActionDisabled}
             >
-              {confirmText}
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {footerActionLoadingText
+                    ? footerActionLoadingText
+                    : "Saving..."}
+                </>
+              ) : (
+                <>
+                  {confirmIcon && <Save className="h-4 w-4 mr-2" />}
+                  {confirmText}
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         )}

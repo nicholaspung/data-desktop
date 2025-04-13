@@ -1,54 +1,29 @@
 // src/features/experiments/experiment-metrics.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Target, Edit, Save, Loader2 } from "lucide-react";
+import { Plus, Trash2, Target, Edit, Save } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, deleteEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { ExperimentMetric } from "./experiments";
+import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 
-interface ExperimentMetricsProps {
-  experimentId: string;
-  showAddButton?: boolean;
-  editable?: boolean;
-}
-
-// Type for experiment metric
-interface ExperimentMetric {
-  id: string;
-  experiment_id: string;
-  metric_id: string;
-  metric_id_data?: any;
-  target: string; // JSON stringified target value
-  target_type: "atleast" | "atmost" | "exactly" | "boolean";
-  importance: number; // 1-10 scale
-}
-
-const ExperimentMetrics: React.FC<ExperimentMetricsProps> = ({
+const ExperimentMetrics = ({
   experimentId,
   showAddButton = true,
   editable = true,
+}: {
+  experimentId: string;
+  showAddButton?: boolean;
+  editable?: boolean;
 }) => {
   // State
   const [experimentMetrics, setExperimentMetrics] = useState<
@@ -253,19 +228,16 @@ const ExperimentMetrics: React.FC<ExperimentMetricsProps> = ({
             <div className="flex gap-4">
               <div className="flex-1">
                 <Label htmlFor="target-type">Target Type</Label>
-                <Select
+                <ReusableSelect
                   value={targetType}
-                  onValueChange={(value) => setTargetType(value as any)}
-                >
-                  <SelectTrigger id="target-type">
-                    <SelectValue placeholder="Select target type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="atleast">At least</SelectItem>
-                    <SelectItem value="atmost">At most</SelectItem>
-                    <SelectItem value="exactly">Exactly</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => setTargetType(value as any)}
+                  title="target type"
+                  options={[
+                    { id: "atleast", label: "At least" },
+                    { id: "atmost", label: "At most" },
+                    { id: "exactly", label: "Exactly" },
+                  ]}
+                />
               </div>
 
               <div className="flex-1">
@@ -304,17 +276,74 @@ const ExperimentMetrics: React.FC<ExperimentMetricsProps> = ({
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Metrics & Goals</CardTitle>
           {showAddButton && editable && (
-            <Button
+            <ReusableDialog
+              open={dialogOpen}
+              onOpenChange={setDialogOpen}
               variant="outline"
               size="sm"
-              onClick={() => {
-                resetForm();
-                setDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Metric
-            </Button>
+              triggerIcon={<Plus className="h-4 w-4 mr-2" />}
+              triggerText="Add Metric"
+              title={
+                editingMetric ? "Edit Metric Goal" : "Add Metric to Experiment"
+              }
+              description={
+                editingMetric
+                  ? "Update the target for this metric"
+                  : "Set a target for tracking this metric in your experiment"
+              }
+              customContent={
+                <div className="space-y-4 py-4">
+                  {/* Metric Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="metric-select">Metric</Label>
+                    <ReusableSelect
+                      value={selectedMetricId}
+                      onChange={setSelectedMetricId}
+                      disabled={!!editingMetric}
+                      title="a metric to track"
+                      renderItem={(option) => option.name}
+                      options={metrics}
+                    />
+                  </div>
+
+                  {/* Target Configuration */}
+                  {selectedMetricId && (
+                    <>
+                      <Separator />
+                      <div className="space-y-4">
+                        <h3 className="font-medium">Set Target</h3>
+                        {renderTargetField()}
+                        <div className="space-y-2">
+                          <Label htmlFor="importance">
+                            Importance (1-10): {importance}
+                          </Label>
+                          <Input
+                            id="importance"
+                            type="range"
+                            min="1"
+                            max="10"
+                            value={importance}
+                            onChange={(e) =>
+                              setImportance(parseInt(e.target.value))
+                            }
+                            className="w-full"
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>Less important</span>
+                            <span>More important</span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              }
+              onCancel={() => setDialogOpen(false)}
+              onConfirm={saveMetric}
+              footerActionDisabled={!selectedMetricId || loading}
+              confirmText={editingMetric ? "Update Metric" : "Add Metric"}
+              confirmIcon={<Save className="h-4 w-4 mr-2" />}
+            />
           )}
         </CardHeader>
         <CardContent>
@@ -400,100 +429,6 @@ const ExperimentMetrics: React.FC<ExperimentMetricsProps> = ({
           )}
         </CardContent>
       </Card>
-
-      {/* Add/Edit Metric Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingMetric ? "Edit Metric Goal" : "Add Metric to Experiment"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingMetric
-                ? "Update the target for this metric"
-                : "Set a target for tracking this metric in your experiment"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {/* Metric Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="metric-select">Metric</Label>
-              <Select
-                value={selectedMetricId}
-                onValueChange={setSelectedMetricId}
-                disabled={!!editingMetric}
-              >
-                <SelectTrigger id="metric-select">
-                  <SelectValue placeholder="Select a metric to track" />
-                </SelectTrigger>
-                <SelectContent>
-                  {metrics.map((metric: any) => (
-                    <SelectItem key={metric.id} value={metric.id}>
-                      {metric.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Target Configuration */}
-            {selectedMetricId && (
-              <>
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="font-medium">Set Target</h3>
-
-                  {renderTargetField()}
-
-                  {/* Importance Slider */}
-                  <div className="space-y-2">
-                    <Label htmlFor="importance">
-                      Importance (1-10): {importance}
-                    </Label>
-                    <Input
-                      id="importance"
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={importance}
-                      onChange={(e) => setImportance(parseInt(e.target.value))}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Less important</span>
-                      <span>More important</span>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={saveMetric}
-              disabled={!selectedMetricId || loading}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  {editingMetric ? "Update Metric" : "Add Metric"}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

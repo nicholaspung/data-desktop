@@ -18,7 +18,6 @@
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
 - only show a metric log if the metric was created on the date of or after
 - in metrics, also add an "end" date which will archive that metric and the metric won't show up after that date
-- in daily-tracker-calendar-view.tsx, the savechanges function needs updating - sometimes the log attaches to an experiment, but sometimes it doesn't
 
 ### DONE
 
@@ -80,5 +79,7 @@
 - add daily log view table component that I don't need to dig in order to view the data [DONE 2025-04-11]
 - add a large calendar view of the tracked metrics [DONE 2025-04-11]
 - bloodwork graphs, when I click "out of range", it still shows the "no range set" values [DONE 2025-04-12]
+- in daily-tracker-calendar-view.tsx, the savechanges function needs updating - sometimes the log attaches to an experiment, but sometimes it doesn't [DONE 2025-04-12]
+- in experiment-dashboard.tsx, combine the header components together [DONE 2025-04-13]
 
 ### GAVE UP

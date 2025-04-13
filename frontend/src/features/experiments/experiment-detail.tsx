@@ -2,19 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
-import { format } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { deleteEntry, updateEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import {
-  Beaker,
-  Edit,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Loader2,
-} from "lucide-react";
+import { Beaker, Edit, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import ExperimentDashboard from "./experiment-dashboard";
 import { getStatusBadge } from "./experiments-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -200,29 +192,14 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
                 </div>
               </div>
             }
-            customFooter={
-              <div className="flex flex-row gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setStatusDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleStatusChange}
-                  disabled={isSubmitting || newStatus === experiment.status}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Status"
-                  )}
-                </Button>
-              </div>
+            onCancel={() => setStatusDialogOpen(false)}
+            onConfirm={handleStatusChange}
+            footerActionDisabled={
+              isSubmitting || newStatus === experiment.status
             }
+            loading={isSubmitting}
+            footerActionLoadingText="Updating..."
+            confirmText="Update Status"
           />
 
           <ConfirmDeleteDialog
@@ -239,40 +216,6 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
           )}
         </div>
       </div>
-
-      {/* Experiment Info Card */}
-      <ReusableCard
-        title="Experiment Details"
-        content={
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium">Goal</h3>
-              <p className="text-muted-foreground">
-                {experiment.goal || "No goal specified"}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-medium">Duration</h3>
-              <div className="flex items-center text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-2" />
-                {format(new Date(experiment.start_date), "MMM d, yyyy")}
-                {experiment.end_date && (
-                  <> - {format(new Date(experiment.end_date), "MMM d, yyyy")}</>
-                )}
-                {!experiment.end_date && <> - Ongoing</>}
-              </div>
-            </div>
-
-            <div className="md:col-span-2">
-              <h3 className="font-medium">Description</h3>
-              <p className="text-muted-foreground">
-                {experiment.description || "No description provided"}
-              </p>
-            </div>
-          </div>
-        }
-      />
 
       {/* Experiment Dashboard */}
       <ExperimentDashboard experimentId={experimentId} />

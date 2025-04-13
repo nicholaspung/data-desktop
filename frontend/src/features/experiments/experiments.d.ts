@@ -38,3 +38,14 @@ export interface DailyLog {
   value: string;
   notes?: string;
 }
+
+// Type for experiment metric
+export interface ExperimentMetric {
+  id: string;
+  experiment_id: string;
+  metric_id: string;
+  metric_id_data?: any;
+  target: string; // JSON stringified target value
+  target_type: "atleast" | "atmost" | "exactly" | "boolean";
+  importance: number; // 1-10 scale
+}

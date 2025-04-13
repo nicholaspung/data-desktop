@@ -134,19 +134,6 @@ export function ExportColumnsDialog({
     </div>
   );
 
-  // Render dialog footer
-  const renderDialogFooter = () => (
-    <div className="space-x-2">
-      <Button variant="outline" onClick={() => setOpen(false)}>
-        Cancel
-      </Button>
-      <Button onClick={handleExport} disabled={selectedColumns.length === 0}>
-        <Download className="h-4 w-4 mr-2" />
-        Export Selected
-      </Button>
-    </div>
-  );
-
   return (
     <>
       <Button
@@ -170,7 +157,11 @@ export function ExportColumnsDialog({
         onOpenChange={setOpen}
         showTrigger={false}
         customContent={renderDialogContent()}
-        customFooter={renderDialogFooter()}
+        onCancel={() => setOpen(false)}
+        onConfirm={handleExport}
+        footerActionDisabled={selectedColumns.length === 0}
+        confirmIcon={<Download className="h-4 w-4 mr-2" />}
+        confirmText="Export Selected"
       />
     </>
   );

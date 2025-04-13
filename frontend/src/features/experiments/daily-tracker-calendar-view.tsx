@@ -31,6 +31,7 @@ export default function DailyTrackerCalendarView() {
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const experimentMetricsData =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
+  const experimentsData = useStore(dataStore, (state) => state.experiments);
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   // Loading state
@@ -95,9 +96,37 @@ export default function DailyTrackerCalendarView() {
     try {
       const metricWithLogs = metricsWithLogs.find((el) => el.id === metricId);
       if (metricWithLogs) {
-        const experimentMetric = experimentMetricsData.filter(
+        // Find all experiment metrics that use this metric
+        const relatedExperimentMetrics = experimentMetricsData.filter(
           (el: any) => el.metric_id === metricId
         );
+
+        // Prioritize experiment metrics from active experiments
+        let experimentId = null;
+        if (relatedExperimentMetrics.length > 0) {
+          // Check if any of these metrics belong to active experiments
+          const activeExperiments = experimentsData.filter(
+            (exp: any) => exp.status === "active"
+          );
+
+          const activeExperimentIds = activeExperiments.map(
+            (exp: any) => exp.id
+          );
+
+          // First try to find metrics from active experiments
+          const activeExperimentMetric = relatedExperimentMetrics.find(
+            (em: any) => activeExperimentIds.includes(em.experiment_id)
+          );
+
+          // If found, use this experiment ID
+          if (activeExperimentMetric) {
+            experimentId = activeExperimentMetric.experiment_id;
+          } else if (relatedExperimentMetrics.length > 0) {
+            // Otherwise just use the first related experiment
+            experimentId = relatedExperimentMetrics[0].experiment_id;
+          }
+        }
+
         if (metricWithLogs.log) {
           // Update existing log
           const response = await ApiService.updateRecord(
@@ -109,9 +138,7 @@ export default function DailyTrackerCalendarView() {
                   ? JSON.stringify(value)
                   : metricWithLogs.log.value,
               notes: key === "notes" ? value : metricWithLogs.log.notes,
-              experiment_id: experimentMetric.length
-                ? experimentMetric[0].experiment_id
-                : null,
+              experiment_id: experimentId, // Use the determined experiment ID
             }
           );
 
@@ -125,9 +152,7 @@ export default function DailyTrackerCalendarView() {
           const newLog = {
             date: selectedDate,
             metric_id: metricId,
-            experiment_id: experimentMetric.length
-              ? experimentMetric[0].experiment_id
-              : null,
+            experiment_id: experimentId, // Use the determined experiment ID
             value:
               key === "value"
                 ? JSON.stringify(value)
