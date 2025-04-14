@@ -46,6 +46,12 @@ func GetExperimentFields() []database.FieldDefinition {
 			DisplayName: "Status",
 			Description: "Status of the experiment",
 		},
+		{
+			Key:         "private",
+			Type:        database.FieldTypeBoolean,
+			DisplayName: "Private",
+			Description: "Is experiment private?",
+		},
 	}
 }
 
@@ -233,6 +239,12 @@ func GetExperimentMetricFields() []database.FieldDefinition {
 			Type:        database.FieldTypeNumber,
 			DisplayName: "Importance",
 			Description: "How important this metric is to the experiment (1-10 scale)",
+		},
+		{
+			Key:         "private",
+			Type:        database.FieldTypeBoolean,
+			DisplayName: "Private",
+			Description: "Is experiment metric private?",
 		},
 	}
 }

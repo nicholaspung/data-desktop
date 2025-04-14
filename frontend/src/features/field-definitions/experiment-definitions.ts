@@ -46,6 +46,12 @@ export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Status",
       description: "Status of the experiment (active, completed, paused)",
     },
+    {
+      key: "private",
+      type: "boolean",
+      displayName: "Private",
+      description: "Is experiment private?",
+    },
   ],
 };
 
@@ -273,6 +279,12 @@ export const EXPERIMENT_METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Importance",
       description:
         "How important this metric is to the experiment (1-10 scale)",
+    },
+    {
+      key: "private",
+      type: "boolean",
+      displayName: "Private",
+      description: "Is experiment metric private?",
     },
   ],
 };

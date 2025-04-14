@@ -1,8 +1,4 @@
-// Modified version of frontend/src/features/experiments/daily-tracker-calendar-view.tsx
-// This adds support for metric scheduling
-
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Beaker, Calendar } from "lucide-react";
 import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
@@ -10,7 +6,7 @@ import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import DailyTrackerNavigation from "./daily-tracker-navigation";
 import DailyTrackerViewCard from "./daily-tracker-view-card";
-import { parseMetricValue } from "./experiments-utils";
+import { parseMetricValue } from "../experiments/experiments-utils";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
@@ -225,11 +221,10 @@ export default function DailyTrackerCalendarView() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daily Tracking</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Daily Tracking</h1>
+
+      <div>
         {metricsLoading || dailyLogsLoading ? (
           <div className="flex items-center justify-center p-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -366,7 +361,7 @@ export default function DailyTrackerCalendarView() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
+import { usePin } from "@/hooks/usePin";
 
 export default function DailyTrackerCalendarGrid({
   currentMonth,
@@ -31,6 +32,7 @@ export default function DailyTrackerCalendarGrid({
   const experimentsData =
     useStore(dataStore, (state) => state.experiments) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
+  const { isUnlocked } = usePin();
 
   // Calculate metrics stats for a day
   const getDayMetricsStats = (day: Date) => {
@@ -241,9 +243,13 @@ export default function DailyTrackerCalendarGrid({
                       Active Experiments:
                     </p>
                     <ul className="pl-4 text-sm">
-                      {stats.activeExperiments.map((exp: any) => (
-                        <li key={exp.id}>{exp.name}</li>
-                      ))}
+                      {stats.activeExperiments.map((exp: any) =>
+                        exp.private && !isUnlocked ? (
+                          <li key={exp.id}>-</li>
+                        ) : (
+                          <li key={exp.id}>{exp.name}</li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}

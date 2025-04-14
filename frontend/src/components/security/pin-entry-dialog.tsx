@@ -23,21 +23,27 @@ export function PinEntryDialog({
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }) {
-  const { unlock, openPinResetDialog } = usePin();
+  const { unlock } = usePin();
   const [pin, setPin] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
-  // Focus the input when the dialog opens
+  // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
       // Small delay to ensure the dialog is fully rendered
       const timeout = setTimeout(() => {
-        pinInputRef.current?.focus();
+        if (pinInputRef.current) {
+          pinInputRef.current.focus();
+        }
       }, 100);
 
       return () => clearTimeout(timeout);
+    } else {
+      // Reset state when dialog closes
+      setPin("");
+      setIsSubmitting(false);
     }
   }, [open]);
 
@@ -54,28 +60,51 @@ export function PinEntryDialog({
 
       if (success) {
         setPin("");
-        onOpenChange(false);
-        if (onSuccess) {
-          onSuccess();
-        }
+
+        // Important: Set state first, then close dialog
+        // This prevents race conditions and focus issues
+        setIsSubmitting(false);
+
+        // Use setTimeout to ensure state is updated before dialog closes
+        setTimeout(() => {
+          onOpenChange(false);
+
+          // Another small delay before calling success callback
+          if (onSuccess) {
+            setTimeout(onSuccess, 50);
+          }
+        }, 50);
       } else {
         setAttempt(attempt + 1);
         setPin("");
+        setIsSubmitting(false);
       }
-    } finally {
+    } catch (error) {
+      console.error("Error during PIN unlock:", error);
       setIsSubmitting(false);
     }
   };
 
-  // Handle PIN reset
-  const handleResetPin = () => {
-    onOpenChange(false);
-    openPinResetDialog();
+  // Handle dialog close
+  const handleOpenChange = (newOpen: boolean) => {
+    // Prevent closing during submission
+    if (isSubmitting && !newOpen) return;
+
+    // Otherwise, propagate the change
+    onOpenChange(newOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[350px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[350px]"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking outside while submitting
+          if (isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-primary" />
@@ -99,7 +128,7 @@ export function PinEntryDialog({
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               className="text-center text-xl tracking-widest"
-              autoFocus
+              autoComplete="off"
               minLength={4}
               disabled={isSubmitting}
             />
@@ -123,16 +152,6 @@ export function PinEntryDialog({
                 <UnlockKeyhole className="h-4 w-4 mr-2" />
               )}
               Unlock
-            </Button>
-
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full text-sm"
-              onClick={handleResetPin}
-              disabled={isSubmitting}
-            >
-              Forgot PIN?
             </Button>
           </DialogFooter>
         </form>

@@ -6,12 +6,14 @@ import {
   BarChart,
   HeartPulse,
   Home,
-  ListTodo,
   PieChart,
   ChevronLeft,
   ChevronRight,
   MenuIcon,
   Bug,
+  Database,
+  CalendarCheck,
+  Beaker,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,9 +46,19 @@ const sidebarItems: SidebarItem[] = [
     href: "/bloodwork",
   },
   {
+    title: "Daily Tracker",
+    icon: <CalendarCheck className="h-5 w-5" />,
+    href: "/calendar",
+  },
+  {
     title: "Experiments",
-    icon: <ListTodo className="h-5 w-5" />,
+    icon: <Beaker className="h-5 w-5" />,
     href: "/experiments",
+  },
+  {
+    title: "Datasets",
+    icon: <Database className="h-5 w-5" />,
+    href: "/dataset",
   },
   {
     title: "Reports",

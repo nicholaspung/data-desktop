@@ -21,6 +21,8 @@ import EditableCell from "./editable-cell";
 import FilterControls from "./filter-controls";
 import { toast } from "sonner";
 import { DataStoreName } from "@/store/data-store";
+import { ProtectedField } from "../security/protected-content";
+import { usePin } from "@/hooks/usePin";
 
 export function EditableDataTable<TData extends Record<string, any>, TValue>({
   columns,
@@ -63,6 +65,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
   useInlineEditing?: boolean; // Flag to enable inline editing
 }) {
+  const { isUnlocked } = usePin();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [filterColumn, setFilterColumn] = useState<string>(
@@ -178,6 +181,10 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         const columnId = String(columnInfo.id);
         const value = getValue();
         const field = fieldMap.get(columnId);
+
+        if (row.original.private && !isUnlocked) {
+          return <ProtectedField>{value}</ProtectedField>;
+        }
 
         // For any editable field that has a field definition
         if (useInlineEditing && field && field.key !== "id") {

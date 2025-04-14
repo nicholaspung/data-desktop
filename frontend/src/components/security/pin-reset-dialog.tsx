@@ -10,32 +10,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Loader2, KeyRound, RefreshCcw } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
-
-// Form validation schema
-const formSchema = z
-  .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    newPin: z.string().min(4, "PIN must be at least 4 digits"),
-    confirmNewPin: z.string().min(4, "PIN must be at least 4 digits"),
-  })
-  .refine((data) => data.newPin === data.confirmNewPin, {
-    message: "PINs do not match",
-    path: ["confirmNewPin"],
-  });
 
 export function PinResetDialog({
   open,
@@ -45,37 +22,85 @@ export function PinResetDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { resetPin } = usePin();
+  const [password, setPassword] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmNewPin, setConfirmNewPin] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Define form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      password: "",
-      newPin: "",
-      confirmNewPin: "",
-    },
-  });
+  const [error, setError] = useState<string | null>(null);
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    // Basic validation
+    if (!password) {
+      setError("Please enter your recovery password");
+      return;
+    }
+
+    if (newPin.length < 4) {
+      setError("PIN must be at least 4 digits");
+      return;
+    }
+
+    if (newPin !== confirmNewPin) {
+      setError("PINs do not match");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const success = await resetPin(values.password, values.newPin);
+      const success = await resetPin(password, newPin);
 
       if (success) {
-        form.reset();
-        onOpenChange(false);
+        // Reset form and close dialog
+        setPassword("");
+        setNewPin("");
+        setConfirmNewPin("");
+
+        // Use setTimeout to avoid race conditions with state updates
+        setTimeout(() => onOpenChange(false), 50);
+      } else {
+        // Error is handled in the resetPin function with toast message
+        setIsSubmitting(false);
       }
-    } finally {
+    } catch (error) {
+      console.error("Error resetting PIN:", error);
+      setError("An unexpected error occurred");
       setIsSubmitting(false);
     }
   };
 
+  // Handle dialog close
+  const handleOpenChange = (newOpen: boolean) => {
+    // Prevent closing during submission
+    if (isSubmitting && !newOpen) return;
+
+    // Reset form when dialog closes
+    if (!newOpen) {
+      setPassword("");
+      setNewPin("");
+      setConfirmNewPin("");
+      setError(null);
+    }
+
+    // Propagate the change
+    onOpenChange(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="sm:max-w-[425px]"
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking outside while submitting
+          if (isSubmitting) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <KeyRound className="h-5 w-5 text-primary" />
@@ -86,84 +111,76 @@ export function PinResetDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Recovery Password */}
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recovery Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Enter your recovery password"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    This is the password you set up when you created your PIN
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
 
-            {/* New PIN Fields */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="newPin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>New PIN</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        placeholder="Enter new PIN"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmNewPin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm New PIN</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        placeholder="Confirm new PIN"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+          {/* Recovery Password */}
+          <div className="space-y-2">
+            <Label htmlFor="password">Recovery Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your recovery password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-muted-foreground">
+              This is the password you set up when you created your PIN
+            </p>
+          </div>
+
+          {/* New PIN Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="newPin">New PIN</Label>
+              <Input
+                id="newPin"
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Enter new PIN"
+                value={newPin}
+                onChange={(e) => setNewPin(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmNewPin">Confirm PIN</Label>
+              <Input
+                id="confirmNewPin"
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Confirm new PIN"
+                value={confirmNewPin}
+                onChange={(e) => setConfirmNewPin(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
 
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                )}
-                Reset PIN
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCcw className="h-4 w-4 mr-2" />
+              )}
+              Reset PIN
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

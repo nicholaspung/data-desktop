@@ -11,6 +11,17 @@ import {
 import { Lock, Unlock, Shield, Settings, RefreshCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePin } from "@/hooks/usePin";
+import { useState } from "react";
+
+/**
+ * Props for the PinLockButton component
+ */
+interface PinLockButtonProps {
+  variant?: "default" | "outline" | "ghost";
+  size?: "default" | "sm" | "lg" | "icon";
+  showLabel?: boolean;
+  className?: string;
+}
 
 /**
  * A button that shows the current lock state and allows interactions
@@ -21,12 +32,7 @@ export function PinLockButton({
   size = "icon",
   showLabel = false,
   className,
-}: {
-  variant?: "default" | "outline" | "ghost";
-  size?: "default" | "sm" | "lg" | "icon";
-  showLabel?: boolean;
-  className?: string;
-}) {
+}: PinLockButtonProps) {
   const {
     isConfigured,
     isUnlocked,
@@ -37,6 +43,8 @@ export function PinLockButton({
     openPinResetDialog,
   } = usePin();
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   // Handle unlock/lock button click
   const handleLockToggle = () => {
     if (isUnlocked) {
@@ -44,6 +52,20 @@ export function PinLockButton({
     } else {
       openPinEntryDialog();
     }
+
+    // Close menu after action
+    setIsMenuOpen(false);
+  };
+
+  // Handle menu item clicks
+  const handlePinSetup = () => {
+    openPinSetupDialog();
+    setIsMenuOpen(false);
+  };
+
+  const handlePinReset = () => {
+    openPinResetDialog();
+    setIsMenuOpen(false);
   };
 
   // If security is not configured, show setup button
@@ -63,7 +85,7 @@ export function PinLockButton({
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger asChild>
         <div className="flex items-center gap-2">
           {/* Countdown timer (only shown when unlocked) */}
@@ -117,13 +139,13 @@ export function PinLockButton({
         <DropdownMenuSeparator />
 
         {isUnlocked && (
-          <DropdownMenuItem onClick={openPinSetupDialog}>
+          <DropdownMenuItem onClick={handlePinSetup}>
             <Settings className="h-4 w-4 mr-2" />
             Security Settings
           </DropdownMenuItem>
         )}
 
-        <DropdownMenuItem onClick={openPinResetDialog}>
+        <DropdownMenuItem onClick={handlePinReset}>
           <RefreshCcw className="h-4 w-4 mr-2" />
           Reset PIN
         </DropdownMenuItem>

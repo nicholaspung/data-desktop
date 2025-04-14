@@ -27,13 +27,18 @@ export function ProtectedContent({
 }) {
   const { isConfigured, isUnlocked, openPinEntryDialog } = usePin();
   const [wasEverUnlocked, setWasEverUnlocked] = useState(false);
+  const [childrenContent, setChildrenContent] = useState<ReactNode>(children);
 
-  // Update tracking when content is unlocked
+  // Update tracking when content is unlocked and keep content updated
   useEffect(() => {
     if (isUnlocked) {
       setWasEverUnlocked(true);
     }
-  }, [isUnlocked]);
+
+    // Keep the children content updated with the latest props
+    // This is important to ensure new content is displayed after the component re-renders
+    setChildrenContent(children);
+  }, [isUnlocked, children]);
 
   // If PIN protection is not configured, simply render the content
   if (!isConfigured) {
@@ -42,7 +47,7 @@ export function ProtectedContent({
 
   // If content is unlocked, show it
   if (isUnlocked) {
-    return <div className={className}>{children}</div>;
+    return <div className={className}>{childrenContent}</div>;
   }
 
   // Handle unlock button click
@@ -53,7 +58,8 @@ export function ProtectedContent({
   // Create a default placeholder with blur effect or a lock message
   const defaultPlaceholder = blur ? (
     <div className="relative">
-      <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/80">
+      {/* Overlay with unlock button */}
+      <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/60">
         <Button
           variant="outline"
           size="sm"
@@ -61,16 +67,19 @@ export function ProtectedContent({
           onClick={handleUnlock}
         >
           <Lock className="h-4 w-4" />
-          Unlock
+          Unlock to View
         </Button>
       </div>
+
+      {/* Blurred content - important: use specific selectors to avoid breaking the UI */}
       <div
         className={cn(
-          "blur-md select-none opacity-25",
-          wasEverUnlocked ? "" : "opacity-0 invisible"
+          "select-none pointer-events-none",
+          wasEverUnlocked ? "blur-sm opacity-25" : "opacity-0"
         )}
+        aria-hidden="true"
       >
-        {children}
+        {childrenContent}
       </div>
     </div>
   ) : (
@@ -86,7 +95,7 @@ export function ProtectedContent({
         onClick={handleUnlock}
       >
         <Lock className="h-4 w-4" />
-        Unlock
+        Unlock to View
       </Button>
     </div>
   );
@@ -109,13 +118,17 @@ export function ProtectedField({
 }) {
   const { isConfigured, isUnlocked, openPinEntryDialog } = usePin();
   const [locallyVisible, setLocallyVisible] = useState(false);
+  const [fieldContent, setFieldContent] = useState<ReactNode>(children);
 
-  // Reset visibility when locked
+  // Reset visibility when locked and keep content updated
   useEffect(() => {
     if (!isUnlocked) {
       setLocallyVisible(false);
     }
-  }, [isUnlocked]);
+
+    // Keep the field content updated with the latest props
+    setFieldContent(children);
+  }, [isUnlocked, children]);
 
   // If PIN protection is not configured, simply render the content
   if (!isConfigured) {
@@ -135,7 +148,7 @@ export function ProtectedField({
     <div className={cn("relative", className)}>
       {locallyVisible && isUnlocked ? (
         <div className="flex items-center gap-2">
-          <div className="transition-opacity duration-200">{children}</div>
+          <div className="transition-opacity duration-200">{fieldContent}</div>
           <Button
             variant="ghost"
             size="icon"

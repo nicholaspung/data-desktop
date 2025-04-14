@@ -9,15 +9,14 @@
 - PDF reports from data
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
-- start putting all the datasets into a single tab, and then putting all the visuals I can about into their own place
+- add in bone density graphs for dexa
+- in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar
+- add a simple "instructions" panel on how to use things for now since UI isn't intuitive
 
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- in metrics, add a way to customize when the metric will show up (i.e. monday/wednesday)
-- in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed
-- only show a metric log if the metric was created on the date of or after
-- in metrics, also add an "end" date which will archive that metric and the metric won't show up after that date
+- in experiments, if a metric is private, only show it when the "show private" button input with PIN is completed
 - metric frequency custom needs to figure out how to showcase that, or just make a specific metric form for it and display it somewhere
 
 ### DONE
@@ -82,5 +81,11 @@
 - bloodwork graphs, when I click "out of range", it still shows the "no range set" values [DONE 2025-04-12]
 - in daily-tracker-calendar-view.tsx, the savechanges function needs updating - sometimes the log attaches to an experiment, but sometimes it doesn't [DONE 2025-04-12]
 - in experiment-dashboard.tsx, combine the header components together [DONE 2025-04-13]
+- in metrics, add a way to customize when the metric will show up (i.e. monday/wednesday) [DONE 2025-04-13]
+- only show a metric log if the metric was created on the date of or after [DONE 2025-04-13]
+- in metrics, also add an "end" date which will archive that metric and the metric won't show up after that date [DONE 2025-04-13]
+- start putting all the datasets into a single tab, and then putting all the visuals I can about into their own place [DONE 2025-04-14]
+- in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed [DONE 2025-04-14]
+
 
 ### GAVE UP

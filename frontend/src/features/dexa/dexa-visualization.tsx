@@ -14,6 +14,7 @@ import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { DEXAScan } from "@/store/dexa-definitions";
+import { cn } from "@/lib/utils";
 
 export default function DexaVisualization({
   className = "",
@@ -87,7 +88,9 @@ export default function DexaVisualization({
   const filteredData = getFilteredData();
 
   return (
-    <div className={className}>
+    <div className={cn("space-y-6", className)}>
+      <h1 className="text-2xl font-bold">DEXA Scan Visualizations</h1>
+
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <Tabs
           value={activeTab}

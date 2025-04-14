@@ -1,471 +1,231 @@
 // src/contexts/pin-context.tsx
-import {
-  createContext,
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  ReactNode,
-} from "react";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { hashValue } from "@/lib/crypto-utils";
+import { compareHash, hashValue } from "@/lib/crypto-utils";
 
+// Define the context type
 interface PinContextType {
-  // State
   isConfigured: boolean;
   isUnlocked: boolean;
-  unlockTimeRemaining: number; // Seconds remaining before auto-lock
-
-  // Actions
+  unlockTimeRemaining: number;
   setupPin: (pin: string, password: string) => Promise<boolean>;
-  verifyPin: (pin: string) => Promise<boolean>;
-  resetPin: (password: string, newPin: string) => Promise<boolean>;
-  changePin: (currentPin: string, newPin: string) => Promise<boolean>;
-  changePassword: (pin: string, newPassword: string) => Promise<boolean>;
   unlock: (pin: string) => Promise<boolean>;
+  resetPin: (password: string, newPin: string) => Promise<boolean>;
   lock: () => void;
-  clearSecuritySettings: () => void;
-
-  // Dialog controls
-  openPinSetupDialog: () => void;
-  openPinEntryDialog: () => void;
-  openPinResetDialog: () => void;
+  clearSettings: () => void;
+  // Dialog control
+  showPinEntry: boolean;
+  showPinSetup: boolean;
+  showPinReset: boolean;
+  setShowPinEntry: (show: boolean) => void;
+  setShowPinSetup: (show: boolean) => void;
+  setShowPinReset: (show: boolean) => void;
 }
 
-// Default context values
-const defaultContext: PinContextType = {
+// Create the context with default values
+const PinContext = createContext<PinContextType>({
   isConfigured: false,
   isUnlocked: false,
   unlockTimeRemaining: 0,
-
   setupPin: async () => false,
-  verifyPin: async () => false,
-  resetPin: async () => false,
-  changePin: async () => false,
-  changePassword: async () => false,
   unlock: async () => false,
+  resetPin: async () => false,
   lock: () => {},
-  clearSecuritySettings: () => {},
+  clearSettings: () => {},
+  // Dialog default values
+  showPinEntry: false,
+  showPinSetup: false,
+  showPinReset: false,
+  setShowPinEntry: () => {},
+  setShowPinSetup: () => {},
+  setShowPinReset: () => {},
+});
 
-  openPinSetupDialog: () => {},
-  openPinEntryDialog: () => {},
-  openPinResetDialog: () => {},
-};
-
-// Create the context
-const PinContext = createContext<PinContextType>(defaultContext);
-
-// Local storage keys
-const PIN_HASH_KEY = "data_desktop_pin_hash";
-const PASSWORD_HASH_KEY = "data_desktop_password_hash";
-const PROTECTION_ENABLED_KEY = "data_desktop_protection_enabled";
-
-// Auto-lock timeout in milliseconds (1 minute)
-const DEFAULT_AUTO_LOCK_TIMEOUT = 60 * 1000; // 60 seconds
-
-export function PinProvider({ children }: { children: ReactNode }) {
-  // State
-  const [isConfigured, setIsConfigured] = useState(false);
+// Create the provider component
+export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  // State for PIN and unlock status
+  const [pinHash, setPinHash] = useState<string | null>(null);
+  const [passwordHash, setPasswordHash] = useState<string | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [unlockTimeRemaining, setUnlockTimeRemaining] = useState(0);
+  const [unlockTime, setUnlockTime] = useState<number>(0);
+  const [unlockTimeRemaining, setUnlockTimeRemaining] = useState<number>(0);
 
   // Dialog state
-  const [isPinSetupOpen, setIsPinSetupOpen] = useState(false);
-  const [isPinEntryOpen, setIsPinEntryOpen] = useState(false);
-  const [isPinResetOpen, setIsPinResetOpen] = useState(false);
+  const [showPinEntry, setShowPinEntry] = useState(false);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [showPinReset, setShowPinReset] = useState(false);
 
-  // Timer references
-  const lockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Auto-lock timer constants
+  const AUTO_LOCK_DURATION = 1 * 60; // 5 minutes in seconds
 
-  // Calculate total lock timeout in seconds
-  const totalLockTimeSeconds = DEFAULT_AUTO_LOCK_TIMEOUT / 1000;
-
-  // Check if PIN is configured on mount
+  // Load PIN and password hashes from localStorage on mount
   useEffect(() => {
-    const pinHash = localStorage.getItem(PIN_HASH_KEY);
-    const passwordHash = localStorage.getItem(PASSWORD_HASH_KEY);
+    const storedPinHash = localStorage.getItem("pin_hash");
+    const storedPasswordHash = localStorage.getItem("password_hash");
 
-    const configured = !!(pinHash && passwordHash);
-    setIsConfigured(configured);
+    if (storedPinHash) {
+      setPinHash(storedPinHash);
+    }
 
-    // If PIN is not configured, open setup dialog automatically
-    if (!configured) {
-      setIsPinSetupOpen(true);
+    if (storedPasswordHash) {
+      setPasswordHash(storedPasswordHash);
     }
   }, []);
 
-  // Setup auto-lock timer and countdown
-  const setupAutoLockTimer = useCallback(() => {
-    // Clear any existing timers
-    if (lockTimeoutRef.current) {
-      clearTimeout(lockTimeoutRef.current);
+  // Set up auto-lock countdown timer without activity monitoring
+  useEffect(() => {
+    if (!isUnlocked) {
+      setUnlockTimeRemaining(0);
+      return;
     }
 
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
+    // Set up fixed timer countdown
+    const interval = setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = Math.max(0, unlockTime + AUTO_LOCK_DURATION - now);
 
-    // Set initial countdown time
-    setUnlockTimeRemaining(totalLockTimeSeconds);
+      setUnlockTimeRemaining(remaining);
 
-    // Set up countdown interval (every second)
-    countdownIntervalRef.current = setInterval(() => {
-      setUnlockTimeRemaining((prev) => {
-        if (prev <= 1) {
-          // Clear interval when time is up
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-          }
-          return 0;
-        }
-        return prev - 1;
-      });
+      if (remaining === 0) {
+        setIsUnlocked(false);
+        toast.info("Session locked due to timeout");
+        clearInterval(interval);
+      }
     }, 1000);
 
-    // Set a new lock timeout
-    lockTimeoutRef.current = setTimeout(() => {
-      if (isUnlocked) {
-        setIsUnlocked(false);
-        toast.info("Private data has been locked due to inactivity");
+    return () => clearInterval(interval);
+  }, [isUnlocked, unlockTime]);
 
-        // Clear the countdown when locked
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
+  // Setup PIN and password with secure hashing
+  const setupPin = useCallback(
+    async (pin: string, password: string): Promise<boolean> => {
+      try {
+        const newPinHash = await hashValue(pin);
+        const newPasswordHash = await hashValue(password);
+
+        // Store hashes in localStorage
+        localStorage.setItem("pin_hash", newPinHash);
+        localStorage.setItem("password_hash", newPasswordHash);
+
+        // Update state
+        setPinHash(newPinHash);
+        setPasswordHash(newPasswordHash);
+
+        // Auto unlock after setup
+        setIsUnlocked(true);
+        setUnlockTime(Math.floor(Date.now() / 1000));
+
+        toast.success("Security setup successful");
+        return true;
+      } catch (error) {
+        console.error("Error setting up PIN:", error);
+        toast.error("Failed to setup security");
+        return false;
+      }
+    },
+    []
+  );
+
+  // Unlock with PIN
+  const unlock = useCallback(
+    async (pin: string): Promise<boolean> => {
+      if (!pinHash) return false;
+
+      try {
+        const isValid = await compareHash(pin, pinHash);
+
+        if (isValid) {
+          setIsUnlocked(true);
+          setUnlockTime(Math.floor(Date.now() / 1000));
+          return true;
+        } else {
+          toast.error("Incorrect PIN");
+          return false;
         }
-        setUnlockTimeRemaining(0);
+      } catch (error) {
+        console.error("Error unlocking:", error);
+        toast.error("Unlock failed");
+        return false;
       }
-    }, DEFAULT_AUTO_LOCK_TIMEOUT);
+    },
+    [pinHash]
+  );
 
-    return () => {
-      // Cleanup function
-      if (lockTimeoutRef.current) {
-        clearTimeout(lockTimeoutRef.current);
-      }
+  // Reset PIN with password
+  const resetPin = useCallback(
+    async (password: string, newPin: string): Promise<boolean> => {
+      if (!passwordHash) return false;
 
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
-    };
-  }, [isUnlocked, totalLockTimeSeconds]);
+      try {
+        const isValid = await compareHash(password, passwordHash);
 
-  // Set up the auto-lock timer when unlocked
-  useEffect(() => {
-    if (isUnlocked) {
-      const cleanup = setupAutoLockTimer();
+        if (isValid) {
+          const newPinHash = await hashValue(newPin);
+          localStorage.setItem("pin_hash", newPinHash);
+          setPinHash(newPinHash);
 
-      // Set up event listeners to reset the timer when user is active
-      const resetTimer = () => {
-        if (isUnlocked) {
-          cleanup();
-          setupAutoLockTimer();
+          // Auto unlock after reset
+          setIsUnlocked(true);
+          setUnlockTime(Math.floor(Date.now() / 1000));
+
+          toast.success("PIN reset successful");
+          return true;
+        } else {
+          toast.error("Incorrect password");
+          return false;
         }
-      };
-
-      window.addEventListener("mousemove", resetTimer);
-      window.addEventListener("keydown", resetTimer);
-
-      return () => {
-        cleanup();
-        window.removeEventListener("mousemove", resetTimer);
-        window.removeEventListener("keydown", resetTimer);
-      };
-    } else {
-      // When locked, ensure the countdown is stopped and reset
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
-      setUnlockTimeRemaining(0);
-    }
-  }, [isUnlocked, setupAutoLockTimer]);
-
-  // PIN Setup function
-  const setupPin = async (pin: string, password: string): Promise<boolean> => {
-    try {
-      if (pin.length < 4) {
-        toast.error("PIN must be at least 4 digits");
+      } catch (error) {
+        console.error("Error resetting PIN:", error);
+        toast.error("Failed to reset PIN");
         return false;
       }
+    },
+    [passwordHash]
+  );
 
-      if (password.length < 6) {
-        toast.error("Password must be at least 6 characters");
-        return false;
-      }
-
-      // Hash the PIN and password
-      const pinHash = await hashValue(pin);
-      const passwordHash = await hashValue(password);
-
-      // Store in localStorage
-      localStorage.setItem(PIN_HASH_KEY, pinHash);
-      localStorage.setItem(PASSWORD_HASH_KEY, passwordHash);
-      localStorage.setItem(PROTECTION_ENABLED_KEY, "true");
-
-      setIsConfigured(true);
-      setIsUnlocked(true); // Auto-unlock after setup
-
-      // Start the countdown timer
-      setupAutoLockTimer();
-
-      toast.success("Security settings configured successfully");
-      return true;
-    } catch (error) {
-      console.error("Error setting up PIN:", error);
-      toast.error("Failed to set up security settings");
-      return false;
-    }
-  };
-
-  // PIN Verification function
-  const verifyPin = async (pin: string): Promise<boolean> => {
-    try {
-      const storedPinHash = localStorage.getItem(PIN_HASH_KEY);
-      if (!storedPinHash) return false;
-
-      const pinHash = await hashValue(pin);
-      return pinHash === storedPinHash;
-    } catch (error) {
-      console.error("Error verifying PIN:", error);
-      return false;
-    }
-  };
-
-  // Password Verification function
-  const verifyPassword = async (password: string): Promise<boolean> => {
-    try {
-      const storedPasswordHash = localStorage.getItem(PASSWORD_HASH_KEY);
-      if (!storedPasswordHash) return false;
-
-      const passwordHash = await hashValue(password);
-      return passwordHash === storedPasswordHash;
-    } catch (error) {
-      console.error("Error verifying password:", error);
-      return false;
-    }
-  };
-
-  // Reset PIN using password
-  const resetPin = async (
-    password: string,
-    newPin: string
-  ): Promise<boolean> => {
-    try {
-      if (newPin.length < 4) {
-        toast.error("PIN must be at least 4 digits");
-        return false;
-      }
-
-      const isPasswordCorrect = await verifyPassword(password);
-      if (!isPasswordCorrect) {
-        toast.error("Incorrect password");
-        return false;
-      }
-
-      // Hash the new PIN
-      const newPinHash = await hashValue(newPin);
-      localStorage.setItem(PIN_HASH_KEY, newPinHash);
-
-      setIsUnlocked(true); // Auto-unlock after reset
-      toast.success("PIN reset successfully");
-      return true;
-    } catch (error) {
-      console.error("Error resetting PIN:", error);
-      toast.error("Failed to reset PIN");
-      return false;
-    }
-  };
-
-  // Change PIN
-  const changePin = async (
-    currentPin: string,
-    newPin: string
-  ): Promise<boolean> => {
-    try {
-      if (newPin.length < 4) {
-        toast.error("PIN must be at least 4 digits");
-        return false;
-      }
-
-      const isPinCorrect = await verifyPin(currentPin);
-      if (!isPinCorrect) {
-        toast.error("Incorrect PIN");
-        return false;
-      }
-
-      // Hash the new PIN
-      const newPinHash = await hashValue(newPin);
-      localStorage.setItem(PIN_HASH_KEY, newPinHash);
-
-      toast.success("PIN changed successfully");
-      return true;
-    } catch (error) {
-      console.error("Error changing PIN:", error);
-      toast.error("Failed to change PIN");
-      return false;
-    }
-  };
-
-  // Change password
-  const changePassword = async (
-    pin: string,
-    newPassword: string
-  ): Promise<boolean> => {
-    try {
-      if (newPassword.length < 6) {
-        toast.error("Password must be at least 6 characters");
-        return false;
-      }
-
-      const isPinCorrect = await verifyPin(pin);
-      if (!isPinCorrect) {
-        toast.error("Incorrect PIN");
-        return false;
-      }
-
-      // Hash the new password
-      const newPasswordHash = await hashValue(newPassword);
-      localStorage.setItem(PASSWORD_HASH_KEY, newPasswordHash);
-
-      toast.success("Password changed successfully");
-      return true;
-    } catch (error) {
-      console.error("Error changing password:", error);
-      toast.error("Failed to change password");
-      return false;
-    }
-  };
-
-  // Unlock function
-  const unlock = async (pin: string): Promise<boolean> => {
-    try {
-      const isCorrect = await verifyPin(pin);
-      if (!isCorrect) {
-        toast.error("Incorrect PIN");
-        return false;
-      }
-
-      setIsUnlocked(true);
-
-      // Setup countdown timer
-      setupAutoLockTimer();
-
-      return true;
-    } catch (error) {
-      console.error("Error unlocking:", error);
-      toast.error("Failed to unlock");
-      return false;
-    }
-  };
-
-  // Lock function
+  // Lock the application
   const lock = useCallback(() => {
     setIsUnlocked(false);
-
-    // Clear lock timers
-    if (lockTimeoutRef.current) {
-      clearTimeout(lockTimeoutRef.current);
-      lockTimeoutRef.current = null;
-    }
-
-    // Clear countdown interval
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-
-    // Reset countdown
-    setUnlockTimeRemaining(0);
+    toast.success("Application locked");
   }, []);
 
-  // Clear security settings
-  const clearSecuritySettings = useCallback(() => {
-    localStorage.removeItem(PIN_HASH_KEY);
-    localStorage.removeItem(PASSWORD_HASH_KEY);
-    localStorage.removeItem(PROTECTION_ENABLED_KEY);
-
-    setIsConfigured(false);
+  // Clear all security settings
+  const clearSettings = useCallback(() => {
+    localStorage.removeItem("pin_hash");
+    localStorage.removeItem("password_hash");
+    setPinHash(null);
+    setPasswordHash(null);
     setIsUnlocked(false);
-
-    // Clear timers
-    if (lockTimeoutRef.current) {
-      clearTimeout(lockTimeoutRef.current);
-      lockTimeoutRef.current = null;
-    }
-
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-      countdownIntervalRef.current = null;
-    }
-
-    setUnlockTimeRemaining(0);
-
-    toast.info("Security settings cleared");
+    toast.success("Security settings cleared");
   }, []);
 
-  // Dialog control functions
-  const openPinSetupDialog = useCallback(() => {
-    setIsPinSetupOpen(true);
-  }, []);
+  // Check if security is configured
+  const isConfigured = pinHash !== null && passwordHash !== null;
 
-  const openPinEntryDialog = useCallback(() => {
-    setIsPinEntryOpen(true);
-  }, []);
-
-  const openPinResetDialog = useCallback(() => {
-    setIsPinResetOpen(true);
-  }, []);
-
+  // Context value
   const contextValue: PinContextType = {
     isConfigured,
     isUnlocked,
     unlockTimeRemaining,
-
     setupPin,
-    verifyPin,
-    resetPin,
-    changePin,
-    changePassword,
     unlock,
+    resetPin,
     lock,
-    clearSecuritySettings,
-
-    openPinSetupDialog,
-    openPinEntryDialog,
-    openPinResetDialog,
+    clearSettings,
+    // Dialog state and setters
+    showPinEntry,
+    showPinSetup,
+    showPinReset,
+    setShowPinEntry,
+    setShowPinSetup,
+    setShowPinReset,
   };
 
   return (
-    <PinContext.Provider value={contextValue}>
-      {children}
-
-      {/* Render the dialog components here */}
-      {isPinSetupOpen && (
-        <PinSetupDialog
-          open={isPinSetupOpen}
-          onOpenChange={setIsPinSetupOpen}
-        />
-      )}
-
-      {isPinEntryOpen && (
-        <PinEntryDialog
-          open={isPinEntryOpen}
-          onOpenChange={setIsPinEntryOpen}
-        />
-      )}
-
-      {isPinResetOpen && (
-        <PinResetDialog
-          open={isPinResetOpen}
-          onOpenChange={setIsPinResetOpen}
-        />
-      )}
-    </PinContext.Provider>
+    <PinContext.Provider value={contextValue}>{children}</PinContext.Provider>
   );
-}
-
-// Import dialog components
-import { PinSetupDialog } from "@/components/security/pin-setup-dialog";
-import { PinEntryDialog } from "@/components/security/pin-entry-dialog";
-import { PinResetDialog } from "@/components/security/pin-reset-dialog";
+};
 
 export default PinContext;
