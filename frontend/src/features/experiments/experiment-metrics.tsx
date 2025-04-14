@@ -12,9 +12,9 @@ import dataStore, { addEntry, deleteEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { ExperimentMetric } from "./experiments";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
+import { ExperimentMetric } from "@/store/experiment-definitions";
 
 const ExperimentMetrics = ({
   experimentId,

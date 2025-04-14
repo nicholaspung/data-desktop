@@ -1,3 +1,4 @@
+// Updated version of frontend/src/features/experiments/daily-tracker-calendar-grid.tsx
 import ReusableTooltip from "@/components/reusable/reusable-tooltip";
 import {
   eachDayOfInterval,
@@ -8,12 +9,13 @@ import {
   isToday,
   startOfMonth,
 } from "date-fns";
-import { Beaker } from "lucide-react";
+import { Beaker, Calendar } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
 
 export default function DailyTrackerCalendarGrid({
   currentMonth,
@@ -41,7 +43,26 @@ export default function DailyTrackerCalendarGrid({
     const loggedMetricsCount = new Set(
       logsForDay.map((log: any) => log.metric_id)
     ).size;
-    const totalMetricsCount = metricsData.length;
+
+    // Calculate metrics scheduled for this day
+    const scheduledMetrics = metricsData.filter((metric: any) => {
+      if (!metric.active) return false;
+
+      // Parse schedule days if needed
+      const scheduleDays = parseScheduleDays(metric.schedule_days);
+
+      // Create a metric object with parsed schedule days
+      const metricWithParsedSchedule = {
+        ...metric,
+        schedule_days: scheduleDays,
+      };
+
+      // Check if metric is scheduled for this day
+      return isMetricScheduledForDate(metricWithParsedSchedule, day);
+    });
+
+    const scheduledMetricsCount = scheduledMetrics.length;
+    const totalMetricsCount = metricsData.filter((m: any) => m.active).length;
 
     // Get active experiments for this day
     const activeExperiments = experimentsData.filter((exp: any) => {
@@ -51,9 +72,11 @@ export default function DailyTrackerCalendarGrid({
     });
 
     // Calculate completion percentage for boolean metrics
-    const booleanMetrics = metricsData.filter((m: any) => m.type === "boolean");
+    const booleanMetrics = scheduledMetrics.filter(
+      (m: any) => m.type === "boolean"
+    );
     const loggedBooleanMetrics = logsForDay.filter((log: any) => {
-      const metric = metricsData.find((m: any) => m.id === log.metric_id);
+      const metric = scheduledMetrics.find((m: any) => m.id === log.metric_id);
       return metric && metric.type === "boolean";
     });
 
@@ -75,6 +98,7 @@ export default function DailyTrackerCalendarGrid({
     return {
       loggedMetricsCount,
       totalMetricsCount,
+      scheduledMetricsCount,
       activeExperiments,
       completionPercentage,
       logsExist: logsForDay.length > 0,
@@ -107,6 +131,11 @@ export default function DailyTrackerCalendarGrid({
     // Styling based on logs
     if (stats.logsExist) {
       className += "border-primary/50 ";
+    }
+
+    // Special styling for days with scheduled metrics
+    if (stats.scheduledMetricsCount > 0) {
+      className += "bg-blue-50/30 dark:bg-blue-950/30 ";
     }
 
     return className;
@@ -163,6 +192,18 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
+                {/* Scheduled metrics indicator */}
+                {stats.scheduledMetricsCount > 0 && (
+                  <div className="absolute bottom-0.5 left-0.5">
+                    <Badge
+                      variant="outline"
+                      className="h-4 w-4 p-0 flex items-center justify-center bg-blue-100/50 dark:bg-blue-900/50"
+                    >
+                      <Calendar className="h-2.5 w-2.5" />
+                    </Badge>
+                  </div>
+                )}
+
                 {/* Active experiments indicator */}
                 {stats.activeExperiments.length > 0 && (
                   <div className="absolute bottom-0.5 right-0.5">
@@ -183,8 +224,14 @@ export default function DailyTrackerCalendarGrid({
                 </p>
                 <p>
                   {stats.logsExist
-                    ? `${stats.loggedMetricsCount} of ${stats.totalMetricsCount} metrics logged`
+                    ? `${stats.loggedMetricsCount} of ${stats.scheduledMetricsCount} metrics logged`
                     : "No logs for this day"}
+                </p>
+
+                {/* Scheduled metrics information */}
+                <p className="text-sm text-muted-foreground">
+                  {stats.scheduledMetricsCount} of {stats.totalMetricsCount}{" "}
+                  metrics scheduled
                 </p>
 
                 {stats.activeExperiments.length > 0 && (
@@ -198,6 +245,18 @@ export default function DailyTrackerCalendarGrid({
                         <li key={exp.id}>{exp.name}</li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Add info about completion rate */}
+                {stats.logsExist && stats.scheduledMetricsCount > 0 && (
+                  <div className="pt-1">
+                    <p className="text-sm flex items-center">
+                      <span className="font-medium">Completion: </span>
+                      <span className="ml-1">
+                        {Math.round(stats.completionPercentage)}%
+                      </span>
+                    </p>
                   </div>
                 )}
               </div>

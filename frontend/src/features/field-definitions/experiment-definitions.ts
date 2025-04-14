@@ -70,7 +70,7 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "type",
-      type: "select",
+      type: "select-single",
       displayName: "Type",
       description: "Type of metric (number, boolean, time, percentage)",
       options: [
@@ -100,6 +100,7 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Category of this metric",
       isSearchable: true,
       isRelation: true,
+      isOptional: true,
       relatedDataset: "metric_categories",
       relatedField: "id",
       displayField: "name",
@@ -115,6 +116,48 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       type: "boolean",
       displayName: "Private",
       description: "Is metric private?",
+    },
+    {
+      key: "schedule_start_date",
+      type: "date",
+      displayName: "Start Showing",
+      description: "When to start showing this metric",
+      isOptional: true,
+    },
+    {
+      key: "schedule_end_date",
+      type: "date",
+      displayName: "Stop Showing",
+      description: "When to stop showing this metric",
+      isOptional: true,
+    },
+    {
+      key: "schedule_days",
+      type: "select-multiple", // Will be handled via a custom component
+      displayName: "Show On Days",
+      description: "Which days of the week to show this metric",
+      isOptional: true,
+      options: [
+        { id: "sunday", label: "Sunday" },
+        { id: "monday", label: "Monday" },
+        { id: "tuesday", label: "Tuesday" },
+        { id: "wednesday", label: "Wednesday" },
+        { id: "thursday", label: "Thursday" },
+        { id: "friday", label: "Friday" },
+        { id: "saturday", label: "Saturday" },
+      ],
+    },
+    {
+      key: "schedule_frequency",
+      type: "select-single",
+      displayName: "Frequency",
+      description: "How often to show this metric",
+      isOptional: true,
+      options: [
+        { id: "daily", label: "Daily" },
+        { id: "weekly", label: "Weekly" },
+        { id: "custom", label: "Custom" },
+      ],
     },
   ],
 };

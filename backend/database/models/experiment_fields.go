@@ -95,15 +95,43 @@ func GetMetricFields() []database.FieldDefinition {
 		},
 		{
 			Key:         "active",
-			Type:        database.FieldTypeBoolean, // JSON encoded default value
+			Type:        database.FieldTypeBoolean,
 			DisplayName: "Active",
 			Description: "Is metric active?",
 		},
 		{
 			Key:         "private",
-			Type:        database.FieldTypeBoolean, // JSON encoded default value
+			Type:        database.FieldTypeBoolean,
 			DisplayName: "Private",
 			Description: "Is metric private?",
+		},
+		{
+			Key:         "schedule_start_date",
+			Type:        database.FieldTypeDate,
+			DisplayName: "Start Date",
+			Description: "When to start showing this metric",
+			IsOptional:  true,
+		},
+		{
+			Key:         "schedule_end_date",
+			Type:        database.FieldTypeDate,
+			DisplayName: "End Date",
+			Description: "When to stop showing this metric",
+			IsOptional:  true,
+		},
+		{
+			Key:         "schedule_days",
+			Type:        database.FieldTypeText, // JSON array of day numbers (0=Sunday, 6=Saturday)
+			DisplayName: "Schedule Days",
+			Description: "Days of week to show this metric",
+			IsOptional:  true,
+		},
+		{
+			Key:         "schedule_frequency",
+			Type:        database.FieldTypeText,
+			DisplayName: "Frequency",
+			Description: "How often to show this metric (daily, weekly, custom)",
+			IsOptional:  true,
 		},
 	}
 }

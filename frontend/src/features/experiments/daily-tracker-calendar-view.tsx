@@ -1,7 +1,9 @@
-// src/features/experiments/daily-tracker-calendar-view.tsx
+// Modified version of frontend/src/features/experiments/daily-tracker-calendar-view.tsx
+// This adds support for metric scheduling
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Beaker } from "lucide-react";
+import { Beaker, Calendar } from "lucide-react";
 import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -9,7 +11,6 @@ import loadingStore from "@/store/loading-store";
 import DailyTrackerNavigation from "./daily-tracker-navigation";
 import DailyTrackerViewCard from "./daily-tracker-view-card";
 import { parseMetricValue } from "./experiments-utils";
-import { MetricWithLog } from "./experiments";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
@@ -18,14 +19,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import DailyTrackerCalendarGrid from "./daily-tracker-calendar-grid";
+import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
+import { MetricWithLog } from "@/store/experiment-definitions";
+
+interface MetricWithLogWithChange extends MetricWithLog {
+  isScheduledForToday: boolean;
+}
 
 export default function DailyTrackerCalendarView() {
   // State for calendar navigation
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [metricsWithLogs, setMetricsWithLogs] = useState<MetricWithLog[]>([]);
+  const [metricsWithLogs, setMetricsWithLogs] = useState<
+    MetricWithLogWithChange[]
+  >([]);
   const [selectedTab, setSelectedTab] = useState("all");
   const [showNotes, setShowNotes] = useState(false);
+  const [showUnscheduled, setShowUnscheduled] = useState(false);
 
   // Access data from the store
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
@@ -45,7 +55,7 @@ export default function DailyTrackerCalendarView() {
     if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
     }
-  }, [dailyLogsData, selectedDate, metricsData]);
+  }, [dailyLogsData, selectedDate, metricsData, showUnscheduled]);
 
   // Process logs for the selected date
   const processLogsForSelectedDate = (
@@ -59,19 +69,44 @@ export default function DailyTrackerCalendarView() {
     });
 
     // Map logs to metrics
-    const metricsWithLogsArray = (metricsData as any[]).map((metric) => {
-      const log = logsForDate.find((log) => log.metric_id === metric.id);
-      return {
-        ...metric,
-        log: log || null,
-        // Parse the value based on metric type
-        value: log
-          ? parseMetricValue(log.value, metric.type)
-          : parseMetricValue(metric.default_value, metric.type),
-        notes: log?.notes || "",
-        hasChanged: false,
-      };
-    });
+    const metricsWithLogsArray = (metricsData as any[])
+      // First, filter inactive metrics
+      .filter((metric) => metric.active)
+      // Then, check if the metric is scheduled for this date
+      .map((metric) => {
+        // Parse schedule_days from string to array if needed
+        const scheduleDays = parseScheduleDays(metric.schedule_days);
+
+        // Create a copy of the metric with parsed schedule_days
+        const metricWithParsedSchedule = {
+          ...metric,
+          schedule_days: scheduleDays,
+        };
+
+        // Check if metric is scheduled for the selected date
+        const isScheduledForToday = isMetricScheduledForDate(
+          metricWithParsedSchedule,
+          date
+        );
+
+        // Find the log for this metric
+        const log = logsForDate.find((log) => log.metric_id === metric.id);
+
+        return {
+          ...metric,
+          schedule_days: scheduleDays, // Store the parsed schedule days
+          log: log || null,
+          // Parse the value based on metric type
+          value: log
+            ? parseMetricValue(log.value, metric.type)
+            : parseMetricValue(metric.default_value, metric.type),
+          notes: log?.notes || "",
+          hasChanged: false,
+          isScheduledForToday, // Add scheduling flag
+        };
+      })
+      // Filter metrics based on scheduling (unless showUnscheduled is true)
+      .filter((metric) => showUnscheduled || metric.isScheduledForToday);
 
     // Sort by category and then by name
     metricsWithLogsArray.sort((a, b) => {
@@ -84,7 +119,7 @@ export default function DailyTrackerCalendarView() {
       return a.name.localeCompare(b.name);
     });
 
-    setMetricsWithLogs(metricsWithLogsArray as MetricWithLog[]);
+    setMetricsWithLogs(metricsWithLogsArray);
   };
 
   // Save changes to a metric log
@@ -185,7 +220,7 @@ export default function DailyTrackerCalendarView() {
   const filteredMetrics = metricsWithLogs.filter((metric) => {
     if (selectedTab === "all") return true;
     return (
-      metric.category_id_data?.name.toLowerCase() === selectedTab.toLowerCase()
+      metric.category_id_data?.name?.toLowerCase() === selectedTab.toLowerCase()
     );
   });
 
@@ -232,14 +267,33 @@ export default function DailyTrackerCalendarView() {
                   </div>
                   <span>Active Experiment</span>
                 </div>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 bg-blue-50/30 dark:bg-blue-950/30 rounded-sm mr-1"></div>
+                  <span>Scheduled Metrics</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 border flex items-center justify-center rounded-sm mr-1">
+                    <Calendar className="h-2 w-2" />
+                  </div>
+                  <span>Has Scheduled Metrics</span>
+                </div>
               </div>
-              {/* Quick Action Buttons */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  checked={showNotes}
-                  onCheckedChange={(checked) => setShowNotes(!!checked)}
-                />
-                <Label>Show notes</Label>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={showNotes}
+                    onCheckedChange={(checked) => setShowNotes(!!checked)}
+                  />
+                  <Label>Show notes</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={showUnscheduled}
+                    onCheckedChange={(checked) => setShowUnscheduled(!!checked)}
+                  />
+                  <Label>Show unscheduled metrics</Label>
+                </div>
               </div>
             </div>
 
@@ -300,6 +354,7 @@ export default function DailyTrackerCalendarView() {
                                   metric={metric}
                                   showNotes={showNotes}
                                   saveChanges={saveChanges}
+                                  isScheduled={metric.isScheduledForToday}
                                 />
                               ))}
                           </div>

@@ -25,6 +25,11 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
       return typeof value === "number"
         ? `${(value * 100).toLocaleString()}%`
         : value;
+    case "select-multiple":
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return "—";
+      }
+      return value.join(", ");
     case "text":
     default:
       return value;

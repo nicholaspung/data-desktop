@@ -25,6 +25,8 @@ import EditableCellConfirmButtons from "./editable-cell-confirm-buttons";
 import dataStore, { DataStoreName, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { getDisplayValue } from "@/lib/table-utils";
+import ReusableSelect from "../reusable/reusable-select";
+import ReusableMultiSelect from "../reusable/reusable-multiselect";
 
 const EditableCell = ({
   value: initialValue,
@@ -196,6 +198,11 @@ const EditableCell = ({
         return typeof value === "number"
           ? `${(value < 1 ? value * 100 : value).toFixed(2)}%`
           : "0%";
+      case "select-multiple":
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          return "—";
+        }
+        return value.join(", ");
       case "text":
       default:
         return value || "-";
@@ -215,7 +222,8 @@ const EditableCell = ({
     options: {
       id: any;
       label: string;
-    }[]
+    }[],
+    noDefault: boolean
   ) => (
     <>
       <Select
@@ -243,11 +251,16 @@ const EditableCell = ({
               No options available
             </div>
           ) : (
-            options.map((option) => (
-              <SelectItem key={option.id} value={option.id}>
-                {option.label}
-              </SelectItem>
-            ))
+            <>
+              {noDefault ? null : (
+                <SelectItem value="_none_">Select...</SelectItem>
+              )}
+              {options.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </>
           )}
         </SelectContent>
       </Select>
@@ -262,7 +275,7 @@ const EditableCell = ({
         allData[field.relatedDataset as DataStoreName],
         field
       );
-      return renderRelationEditMode(options);
+      return renderRelationEditMode(options, field.isOptional ? false : true);
     }
 
     switch (field.type) {
@@ -352,7 +365,9 @@ const EditableCell = ({
                   }}
                   initialFocus
                   disabled={(date) =>
-                    date > new Date() || date < new Date("1900-01-01")
+                    field.isOptional
+                      ? false
+                      : date > new Date() || date < new Date("1900-01-01")
                   }
                 />
                 <div className="flex justify-end gap-2 p-2 border-t">
@@ -410,6 +425,28 @@ const EditableCell = ({
               </div>
             </PopoverContent>
           </Popover>
+        );
+
+      case "select-single":
+        return (
+          <ReusableSelect
+            noDefault={field.isOptional ? false : true}
+            options={field.options || []}
+            value={editValue as string}
+            onChange={(value) => setEditValue(value)}
+            title={column.id as string}
+            triggerClassName="w-full"
+          />
+        );
+
+      case "select-multiple":
+        return (
+          <ReusableMultiSelect
+            options={field.options || []}
+            selected={Array.isArray(editValue) ? editValue : []}
+            onChange={(values) => setEditValue(values)}
+            title={column.id as string}
+          />
         );
 
       default:

@@ -34,6 +34,7 @@ import dataStore, { DataStoreName } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
+import ReusableMultiSelect from "../reusable/reusable-multiselect";
 
 export function BatchEntryTable({
   datasetId,
@@ -168,6 +169,24 @@ export function BatchEntryTable({
           case "boolean":
             // If boolean is true, it's been changed from default false
             if (value === true) return true;
+            break;
+          case "select-single":
+            // For select fields, check if a non-default option was selected
+            // If it has options and the first option is not selected (assuming first is default)
+            if (field.options && field.options.length > 0) {
+              const defaultValue = field.options[0].id;
+              if (value && value !== defaultValue) return true;
+            }
+            // If there's a value but no options defined (should be rare)
+            else if (value && value.trim() !== "") {
+              return true;
+            }
+            break;
+          case "select-multiple":
+            // For multi-select fields, check if the array has any items
+            if (Array.isArray(value) && value.length > 0) {
+              return true;
+            }
             break;
           case "date":
             // Date is more complex - most entries will have a date
@@ -504,6 +523,31 @@ export function BatchEntryTable({
                 />
               </PopoverContent>
             </Popover>
+          </div>
+        );
+
+      case "select-single":
+        return (
+          <ReusableSelect
+            options={field.options || []}
+            value={value}
+            onChange={(value) => updateEntryField(entryIndex, field.key, value)}
+            title={field.displayName}
+            triggerClassName="w-full"
+          />
+        );
+
+      case "select-multiple":
+        return (
+          <div style={{ minWidth: "500px", width: "100%" }}>
+            <ReusableMultiSelect
+              options={field.options || []}
+              selected={value ? value : []}
+              onChange={(values) =>
+                updateEntryField(entryIndex, field.key, values)
+              }
+              title={field.displayName}
+            />
           </div>
         );
 

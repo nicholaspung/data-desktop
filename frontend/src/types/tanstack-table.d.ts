@@ -12,5 +12,6 @@ declare module "@tanstack/react-table" {
     unit?: string;
     description?: string;
     isSearchable?: boolean;
+    options?: { id: string; label: string }[];
   }
 }

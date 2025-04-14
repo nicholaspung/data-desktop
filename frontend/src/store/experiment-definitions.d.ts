@@ -24,22 +24,24 @@ export enum ExperimentStatus {
 
 // Metric definition
 export interface Metric {
+  id: string;
   name: string;
-  description?: string;
-  type: MetricType;
+  description: string;
+  type: "number" | "boolean" | "time" | "percentage" | "text";
   unit?: string;
-  default_value: string; // JSON-encoded default value
+  default_value: string;
   category_id: string;
+  category_id_data?: {
+    name: string;
+    color: string;
+  };
   active: boolean;
   private: boolean;
-
-  // Relation data that might be added when fetched
-  category_id_data?: MetricCategory;
-
-  // Metadata fields
-  id?: string;
-  createdAt?: Date;
-  lastModified?: Date;
+  // New scheduling fields
+  schedule_start_date?: Date | null; // When to start showing this metric
+  schedule_end_date?: Date | null; // When to stop showing this metric
+  schedule_days?: number[]; // Days of week to show (0=Sunday, 6=Saturday)
+  schedule_frequency?: "daily" | "weekly" | "custom"; // How often to show
 }
 
 // Enum for metric types
@@ -64,7 +66,7 @@ export interface DailyLog {
   experiment_id_data?: Experiment;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }
@@ -92,7 +94,7 @@ export interface ExperimentMetric {
   metric_id_data?: Metric;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }

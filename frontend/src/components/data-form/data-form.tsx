@@ -34,6 +34,7 @@ import { DataStoreName } from "@/store/data-store";
 import SavedDataBadge from "../reusable/saved-data-badge";
 import DataFormContent from "./data-form-content";
 import ReusableSelect from "../reusable/reusable-select";
+import ReusableMultiSelect from "../reusable/reusable-multiselect";
 
 export default function DataForm({
   datasetId,
@@ -216,21 +217,56 @@ export default function DataForm({
       }
 
       // Handle select fields
-      if (field.type === "select" && field.options) {
+      if (field.options) {
         // Create a schema that validates against the available options
         const validOptions = field.options.map((option) => option.id);
 
-        if (isOptional) {
-          schemaObj[field.key] = z.string().optional();
-        } else {
-          schemaObj[field.key] = z
-            .string({
-              required_error: `${field.displayName} is required`,
-            })
-            .refine((val) => validOptions.includes(val), {
-              message: `Invalid option for ${field.displayName}`,
-            });
+        if (field.type === "select-single") {
+          // Validate as a single string selection
+          if (isOptional) {
+            schemaObj[field.key] = z
+              .string()
+              .optional()
+              .refine((val) => !val || validOptions.includes(val), {
+                message: `Invalid option for ${field.displayName}`,
+              });
+          } else {
+            schemaObj[field.key] = z
+              .string({
+                required_error: `${field.displayName} is required`,
+              })
+              .refine((val) => validOptions.includes(val), {
+                message: `Invalid option for ${field.displayName}`,
+              });
+          }
+        } else if (field.type === "select-multiple") {
+          // Validate as an array of strings
+          if (isOptional) {
+            schemaObj[field.key] = z
+              .array(z.string())
+              .optional()
+              .refine(
+                (val) =>
+                  !val || val.every((item) => validOptions.includes(item)),
+                {
+                  message: `Invalid options for ${field.displayName}`,
+                }
+              );
+          } else {
+            schemaObj[field.key] = z
+              .array(z.string(), {
+                required_error: `${field.displayName} is required`,
+              })
+              .min(1, `At least one ${field.displayName} must be selected`)
+              .refine(
+                (val) => val.every((item) => validOptions.includes(item)),
+                {
+                  message: `Invalid options for ${field.displayName}`,
+                }
+              );
+          }
         }
+
         return;
       }
 
@@ -377,7 +413,8 @@ export default function DataForm({
       (field) => field.type === "number" || field.type === "percentage"
     ),
     text: fields.filter((field) => field.type === "text"),
-    select: fields.filter((field) => field.type === "select"),
+    selectSingle: fields.filter((field) => field.type === "select-single"),
+    selectMultiple: fields.filter((field) => field.type === "select-multiple"),
   };
 
   // Render a field based on its type
@@ -414,35 +451,66 @@ export default function DataForm({
     }
 
     // Add a new case for select fields
-    if (field.type === "select" && Array.isArray(field.options)) {
-      return (
-        <FormField
-          key={field.key}
-          control={form.control}
-          name={field.key}
-          render={({ field: formField }) => (
-            <FormItem>
-              <FormLabel>{field.displayName}</FormLabel>
-              <FormControl>
-                <ReusableSelect
-                  options={field.options || []}
-                  value={formField.value}
-                  onChange={(value) => {
-                    formField.onChange(value);
-                    // Trigger validation
-                    form.trigger(field.key);
-                  }}
-                  title={field.displayName}
-                />
-              </FormControl>
-              {field.description && (
-                <FormDescription>{field.description}</FormDescription>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      );
+    if (Array.isArray(field.options)) {
+      if (field.type === "select-single") {
+        return (
+          <FormField
+            key={field.key}
+            control={form.control}
+            name={field.key}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.displayName}</FormLabel>
+                <FormControl>
+                  <ReusableSelect
+                    options={field.options || []}
+                    value={formField.value}
+                    onChange={(value) => {
+                      formField.onChange(value);
+                      // Trigger validation
+                      form.trigger(field.key);
+                    }}
+                    title={field.displayName}
+                  />
+                </FormControl>
+                {field.description && (
+                  <FormDescription>{field.description}</FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      } else if (field.type === "select-multiple") {
+        return (
+          <FormField
+            key={field.key}
+            control={form.control}
+            name={field.key}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.displayName}</FormLabel>
+                <FormControl>
+                  <ReusableMultiSelect
+                    options={field.options || []}
+                    selected={formField.value}
+                    onChange={(value) => {
+                      formField.onChange(value);
+                      // Trigger validation
+                      form.trigger(field.key);
+                    }}
+                    title={field.displayName}
+                  />
+                </FormControl>
+                {field.description && (
+                  <FormDescription>{field.description}</FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+      }
     }
 
     switch (field.type) {
