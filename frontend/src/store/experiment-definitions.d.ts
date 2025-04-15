@@ -8,9 +8,10 @@ export interface Experiment {
   end_date?: Date;
   goal: string;
   status: ExperimentStatus;
+  private: boolean;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }
@@ -92,6 +93,8 @@ export interface ExperimentMetric {
   // Relation data
   experiment_id_data?: Experiment;
   metric_id_data?: Metric;
+
+  private: boolean;
 
   // Metadata fields
   id: string;
