@@ -1,45 +1,40 @@
 // src/features/experiments/experiment-dashboard.tsx
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { format, differenceInDays, isAfter } from "date-fns";
+import { differenceInDays, isAfter } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
-import {
-  Loader2,
-  CalendarDays,
-  Target,
-  ChevronRight,
-  BarChart,
-  ListChecks,
-  ListTodo,
-} from "lucide-react";
+import { Loader2, Target, BarChart, ListChecks } from "lucide-react";
 import ExperimentMetrics from "./experiment-metrics";
-import { getStatusBadge } from "./experiments-utils";
 import ExperimentDashboardProgress from "./experiment-dashboard-progress";
+import ExperimentDashboardHeader from "./experiment-dashboard-header";
+import {
+  DailyLog,
+  Experiment,
+  ExperimentMetric,
+  Metric,
+} from "@/store/experiment-definitions";
+import ExperimentDashboardLogs from "./experiment-dashboard-logs";
 
-interface ExperimentDashboardProps {
-  experimentId: string;
+export interface ProgressDataType {
+  overall: number;
+  byMetric: Record<string, number>;
+  completionRate: Record<string, number>;
+  daysElapsed: number;
+  totalDays: number;
+  daysRemaining: number;
 }
 
-const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
-  experimentId,
-}) => {
+const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
   // State
-  const [experiment, setExperiment] = useState<any>(null);
-  const [metrics, setMetrics] = useState<any[]>([]);
-  const [experimentMetrics, setExperimentMetrics] = useState<any[]>([]);
-  const [dailyLogs, setDailyLogs] = useState<any[]>([]);
-  const [progressData, setProgressData] = useState<{
-    overall: number;
-    byMetric: Record<string, number>;
-    completionRate: Record<string, number>;
-    daysElapsed: number;
-    totalDays: number;
-    daysRemaining: number;
-  }>({
+  const [experiment, setExperiment] = useState<Experiment | null>(null);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [experimentMetrics, setExperimentMetrics] = useState<
+    ExperimentMetric[]
+  >([]);
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
+  const [progressData, setProgressData] = useState<ProgressDataType>({
     overall: 0,
     byMetric: {},
     completionRate: {},
@@ -231,88 +226,10 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Experiment Header */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-2xl font-bold">{experiment.name}</h2>
-              <p className="text-muted-foreground mt-1">
-                {experiment.description}
-              </p>
-
-              <div className="flex items-center gap-2 mt-2">
-                {experiment &&
-                  getStatusBadge(
-                    experiment.status,
-                    experiment.status.charAt(0).toUpperCase() +
-                      experiment.status.slice(1)
-                  )}
-
-                <div className="flex items-center text-sm">
-                  <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
-                  <span>
-                    {format(new Date(experiment.start_date), "MMM d, yyyy")}
-                    {experiment.end_date && (
-                      <>
-                        {" "}
-                        - {format(new Date(experiment.end_date), "MMM d, yyyy")}
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <div className="text-right">
-                <div className="text-sm text-muted-foreground">
-                  Time Progress
-                </div>
-                <div className="text-2xl font-bold">
-                  {progressData.totalDays > 0
-                    ? Math.round(
-                        (progressData.daysElapsed / progressData.totalDays) *
-                          100
-                      )
-                    : 0}
-                  %
-                </div>
-              </div>
-
-              <Progress
-                value={
-                  progressData.totalDays > 0
-                    ? (progressData.daysElapsed / progressData.totalDays) * 100
-                    : 0
-                }
-                className="w-32 h-2"
-              />
-
-              <div className="text-sm">
-                {progressData.daysRemaining === 0
-                  ? "Experiment complete"
-                  : `${progressData.daysRemaining} days remaining`}
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h3 className="font-medium">Goal</h3>
-              <p className="text-muted-foreground">
-                {experiment.goal || "No goal specified"}
-              </p>
-            </div>
-
-            <div className="md:col-span-2">
-              <h3 className="font-medium">Description</h3>
-              <p className="text-muted-foreground">
-                {experiment.description || "No description provided"}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ExperimentDashboardHeader
+        experiment={experiment}
+        progressData={progressData}
+      />
 
       {/* Tabs for different views */}
       <Tabs defaultValue="progress">
@@ -346,103 +263,7 @@ const ExperimentDashboard: React.FC<ExperimentDashboardProps> = ({
         </TabsContent>
 
         <TabsContent value="logs" className="mt-6">
-          {/* Recent Logs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Daily Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dailyLogs.length === 0 ? (
-                <div className="text-center p-8">
-                  <p className="text-muted-foreground">No logs recorded yet</p>
-                  <Button variant="outline" className="mt-4" asChild>
-                    <a href="/experiments?tab=daily_logs">
-                      <ListTodo className="h-4 w-4 mr-2" />
-                      Go to Daily Tracker
-                    </a>
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Group logs by date */}
-                  {Object.entries(
-                    dailyLogs.reduce((acc: Record<string, any[]>, log) => {
-                      const dateStr = format(new Date(log.date), "yyyy-MM-dd");
-                      if (!acc[dateStr]) acc[dateStr] = [];
-                      acc[dateStr].push(log);
-                      return acc;
-                    }, {})
-                  )
-                    .sort(
-                      (a, b) =>
-                        new Date(b[0]).getTime() - new Date(a[0]).getTime()
-                    )
-                    .slice(0, 7) // Show most recent 7 days
-                    .map(([dateStr, logs]) => (
-                      <div key={dateStr} className="space-y-2">
-                        <h3 className="font-medium">
-                          {format(new Date(dateStr), "EEEE, MMMM d, yyyy")}
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {logs.map((log) => {
-                            const metric = metrics.find(
-                              (m) => m.id === log.metric_id
-                            );
-                            if (!metric) return null;
-
-                            let displayValue;
-                            try {
-                              const value = JSON.parse(log.value);
-                              if (metric.type === "boolean") {
-                                displayValue = value
-                                  ? "Completed"
-                                  : "Not Completed";
-                              } else {
-                                displayValue = `${value}${metric.unit ? ` ${metric.unit}` : ""}`;
-                              }
-                            } catch (e: any) {
-                              console.error(e);
-                              displayValue = log.value;
-                            }
-
-                            return (
-                              <Card key={log.id} className="bg-accent/10">
-                                <CardContent className="p-3">
-                                  <div className="flex justify-between items-start">
-                                    <div>
-                                      <div className="font-medium">
-                                        {metric.name}
-                                      </div>
-                                      <div className="text-sm">
-                                        {displayValue}
-                                      </div>
-                                      {log.notes && (
-                                        <div className="text-xs text-muted-foreground mt-1">
-                                          {log.notes}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-
-                  <div className="flex justify-center mt-4">
-                    <Button variant="outline" asChild>
-                      <a href="/experiments?tab=daily_logs">
-                        View All Logs
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ExperimentDashboardLogs dailyLogs={dailyLogs} metrics={metrics} />
         </TabsContent>
       </Tabs>
     </div>

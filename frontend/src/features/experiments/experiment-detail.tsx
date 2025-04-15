@@ -6,26 +6,27 @@ import { useStore } from "@tanstack/react-store";
 import dataStore, { deleteEntry, updateEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import { Beaker, Edit, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Edit, CheckCircle, XCircle, Loader2, ChevronLeft } from "lucide-react";
 import ExperimentDashboard from "./experiment-dashboard";
-import { getStatusBadge } from "./experiments-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableCard from "@/components/reusable/reusable-card";
+import { Experiment } from "@/store/experiment-definitions";
+import { ProtectedContent } from "@/components/security/protected-content";
 
-interface ExperimentDetailProps {
-  experimentId: string;
-  onClose?: () => void;
-  onDelete?: () => void;
-}
-
-const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
+const ExperimentDetail = ({
   experimentId,
   onClose,
   onDelete,
+  handleBackToList,
+}: {
+  experimentId: string;
+  onClose?: () => void;
+  onDelete?: () => void;
+  handleBackToList: () => void;
 }) => {
   // State
-  const [experiment, setExperiment] = useState<any>(null);
+  const [experiment, setExperiment] = useState<Experiment | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<"active" | "completed" | "paused">(
     "active"
@@ -73,6 +74,11 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
 
       if (onDelete) {
         onDelete();
+      }
+
+      // Navigate back after deletion
+      if (onClose) {
+        onClose();
       }
     } catch (error) {
       console.error("Error deleting experiment:", error);
@@ -131,19 +137,20 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
     );
   }
 
-  return (
+  const Content = () => (
     <div className="space-y-6">
       {/* Experiment Header with Controls */}
       <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2">
-          <Beaker className="h-5 w-5 text-primary" />
-          <h1 className="text-2xl font-bold">{experiment.name}</h1>
-          {getStatusBadge(
-            experiment.status,
-            experiment.status.charAt(0).toUpperCase() +
-              experiment.status.slice(1)
-          )}
-        </div>
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackToList}
+          className="mb-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Back to Experiments
+        </Button>
 
         <div className="flex gap-2">
           <ReusableDialog
@@ -208,18 +215,20 @@ const ExperimentDetail: React.FC<ExperimentDetailProps> = ({
             triggerText="Delete"
             onConfirm={handleDelete}
           />
-
-          {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Close
-            </Button>
-          )}
         </div>
       </div>
 
       {/* Experiment Dashboard */}
       <ExperimentDashboard experimentId={experimentId} />
     </div>
+  );
+
+  return experiment.private ? (
+    <ProtectedContent>
+      <Content />
+    </ProtectedContent>
+  ) : (
+    <Content />
   );
 };
 

@@ -13,11 +13,17 @@
 - in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar
 - add a simple "instructions" panel on how to use things for now since UI isn't intuitive
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
+- add time tracking, and also tie it with a metric if possible
 
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
 - metric frequency custom needs to figure out how to showcase that, or just make a specific metric form for it and display it somewhere
+- need to have a custom "add experiment" button in `experiment-list.tsx`
+- need to have a "add metric" button in `daily-tracker-calendar-view.tsx`
+- need to figure out how to add a random metric
+- need to have an "info" button on how to use "daily tracking" and "experiments"
+- need to add info for dexa, bloodwork, experiments, and daily tracking
 
 ### DONE
 

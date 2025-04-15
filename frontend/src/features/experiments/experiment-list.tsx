@@ -45,12 +45,18 @@ const ExperimentList = ({
     }
   };
 
+  // Handle going back to experiment list
+  const handleBackToList = () => {
+    setSelectedExperimentId(null);
+  };
+
   // If an experiment is selected and detail view is required
   if (selectedExperimentId) {
     return (
       <ExperimentDetail
         experimentId={selectedExperimentId}
-        onClose={() => setSelectedExperimentId(null)}
+        onClose={handleBackToList}
+        handleBackToList={handleBackToList}
       />
     );
   }

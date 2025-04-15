@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { ExperimentMetric } from "@/store/experiment-definitions";
+import { ProtectedContent } from "@/components/security/protected-content";
 
 const ExperimentMetrics = ({
   experimentId,
@@ -41,6 +42,7 @@ const ExperimentMetrics = ({
     "atleast" | "atmost" | "exactly" | "boolean"
   >("atleast");
   const [importance, setImportance] = useState<number>(5);
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
 
   // Get data from store
@@ -80,6 +82,7 @@ const ExperimentMetrics = ({
         target: JSON.stringify(targetValue),
         target_type: targetType,
         importance,
+        private: isPrivate,
       };
 
       if (editingMetric) {
@@ -140,6 +143,7 @@ const ExperimentMetrics = ({
     setTargetValue("0");
     setTargetType("atleast");
     setImportance(5);
+    setIsPrivate(false);
     setEditingMetric(null);
   };
 
@@ -168,6 +172,7 @@ const ExperimentMetrics = ({
 
     setTargetType(metric.target_type);
     setImportance(metric.importance);
+    setIsPrivate(metric.private || false);
     setDialogOpen(true);
   };
 
@@ -270,6 +275,68 @@ const ExperimentMetrics = ({
     }
   };
 
+  // Render content for a metric card
+  const renderMetricContent = (metric: ExperimentMetric) => {
+    return (
+      <div className="relative">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-medium">
+                {metric.metric_id_data?.name || "Unknown Metric"}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {metric.metric_id_data?.description}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-sm">
+                Importance: {metric.importance}/10
+              </Badge>
+
+              {editable && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditDialog(metric)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive"
+                    onClick={() => deleteMetric(metric.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-center">
+            <Target className="h-4 w-4 mr-2 text-primary" />
+            <span className="text-sm font-medium">
+              Goal: {formatTargetValue(metric)}
+            </span>
+          </div>
+
+          {/* Display metric type and unit */}
+          <div className="mt-1 text-xs text-muted-foreground">
+            Type: {metric.metric_id_data?.type || "Unknown"}
+            {metric.metric_id_data?.unit &&
+              ` • Unit: ${metric.metric_id_data.unit}`}
+            {metric.private && " • Private"}
+          </div>
+        </CardContent>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -278,7 +345,11 @@ const ExperimentMetrics = ({
           {showAddButton && editable && (
             <ReusableDialog
               open={dialogOpen}
-              onOpenChange={setDialogOpen}
+              onOpenChange={(value) => {
+                resetForm();
+                setEditingMetric(null);
+                setDialogOpen(value);
+              }}
               variant="outline"
               size="sm"
               triggerIcon={<Plus className="h-4 w-4 mr-2" />}
@@ -333,6 +404,20 @@ const ExperimentMetrics = ({
                             <span>More important</span>
                           </div>
                         </div>
+
+                        {/* Privacy setting */}
+                        <div className="flex items-center space-x-2 pt-2">
+                          <Checkbox
+                            id="private"
+                            checked={isPrivate}
+                            onCheckedChange={(checked) =>
+                              setIsPrivate(!!checked)
+                            }
+                          />
+                          <Label htmlFor="private" className="cursor-pointer">
+                            Make this metric private (PIN-protected)
+                          </Label>
+                        </div>
                       </div>
                     </>
                   )}
@@ -358,6 +443,7 @@ const ExperimentMetrics = ({
                   className="mt-4"
                   onClick={() => {
                     resetForm();
+                    setEditingMetric(null);
                     setDialogOpen(true);
                   }}
                 >
@@ -370,59 +456,13 @@ const ExperimentMetrics = ({
             <div className="space-y-4">
               {experimentMetrics.map((metric) => (
                 <Card key={metric.id} className="bg-accent/10">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">
-                          {metric.metric_id_data?.name || "Unknown Metric"}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {metric.metric_id_data?.description}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-sm">
-                          Importance: {metric.importance}/10
-                        </Badge>
-
-                        {editable && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openEditDialog(metric)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive"
-                              onClick={() => deleteMetric(metric.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-2 flex items-center">
-                      <Target className="h-4 w-4 mr-2 text-primary" />
-                      <span className="text-sm font-medium">
-                        Goal: {formatTargetValue(metric)}
-                      </span>
-                    </div>
-
-                    {/* Display metric type and unit */}
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Type: {metric.metric_id_data?.type || "Unknown"}
-                      {metric.metric_id_data?.unit &&
-                        ` • Unit: ${metric.metric_id_data.unit}`}
-                    </div>
-                  </CardContent>
+                  {metric.private ? (
+                    <ProtectedContent>
+                      {renderMetricContent(metric)}
+                    </ProtectedContent>
+                  ) : (
+                    renderMetricContent(metric)
+                  )}
                 </Card>
               ))}
             </div>
