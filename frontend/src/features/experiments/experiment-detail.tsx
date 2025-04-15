@@ -1,5 +1,5 @@
 // src/features/experiments/experiment-detail.tsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { useStore } from "@tanstack/react-store";

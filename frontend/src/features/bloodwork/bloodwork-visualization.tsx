@@ -12,6 +12,7 @@ import { BloodMarker, BloodResult } from "./bloodwork";
 import BloodMarkerCard from "./blood-marker-card";
 import { hasAnyRangeDefined } from "./bloodwork-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import { InfoPanel } from "@/components/reusable/info-panel";
 
 // Create the main visualization component
 const BloodworkVisualizations: React.FC = () => {
@@ -257,9 +258,22 @@ const BloodworkVisualizations: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Bloodwork Visualizations</h1>
+      <InfoPanel title="About Reference Ranges" defaultExpanded={false}>
+        There are two types of ranges for blood markers:
+        <ol>
+          <li>
+            - <strong>Standard Reference Ranges</strong>: The ranges provided by
+            labs, indicating what's normal for the general population
+          </li>
+          <li>
+            - <strong>Optimal Ranges</strong>: Often narrower ranges associated
+            with better health outcomes This tracker allows you to set both
+            types of ranges for each marker.
+          </li>
+        </ol>
+      </InfoPanel>
 
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -222,8 +222,6 @@ export default function DailyTrackerCalendarView() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Daily Tracking</h1>
-
       <div>
         {metricsLoading || dailyLogsLoading ? (
           <div className="flex items-center justify-center p-8">

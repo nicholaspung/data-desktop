@@ -11,7 +11,6 @@
 - it would be nice if the options I chose for table view stayed when I updated a value
 - add in bone density graphs for dexa
 - in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar
-- add a simple "instructions" panel on how to use things for now since UI isn't intuitive
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add time tracking, and also tie it with a metric if possible
 
@@ -93,5 +92,6 @@
 - start putting all the datasets into a single tab, and then putting all the visuals I can about into their own place [DONE 2025-04-14]
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed [DONE 2025-04-14]
 - in experiments, if a metric is private, only show it when the "show private" button input with PIN is completed [DONE 2025-04-14]
+- add a simple "instructions" panel on how to use things for now since UI isn't intuitive [DONE 2025-04-15]
 
 ### GAVE UP
