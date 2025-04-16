@@ -1,16 +1,16 @@
-// src/features/experiments/experiment-list.tsx
+// Updated version to add the new button to experiment-list.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import ExperimentDetail from "./experiment-detail";
 import ExperimentListItem from "./experiment-list-item";
 import { Experiment } from "@/store/experiment-definitions";
+import AddExperimentDialog from "./add-experiment-dialog"; // Add this import
 
 const ExperimentList = ({
   onSelectExperiment,
@@ -63,7 +63,15 @@ const ExperimentList = ({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Experiment List</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Experiment List</h1>
+
+        {/* Add the new button here */}
+        <AddExperimentDialog
+          buttonLabel="Create New Experiment"
+          onSuccess={() => setActiveTab("active")}
+        />
+      </div>
 
       {/* Experiment Tabs */}
       <Tabs
@@ -126,14 +134,12 @@ const ExperimentList = ({
                       {status === "completed" &&
                         "No completed experiments yet."}
                     </p>
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => setActiveTab("new")}
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" />
-                      Create New Experiment
-                    </Button>
+                    {/* Replace this button with our AddExperimentDialog */}
+                    <AddExperimentDialog
+                      buttonVariant="outline"
+                      buttonClassName="mt-4"
+                      onSuccess={() => setActiveTab("active")}
+                    />
                   </div>
                 ) : (
                   <div className="space-y-4">

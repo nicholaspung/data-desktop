@@ -7,20 +7,13 @@ export interface Experiment {
   start_date: Date;
   end_date?: Date;
   goal: string;
-  status: ExperimentStatus;
+  status: "active" | "paused" | "completed";
   private: boolean;
 
   // Metadata fields
   id: string;
   createdAt?: Date;
   lastModified?: Date;
-}
-
-// Enum for experiment status
-export enum ExperimentStatus {
-  ACTIVE = "active",
-  PAUSED = "paused",
-  COMPLETED = "completed",
 }
 
 // Metric definition

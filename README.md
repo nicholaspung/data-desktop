@@ -19,8 +19,7 @@
 - in bloodwork, add a "bloodwork" filter, which is the date filter, allow selection
 - progress line chart in experiment-dashboard maybe showing the wrong date
 - add in bone density graphs for dexa
-- Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- need to have a custom "add experiment" button in `experiment-list.tsx`
+- need to add a way to edit some of the details in `experiment-detail.tsx`
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
 - add a "add dexa scan" button in `dexa.tsx`
 - add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
@@ -101,5 +100,7 @@
 - in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar [DONE 2025-04-15]
 - in `daily-tracker-calendar-view.tsx`, need to update the logic in there so that if `schedule_days` is `-1`, it doesn't affect the progress shown in the calendar, and also not show up in the logs below [DONE 2025-04-16]
 - in `daily-tracker-calendar-view.tsx`, need to be able to edit/delete a metric that is showing up in the logs section [DONE 2025-04-16]
+- Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit [DONE 2025-04-16]
+- need to have a custom "add experiment" button in `experiment-list.tsx` [DONE 2025-04-16]
 
 ### GAVE UP
