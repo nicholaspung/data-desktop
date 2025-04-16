@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 import {
-  BarChart,
   HeartPulse,
   Home,
   PieChart,
@@ -14,6 +13,7 @@ import {
   Database,
   CalendarCheck,
   Beaker,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,11 @@ const sidebarItems: SidebarItem[] = [
     href: "/calendar",
   },
   {
+    title: "Quick Metric Logger",
+    icon: <ClipboardCheck className="h-5 w-5" />,
+    href: "/metric",
+  },
+  {
     title: "Experiments",
     icon: <Beaker className="h-5 w-5" />,
     href: "/experiments",
@@ -59,11 +64,6 @@ const sidebarItems: SidebarItem[] = [
     title: "Datasets",
     icon: <Database className="h-5 w-5" />,
     href: "/dataset",
-  },
-  {
-    title: "Reports",
-    icon: <BarChart className="h-5 w-5" />,
-    href: "/reports",
   },
 ];
 

@@ -16,15 +16,17 @@
 - if a log has a note, it's not showing when I toggle "show notes"
 - progress line chart in experiment-dashboard maybe showing the wrong date
 - add a way in the backend to make a field unique
+- update the daily tracking information to be what the feature actually is
 
 ### IN PROGRESS
 
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
-- metric frequency custom needs to figure out how to showcase that, or just make a specific metric form for it and display it somewhere
 - need to have a custom "add experiment" button in `experiment-list.tsx`
 - in `daily-tracker-calendar-view.tsx`, need to be able to edit/delete a metric that is showing up in the logs section
-- need to figure out how to add a random metric
-- need to add info for dexa, bloodwork, experiments, and daily tracking
+- need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
+- in `daily-tracker-calendar-view.tsx`, need to update the logic in there so that if `schedule_days` is `-1`, it doesn't affect the progress shown in the calendar, and also not show up in the logs below
+- add a "add dexa scan" button in `dexa.tsx`
+- add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
 
 ### DONE
 
@@ -97,5 +99,7 @@
 - add a simple "instructions" panel on how to use things for now since UI isn't intuitive [DONE 2025-04-15]
 - need to have an "info" button on how to use "daily tracking" and "experiments" [DONE 2025-04-15]
 - need to have a "add metric" button in `daily-tracker-calendar-view.tsx` [DONE 2025-04-15]
+- metric frequency custom needs to figure out how to showcase that, or just make a specific metric form for it and display it somewhere [DONE 2025-04-15]
+- need to figure out how to add a random metric [DONE 2025-04-15]
 
 ### GAVE UP

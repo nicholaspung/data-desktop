@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as MetricImport } from './routes/metric'
 import { Route as ExperimentsImport } from './routes/experiments'
 import { Route as DexaImport } from './routes/dexa'
 import { Route as DebugImport } from './routes/debug'
@@ -20,6 +21,12 @@ import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const MetricRoute = MetricImport.update({
+  id: '/metric',
+  path: '/metric',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const ExperimentsRoute = ExperimentsImport.update({
   id: '/experiments',
@@ -116,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperimentsImport
       parentRoute: typeof rootRoute
     }
+    '/metric': {
+      id: '/metric'
+      path: '/metric'
+      fullPath: '/metric'
+      preLoaderRoute: typeof MetricImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -129,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/metric': typeof MetricRoute
 }
 
 export interface FileRoutesByTo {
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/metric': typeof MetricRoute
 }
 
 export interface FileRoutesById {
@@ -150,6 +166,7 @@ export interface FileRoutesById {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/metric': typeof MetricRoute
 }
 
 export interface FileRouteTypes {
@@ -162,6 +179,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/metric'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -171,6 +189,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/metric'
   id:
     | '__root__'
     | '/'
@@ -180,6 +199,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/metric'
   fileRoutesById: FileRoutesById
 }
 
@@ -191,6 +211,7 @@ export interface RootRouteChildren {
   DebugRoute: typeof DebugRoute
   DexaRoute: typeof DexaRoute
   ExperimentsRoute: typeof ExperimentsRoute
+  MetricRoute: typeof MetricRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -201,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   DebugRoute: DebugRoute,
   DexaRoute: DexaRoute,
   ExperimentsRoute: ExperimentsRoute,
+  MetricRoute: MetricRoute,
 }
 
 export const routeTree = rootRoute
@@ -219,7 +241,8 @@ export const routeTree = rootRoute
         "/dataset",
         "/debug",
         "/dexa",
-        "/experiments"
+        "/experiments",
+        "/metric"
       ]
     },
     "/": {
@@ -242,6 +265,9 @@ export const routeTree = rootRoute
     },
     "/experiments": {
       "filePath": "experiments.tsx"
+    },
+    "/metric": {
+      "filePath": "metric.tsx"
     }
   }
 }
