@@ -2,19 +2,9 @@
 import { useState, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format } from "date-fns";
-import {
-  Search,
-  CheckCircle,
-  Circle,
-  Filter,
-  Calendar,
-  CalendarX,
-} from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -26,15 +16,19 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import ReusableCard from "@/components/reusable/reusable-card";
-import dataStore, { addEntry, updateEntry } from "@/store/data-store";
+import dataStore, {
+  addEntry,
+  deleteEntry,
+  updateEntry,
+} from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import { ProtectedContent } from "@/components/security/protected-content";
 import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
+import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
+import QuickMetricLoggerCardItem from "./quick-metric-logger-card-item";
 
 const QuickMetricLogger = () => {
   // State
@@ -195,25 +189,6 @@ const QuickMetricLogger = () => {
     return true;
   };
 
-  // Get the current value for a metric on the selected date
-  const getMetricValue = (metric: Metric) => {
-    const todayLog = dailyLogs.find(
-      (log: DailyLog) =>
-        log.metric_id === metric.id &&
-        format(new Date(log.date), "yyyy-MM-dd") ===
-          format(selectedDate, "yyyy-MM-dd")
-    );
-
-    if (!todayLog) return null;
-
-    try {
-      return JSON.parse(todayLog.value);
-    } catch (e) {
-      console.error(e);
-      return todayLog.value;
-    }
-  };
-
   // Toggle completion for a boolean metric
   const toggleMetricCompletion = async (metric: Metric) => {
     if (metric.type !== "boolean") return;
@@ -308,181 +283,17 @@ const QuickMetricLogger = () => {
     }
   };
 
-  // Render metric in list view
-  const renderListItem = (metric: Metric) => {
-    const isCompleted = isMetricCompleted(metric);
-    const isCalendarTracked = !(metric.schedule_days || []).includes(-1);
-
-    return (
-      <Card
-        key={metric.id}
-        className={`mb-2 ${isCompleted ? "bg-green-50 dark:bg-green-950/30" : ""}`}
-      >
-        <CardContent className="p-3 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            {metric.type === "boolean" ? (
-              <Checkbox
-                checked={isCompleted}
-                onCheckedChange={() => toggleMetricCompletion(metric)}
-              />
-            ) : (
-              <div className="w-4" />
-            )}
-
-            <div>
-              <div className="font-medium">{metric.name}</div>
-              {metric.description && (
-                <div className="text-xs text-muted-foreground">
-                  {metric.description}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Badge
-              variant={isCalendarTracked ? "default" : "outline"}
-              className="text-xs"
-            >
-              {isCalendarTracked ? (
-                <Calendar className="h-3 w-3 mr-1" />
-              ) : (
-                <CalendarX className="h-3 w-3 mr-1" />
-              )}
-              {isCalendarTracked ? "Tracked" : "Not tracked"}
-            </Badge>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleCalendarTracking(metric)}
-            >
-              {isCalendarTracked ? "Remove from calendar" : "Add to calendar"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
+  // Delete a metric
+  const handleDeleteMetric = async (metric: Metric) => {
+    try {
+      await ApiService.deleteRecord(metric.id);
+      deleteEntry(metric.id, "metrics");
+      toast.success("Metric deleted successfully");
+    } catch (error) {
+      console.error("Error deleting metric:", error);
+      toast.error("Failed to delete metric");
+    }
   };
-
-  // Render card view
-  const renderCardView = () => {
-    return Object.keys(groupedMetrics)
-      .sort()
-      .map((category) => (
-        <div key={category} className="mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-medium text-lg">{category}</h3>
-            <Separator className="flex-1" />
-            <Badge variant="outline">{groupedMetrics[category].length}</Badge>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {groupedMetrics[category].map((metric) => {
-              const isCompleted = isMetricCompleted(metric);
-              const isCalendarTracked = !(metric.schedule_days || []).includes(
-                -1
-              );
-
-              return (
-                <Card
-                  key={metric.id}
-                  className={`${isCompleted ? "bg-green-50 dark:bg-green-950/30" : ""} ${metric.private ? "border-amber-300" : ""}`}
-                >
-                  <CardContent className="p-3">
-                    {metric.private ? (
-                      <ProtectedContent>
-                        {renderCardContent(
-                          metric,
-                          isCompleted,
-                          isCalendarTracked
-                        )}
-                      </ProtectedContent>
-                    ) : (
-                      renderCardContent(metric, isCompleted, isCalendarTracked)
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      ));
-  };
-
-  // Render the content of a card
-  const renderCardContent = (
-    metric: Metric,
-    isCompleted: boolean,
-    isCalendarTracked: boolean
-  ) => (
-    <>
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex items-center gap-2">
-          {metric.type === "boolean" ? (
-            <Button
-              size="sm"
-              variant={isCompleted ? "default" : "outline"}
-              className="h-8 w-8 p-0 rounded-full"
-              onClick={() => toggleMetricCompletion(metric)}
-            >
-              {isCompleted ? (
-                <CheckCircle className="h-5 w-5" />
-              ) : (
-                <Circle className="h-5 w-5" />
-              )}
-            </Button>
-          ) : (
-            <div className="h-8 w-8 flex items-center justify-center text-sm font-medium">
-              {getMetricValue(metric) ?? "—"}
-              {metric.unit ? ` ${metric.unit}` : ""}
-            </div>
-          )}
-
-          <div>
-            <div className="font-medium">{metric.name}</div>
-            <div className="text-xs text-muted-foreground">
-              {metric.description}
-            </div>
-          </div>
-        </div>
-
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 w-7 p-0 rounded-full"
-          onClick={() => toggleCalendarTracking(metric)}
-        >
-          {isCalendarTracked ? (
-            <Calendar className="h-4 w-4 text-primary" />
-          ) : (
-            <CalendarX className="h-4 w-4 text-muted-foreground" />
-          )}
-        </Button>
-      </div>
-
-      <div className="mt-2 text-xs flex items-center justify-between">
-        <Badge
-          variant={
-            metric.type === "boolean"
-              ? isCompleted
-                ? "success"
-                : "outline"
-              : "outline"
-          }
-        >
-          {metric.type === "boolean"
-            ? isCompleted
-              ? "Completed"
-              : "Incomplete"
-            : metric.type}
-        </Badge>
-        <span className="text-muted-foreground">
-          {isCalendarTracked ? "Shows in calendar" : "Hidden from calendar"}
-        </span>
-      </div>
-    </>
-  );
 
   return (
     <div className="space-y-6">
@@ -606,19 +417,24 @@ const QuickMetricLogger = () => {
         <div className="space-y-4">
           {viewMode === "list" ? (
             <div className="space-y-6">
-              {Object.keys(groupedMetrics)
-                .sort()
-                .map((category) => (
-                  <div key={category}>
-                    <h3 className="font-medium text-lg mb-2">{category}</h3>
-                    {groupedMetrics[category].map((metric) =>
-                      renderListItem(metric)
-                    )}
-                  </div>
-                ))}
+              <QuickMetricLoggerListItem
+                groupedMetrics={groupedMetrics}
+                isMetricCompleted={isMetricCompleted}
+                toggleMetricCompletion={toggleMetricCompletion}
+                toggleCalendarTracking={toggleCalendarTracking}
+                handleDeleteMetric={handleDeleteMetric}
+              />
             </div>
           ) : (
-            renderCardView()
+            <QuickMetricLoggerCardItem
+              groupedMetrics={groupedMetrics}
+              isMetricCompleted={isMetricCompleted}
+              toggleMetricCompletion={toggleMetricCompletion}
+              toggleCalendarTracking={toggleCalendarTracking}
+              dailyLogs={dailyLogs}
+              selectedDate={selectedDate}
+              handleDeleteMetric={handleDeleteMetric}
+            />
           )}
         </div>
       )}

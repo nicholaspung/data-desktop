@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import DailyTrackerCalendarGrid from "./daily-tracker-calendar-grid";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
-import { MetricWithLog } from "@/store/experiment-definitions";
+import { DailyLog, MetricWithLog } from "@/store/experiment-definitions";
 
 interface MetricWithLogWithChange extends MetricWithLog {
   isScheduledForToday: boolean;
@@ -56,7 +56,7 @@ export default function DailyTrackerCalendarView() {
   // Process logs for the selected date
   const processLogsForSelectedDate = (
     date: Date,
-    logs: Record<string, any>[] = dailyLogsData
+    logs: DailyLog[] = dailyLogsData
   ) => {
     // Filter logs for the selected date
     const logsForDate = logs.filter((log) => {
@@ -65,13 +65,16 @@ export default function DailyTrackerCalendarView() {
     });
 
     // Map logs to metrics
-    const metricsWithLogsArray = (metricsData as any[])
+    const metricsWithLogsArray = metricsData
       // First, filter inactive metrics
       .filter((metric) => metric.active)
       // Then, check if the metric is scheduled for this date
       .map((metric) => {
         // Parse schedule_days from string to array if needed
         const scheduleDays = parseScheduleDays(metric.schedule_days);
+        const doNotShow = metric.schedule_days
+          ? Boolean(metric.schedule_days.find((el) => el === -1))
+          : false;
 
         // Create a copy of the metric with parsed schedule_days
         const metricWithParsedSchedule = {
@@ -98,7 +101,7 @@ export default function DailyTrackerCalendarView() {
             : parseMetricValue(metric.default_value, metric.type),
           notes: log?.notes || "",
           hasChanged: false,
-          isScheduledForToday, // Add scheduling flag
+          isScheduledForToday: doNotShow ? false : isScheduledForToday, // Add scheduling flag
         };
       })
       // Filter metrics based on scheduling (unless showUnscheduled is true)

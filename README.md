@@ -9,22 +9,19 @@
 - PDF reports from data
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
-- add in bone density graphs for dexa
-- in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add time tracking, and also tie it with a metric if possible
-- if a log has a note, it's not showing when I toggle "show notes"
-- progress line chart in experiment-dashboard maybe showing the wrong date
 - add a way in the backend to make a field unique
 - update the daily tracking information to be what the feature actually is
 
 ### IN PROGRESS
 
+- in bloodwork, add a "bloodwork" filter, which is the date filter, allow selection
+- progress line chart in experiment-dashboard maybe showing the wrong date
+- add in bone density graphs for dexa
 - Working on tracking feature, i.e. there's a bunch of random things I want to track if I did, it doesn't need to connect to a habit
 - need to have a custom "add experiment" button in `experiment-list.tsx`
-- in `daily-tracker-calendar-view.tsx`, need to be able to edit/delete a metric that is showing up in the logs section
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
-- in `daily-tracker-calendar-view.tsx`, need to update the logic in there so that if `schedule_days` is `-1`, it doesn't affect the progress shown in the calendar, and also not show up in the logs below
 - add a "add dexa scan" button in `dexa.tsx`
 - add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
 
@@ -101,5 +98,8 @@
 - need to have a "add metric" button in `daily-tracker-calendar-view.tsx` [DONE 2025-04-15]
 - metric frequency custom needs to figure out how to showcase that, or just make a specific metric form for it and display it somewhere [DONE 2025-04-15]
 - need to figure out how to add a random metric [DONE 2025-04-15]
+- in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar [DONE 2025-04-15]
+- in `daily-tracker-calendar-view.tsx`, need to update the logic in there so that if `schedule_days` is `-1`, it doesn't affect the progress shown in the calendar, and also not show up in the logs below [DONE 2025-04-16]
+- in `daily-tracker-calendar-view.tsx`, need to be able to edit/delete a metric that is showing up in the logs section [DONE 2025-04-16]
 
 ### GAVE UP

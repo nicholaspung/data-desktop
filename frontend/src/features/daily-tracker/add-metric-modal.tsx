@@ -1,7 +1,7 @@
 // src/features/daily-tracker/components/add-metric-modal.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,27 +9,36 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AddMetricForm from "./add-metric-form";
+import { Metric } from "@/store/experiment-definitions";
 
 /**
- * A self-contained component that provides a button to open a modal with the add metric form
+ * A self-contained component that provides a button to open a modal with the add/edit metric form
  * and handles all the form submission logic.
  */
 export default function AddMetricModal({
-  buttonLabel = "Add Metric",
+  buttonLabel,
   buttonVariant = "default",
   buttonSize = "default",
   buttonClassName = "",
   showIcon = true,
-  isEdit,
+  metric, // Add metric data prop for editing
+  onSuccess, // Callback for when form is submitted successfully
 }: {
   buttonLabel?: string;
   buttonVariant?: "default" | "outline" | "ghost" | "link" | "destructive";
   buttonSize?: "default" | "sm" | "lg" | "icon";
   buttonClassName?: string;
   showIcon?: boolean;
-  isEdit?: boolean;
+  metric?: Metric; // Metric data to edit (optional)
+  onSuccess?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const isEdit = !!metric;
+
+  const handleSuccess = () => {
+    setOpen(false);
+    if (onSuccess) onSuccess();
+  };
 
   return (
     <>
@@ -39,8 +48,13 @@ export default function AddMetricModal({
         onClick={() => setOpen(true)}
         className={buttonClassName}
       >
-        {showIcon && <Plus className="h-4 w-4 mr-2" />}
-        {buttonLabel}
+        {showIcon &&
+          (isEdit ? (
+            <Pencil className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4 mr-2" />
+          ))}
+        {buttonLabel || (isEdit ? "" : "Add Metric")}
       </Button>
 
       <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
@@ -52,7 +66,8 @@ export default function AddMetricModal({
           </DialogHeader>
 
           <AddMetricForm
-            onSuccess={() => setOpen(false)}
+            metric={metric}
+            onSuccess={handleSuccess}
             onCancel={() => setOpen(false)}
           />
         </DialogContent>

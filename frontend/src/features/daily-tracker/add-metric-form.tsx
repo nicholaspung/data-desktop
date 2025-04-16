@@ -1,4 +1,4 @@
-// src/features/experiments/add-metric-form.tsx
+// src/features/daily-tracker/add-metric-form.tsx
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,21 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Save, Plus } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
-import dataStore, { addEntry } from "@/store/data-store";
+import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
 import { Switch } from "@/components/ui/switch";
-import { Experiment } from "@/store/experiment-definitions";
+import { Experiment, Metric } from "@/store/experiment-definitions";
 import { ProtectedField } from "@/components/security/protected-content";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 export default function AddMetricForm({
+  metric, // Add metric prop for editing
   onSuccess,
   onCancel,
   className,
 }: {
+  metric?: Metric; // Metric data to edit (optional)
   onSuccess?: () => void;
   onCancel?: () => void;
   className?: string;
@@ -30,38 +32,85 @@ export default function AddMetricForm({
     useStore(dataStore, (state) => state.metric_categories) || [];
   const experiments = useStore(dataStore, (state) => state.experiments) || [];
 
-  // Form state
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  // Determine if we're in edit mode
+  const isEditMode = !!metric;
+
+  // Form state - initialize with metric data if in edit mode
+  const [name, setName] = useState(metric?.name || "");
+  const [description, setDescription] = useState(metric?.description || "");
   const [type, setType] = useState<
     "number" | "boolean" | "time" | "percentage"
-  >("number");
-  const [unit, setUnit] = useState("");
-  const [defaultValue, setDefaultValue] = useState("0");
+  >((metric?.type as any) || "number");
+  const [unit, setUnit] = useState(metric?.unit || "");
+  const [defaultValue, setDefaultValue] = useState(
+    metric?.default_value?.toString() || "0"
+  );
 
   // Category state
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState(metric?.category_id || "");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [isDuplicateCategory, setIsDuplicateCategory] = useState(false);
 
-  const [active, setActive] = useState(true);
-  const [isPrivate, setIsPrivate] = useState(false);
+  const [active, setActive] = useState(metric?.active ?? true);
+  const [isPrivate, setIsPrivate] = useState(metric?.private ?? false);
   const [experimentId, setExperimentId] = useState<string>("");
 
   // Schedule fields
   const [scheduleFrequency, setScheduleFrequency] = useState<
     "daily" | "weekly" | "custom"
-  >("daily");
-  const [scheduleStartDate, setScheduleStartDate] = useState<string>("");
-  const [scheduleEndDate, setScheduleEndDate] = useState<string>("");
-  const [scheduleDays, setScheduleDays] = useState<string[]>([]);
+  >((metric?.schedule_frequency as any) || "daily");
+  const [scheduleStartDate, setScheduleStartDate] = useState<string>(
+    metric?.schedule_start_date
+      ? new Date(metric.schedule_start_date).toISOString().split("T")[0]
+      : ""
+  );
+  const [scheduleEndDate, setScheduleEndDate] = useState<string>(
+    metric?.schedule_end_date
+      ? new Date(metric.schedule_end_date).toISOString().split("T")[0]
+      : ""
+  );
+  const [scheduleDays, setScheduleDays] = useState<string[]>(
+    Array.isArray(metric?.schedule_days)
+      ? metric.schedule_days
+          .map((day) => {
+            switch (day) {
+              case 0:
+                return "sunday";
+              case 1:
+                return "monday";
+              case 2:
+                return "tuesday";
+              case 3:
+                return "wednesday";
+              case 4:
+                return "thursday";
+              case 5:
+                return "friday";
+              case 6:
+                return "saturday";
+              default:
+                return "";
+            }
+          })
+          .filter(Boolean)
+      : []
+  );
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
-  const [showSchedulingOptions, setShowSchedulingOptions] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(
+    isEditMode || false
+  );
+  const [showSchedulingOptions, setShowSchedulingOptions] = useState(
+    isEditMode &&
+      (!!metric?.schedule_frequency ||
+        !!metric?.schedule_start_date ||
+        !!metric?.schedule_end_date ||
+        (Array.isArray(metric?.schedule_days) &&
+          metric.schedule_days.length > 0))
+  );
 
   // Format category options for autocomplete
   const categoryOptions = categories.map((cat: any) => ({
@@ -84,14 +133,16 @@ export default function AddMetricForm({
 
   // Update default value when type changes
   useEffect(() => {
-    if (type === "boolean") {
-      setDefaultValue("false");
-    } else if (type === "number" || type === "percentage") {
-      setDefaultValue("0");
-    } else if (type === "time") {
-      setDefaultValue("0");
+    if (!isEditMode) {
+      if (type === "boolean") {
+        setDefaultValue("false");
+      } else if (type === "number" || type === "percentage") {
+        setDefaultValue("0");
+      } else if (type === "time") {
+        setDefaultValue("0");
+      }
     }
-  }, [type]);
+  }, [type, isEditMode]);
 
   // Handle creating a new category
   const handleAddCategory = async () => {
@@ -123,9 +174,6 @@ export default function AddMetricForm({
         setNewCategoryName("");
         setShowAddCategory(false);
         toast.success(`Category "${response.name}" created and selected`);
-        if (onSuccess) {
-          onSuccess();
-        }
       }
     } catch (error) {
       console.error("Error creating category:", error);
@@ -154,6 +202,30 @@ export default function AddMetricForm({
         processedDefaultValue = defaultValue === "true" ? "true" : "false";
       }
 
+      // Convert schedule days from string labels to numbers
+      const numericScheduleDays = scheduleDays
+        .map((day) => {
+          switch (day) {
+            case "sunday":
+              return 0;
+            case "monday":
+              return 1;
+            case "tuesday":
+              return 2;
+            case "wednesday":
+              return 3;
+            case "thursday":
+              return 4;
+            case "friday":
+              return 5;
+            case "saturday":
+              return 6;
+            default:
+              return -1;
+          }
+        })
+        .filter((day) => day >= 0);
+
       // Prepare the metric data
       const metricData = {
         name,
@@ -173,47 +245,67 @@ export default function AddMetricForm({
           showSchedulingOptions && scheduleEndDate
             ? new Date(scheduleEndDate)
             : null,
-        schedule_days: showSchedulingOptions ? scheduleDays : null,
+        schedule_days: showSchedulingOptions ? numericScheduleDays : null,
       };
 
-      // Add metric to database
-      const response = await ApiService.addRecord("metrics", metricData);
+      let response;
 
-      if (response) {
-        // Add to store
-        addEntry(response, "metrics");
+      if (isEditMode && metric) {
+        // Update existing metric
+        response = await ApiService.updateRecord(metric.id, {
+          ...metric,
+          ...metricData,
+        });
 
-        // If experiment is selected, create the experiment-metric relationship
-        if (experimentId) {
-          const experimentMetricData = {
-            experiment_id: experimentId,
-            metric_id: response.id,
-            target: type === "boolean" ? "true" : "0",
-            target_type: type === "boolean" ? "boolean" : "atleast",
-            importance: 5, // Default importance
-            private: isPrivate,
-          };
-
-          const relationResponse = await ApiService.addRecord(
-            "experiment_metrics",
-            experimentMetricData
-          );
-
-          if (relationResponse) {
-            addEntry(relationResponse, "experiment_metrics");
-          }
+        if (response) {
+          updateEntry(metric.id, response, "metrics");
+          toast.success("Metric updated successfully");
         }
+      } else {
+        // Add new metric
+        response = await ApiService.addRecord("metrics", metricData);
 
-        toast.success("Metric created successfully");
-        resetForm();
-
-        if (onSuccess) {
-          onSuccess();
+        if (response) {
+          // Add to store
+          addEntry(response, "metrics");
+          toast.success("Metric created successfully");
         }
       }
+
+      // If response was successful and we have an experiment selected,
+      // create or update the experiment-metric relationship
+      if (response && experimentId && !isEditMode) {
+        const experimentMetricData = {
+          experiment_id: experimentId,
+          metric_id: response.id,
+          target: type === "boolean" ? "true" : "0",
+          target_type: type === "boolean" ? "boolean" : "atleast",
+          importance: 5, // Default importance
+          private: isPrivate,
+        };
+
+        const relationResponse = await ApiService.addRecord(
+          "experiment_metrics",
+          experimentMetricData
+        );
+
+        if (relationResponse) {
+          addEntry(relationResponse, "experiment_metrics");
+        }
+      }
+
+      // Call success callback
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // If not editing, reset the form
+      if (!isEditMode) {
+        resetForm();
+      }
     } catch (error) {
-      console.error("Error creating metric:", error);
-      toast.error("Failed to create metric");
+      console.error("Error saving metric:", error);
+      toast.error(`Failed to ${isEditMode ? "update" : "create"} metric`);
     } finally {
       setIsSubmitting(false);
     }
@@ -275,6 +367,7 @@ export default function AddMetricForm({
               value={type}
               onChange={(value) => setType(value as any)}
               title="metric type"
+              disabled={isEditMode} // Disable type change in edit mode
               options={[
                 { id: "number", label: "Number (e.g., 10, 25.5)" },
                 { id: "boolean", label: "Yes/No (e.g., Completed)" },
@@ -282,6 +375,11 @@ export default function AddMetricForm({
                 { id: "time", label: "Time (e.g., minutes)" },
               ]}
             />
+            {isEditMode && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Metric type cannot be changed after creation
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -415,31 +513,33 @@ export default function AddMetricForm({
           )}
         </div>
 
-        {/* Attach to Experiment */}
-        <div className="space-y-2">
-          <Label htmlFor="experiment">Attach to Experiment (optional)</Label>
-          <ReusableSelect
-            value={experimentId}
-            onChange={setExperimentId}
-            title="experiment"
-            noDefault={false}
-            renderItem={(option) =>
-              option.private ? (
-                <ProtectedField>{option.name}</ProtectedField>
-              ) : (
-                option.name
-              )
-            }
-            options={experiments
-              .filter((exp: Experiment) => exp.status === "active") // Only show active experiments
-              .map((exp: Experiment) => ({
-                id: exp.id,
-                label: exp.name,
-                name: exp.name,
-                private: exp.private,
-              }))}
-          />
-        </div>
+        {/* Attach to Experiment - only show for new metrics */}
+        {!isEditMode && (
+          <div className="space-y-2">
+            <Label htmlFor="experiment">Attach to Experiment (optional)</Label>
+            <ReusableSelect
+              value={experimentId}
+              onChange={setExperimentId}
+              title="experiment"
+              noDefault={false}
+              renderItem={(option) =>
+                option.private ? (
+                  <ProtectedField>{option.name}</ProtectedField>
+                ) : (
+                  option.name
+                )
+              }
+              options={experiments
+                .filter((exp: Experiment) => exp.status === "active")
+                .map((exp: Experiment) => ({
+                  id: exp.id,
+                  label: exp.name,
+                  name: exp.name,
+                  private: exp.private,
+                }))}
+            />
+          </div>
+        )}
 
         {/* Advanced Options Toggle */}
         <div className="pt-2">
@@ -579,12 +679,12 @@ export default function AddMetricForm({
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating...
+                {isEditMode ? "Updating..." : "Creating..."}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Create Metric
+                {isEditMode ? "Update Metric" : "Create Metric"}
               </>
             )}
           </Button>
