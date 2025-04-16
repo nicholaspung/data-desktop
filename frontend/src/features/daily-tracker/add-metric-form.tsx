@@ -1,393 +1,460 @@
-// src/features/daily-tracker/components/add-metric-form.tsx
-import React, { useState } from "react";
+// src/features/experiments/add-metric-form.tsx
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { Loader2, Save, Plus } from "lucide-react";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { addEntry } from "@/store/data-store";
+import { ApiService } from "@/services/api";
+import { toast } from "sonner";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import { InlineHelp } from "@/components/reusable/feature-guide";
+import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
+import { Switch } from "@/components/ui/switch";
+import { Experiment } from "@/store/experiment-definitions";
+import { ProtectedField } from "@/components/security/protected-content";
 
 export default function AddMetricForm({
-  onSubmit,
+  onSuccess,
   onCancel,
-  isEdit = false,
-  initialData = {},
-  categories = [],
-  experiments = [],
+  className,
 }: {
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
-  isEdit?: boolean;
-  initialData?: any;
-  categories: { id: string; name: string }[];
-  experiments: { id: string; name: string }[];
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  className?: string;
 }) {
-  const [formData, setFormData] = useState({
-    name: initialData.name || "",
-    description: initialData.description || "",
-    type: initialData.type || "boolean",
-    defaultValue: initialData.defaultValue || "",
-    unit: initialData.unit || "",
-    categoryId: initialData.categoryId || "",
-    isPrivate: initialData.isPrivate || false,
-    active: initialData.active !== undefined ? initialData.active : true,
+  // Get available categories from the store
+  const categories =
+    useStore(dataStore, (state) => state.metric_categories) || [];
+  const experiments = useStore(dataStore, (state) => state.experiments) || [];
 
-    // Scheduling options
-    scheduleFrequency: initialData.scheduleFrequency || "daily",
-    scheduleDays: initialData.scheduleDays || [0, 1, 2, 3, 4, 5, 6], // Default all days
-    scheduleStartDate:
-      initialData.scheduleStartDate ||
-      new Date().toISOString().substring(0, 10),
-    scheduleEndDate: initialData.scheduleEndDate || "",
+  // Form state
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState<
+    "number" | "boolean" | "time" | "percentage"
+  >("number");
+  const [unit, setUnit] = useState("");
+  const [defaultValue, setDefaultValue] = useState("0");
+  const [categoryId, setCategoryId] = useState("");
+  const [active, setActive] = useState(true);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [experimentId, setExperimentId] = useState<string>("");
 
-    // Experiment options
-    attachToExperiments: initialData.attachToExperiments || [],
-  });
+  // Schedule fields
+  const [scheduleFrequency, setScheduleFrequency] = useState<
+    "daily" | "weekly" | "custom"
+  >("daily");
+  const [scheduleStartDate, setScheduleStartDate] = useState<string>("");
+  const [scheduleEndDate, setScheduleEndDate] = useState<string>("");
+  const [scheduleDays, setScheduleDays] = useState<string[]>([]);
 
-  const [activeTab, setActiveTab] = useState("basic");
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showSchedulingOptions, setShowSchedulingOptions] = useState(false);
 
-  const handleChange = (field: string, value: any) => {
-    setFormData({
-      ...formData,
-      [field]: value,
-    });
+  // Update default value when type changes
+  useEffect(() => {
+    if (type === "boolean") {
+      setDefaultValue("false");
+    } else if (type === "number" || type === "percentage") {
+      setDefaultValue("0");
+    } else if (type === "time") {
+      setDefaultValue("0");
+    }
+  }, [type]);
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Validate required fields
+      if (!name) {
+        toast.error("Metric name is required");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Ensure default value is properly formatted based on type
+      let processedDefaultValue = defaultValue;
+      if (type === "boolean") {
+        processedDefaultValue = defaultValue === "true" ? "true" : "false";
+      }
+
+      // Prepare the metric data
+      const metricData = {
+        name,
+        description,
+        type,
+        unit,
+        default_value: processedDefaultValue,
+        category_id: categoryId || null,
+        active,
+        private: isPrivate,
+        schedule_frequency: showSchedulingOptions ? scheduleFrequency : null,
+        schedule_start_date:
+          showSchedulingOptions && scheduleStartDate
+            ? new Date(scheduleStartDate)
+            : null,
+        schedule_end_date:
+          showSchedulingOptions && scheduleEndDate
+            ? new Date(scheduleEndDate)
+            : null,
+        schedule_days: showSchedulingOptions ? scheduleDays : null,
+      };
+
+      // Add metric to database
+      const response = await ApiService.addRecord("metrics", metricData);
+
+      if (response) {
+        // Add to store
+        addEntry(response, "metrics");
+
+        // If experiment is selected, create the experiment-metric relationship
+        if (experimentId) {
+          const experimentMetricData = {
+            experiment_id: experimentId,
+            metric_id: response.id,
+            target: type === "boolean" ? "true" : "0",
+            target_type: type === "boolean" ? "boolean" : "atleast",
+            importance: 5, // Default importance
+            private: isPrivate,
+          };
+
+          const relationResponse = await ApiService.addRecord(
+            "experiment_metrics",
+            experimentMetricData
+          );
+
+          if (relationResponse) {
+            addEntry(relationResponse, "experiment_metrics");
+          }
+        }
+
+        toast.success("Metric created successfully");
+        resetForm();
+
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    } catch (error) {
+      console.error("Error creating metric:", error);
+      toast.error("Failed to create metric");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
+  // Reset form fields
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setType("number");
+    setUnit("");
+    setDefaultValue("0");
+    setCategoryId("");
+    setActive(true);
+    setIsPrivate(false);
+    setExperimentId("");
+    setScheduleFrequency("daily");
+    setScheduleStartDate("");
+    setScheduleEndDate("");
+    setScheduleDays([]);
+    setShowAdvancedOptions(false);
+    setShowSchedulingOptions(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
-          <TabsTrigger value="experiments">Experiments</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-        </TabsList>
-
-        {/* Basic Information Tab */}
-        <TabsContent value="basic" className="space-y-4">
-          <InlineHelp storageKey="metric-basic-info-help">
-            The basic information defines what you're tracking and how it should
-            be measured.
-            <li>
-              - Choose a descriptive <strong>name</strong> that clearly
-              identifies what you're tracking
-            </li>
-            <li>
-              - Select the appropriate <strong>type</strong> that matches what
-              you're measuring
-            </li>
-            <li>
-              - Set a <strong>default value</strong> that will be pre-filled
-              when tracking
-            </li>
-          </InlineHelp>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Metric Name *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  placeholder="e.g., Morning Meditation, Steps Walked"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  placeholder="Describe what this metric measures and how to track it"
-                  className="min-h-[80px]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Metric Type *</Label>
-                <RadioGroup
-                  value={formData.type}
-                  onValueChange={(value) => handleChange("type", value)}
-                  className="flex flex-col space-y-1"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="boolean" id="boolean" />
-                    <Label htmlFor="boolean">Boolean (Yes/No)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="number" id="number" />
-                    <Label htmlFor="number">Number</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="time" id="time" />
-                    <Label htmlFor="time">Time Duration</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="percentage" id="percentage" />
-                    <Label htmlFor="percentage">Percentage</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {(formData.type === "number" ||
-                formData.type === "percentage") && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="defaultValue">Default Value</Label>
-                    <Input
-                      id="defaultValue"
-                      type="number"
-                      value={formData.defaultValue}
-                      onChange={(e) =>
-                        handleChange("defaultValue", e.target.value)
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="unit">Unit (optional)</Label>
-                    <Input
-                      id="unit"
-                      value={formData.unit}
-                      onChange={(e) => handleChange("unit", e.target.value)}
-                      placeholder="e.g., steps, kg, miles"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {formData.type === "time" && (
-                <div className="space-y-2">
-                  <Label htmlFor="defaultValue">Default Minutes</Label>
-                  <Input
-                    id="defaultValue"
-                    type="number"
-                    value={formData.defaultValue}
-                    onChange={(e) =>
-                      handleChange("defaultValue", e.target.value)
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category (optional)</Label>
-                <ReusableSelect
-                  options={[
-                    { id: "none", label: "No Category" },
-                    ...categories,
-                  ]}
-                  value={formData.categoryId || "none"}
-                  onChange={(value) =>
-                    handleChange("categoryId", value === "none" ? "" : value)
-                  }
-                  placeholder="Select category"
-                  title="category"
-                />
-              </div>
-            </div>
+    <form onSubmit={handleSubmit} className={className}>
+      <div className="space-y-4">
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Metric Name</Label>
+            <Input
+              id="name"
+              placeholder="e.g., Steps Walked, Meditation, Weight"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
           </div>
-        </TabsContent>
 
-        {/* Scheduling Tab */}
-        <TabsContent value="scheduling" className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Frequency</Label>
-              <Select
-                value={formData.scheduleFrequency}
-                onValueChange={(value) =>
-                  handleChange("scheduleFrequency", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="custom">Custom</SelectItem>
-                  <SelectItem value="manual">Manual (Search Only)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formData.scheduleFrequency === "weekly" && (
-              <div className="space-y-2">
-                <Label>Days of Week</Label>
-                <div className="flex flex-wrap gap-2">
-                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                    (day, index) => (
-                      <div key={day} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`day-${index}`}
-                          checked={formData.scheduleDays.includes(index)}
-                          onCheckedChange={(checked) => {
-                            const newDays = checked
-                              ? [...formData.scheduleDays, index]
-                              : formData.scheduleDays.filter(
-                                  (d: any) => d !== index
-                                );
-                            handleChange("scheduleDays", newDays);
-                          }}
-                        />
-                        <Label htmlFor={`day-${index}`}>{day}</Label>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date (optional)</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.scheduleStartDate}
-                  onChange={(e) =>
-                    handleChange("scheduleStartDate", e.target.value)
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date (optional)</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.scheduleEndDate}
-                  onChange={(e) =>
-                    handleChange("scheduleEndDate", e.target.value)
-                  }
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input
+              id="description"
+              placeholder="Description of what this metric tracks"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
           </div>
-        </TabsContent>
+        </div>
 
-        {/* Experiments Tab */}
-        <TabsContent value="experiments" className="space-y-4">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Attach to Experiments (optional)</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                You can connect this metric to one or more experiments for
-                tracking purposes. Detailed targets will be configured in the
-                experiment settings.
-              </p>
+        {/* Type and Unit */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="type">Metric Type</Label>
+            <ReusableSelect
+              value={type}
+              onChange={(value) => setType(value as any)}
+              title="metric type"
+              options={[
+                { id: "number", label: "Number (e.g., 10, 25.5)" },
+                { id: "boolean", label: "Yes/No (e.g., Completed)" },
+                { id: "percentage", label: "Percentage (e.g., 85%)" },
+                { id: "time", label: "Time (e.g., minutes)" },
+              ]}
+            />
+          </div>
 
-              {experiments.length === 0 ? (
-                <div className="text-sm border rounded-md p-4 bg-muted/40">
-                  No active experiments found. Create an experiment first to
-                  connect this metric.
-                </div>
+          <div className="space-y-2">
+            <Label htmlFor="unit">Unit (optional)</Label>
+            <Input
+              id="unit"
+              placeholder="e.g., kg, miles, mins"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              disabled={type === "boolean"}
+            />
+          </div>
+        </div>
+
+        {/* Default Value */}
+        <div className="space-y-2">
+          <Label htmlFor="defaultValue">Default Value</Label>
+          {type === "boolean" ? (
+            <ReusableSelect
+              value={defaultValue}
+              onChange={setDefaultValue}
+              title="default value"
+              options={[
+                { id: "false", label: "No / Not Completed" },
+                { id: "true", label: "Yes / Completed" },
+              ]}
+            />
+          ) : (
+            <Input
+              id="defaultValue"
+              type={
+                type === "time" || type === "number" || type === "percentage"
+                  ? "number"
+                  : "text"
+              }
+              placeholder="Default value"
+              value={defaultValue}
+              onChange={(e) => setDefaultValue(e.target.value)}
+            />
+          )}
+        </div>
+
+        {/* Category Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="category">Category (optional)</Label>
+          <div className="flex gap-2">
+            <ReusableSelect
+              value={categoryId}
+              onChange={setCategoryId}
+              title="category"
+              noDefault={false}
+              options={categories.map((cat: any) => ({
+                id: cat.id,
+                label: cat.name,
+              }))}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                // Open category creation dialog - this would be implemented separately
+                toast.info("Category creation not implemented in this example");
+              }}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Attach to Experiment */}
+        <div className="space-y-2">
+          <Label htmlFor="experiment">Attach to Experiment (optional)</Label>
+          <ReusableSelect
+            value={experimentId}
+            onChange={setExperimentId}
+            title="experiment"
+            noDefault={false}
+            renderItem={(option) =>
+              option.private ? (
+                <ProtectedField>{option.name}</ProtectedField>
               ) : (
-                <div className="space-y-2">
-                  {experiments.map((experiment) => (
-                    <div
-                      key={experiment.id}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={`exp-${experiment.id}`}
-                        checked={formData.attachToExperiments.includes(
-                          experiment.id
-                        )}
-                        onCheckedChange={(checked) => {
-                          const newExperiments = checked
-                            ? [...formData.attachToExperiments, experiment.id]
-                            : formData.attachToExperiments.filter(
-                                (id: any) => id !== experiment.id
-                              );
-                          handleChange("attachToExperiments", newExperiments);
-                        }}
+                option.name
+              )
+            }
+            options={experiments
+              .filter((exp: Experiment) => exp.status === "active") // Only show active experiments
+              .map((exp: Experiment) => ({
+                id: exp.id,
+                label: exp.name,
+                name: exp.name,
+                private: exp.private,
+              }))}
+          />
+        </div>
+
+        {/* Advanced Options Toggle */}
+        <div className="pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+            className="px-0 text-muted-foreground"
+          >
+            {showAdvancedOptions ? "Hide" : "Show"} Advanced Options
+          </Button>
+        </div>
+
+        {/* Advanced Options */}
+        {showAdvancedOptions && (
+          <>
+            <Separator />
+
+            <div className="space-y-4 pt-2">
+              {/* Active Status */}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="active" className="cursor-pointer">
+                  Active
+                </Label>
+                <Switch
+                  id="active"
+                  checked={active}
+                  onCheckedChange={setActive}
+                />
+              </div>
+
+              {/* Privacy Setting */}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="private" className="cursor-pointer">
+                  Private (PIN Protected)
+                </Label>
+                <Switch
+                  id="private"
+                  checked={isPrivate}
+                  onCheckedChange={setIsPrivate}
+                />
+              </div>
+
+              {/* Scheduling Options Toggle */}
+              <div className="flex items-center justify-between">
+                <Label htmlFor="scheduling" className="cursor-pointer">
+                  Enable Scheduling
+                </Label>
+                <Switch
+                  id="scheduling"
+                  checked={showSchedulingOptions}
+                  onCheckedChange={setShowSchedulingOptions}
+                />
+              </div>
+
+              {/* Scheduling Options */}
+              {showSchedulingOptions && (
+                <div className="space-y-4 pl-4 border-l-2 border-muted mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduleFrequency">Frequency</Label>
+                    <ReusableSelect
+                      value={scheduleFrequency}
+                      onChange={(value) => setScheduleFrequency(value as any)}
+                      title="frequency"
+                      options={[
+                        { id: "daily", label: "Daily" },
+                        { id: "weekly", label: "Weekly" },
+                        { id: "custom", label: "Custom" },
+                      ]}
+                    />
+                  </div>
+
+                  {scheduleFrequency === "custom" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduleDays">Show on Days</Label>
+                      <ReusableMultiSelect
+                        selected={scheduleDays}
+                        onChange={setScheduleDays}
+                        options={[
+                          { id: "sunday", label: "Sunday" },
+                          { id: "monday", label: "Monday" },
+                          { id: "tuesday", label: "Tuesday" },
+                          { id: "wednesday", label: "Wednesday" },
+                          { id: "thursday", label: "Thursday" },
+                          { id: "friday", label: "Friday" },
+                          { id: "saturday", label: "Saturday" },
+                        ]}
+                        placeholder="Select days..."
                       />
-                      <Label htmlFor={`exp-${experiment.id}`}>
-                        {experiment.name}
-                      </Label>
                     </div>
-                  ))}
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduleStartDate">
+                        Start Date (optional)
+                      </Label>
+                      <Input
+                        id="scheduleStartDate"
+                        type="date"
+                        value={scheduleStartDate}
+                        onChange={(e) => setScheduleStartDate(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="scheduleEndDate">
+                        End Date (optional)
+                      </Label>
+                      <Input
+                        id="scheduleEndDate"
+                        type="date"
+                        value={scheduleEndDate}
+                        onChange={(e) => setScheduleEndDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
+          </>
+        )}
 
-            <div className="text-sm bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-4">
-              <p className="font-medium">Note about experiments</p>
-              <p className="mt-1">
-                After connecting this metric to an experiment, you'll need to
-                configure specific targets and tracking parameters in the
-                experiment settings.
-              </p>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Advanced Tab */}
-        <TabsContent value="advanced" className="space-y-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="active">Active</Label>
-                <p className="text-sm text-muted-foreground">
-                  Inactive metrics won't appear in the tracker
-                </p>
-              </div>
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => handleChange("active", checked)}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="private">Private (PIN Protected)</Label>
-                <p className="text-sm text-muted-foreground">
-                  Private metrics require PIN authentication to view
-                </p>
-              </div>
-              <Switch
-                id="private"
-                checked={formData.isPrivate}
-                onCheckedChange={(checked) =>
-                  handleChange("isPrivate", checked)
-                }
-              />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          {isEdit ? "Update Metric" : "Create Metric"}
-        </Button>
+        {/* Form Actions */}
+        <div className="flex justify-end gap-2 pt-4">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Create Metric
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </form>
   );

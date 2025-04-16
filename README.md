@@ -23,7 +23,6 @@
 - need to have a custom "add experiment" button in `experiment-list.tsx`
 - need to have a "add metric" button in `daily-tracker-calendar-view.tsx`
 - need to figure out how to add a random metric
-- need to have an "info" button on how to use "daily tracking" and "experiments"
 - need to add info for dexa, bloodwork, experiments, and daily tracking
 
 ### DONE
@@ -95,5 +94,6 @@
 - in daily tracker view, if a metric is private, only show it when the "show private" button input with PIN is completed [DONE 2025-04-14]
 - in experiments, if a metric is private, only show it when the "show private" button input with PIN is completed [DONE 2025-04-14]
 - add a simple "instructions" panel on how to use things for now since UI isn't intuitive [DONE 2025-04-15]
+- need to have an "info" button on how to use "daily tracking" and "experiments" [DONE 2025-04-15]
 
 ### GAVE UP
