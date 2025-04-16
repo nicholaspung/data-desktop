@@ -13,6 +13,8 @@
 - in daily tracker, would be nice if I could view specific metrics via a filter on the calendar without seeing a progress bar
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add time tracking, and also tie it with a metric if possible
+- if a log has a note, it's not showing when I toggle "show notes"
+- progress line chart in experiment-dashboard maybe showing the wrong date
 
 ### IN PROGRESS
 

@@ -11,10 +11,12 @@ export default function DexaPage() {
   return (
     <div className="space-y-6">
       <InfoPanel title="Getting Started with DEXA Scans" variant="info">
-        DEXA scans provide detailed body composition data including: - Body fat
-        percentage - Lean muscle mass - Bone density You can import your DEXA
-        data using the CSV import feature, or manually enter values using the
-        form.
+        DEXA scans provide detailed body composition data including:
+        <ol>
+          <li>- Body fat percentage</li>
+          <li>- Lean muscle mass</li>
+          <li>- Bone density</li>
+        </ol>
       </InfoPanel>
 
       <DexaVisualization datasetId="dexa" />

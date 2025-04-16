@@ -1,5 +1,5 @@
 // src/features/daily-tracker/components/add-metric-modal.tsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import {
@@ -12,15 +12,6 @@ import AddMetricForm from "./add-metric-form";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 
-interface AddMetricModalProps {
-  buttonLabel?: string;
-  buttonVariant?: "default" | "outline" | "ghost" | "link" | "destructive";
-  buttonSize?: "default" | "sm" | "lg" | "icon";
-  buttonClassName?: string;
-  onMetricAdded?: (metric: any) => void;
-  showIcon?: boolean;
-}
-
 /**
  * A self-contained component that provides a button to open a modal with the add metric form
  * and handles all the form submission logic.
@@ -32,7 +23,16 @@ export default function AddMetricModal({
   buttonClassName = "",
   onMetricAdded,
   showIcon = true,
-}: AddMetricModalProps) {
+  isEdit,
+}: {
+  buttonLabel?: string;
+  buttonVariant?: "default" | "outline" | "ghost" | "link" | "destructive";
+  buttonSize?: "default" | "sm" | "lg" | "icon";
+  buttonClassName?: string;
+  onMetricAdded?: (metric: any) => void;
+  showIcon?: boolean;
+  isEdit?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -89,7 +89,9 @@ export default function AddMetricModal({
       <Dialog open={open} onOpenChange={(value) => !loading && setOpen(value)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add New Metric</DialogTitle>
+            <DialogTitle>
+              {isEdit ? "Edit Metric" : "Add New Metric"}
+            </DialogTitle>
           </DialogHeader>
 
           <AddMetricForm
