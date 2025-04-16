@@ -14,6 +14,7 @@ import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
 import { Switch } from "@/components/ui/switch";
 import { Experiment } from "@/store/experiment-definitions";
 import { ProtectedField } from "@/components/security/protected-content";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 export default function AddMetricForm({
   onSuccess,
@@ -37,7 +38,14 @@ export default function AddMetricForm({
   >("number");
   const [unit, setUnit] = useState("");
   const [defaultValue, setDefaultValue] = useState("0");
+
+  // Category state
   const [categoryId, setCategoryId] = useState("");
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isDuplicateCategory, setIsDuplicateCategory] = useState(false);
+
   const [active, setActive] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
   const [experimentId, setExperimentId] = useState<string>("");
@@ -55,6 +63,25 @@ export default function AddMetricForm({
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showSchedulingOptions, setShowSchedulingOptions] = useState(false);
 
+  // Format category options for autocomplete
+  const categoryOptions = categories.map((cat: any) => ({
+    id: cat.id,
+    label: cat.name,
+  }));
+
+  // Check for duplicate category
+  useEffect(() => {
+    if (showAddCategory && newCategoryName.trim()) {
+      const duplicate = categories.some(
+        (cat: any) =>
+          cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
+      );
+      setIsDuplicateCategory(duplicate);
+    } else {
+      setIsDuplicateCategory(false);
+    }
+  }, [newCategoryName, categories, showAddCategory]);
+
   // Update default value when type changes
   useEffect(() => {
     if (type === "boolean") {
@@ -65,6 +92,48 @@ export default function AddMetricForm({
       setDefaultValue("0");
     }
   }, [type]);
+
+  // Handle creating a new category
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    if (isDuplicateCategory) {
+      toast.error("A category with this name already exists");
+      return;
+    }
+
+    setIsAddingCategory(true);
+
+    try {
+      const categoryData = {
+        name: newCategoryName.trim(),
+      };
+
+      const response = await ApiService.addRecord(
+        "metric_categories",
+        categoryData
+      );
+
+      if (response) {
+        addEntry(response, "metric_categories");
+        setCategoryId(response.id);
+        setNewCategoryName("");
+        setShowAddCategory(false);
+        toast.success(`Category "${response.name}" created and selected`);
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      toast.error("Failed to create category");
+    } finally {
+      setIsAddingCategory(false);
+    }
+  };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -158,6 +227,8 @@ export default function AddMetricForm({
     setUnit("");
     setDefaultValue("0");
     setCategoryId("");
+    setShowAddCategory(false);
+    setNewCategoryName("");
     setActive(true);
     setIsPrivate(false);
     setExperimentId("");
@@ -253,10 +324,26 @@ export default function AddMetricForm({
           )}
         </div>
 
-        {/* Category Selection */}
+        {/* Category Selection with AutocompleteInput */}
         <div className="space-y-2">
-          <Label htmlFor="category">Category (optional)</Label>
-          <div className="flex gap-2">
+          <div className="flex justify-between items-center">
+            <Label htmlFor="category">Category (optional)</Label>
+
+            {!showAddCategory && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddCategory(true)}
+                className="text-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                New Category
+              </Button>
+            )}
+          </div>
+
+          {!showAddCategory ? (
             <ReusableSelect
               value={categoryId}
               onChange={setCategoryId}
@@ -267,18 +354,65 @@ export default function AddMetricForm({
                 label: cat.name,
               }))}
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                // Open category creation dialog - this would be implemented separately
-                toast.info("Category creation not implemented in this example");
-              }}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+          ) : (
+            <div className="border p-3 rounded-md bg-muted/20">
+              <p className="text-sm font-medium mb-2">Create New Category</p>
+              <div className="flex flex-col gap-2">
+                <AutocompleteInput
+                  id="newCategory"
+                  value={newCategoryName}
+                  onChange={setNewCategoryName}
+                  options={categoryOptions}
+                  placeholder="New category name"
+                  autofocus={true}
+                  description={
+                    isDuplicateCategory
+                      ? "A category with this name already exists"
+                      : "Enter a unique name for the category"
+                  }
+                />
+
+                {isDuplicateCategory && (
+                  <p className="text-sm text-destructive">
+                    This category already exists. Please use a different name.
+                  </p>
+                )}
+
+                <div className="flex gap-2 mt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowAddCategory(false);
+                      setNewCategoryName("");
+                    }}
+                    disabled={isAddingCategory}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    onClick={handleAddCategory}
+                    disabled={
+                      isAddingCategory ||
+                      !newCategoryName.trim() ||
+                      isDuplicateCategory
+                    }
+                  >
+                    {isAddingCategory ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-1" />
+                    )}
+                    Add Category
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Attach to Experiment */}

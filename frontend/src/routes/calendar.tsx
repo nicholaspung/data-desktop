@@ -4,6 +4,7 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
+import AddCategoryDialog from "@/features/daily-tracker/add-category-dialog";
 import AddMetricModal from "@/features/daily-tracker/add-metric-modal";
 import DailyTrackerCalendarView from "@/features/daily-tracker/daily-tracker-calendar-view";
 import { createFileRoute } from "@tanstack/react-router";
@@ -225,7 +226,8 @@ function RouteComponent() {
           guideContent={dailyTrackerGuideContent}
           storageKey="calendar-page"
         >
-          <AddMetricModal buttonLabel="Add Metric" onMetricAdded={() => {}} />
+          <AddMetricModal buttonLabel="Add Metric" />
+          <AddCategoryDialog />
         </FeatureHeader>
       }
       sidebar={
