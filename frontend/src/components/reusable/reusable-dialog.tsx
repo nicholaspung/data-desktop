@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, X } from "lucide-react";
 import { ReactNode } from "react";
 
 /**
@@ -91,7 +91,18 @@ export default function ReusableDialog({
         className={contentClassName ? contentClassName : "sm:max-w-[600px]"}
       >
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <div className="flex flex-row justify-between items-start">
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => onOpenChange && onOpenChange(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
           {description && (
             <AlertDialogDescription>{description}</AlertDialogDescription>
           )}

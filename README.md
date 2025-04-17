@@ -19,8 +19,9 @@
 - in bloodwork, add a "bloodwork" filter, which is the date filter, allow selection
 - add in bone density graphs for dexa
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
-- add a "add dexa scan" button in `dexa.tsx`
+- add a "delete dexa scan" button
 - add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
+- add "edit bloodwork" and "delete bloodwork" buttons
 
 ### DONE
 
@@ -102,5 +103,6 @@
 - need to have a custom "add experiment" button in `experiment-list.tsx` [DONE 2025-04-16]
 - need to add a way to edit some of the details in `experiment-detail.tsx` [DONE 2025-04-16]
 - progress line chart in experiment-dashboard maybe showing the wrong date [DONE 2025-04-16]
+- add a "add dexa scan" button in `dexa.tsx` [DONE 2025-04-16]
 
 ### GAVE UP

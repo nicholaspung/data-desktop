@@ -30,7 +30,7 @@ import { FieldDefinition } from "@/types/types";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { RelationField } from "./relation-field";
 import { createFreshDefaultValues, hasNonEmptyValues } from "@/lib/form-utils";
-import { DataStoreName } from "@/store/data-store";
+import { addEntry, DataStoreName, updateEntry } from "@/store/data-store";
 import SavedDataBadge from "../reusable/saved-data-badge";
 import DataFormContent from "./data-form-content";
 import ReusableSelect from "../reusable/reusable-select";
@@ -370,8 +370,15 @@ export default function DataForm({
 
         // After successful submission, completely reset the form
         completeFormReset();
+
+        if (response) {
+          addEntry(response, datasetId);
+        }
       } else if (mode === "edit" && recordId) {
         response = await ApiService.updateRecord(recordId, values);
+        if (response) {
+          updateEntry(recordId, response, datasetId);
+        }
       }
 
       toast.success(successMessage);
