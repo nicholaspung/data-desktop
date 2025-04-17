@@ -1,5 +1,5 @@
 // src/features/bloodwork/add-bloodwork-dialog.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle, Search } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
@@ -19,8 +19,18 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BloodMarker } from "./bloodwork";
 import BloodMarkerInput from "./blood-marker-input";
+import useLoadData from "@/hooks/useLoadData";
+import { useFieldDefinitions } from "../field-definitions/field-definitions-store";
 
 export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
+  const { getDatasetFields } = useFieldDefinitions();
+  const bloodworkResultFields = getDatasetFields("blood_results");
+  const { loadData } = useLoadData({
+    fields: bloodworkResultFields,
+    datasetId: "blood_results",
+    title: "Blood Results",
+  });
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +41,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   const [markerValues, setMarkerValues] = useState<
     Record<string, { value: string | number; valueType: "number" | "text" }>
   >({});
+  const [isExistingDate, setIsExistingDate] = useState(false);
 
   // Get blood markers from store
   const bloodMarkers = useStore(
@@ -63,6 +74,42 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   ]
     .sort()
     .reverse();
+
+  // Check if the current date is in existing dates
+  useEffect(() => {
+    const currentDateStr = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+    )
+      .toISOString()
+      .split("T")[0];
+
+    const exists = existingDates.includes(currentDateStr);
+    setIsExistingDate(exists);
+
+    // If selecting an existing date, find and pre-fill the bloodwork details
+    if (exists) {
+      const existingRecord = existingBloodwork.find((record) => {
+        const recordDate =
+          record.date instanceof Date ? record.date : new Date(record.date);
+        const recordDateStr = new Date(
+          Date.UTC(
+            recordDate.getFullYear(),
+            recordDate.getMonth(),
+            recordDate.getDate()
+          )
+        )
+          .toISOString()
+          .split("T")[0];
+        return recordDateStr === currentDateStr;
+      });
+
+      if (existingRecord) {
+        setFasted(existingRecord.fasted || false);
+        setLabName(existingRecord.lab_name || "");
+        setNotes(existingRecord.notes || "");
+      }
+    }
+  }, [date, existingDates, existingBloodwork]);
 
   // Filter markers based on search term
   const filteredMarkers = bloodMarkers.filter(
@@ -149,14 +196,13 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             value_text: data.valueType === "text" ? String(data.value) : "",
           };
 
-          const response = ApiService.addRecord("blood_results", resultData);
-          if (response) {
-            addEntry(response, "blood_results");
-          }
-          return response;
+          // Use await to wait for the response
+          return await ApiService.addRecord("blood_results", resultData);
         });
 
       await Promise.all(resultPromises);
+
+      loadData();
 
       toast.success("Bloodwork results added successfully");
 
@@ -199,7 +245,12 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         <div className="space-y-6 p-4 overflow-y-auto max-h-[70vh]">
           {/* Bloodwork date selector */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Test Date</label>
+            <label className="text-sm font-medium">
+              Test Date{" "}
+              {isExistingDate && (
+                <span className="text-blue-500 ml-1">(Existing)</span>
+              )}
+            </label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -264,37 +315,41 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             </Popover>
           </div>
 
-          {/* Additional bloodwork details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Fasted</label>
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={fasted ? "true" : "false"}
-                onChange={(e) => setFasted(e.target.value === "true")}
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Lab Name</label>
-              <Input
-                value={labName}
-                onChange={(e) => setLabName(e.target.value)}
-                placeholder="Lab or facility name"
-              />
-            </div>
-          </div>
+          {/* Additional bloodwork details - only show for new dates */}
+          {!isExistingDate && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Fasted</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={fasted ? "true" : "false"}
+                    onChange={(e) => setFasted(e.target.value === "true")}
+                  >
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Lab Name</label>
+                  <Input
+                    value={labName}
+                    onChange={(e) => setLabName(e.target.value)}
+                    placeholder="Lab or facility name"
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Notes</label>
-            <Input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Additional notes about this test"
-            />
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notes</label>
+                <Input
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Additional notes about this test"
+                />
+              </div>
+            </>
+          )}
 
           {/* Search and filter */}
           <div className="relative">

@@ -18,7 +18,6 @@
 ### IN PROGRESS
 
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
-- add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
 - add a "add bloodmarker" button
 - add a "edit/delete bloodmarker" button
 - add "edit bloodwork" and "delete bloodwork" buttons, component should be a selection of the date, and selection of the bloodmarker, then it allows for edit/delete
@@ -106,5 +105,6 @@
 - add a "add dexa scan" button in `dexa.tsx` [DONE 2025-04-16]
 - add a "delete dexa scan" button [DONE 2025-04-16]
 - add in bone density graphs for dexa [DONE 2025-04-16]
+- add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs [DONE 2025-04-17]
 
 ### GAVE UP
