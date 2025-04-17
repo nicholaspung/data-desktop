@@ -1,15 +1,9 @@
 // src/features/daily-tracker/components/add-metric-modal.tsx
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Plus, Pencil } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import AddMetricForm from "./add-metric-form";
 import { Metric } from "@/store/experiment-definitions";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 
 /**
  * A self-contained component that provides a button to open a modal with the add/edit metric form
@@ -17,10 +11,6 @@ import { Metric } from "@/store/experiment-definitions";
  */
 export default function AddMetricModal({
   buttonLabel,
-  buttonVariant = "default",
-  buttonSize = "default",
-  buttonClassName = "",
-  showIcon = true,
   metric, // Add metric data prop for editing
   onSuccess, // Callback for when form is submitted successfully
 }: {
@@ -41,37 +31,28 @@ export default function AddMetricModal({
   };
 
   return (
-    <>
-      <Button
-        variant={buttonVariant}
-        size={buttonSize}
-        onClick={() => setOpen(true)}
-        className={buttonClassName}
-      >
-        {showIcon &&
-          (isEdit ? (
-            <Pencil className="h-4 w-4" />
-          ) : (
-            <Plus className="h-4 w-4 mr-2" />
-          ))}
-        {buttonLabel || (isEdit ? "" : "Add Metric")}
-      </Button>
-
-      <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isEdit ? "Edit Metric" : "Add New Metric"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <AddMetricForm
-            metric={metric}
-            onSuccess={handleSuccess}
-            onCancel={() => setOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+    <ReusableDialog
+      open={open}
+      onOpenChange={(value) => setOpen(value)}
+      contentClassName="max-w-3xl max-h-[90vh] overflow-y-auto"
+      title={isEdit ? "Edit Metric" : "Add New Metric"}
+      customContent={
+        <AddMetricForm
+          metric={metric}
+          onSuccess={handleSuccess}
+          onCancel={() => setOpen(false)}
+        />
+      }
+      triggerIcon={
+        isEdit ? (
+          <Pencil className="h-4 w-4" />
+        ) : (
+          <Plus className="h-4 w-4 mr-2" />
+        )
+      }
+      triggerText={buttonLabel || (isEdit ? "" : "Add Metric")}
+      variant="outline"
+      customFooter={<></>}
+    />
   );
 }

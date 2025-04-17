@@ -13,6 +13,7 @@ import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Experiment } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
+import EditExperimentDialog from "./edit-experiment-dialog";
 
 const ExperimentDetail = ({
   experimentId,
@@ -153,6 +154,10 @@ const ExperimentDetail = ({
         </Button>
 
         <div className="flex gap-2">
+          <EditExperimentDialog
+            experiment={experiment}
+            onSuccess={loadExperiment}
+          />
           <ReusableDialog
             open={statusDialogOpen}
             onOpenChange={setStatusDialogOpen}

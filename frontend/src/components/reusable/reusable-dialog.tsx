@@ -48,6 +48,7 @@ export default function ReusableDialog({
   confirmIcon,
   footerActionDisabled,
   footerActionLoadingText,
+  contentClassName,
 }: {
   title?: string;
   description?: string;
@@ -70,6 +71,7 @@ export default function ReusableDialog({
   confirmIcon?: ReactNode;
   footerActionDisabled?: boolean;
   footerActionLoadingText?: string;
+  contentClassName?: string;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -85,7 +87,9 @@ export default function ReusableDialog({
           )}
         </AlertDialogTrigger>
       )}
-      <AlertDialogContent className="sm:max-w-[600px]">
+      <AlertDialogContent
+        className={contentClassName ? contentClassName : "sm:max-w-[600px]"}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description && (

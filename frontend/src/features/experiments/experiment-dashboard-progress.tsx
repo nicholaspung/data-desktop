@@ -41,7 +41,6 @@ export default function ExperimentDashboardProgress({
       .sort()
       .map((dateStr) => {
         const logs = logsByDate[dateStr];
-        const dateObj = new Date(dateStr);
 
         // Calculate completion rate for boolean metrics on this date
         const booleanMetrics = experimentMetrics
@@ -67,15 +66,19 @@ export default function ExperimentDashboardProgress({
             ? (completedCount / booleanMetrics.length) * 100
             : 0;
 
+        const [year, monthPlus1, day] = dateStr.split("-");
+
         return {
           date: dateStr,
-          displayDate: format(dateObj, "MMM d"),
+          displayDate: format(
+            new Date(Number(year), Number(monthPlus1) - 1, Number(day)),
+            "MMM d"
+          ), // The issue was here - the date was correct but displayed wrong
           completionRate,
           logCount: logs.length,
         };
       });
   };
-
   // Prepare chart configurations
   const completionChartData = generateCompletionChartData();
 

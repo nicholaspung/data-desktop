@@ -1,6 +1,5 @@
 // src/features/dexa/dexa-visualization.tsx
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import BodyCompositionTab from "./visualization/body-composition-tab";
@@ -15,6 +14,7 @@ import loadingStore from "@/store/loading-store";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { DEXAScan } from "@/store/dexa-definitions";
 import { cn } from "@/lib/utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 
 export default function DexaVisualization({
   className = "",
@@ -61,18 +61,20 @@ export default function DexaVisualization({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
+      <ReusableCard
+        cardClassName={className}
+        contentClassName="flex items-center justify-center py-10"
+        content={<Loader2 className="h-8 w-8 animate-spin text-primary" />}
+      />
     );
   }
 
   if (data.length === 0) {
     return (
-      <Card className={className}>
-        <CardContent className="py-10">
+      <ReusableCard
+        cardClassName={className}
+        contentClassName="py-10"
+        content={
           <div className="text-center">
             <h3 className="text-lg font-medium">No Data Available</h3>
             <p className="text-muted-foreground mt-2">
@@ -80,8 +82,8 @@ export default function DexaVisualization({
               visualizations.
             </p>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
