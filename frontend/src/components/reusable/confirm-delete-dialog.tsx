@@ -49,6 +49,7 @@ export function ConfirmDeleteDialog({
       }
       onConfirm={onConfirm}
       confirmText="Delete"
+      showXIcon={false}
     />
   );
 }

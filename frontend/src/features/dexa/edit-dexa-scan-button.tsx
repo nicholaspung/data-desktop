@@ -6,15 +6,18 @@ import ReusableDialog from "@/components/reusable/reusable-dialog";
 import DataForm from "@/components/data-form/data-form";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import dataStore from "@/store/data-store";
+import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { DEXAScan } from "@/store/dexa-definitions";
+import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import { ApiService } from "@/services/api";
 
 export default function EditDexaScanButton() {
   const [open, setOpen] = useState(false);
   const [selectedScan, setSelectedScan] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const { getDatasetFields } = useFieldDefinitions();
   const dexaFields = getDatasetFields("dexa");
 
@@ -25,8 +28,9 @@ export default function EditDexaScanButton() {
     .map((scan) => ({
       id: scan.id,
       label: format(new Date(scan.date), "MMM d, yyyy"),
+      date: new Date(scan.date), // Add date for sorting
     }))
-    .sort((a, b) => b.label.localeCompare(a.label)); // Sort newest to oldest
+    .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest to oldest
 
   // Get the selected scan data
   const selectedScanData = scans.find((scan) => scan.id === selectedScan);
@@ -35,6 +39,24 @@ export default function EditDexaScanButton() {
     setOpen(false);
     setSelectedScan("");
     toast.success("DEXA scan updated successfully!");
+  };
+
+  const handleDelete = async () => {
+    if (!selectedScan) return;
+
+    setIsDeleting(true);
+
+    try {
+      await ApiService.deleteRecord(selectedScan);
+      deleteEntry(selectedScan, "dexa" as DataStoreName);
+      toast.success("DEXA scan deleted successfully!");
+      setSelectedScan("");
+    } catch (error) {
+      console.error("Error deleting scan:", error);
+      toast.error("Failed to delete DEXA scan");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -54,7 +76,7 @@ export default function EditDexaScanButton() {
         </Button>
       }
       customContent={
-        <div className="py-4 overflow-y-auto max-h-[70vh]">
+        <div className="p-4 overflow-y-auto max-h-[70vh]">
           {scans.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground">
               No DEXA scans available to edit. Please add a scan first.
@@ -72,6 +94,21 @@ export default function EditDexaScanButton() {
                   title="DEXA Scan"
                   placeholder="Select a scan date..."
                 />
+
+                {/* Delete button appears when a scan is selected */}
+                {selectedScan && (
+                  <div className="mt-3">
+                    <ConfirmDeleteDialog
+                      title="Delete DEXA Scan"
+                      description="Are you sure you want to delete this DEXA scan? This action cannot be undone."
+                      onConfirm={handleDelete}
+                      loading={isDeleting}
+                      triggerText="Delete Selected Scan"
+                      variant="destructive"
+                      size="default"
+                    />
+                  </div>
+                )}
               </div>
 
               {selectedScan && selectedScanData ? (

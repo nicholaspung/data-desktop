@@ -29,7 +29,7 @@ export default function AddDexaScanButton() {
         </Button>
       }
       customContent={
-        <div className="py-4 overflow-y-auto max-h-[70vh]">
+        <div className="p-4 overflow-y-auto max-h-[70vh]">
           <DataForm
             datasetId="dexa"
             fields={dexaFields}

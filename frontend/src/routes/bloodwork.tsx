@@ -7,6 +7,7 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
+import { AddBloodworkDialog } from "@/features/bloodwork/add-bloodwork-dialog";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
@@ -82,7 +83,9 @@ export default function BloodworkPage() {
           description="Track and analyze your blood test results over time"
           guideContent={bloodworkGuideContent}
           storageKey="bloodwork-page"
-        ></FeatureHeader>
+        >
+          <AddBloodworkDialog />
+        </FeatureHeader>
       }
       sidebar={
         <HelpSidebar title="Tips & Information">

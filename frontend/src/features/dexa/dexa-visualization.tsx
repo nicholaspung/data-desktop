@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import ReusableCard from "@/components/reusable/reusable-card";
 import AddDexaScanButton from "./add-dexa-scan-button";
 import EditDexaScanButton from "./edit-dexa-scan-button";
+import BoneDensityTab from "./visualization/bone-density-tab";
 
 export default function DexaVisualization({
   className = "",
@@ -109,8 +110,9 @@ export default function DexaVisualization({
         >
           <TabsList>
             <TabsTrigger value="bodyComp">Body Composition</TabsTrigger>
-            <TabsTrigger value="bodyAnatomy">Body Anatomy</TabsTrigger>{" "}
-            {/* New Body Anatomy tab */}
+            <TabsTrigger value="bodyAnatomy">Body Anatomy</TabsTrigger>
+            <TabsTrigger value="boneDensity">Bone Density</TabsTrigger>{" "}
+            {/* New tab */}
             <TabsTrigger value="trends">Trends</TabsTrigger>
             <TabsTrigger value="regional">Regional Analysis</TabsTrigger>
             <TabsTrigger value="symmetry">Symmetry</TabsTrigger>
@@ -141,18 +143,16 @@ export default function DexaVisualization({
       {/* Use direct conditional rendering instead of TabsContent */}
       <div className="space-y-6">
         {activeTab === "bodyComp" && <BodyCompositionTab data={filteredData} />}
-
-        {/* Render the new Body Anatomy tab */}
         {activeTab === "bodyAnatomy" && <BodyAnatomyTab data={filteredData} />}
-
+        {activeTab === "boneDensity" && (
+          <BoneDensityTab data={filteredData} />
+        )}{" "}
+        {/* New tab content */}
         {activeTab === "trends" && <TrendsTab data={filteredData} />}
-
         {activeTab === "regional" && (
           <RegionalAnalysisTab data={filteredData} />
         )}
-
         {activeTab === "symmetry" && <SymmetryTab data={filteredData} />}
-
         {activeTab === "goals" && <GoalTab data={filteredData} />}
       </div>
     </div>

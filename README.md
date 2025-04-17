@@ -13,15 +13,15 @@
 - add time tracking, and also tie it with a metric if possible
 - add a way in the backend to make a field unique
 - update the daily tracking information to be what the feature actually is
+- add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 
 ### IN PROGRESS
 
-- in bloodwork, add a "bloodwork" filter, which is the date filter, allow selection
-- add in bone density graphs for dexa
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
-- add a "delete dexa scan" button
 - add a "add bloodwork" button in `bloodwork.tsx` - this one should allow the user to choose a date, then it would populate all the bloodwork markers and allow the user to add a value next to it, then the function would first create a bloodwork date, then add the bloodwork results according to the data the user inputs
-- add "edit bloodwork" and "delete bloodwork" buttons
+- add a "add bloodmarker" button
+- add a "edit/delete bloodmarker" button
+- add "edit bloodwork" and "delete bloodwork" buttons, component should be a selection of the date, and selection of the bloodmarker, then it allows for edit/delete
 
 ### DONE
 
@@ -104,5 +104,7 @@
 - need to add a way to edit some of the details in `experiment-detail.tsx` [DONE 2025-04-16]
 - progress line chart in experiment-dashboard maybe showing the wrong date [DONE 2025-04-16]
 - add a "add dexa scan" button in `dexa.tsx` [DONE 2025-04-16]
+- add a "delete dexa scan" button [DONE 2025-04-16]
+- add in bone density graphs for dexa [DONE 2025-04-16]
 
 ### GAVE UP

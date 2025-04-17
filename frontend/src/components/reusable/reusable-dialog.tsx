@@ -49,6 +49,7 @@ export default function ReusableDialog({
   footerActionDisabled,
   footerActionLoadingText,
   contentClassName,
+  showXIcon = true,
 }: {
   title?: string;
   description?: string;
@@ -72,6 +73,7 @@ export default function ReusableDialog({
   footerActionDisabled?: boolean;
   footerActionLoadingText?: string;
   contentClassName?: string;
+  showXIcon?: boolean;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -93,15 +95,17 @@ export default function ReusableDialog({
         <AlertDialogHeader>
           <div className="flex flex-row justify-between items-start">
             <AlertDialogTitle>{title}</AlertDialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={() => onOpenChange && onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
+            {showXIcon && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => onOpenChange && onOpenChange(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            )}
           </div>
           {description && (
             <AlertDialogDescription>{description}</AlertDialogDescription>
