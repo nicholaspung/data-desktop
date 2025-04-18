@@ -18,12 +18,8 @@ in quick-metric-logger, improve the button layout for hide from calendar, edit/d
 
 ### IN PROGRESS
 
-- in `index.tsx`, add the latest DEXA scan summary information if there are any, and when a user clicks on it, it navigates user to DEXA scan route
-- in `index.tsx`, add the latest summary of "in range" "out of range" bloodmarks (just a bar graph of those 2 are fine), and when a user clicks on it, it naviates user to bloodwork route
 - in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route
-- in `index.tsx`, add a simple view for experiments that are active currently and how long it is until it ends, along with the dates
 - in `index.tsx`, add a "log a random metric" that navigates the user to the metric route
-- in `index.tsx`, add a quick stat part where it shows the dataset information in a list view, with the information: dataset name, last updated, and how many total records, with a button that can navigate the user to the dataset route
 
 ### DONE
 
@@ -117,5 +113,9 @@ in quick-metric-logger, improve the button layout for hide from calendar, edit/d
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger [DONE 2025-04-17]
 - there's a bug in daily tracking where in the popover, it still says there are more metrics that are visible (i.e. 5 metrics instead of the 4, because 1 metric shouldn't be counted, i.e. schedule_days = [-1]) [DONE 2025-04-18]
 - add a streak for metrics somewhere, maybe in both calendar logs and also in quick metric logger? [DONE 2025-04-18]
+- in `index.tsx`, add the latest DEXA scan summary information if there are any, and when a user clicks on it, it navigates user to DEXA scan route [DONE 2025-04-18]
+- in `index.tsx`, add the latest summary of "in range" "out of range" bloodmarks (just a bar graph of those 2 are fine), and when a user clicks on it, it naviates user to bloodwork route [DONE 2025-04-18]
+- in `index.tsx`, add a simple view for experiments that are active currently and how long it is until it ends, along with the dates [DONE 2025-04-18]
+- in `index.tsx`, add a quick stat part where it shows the dataset information in a list view, with the information: dataset name, last updated, and how many total records, with a button that can navigate the user to the dataset route [DONE 2025-04-18]
 
 ### GAVE UP

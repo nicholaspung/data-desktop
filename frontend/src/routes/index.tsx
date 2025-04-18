@@ -9,6 +9,11 @@ import { DatasetSummary, FieldDefinition } from "@/types/types";
 import { DataStoreName, loadState } from "@/store/data-store";
 import { getProcessedRecords } from "@/lib/data-utils";
 import ReusableCard from "@/components/reusable/reusable-card";
+import DEXADashboardSummary from "@/features/dashboard/dexa-dashboard-summary";
+import { Separator } from "@/components/ui/separator";
+import BloodworkDashboardSummary from "@/features/dashboard/bloodwork-dashboard-summary";
+import ExperimentDashboardSummary from "@/features/dashboard/experiment-dashboard-summary";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -51,9 +56,7 @@ function Home() {
               : null,
             // Assign icons based on dataset type
             icon: getDatasetIcon(dataset.type),
-            href: dataset.id.includes("blood")
-              ? "/bloodwork"
-              : `/${dataset.id}`,
+            href: `/dataset`,
           };
         } catch (error) {
           console.error(`Error getting records for ${dataset.id}:`, error);
@@ -99,7 +102,7 @@ function Home() {
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <Button
@@ -112,8 +115,15 @@ function Home() {
         </Button>
       </div>
 
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <ExperimentDashboardSummary />
+        <DEXADashboardSummary />
+        <BloodworkDashboardSummary />
+      </div>
+
       <div className="flex flex-col space-y-2">
         <h4 className="text-l font-bold">Dataset summary information</h4>
+        <Separator />
         {isLoading
           ? // Loading state
             Array.from({ length: 4 }).map((_, i) => (
@@ -129,35 +139,37 @@ function Home() {
             ))
           : // Data summaries
             summaries.map((summary) => (
-              <ReusableCard
-                key={summary.id}
-                showHeader={false}
-                cardClassName="hover:bg-accent/20 transition-colors cursor-pointer"
-                contentClassName="pt-6"
-                content={
-                  <div className="flex flex-row justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center">
-                        {summary.icon}
-                        <span className="ml-2">{summary.name}</span>
+              <Link to={summary.href} search={{ datasetId: summary.id }}>
+                <ReusableCard
+                  key={summary.id}
+                  showHeader={false}
+                  cardClassName="hover:bg-accent/20 transition-colors"
+                  contentClassName="pt-6"
+                  content={
+                    <div className="flex flex-row justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-center">
+                          {summary.icon}
+                          <span className="ml-2 font-bold">{summary.name}</span>
+                        </div>
+                        <span>
+                          {summary.lastUpdated
+                            ? `Last updated: ${new Date(summary.lastUpdated).toLocaleDateString()}`
+                            : "No data yet"}
+                        </span>
                       </div>
-                      <span>
-                        {summary.lastUpdated
-                          ? `Last updated: ${new Date(summary.lastUpdated).toLocaleDateString()}`
-                          : "No data yet"}
-                      </span>
+                      <div>
+                        <p className="text-2xl font-bold">{summary.count}</p>
+                        <p className="text-sm text-muted-foreground">
+                          total records
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold">{summary.count}</p>
-                      <p className="text-sm text-muted-foreground">
-                        total records
-                      </p>
-                    </div>
-                  </div>
-                }
-              />
+                  }
+                />
+              </Link>
             ))}
       </div>
-    </>
+    </div>
   );
 }

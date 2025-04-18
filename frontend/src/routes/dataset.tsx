@@ -1,7 +1,7 @@
 import { DatasetConfig } from "@/components/data-page/data-page";
 import { DatasetSelector } from "@/components/data-page/dataset-selector";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useSearch } from "@tanstack/react-router";
 import {
   Activity,
   Beaker,
@@ -10,12 +10,25 @@ import {
   TagIcon,
 } from "lucide-react";
 
+interface DatasetSearchParams {
+  datasetId?: string;
+}
+
 export const Route = createFileRoute("/dataset")({
+  validateSearch: (search: Record<string, unknown>): DatasetSearchParams => {
+    return {
+      datasetId: search.datasetId as string | undefined,
+    };
+  },
   component: RouteComponent,
 });
 
 function RouteComponent() {
   const { getDatasetFields } = useFieldDefinitions();
+
+  // Get query parameters from the URL
+  const search = useSearch({ from: "/dataset" });
+  const datasetIdFromUrl = search.datasetId;
 
   // Get field definitions
   const dexaFields = getDatasetFields("dexa");
@@ -106,7 +119,7 @@ function RouteComponent() {
   return (
     <DatasetSelector
       datasets={datasets}
-      defaultDatasetId="dexa"
+      defaultDatasetId={datasetIdFromUrl || "dexa"}
       title="Select Dataset"
     />
   );
