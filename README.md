@@ -12,13 +12,18 @@
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add time tracking, and also tie it with a metric if possible
 - add a way in the backend to make a field unique
-- update the daily tracking information to be what the feature actually is
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
+- for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
 
 ### IN PROGRESS
 
-- need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger
-- in "add bloodwork", when I select an already existing dataset, I want it to populate the data that is already created, and disable them. I also want it to show the previous date's value
+- add a streak for metrics somewhere, maybe in both calendar logs and also in quick metric logger?
+- in `index.tsx`, add the latest DEXA scan summary information if there are any, and when a user clicks on it, it navigates user to DEXA scan route
+- in `index.tsx`, add the latest summary of "in range" "out of range" bloodmarks (just a bar graph of those 2 are fine), and when a user clicks on it, it naviates user to bloodwork route
+- in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route
+- in `index.tsx`, add a simple view for experiments that are active currently and how long it is until it ends, along with the dates
+- in `index.tsx`, add a "log a random metric" that navigates the user to the metric route
+- in `index.tsx`, add a quick stat part where it shows the dataset information in a list view, with the information: dataset name, last updated, and how many total records, with a button that can navigate the user to the dataset route
 
 ### DONE
 
@@ -107,5 +112,8 @@
 - add a "edit/delete bloodmarker" button [DONE 2025-04-17]
 - add a "add bloodmarker" button [DONE 2025-04-17]
 - add "edit bloodwork" and "delete bloodwork" buttons, component should be a selection of the date, and selection of the bloodmarker, then it allows for edit/delete [DONE 2025-04-17]
+- in "add bloodwork", when I select an already existing dataset, I want it to populate the data that is already created, and disable them. I also want it to show the previous date's value [DONE 2025-04-17]
+- update the daily tracking information to be what the feature actually is [DONE 2025-04-17]
+- need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger [DONE 2025-04-17]
 
 ### GAVE UP

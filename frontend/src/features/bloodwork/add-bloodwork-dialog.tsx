@@ -304,6 +304,24 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     }
   };
 
+  const getLastResultForMarker = (markerId: string) => {
+    // Sort all results for this marker by date (newest first)
+    const resultsForMarker = bloodResults
+      .filter((result) => result.blood_marker_id === markerId)
+      .sort((a, b) => {
+        const dateA = a.blood_test_id_data?.date
+          ? new Date(a.blood_test_id_data.date).getTime()
+          : 0;
+        const dateB = b.blood_test_id_data?.date
+          ? new Date(b.blood_test_id_data.date).getTime()
+          : 0;
+        return dateB - dateA;
+      });
+
+    // Return the most recent result, or null if none exists
+    return resultsForMarker.length > 0 ? resultsForMarker[0] : undefined;
+  };
+
   return (
     <ReusableDialog
       title="Add Bloodwork Results"
@@ -462,6 +480,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                 {filteredMarkers.map((marker) => {
                   // Check if this marker already has results for the selected date
                   const hasExistingResult = resultExistsForMarker(marker.id);
+                  const lastResult = getLastResultForMarker(marker.id);
 
                   return (
                     <BloodMarkerInput
@@ -474,6 +493,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                       }
                       disabled={isExistingDate && hasExistingResult}
                       isExisting={hasExistingResult}
+                      lastResult={lastResult}
                     />
                   );
                 })}

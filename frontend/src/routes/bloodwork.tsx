@@ -24,67 +24,6 @@ export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
 });
 
-// Bloodwork guide content
-const bloodworkGuideContent = [
-  {
-    title: "Getting Started",
-    content: `
-## Understanding Your Bloodwork
-
-This feature allows you to track and analyze your blood test results over time. Here's how to get started:
-
-1. **Import Data**: Use the CSV import feature to quickly add blood test results
-2. **Add Markers**: Create blood markers with reference ranges
-3. **Visualize Results**: See how your values change over time with automatic charts
-
-For best results, make sure to include reference ranges for each marker.
-    `,
-  },
-  {
-    title: "Importing Data",
-    content: `
-## CSV Import Instructions
-
-To import your bloodwork data:
-
-1. Click the "Import CSV" button
-2. Select your CSV file
-3. Map the columns to the correct fields
-4. Click "Import" to add the data
-
-Your CSV should have the following columns:
-- Test Date
-- Marker Name
-- Value
-- Unit (optional)
-- Reference Range (optional)
-
-**Tip**: You can download a template CSV from the import dialog.
-    `,
-  },
-  {
-    title: "Analyzing Results",
-    content: `
-## Understanding Your Results
-
-The bloodwork dashboard helps you visualize your results in several ways:
-
-- **Status indicators**: Quickly see which markers are within optimal ranges
-- **Trend charts**: Track how values change over time
-- **Comparison view**: Compare multiple test dates side by side
-
-### Color Coding
-
-- 🟢 **Green**: Within optimal range
-- 🟡 **Yellow**: Within reference range but not optimal
-- 🔴 **Red**: Outside reference range
-
-You can filter the view to focus on specific categories or statuses.
-    `,
-  },
-];
-
-// Example bloodwork page with help components integrated
 export default function BloodworkPage() {
   return (
     <FeatureLayout
@@ -92,7 +31,6 @@ export default function BloodworkPage() {
         <FeatureHeader
           title="Bloodwork Tracker"
           description="Track and analyze your blood test results over time"
-          guideContent={bloodworkGuideContent}
           storageKey="bloodwork-page"
         >
           <div className="flex space-x-2">
@@ -104,46 +42,91 @@ export default function BloodworkPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <div className="flex space-x-2">
-                  <DropdownMenuItem asChild>
-                    <BloodworkManager />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <BloodMarkerManager />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <BloodResultsManager />
-                  </DropdownMenuItem>
-                </div>
+                <DropdownMenuItem asChild>
+                  <BloodMarkerManager />
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <BloodworkManager />
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <BloodResultsManager />
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </FeatureHeader>
       }
       sidebar={
-        <HelpSidebar title="Tips & Information">
-          <CompactInfoPanel title="Quick Setup">
-            For the best experience, start by:
-            <ol>
-              <li>1. Setting up your blood marker reference ranges</li>
-              <li>2. Importing your historical blood test data</li>
-              <li>3. Using the visualization tab to track changes over time</li>
-            </ol>
+        <HelpSidebar title="Getting Started">
+          <CompactInfoPanel title="Step 1: Get a Blood Test" defaultExpanded>
+            Obtain a blood test from your medical provider or service. This will
+            provide the marker names, values and reference ranges needed.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Data Privacy" variant="info" defaultExpanded>
+          <CompactInfoPanel title="Step 2: Add Blood Markers" defaultExpanded>
+            Click the gear icon and select "Manage Blood Markers". Add each
+            marker that was tested in your blood work:
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Enter the marker name exactly as shown on your test</li>
+              <li>Include the unit of measurement (mg/dL, etc.)</li>
+              <li>Add the lab reference ranges for general population</li>
+              <li>
+                Optionally add "optimal" ranges if you follow specific
+                recommendations
+              </li>
+            </ul>
+            <strong className="block mt-2">
+              This is a one-time setup for each new marker.
+            </strong>
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Step 3: Add Test Results" defaultExpanded>
+            Click "Add Bloodwork" and:
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Select the date of your blood test</li>
+              <li>Enter the lab name (optional)</li>
+              <li>Add any notes about the test</li>
+              <li>Input values for each blood marker</li>
+              <li>Use numeric values when possible for better visualization</li>
+              <li>Submit to save your results</li>
+            </ul>
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Viewing & Managing Data" variant="tip">
+            <strong>View Results:</strong> After adding data, your test results
+            will appear in the visualization section below.
+            <div className="mt-2 space-y-1">
+              <strong>To Edit or Delete:</strong>
+              <ul className="list-disc list-inside">
+                <li>
+                  <strong>Blood Markers:</strong> Gear icon → Manage Blood
+                  Markers
+                </li>
+                <li>
+                  <strong>Blood Tests:</strong> Gear icon → Manage Bloodwork
+                  Tests
+                </li>
+                <li>
+                  <strong>Test Results:</strong> Gear icon → Manage Blood
+                  Results
+                </li>
+              </ul>
+            </div>
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Data Privacy" variant="info">
             All bloodwork data is stored locally on your computer and is never
             sent to any server.
           </CompactInfoPanel>
 
           <CompactInfoPanel
-            title="Interpreting Results"
+            title="Medical Disclaimer"
             variant="warning"
             defaultExpanded
           >
             This application is for tracking purposes only and is not a
             substitute for medical advice. Always consult with healthcare
-            professionals.
+            professionals when interpreting your results.
           </CompactInfoPanel>
         </HelpSidebar>
       }

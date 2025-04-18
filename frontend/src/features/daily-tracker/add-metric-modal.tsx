@@ -51,7 +51,7 @@ export default function AddMetricModal({
         )
       }
       triggerText={buttonLabel || (isEdit ? "" : "Add Metric")}
-      variant="outline"
+      variant="default"
       customFooter={<></>}
     />
   );

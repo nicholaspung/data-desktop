@@ -15,8 +15,6 @@ import ReusableSelect from "@/components/reusable/reusable-select";
 import { DEXAScan } from "@/store/dexa-definitions";
 import { cn } from "@/lib/utils";
 import ReusableCard from "@/components/reusable/reusable-card";
-import AddDexaScanButton from "./add-dexa-scan-button";
-import EditDexaScanButton from "./edit-dexa-scan-button";
 import BoneDensityTab from "./visualization/bone-density-tab";
 
 export default function DexaVisualization({
@@ -94,14 +92,6 @@ export default function DexaVisualization({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="flex flex-row justify-between items-center">
-        <h1 className="text-2xl font-bold">DEXA Scan Visualizations</h1>
-        <div className="flex gap-2">
-          <AddDexaScanButton />
-          <EditDexaScanButton />
-        </div>
-      </div>
-
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <Tabs
           value={activeTab}
