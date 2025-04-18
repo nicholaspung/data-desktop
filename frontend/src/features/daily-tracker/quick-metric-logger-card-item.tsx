@@ -1,3 +1,4 @@
+// frontend/src/features/daily-tracker/quick-metric-logger-card-item.tsx
 import ReusableCard from "@/components/reusable/reusable-card";
 import { ProtectedContent } from "@/components/security/protected-content";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { format } from "date-fns";
 import { Calendar, CalendarX, CheckCircle, Circle } from "lucide-react";
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import MetricStreakDisplay from "./metric-streak-display";
 
 export default function QuickMetricLoggerCardItem({
   groupedMetrics,
@@ -113,6 +115,14 @@ export default function QuickMetricLoggerCardItem({
         </div>
       </div>
 
+      {/* Add streak display */}
+      <MetricStreakDisplay
+        metricId={metric.id}
+        metricType={metric.type}
+        size="sm"
+        className="mt-1 mb-1"
+      />
+
       <div className="mt-2 text-xs flex items-center justify-between">
         <Badge
           variant={
@@ -155,6 +165,7 @@ export default function QuickMetricLoggerCardItem({
 
             return (
               <ReusableCard
+                key={metric.id}
                 showHeader={false}
                 cardClassName={`${isCompleted ? "bg-green-50 dark:bg-green-950/30" : ""} ${metric.private ? "border-amber-300" : ""}`}
                 contentClassName="p-3"

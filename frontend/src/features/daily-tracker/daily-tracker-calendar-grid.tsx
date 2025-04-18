@@ -17,6 +17,7 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
 import { usePin } from "@/hooks/usePin";
+import { Metric } from "@/store/experiment-definitions";
 
 export default function DailyTrackerCalendarGrid({
   currentMonth,
@@ -47,8 +48,12 @@ export default function DailyTrackerCalendarGrid({
     ).size;
 
     // Calculate metrics scheduled for this day
-    const scheduledMetrics = metricsData.filter((metric: any) => {
+    const scheduledMetrics = metricsData.filter((metric: Metric) => {
       if (!metric.active) return false;
+
+      const doNotShow = metric.schedule_days
+        ? Boolean(metric.schedule_days.find((el) => el === -1))
+        : false;
 
       // Parse schedule days if needed
       const scheduleDays = parseScheduleDays(metric.schedule_days);
@@ -60,7 +65,9 @@ export default function DailyTrackerCalendarGrid({
       };
 
       // Check if metric is scheduled for this day
-      return isMetricScheduledForDate(metricWithParsedSchedule, day);
+      return doNotShow
+        ? false
+        : isMetricScheduledForDate(metricWithParsedSchedule, day);
     });
 
     const scheduledMetricsCount = scheduledMetrics.length;

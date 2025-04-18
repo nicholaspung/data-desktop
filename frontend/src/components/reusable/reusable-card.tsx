@@ -9,7 +9,7 @@ export default function ReusableCard({
   cardClassName,
   description,
 }: {
-  title?: string;
+  title?: ReactNode;
   content: ReactNode;
   showHeader?: boolean;
   contentClassName?: string;

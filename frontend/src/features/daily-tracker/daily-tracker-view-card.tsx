@@ -1,4 +1,4 @@
-// Updated version of frontend/src/features/experiments/daily-tracker-view-card.tsx
+// frontend/src/features/daily-tracker/daily-tracker-view-card.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { MetricWithLog } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
+import MetricStreakDisplay from "./metric-streak-display";
 
 export default function DailyTrackerViewCard({
   metric,
@@ -76,6 +77,15 @@ export default function DailyTrackerViewCard({
           </Badge>
         )}
       </div>
+
+      {/* Display streak information */}
+      <MetricStreakDisplay
+        metricId={metric.id}
+        metricType={metric.type}
+        size="sm"
+        style="badge"
+        className="mb-3"
+      />
 
       {/* Render appropriate input based on metric type */}
       <div className="mt-4">

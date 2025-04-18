@@ -14,10 +14,10 @@
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
+in quick-metric-logger, improve the button layout for hide from calendar, edit/delete
 
 ### IN PROGRESS
 
-- add a streak for metrics somewhere, maybe in both calendar logs and also in quick metric logger?
 - in `index.tsx`, add the latest DEXA scan summary information if there are any, and when a user clicks on it, it navigates user to DEXA scan route
 - in `index.tsx`, add the latest summary of "in range" "out of range" bloodmarks (just a bar graph of those 2 are fine), and when a user clicks on it, it naviates user to bloodwork route
 - in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route
@@ -115,5 +115,7 @@
 - in "add bloodwork", when I select an already existing dataset, I want it to populate the data that is already created, and disable them. I also want it to show the previous date's value [DONE 2025-04-17]
 - update the daily tracking information to be what the feature actually is [DONE 2025-04-17]
 - need to add info for dexa, bloodwork, experiments, daily tracking, quick metric logger [DONE 2025-04-17]
+- there's a bug in daily tracking where in the popover, it still says there are more metrics that are visible (i.e. 5 metrics instead of the 4, because 1 metric shouldn't be counted, i.e. schedule_days = [-1]) [DONE 2025-04-18]
+- add a streak for metrics somewhere, maybe in both calendar logs and also in quick metric logger? [DONE 2025-04-18]
 
 ### GAVE UP

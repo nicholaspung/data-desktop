@@ -1,20 +1,14 @@
 // src/pages/index.tsx - Updated with null check
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
-import { BarChart, HeartPulse, PieChart, Plus, RefreshCcw } from "lucide-react";
+import { BarChart, HeartPulse, PieChart, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ApiService } from "@/services/api";
 import { DatasetSummary, FieldDefinition } from "@/types/types";
 import { DataStoreName, loadState } from "@/store/data-store";
 import { getProcessedRecords } from "@/lib/data-utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -118,7 +112,8 @@ function Home() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col space-y-2">
+        <h4 className="text-l font-bold">Dataset summary information</h4>
         {isLoading
           ? // Loading state
             Array.from({ length: 4 }).map((_, i) => (
@@ -134,68 +129,34 @@ function Home() {
             ))
           : // Data summaries
             summaries.map((summary) => (
-              <Link key={summary.id} to={summary.href} className="block">
-                <Card className="hover:bg-accent/20 transition-colors cursor-pointer h-full">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="flex items-center gap-2">
-                      {summary.icon}
-                      {summary.name}
-                    </CardTitle>
-                    <CardDescription>
-                      {summary.lastUpdated
-                        ? `Last updated: ${new Date(summary.lastUpdated).toLocaleDateString()}`
-                        : "No data yet"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-2xl font-bold">{summary.count}</p>
-                    <p className="text-sm text-muted-foreground">
-                      total records
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ReusableCard
+                key={summary.id}
+                showHeader={false}
+                cardClassName="hover:bg-accent/20 transition-colors cursor-pointer"
+                contentClassName="pt-6"
+                content={
+                  <div className="flex flex-row justify-between">
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        {summary.icon}
+                        <span className="ml-2">{summary.name}</span>
+                      </div>
+                      <span>
+                        {summary.lastUpdated
+                          ? `Last updated: ${new Date(summary.lastUpdated).toLocaleDateString()}`
+                          : "No data yet"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{summary.count}</p>
+                      <p className="text-sm text-muted-foreground">
+                        total records
+                      </p>
+                    </div>
+                  </div>
+                }
+              />
             ))}
-
-        {/* Add New Dataset Card */}
-        <Card className="border-dashed border-2 cursor-pointer hover:bg-accent/20 transition-colors h-full">
-          <CardHeader className="pb-2">
-            <CardTitle>Add New Dataset</CardTitle>
-            <CardDescription>Create a custom dataset</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center justify-center py-6">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-12 rounded-full"
-            >
-              <Plus className="h-6 w-6" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity / Stats Section */}
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Activity list will go here */}
-            <p className="text-muted-foreground">No recent activity</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Stats will go here */}
-            <p className="text-muted-foreground">No stats available</p>
-          </CardContent>
-        </Card>
       </div>
     </>
   );
