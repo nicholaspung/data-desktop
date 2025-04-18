@@ -17,7 +17,6 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { BloodMarker } from "./bloodwork";
 import BloodMarkerInput from "./blood-marker-input";
 import useLoadData from "@/hooks/useLoadData";
 import { useFieldDefinitions } from "../field-definitions/field-definitions-store";
@@ -42,16 +41,32 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     Record<string, { value: string | number; valueType: "number" | "text" }>
   >({});
   const [isExistingDate, setIsExistingDate] = useState(false);
+  const [existingBloodworkId, setExistingBloodworkId] = useState<string | null>(
+    null
+  );
 
   // Get blood markers from store
   const bloodMarkers = useStore(
     dataStore,
     (state) => state.blood_markers || []
-  ) as BloodMarker[];
+  );
   const existingBloodwork = useStore(
     dataStore,
     (state) => state.bloodwork || []
   );
+  const bloodResults = useStore(
+    dataStore,
+    (state) => state.blood_results || []
+  );
+
+  // Reset form data function
+  const resetFormData = () => {
+    setFasted(false);
+    setLabName("");
+    setNotes("");
+    setMarkerValues({});
+    setExistingBloodworkId(null);
+  };
 
   // Get existing dates for dropdown
   const existingDates = [
@@ -107,9 +122,59 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         setFasted(existingRecord.fasted || false);
         setLabName(existingRecord.lab_name || "");
         setNotes(existingRecord.notes || "");
+        setExistingBloodworkId(existingRecord.id || null);
+
+        // Populate marker values for this bloodwork record
+        if (existingRecord.id) {
+          const resultsForTest = bloodResults.filter(
+            (result) => result.blood_test_id === existingRecord.id
+          );
+
+          // Clear existing marker values first
+          setMarkerValues({});
+
+          // Create a new marker values object with existing results
+          const newMarkerValues: Record<
+            string,
+            { value: string | number; valueType: "number" | "text" }
+          > = {};
+
+          resultsForTest.forEach((result) => {
+            if (result.value_text && result.value_text.trim() !== "") {
+              newMarkerValues[result.blood_marker_id] = {
+                value: result.value_text,
+                valueType: "text",
+              };
+            } else {
+              if (typeof result.value_number === "number") {
+                newMarkerValues[result.blood_marker_id] = {
+                  value: result.value_number,
+                  valueType: "number",
+                };
+              }
+            }
+          });
+
+          setMarkerValues(newMarkerValues);
+        }
       }
+    } else {
+      // Reset form data when selecting a non-existing date
+      resetFormData();
     }
-  }, [date, existingDates, existingBloodwork]);
+  }, [date, existingDates, existingBloodwork, bloodResults]);
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (showAddDialog) {
+      // Set to today's date
+      setDate(new Date());
+      // Reset form data
+      resetFormData();
+      // Reset search term
+      setSearchTerm("");
+    }
+  }, [showAddDialog]);
 
   // Filter markers based on search term
   const filteredMarkers = bloodMarkers.filter(
@@ -134,6 +199,16 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   // Check if form is valid
   const isFormValid = () => {
     return date && Object.keys(markerValues).length > 0;
+  };
+
+  // Helper function to check if a result already exists for this marker
+  const resultExistsForMarker = (markerId: string) => {
+    if (!existingBloodworkId) return false;
+    return bloodResults.some(
+      (result) =>
+        result.blood_test_id === existingBloodworkId &&
+        result.blood_marker_id === markerId
+    );
   };
 
   // Handle form submission
@@ -187,6 +262,12 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           if (typeof data.value === "string") return data.value.trim() !== "";
           return data.value !== null && data.value !== undefined;
         })
+        // Skip existing results if it's an existing date
+        .filter((markerId) => {
+          if (!existingBloodworkId) return true;
+          // Only add results for markers that don't have results yet
+          return !resultExistsForMarker(markerId);
+        })
         .map(async (markerId) => {
           const data = markerValues[markerId];
           const resultData = {
@@ -207,7 +288,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       toast.success("Bloodwork results added successfully");
 
       // Reset form and close dialog
-      setMarkerValues({});
+      resetFormData();
       setSearchTerm("");
 
       if (onSuccess) {
@@ -238,6 +319,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           Add Bloodwork
         </Button>
       }
+      contentClassName="sm:max-w-[800px]"
       loading={isSubmitting}
       footerActionDisabled={!isFormValid()}
       footerActionLoadingText="Saving..."
@@ -377,20 +459,37 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
               </div>
             ) : (
               <div className="max-h-[400px] overflow-y-auto">
-                {filteredMarkers.map((marker) => (
-                  <BloodMarkerInput
-                    key={marker.id}
-                    marker={marker}
-                    value={markerValues[marker.id]?.value || ""}
-                    valueType={markerValues[marker.id]?.valueType || "number"}
-                    onChange={(value, valueType) =>
-                      handleMarkerChange(marker.id, value, valueType)
-                    }
-                  />
-                ))}
+                {filteredMarkers.map((marker) => {
+                  // Check if this marker already has results for the selected date
+                  const hasExistingResult = resultExistsForMarker(marker.id);
+
+                  return (
+                    <BloodMarkerInput
+                      key={marker.id}
+                      marker={marker}
+                      value={markerValues[marker.id]?.value || ""}
+                      valueType={markerValues[marker.id]?.valueType || "number"}
+                      onChange={(value, valueType) =>
+                        handleMarkerChange(marker.id, value, valueType)
+                      }
+                      disabled={isExistingDate && hasExistingResult}
+                      isExisting={hasExistingResult}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {isExistingDate && (
+            <div className="text-sm text-muted-foreground">
+              <p>
+                Note: For existing test dates, you can only add results for
+                markers that don't already have values. Existing marker results
+                are displayed but can't be modified.
+              </p>
+            </div>
+          )}
         </div>
       }
     />

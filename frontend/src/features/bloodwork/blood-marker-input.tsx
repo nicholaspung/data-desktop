@@ -2,33 +2,28 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { BloodMarker } from "./bloodwork";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function BloodMarkerInput({
   marker,
   value,
   valueType = "number",
   onChange,
+  disabled = false,
+  isExisting = false,
 }: {
   marker: BloodMarker;
   value: string | number;
   valueType: "number" | "text";
   onChange: (value: string | number, valueType: "number" | "text") => void;
+  disabled?: boolean;
+  isExisting?: boolean;
 }) {
-  // Choose initial tab based on marker characteristics
-  const initialTab = marker.general_reference ? "text" : valueType || "number";
-
-  const [activeTab, setActiveTab] = useState<"number" | "text">(
-    initialTab as "number" | "text"
-  );
-
-  // Handle tab change
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as "number" | "text");
-
-    // Clear value when switching tabs
-    onChange("", tab as "number" | "text");
-  };
+  // Keep track of the selected input type
+  const [activeType, setActiveType] = useState<"number" | "text">(valueType);
 
   // Helper to format range display
   const formatRange = (low?: number, high?: number, general?: string) => {
@@ -52,10 +47,29 @@ export default function BloodMarkerInput({
     marker.optimal_general
   );
 
+  // Handle type change
+  const handleTypeChange = (newType: string) => {
+    if (disabled) return;
+    setActiveType(newType as "number" | "text");
+    onChange("", newType as "number" | "text");
+  };
+
   return (
-    <div className="p-3 border-b flex flex-col sm:flex-row gap-2 hover:bg-muted/30">
+    <div
+      className={cn(
+        "p-3 border-b flex flex-col sm:flex-row gap-2",
+        disabled ? "bg-gray-50 dark:bg-gray-900" : "hover:bg-muted/30"
+      )}
+    >
       <div className="flex-1">
-        <div className="font-medium text-sm">{marker.name}</div>
+        <div className="font-medium text-sm flex items-center gap-2">
+          {marker.name}
+          {isExisting && (
+            <Badge variant="outline" className="text-xs">
+              Existing
+            </Badge>
+          )}
+        </div>
         <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4">
           {marker.unit && <span>Unit: {marker.unit}</span>}
           {referenceRange !== "No range set" && (
@@ -67,40 +81,51 @@ export default function BloodMarkerInput({
         </div>
       </div>
 
-      <div className="w-full sm:w-[180px]">
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2 h-8">
-            <TabsTrigger value="number" className="text-xs">
-              Number
-            </TabsTrigger>
-            <TabsTrigger value="text" className="text-xs">
-              Text
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="number" className="mt-1">
+      <div className="w-full sm:w-[280px] flex flex-col">
+        <div className="flex items-center gap-2 mb-1">
+          <RadioGroup
+            value={activeType}
+            onValueChange={handleTypeChange}
+            className="flex flex-row gap-4"
+            disabled={disabled}
+          >
+            <div className="flex items-center space-x-1">
+              <RadioGroupItem value="number" id={`number-${marker.id}`} />
+              <Label htmlFor={`number-${marker.id}`} className="text-xs">
+                Number
+              </Label>
+            </div>
+            <div className="flex items-center space-x-1">
+              <RadioGroupItem value="text" id={`text-${marker.id}`} />
+              <Label htmlFor={`text-${marker.id}`} className="text-xs">
+                Text
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        <div className="flex gap-2">
+          {activeType === "number" ? (
             <Input
               type="number"
               inputMode="decimal"
-              value={activeTab === "number" ? value : ""}
+              value={value}
               onChange={(e) => onChange(e.target.value, "number")}
               placeholder="0.0"
               className="h-8"
+              disabled={disabled}
             />
-          </TabsContent>
-          <TabsContent value="text" className="mt-1">
+          ) : (
             <Input
               type="text"
-              value={activeTab === "text" ? value : ""}
+              value={value}
               onChange={(e) => onChange(e.target.value, "text")}
               placeholder="Text result"
               className="h-8"
+              disabled={disabled}
             />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
     </div>
   );

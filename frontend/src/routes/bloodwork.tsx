@@ -8,6 +8,17 @@ import {
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import { AddBloodworkDialog } from "@/features/bloodwork/add-bloodwork-dialog";
+import BloodMarkerManager from "@/features/bloodwork/blood-marker-manager";
+import BloodworkManager from "@/features/bloodwork/bloodwork-manager";
+import BloodResultsManager from "@/features/bloodwork/blood-results-manager";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
@@ -84,7 +95,29 @@ export default function BloodworkPage() {
           guideContent={bloodworkGuideContent}
           storageKey="bloodwork-page"
         >
-          <AddBloodworkDialog />
+          <div className="flex space-x-2">
+            <AddBloodworkDialog />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="px-2 flex">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <div className="flex space-x-2">
+                  <DropdownMenuItem asChild>
+                    <BloodworkManager />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <BloodMarkerManager />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <BloodResultsManager />
+                  </DropdownMenuItem>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </FeatureHeader>
       }
       sidebar={

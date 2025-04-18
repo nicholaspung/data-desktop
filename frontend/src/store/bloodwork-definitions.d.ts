@@ -8,7 +8,7 @@ export interface BloodworkTest {
   notes?: string;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }
@@ -27,7 +27,7 @@ export interface BloodMarker {
   optimal_general?: string;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }
@@ -45,7 +45,7 @@ export interface BloodResult {
   blood_marker_id_data?: BloodMarker;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }
