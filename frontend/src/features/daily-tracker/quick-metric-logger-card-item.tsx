@@ -30,12 +30,24 @@ export default function QuickMetricLoggerCardItem({
 }) {
   // Get the current value for a metric on the selected date
   const getMetricValue = (metric: Metric) => {
-    const todayLog = dailyLogs.find(
-      (log: DailyLog) =>
-        log.metric_id === metric.id &&
-        format(new Date(log.date), "yyyy-MM-dd") ===
-          format(selectedDate, "yyyy-MM-dd")
-    );
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+    const todayLog = dailyLogs.find((log: DailyLog) => {
+      // Ensure log date is processed as YYYY-MM-DD local time
+      let logDate;
+      if (typeof log.date === "string") {
+        logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+      } else {
+        logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+      }
+
+      const logDateString = format(logDate, "yyyy-MM-dd");
+      return (
+        log.metric_id === metric.id && logDateString === selectedDateString
+      );
+    });
 
     if (!todayLog) return null;
 

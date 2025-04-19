@@ -14,6 +14,8 @@ import { Separator } from "@/components/ui/separator";
 import BloodworkDashboardSummary from "@/features/dashboard/bloodwork-dashboard-summary";
 import ExperimentDashboardSummary from "@/features/dashboard/experiment-dashboard-summary";
 import { Link } from "@tanstack/react-router";
+import DailyTrackingDashboardSummary from "@/features/dashboard/daily-tracking-dashboard-summary";
+import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric-logger-dashboard-summary";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -116,7 +118,9 @@ function Home() {
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <DailyTrackingDashboardSummary />
         <ExperimentDashboardSummary />
+        <QuickMetricLoggerDashboardSummary />
         <DEXADashboardSummary />
         <BloodworkDashboardSummary />
       </div>

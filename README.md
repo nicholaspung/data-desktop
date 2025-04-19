@@ -19,7 +19,7 @@ in quick-metric-logger, improve the button layout for hide from calendar, edit/d
 ### IN PROGRESS
 
 - in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route
-- in `index.tsx`, add a "log a random metric" that navigates the user to the metric route
+- in daily metric logging, cannot log item 
 
 ### DONE
 
@@ -117,5 +117,7 @@ in quick-metric-logger, improve the button layout for hide from calendar, edit/d
 - in `index.tsx`, add the latest summary of "in range" "out of range" bloodmarks (just a bar graph of those 2 are fine), and when a user clicks on it, it naviates user to bloodwork route [DONE 2025-04-18]
 - in `index.tsx`, add a simple view for experiments that are active currently and how long it is until it ends, along with the dates [DONE 2025-04-18]
 - in `index.tsx`, add a quick stat part where it shows the dataset information in a list view, with the information: dataset name, last updated, and how many total records, with a button that can navigate the user to the dataset route [DONE 2025-04-18]
+- in `index.tsx`, add a "log a random metric", which allows a user to search for the metric and log it there that navigates the user to the metric route [DONE 2025-04-19]
+- in quick metric logger, not sure if the logging is logging the right date in date selection calendar [DONE 2025-04-19]
 
 ### GAVE UP

@@ -1,7 +1,7 @@
-// src/features/experiments/quick-metric-logger.tsx
-import { useState, useMemo } from "react";
+// src/features/daily-tracker/quick-metric-logger.tsx
+import { useState, useMemo, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,12 @@ const QuickMetricLogger = () => {
   const [showCalendarTracked, setShowCalendarTracked] = useState<
     "all" | "tracked" | "nottracked"
   >("all");
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    // Create a date at midnight local time to avoid timezone issues
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
   const [viewMode, setViewMode] = useState<"list" | "cards">("cards");
 
   // Access store data
@@ -46,6 +51,12 @@ const QuickMetricLogger = () => {
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
+
+  // Ensure selected date stays in sync with startOfDay
+  useEffect(() => {
+    // Keep selected date at start of day to avoid time-of-day complications
+    setSelectedDate(startOfDay(selectedDate));
+  }, []);
 
   // Get all unique categories from metrics
   const uniqueCategories = useMemo(() => {
@@ -83,7 +94,6 @@ const QuickMetricLogger = () => {
           ));
 
       // Check if metric has a calendar display attribute
-      // (This would be a property you add to metrics to determine if they should show on calendar)
       const matchesCalendarTracked =
         showCalendarTracked === "all" ||
         (showCalendarTracked === "tracked" &&
@@ -93,12 +103,16 @@ const QuickMetricLogger = () => {
 
       // Check if metric is completed for today
       if (showOnlyIncomplete) {
-        const todayLog = dailyLogs.find(
-          (log: DailyLog) =>
-            log.metric_id === metric.id &&
-            format(new Date(log.date), "yyyy-MM-dd") ===
-              format(selectedDate, "yyyy-MM-dd")
-        );
+        // Use startOfDay format for consistent date comparison
+        const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+        const todayLog = dailyLogs.find((log: DailyLog) => {
+          const logDate = new Date(log.date);
+          const logDateString = format(logDate, "yyyy-MM-dd");
+          return (
+            log.metric_id === metric.id && logDateString === selectedDateString
+          );
+        });
 
         // For boolean metrics, we consider them incomplete if there's no log or the log value is false
         if (metric.type === "boolean") {
@@ -166,12 +180,28 @@ const QuickMetricLogger = () => {
 
   // Check if a metric is completed for the selected date
   const isMetricCompleted = (metric: Metric) => {
-    const todayLog = dailyLogs.find(
-      (log: DailyLog) =>
-        log.metric_id === metric.id &&
-        format(new Date(log.date), "yyyy-MM-dd") ===
-          format(selectedDate, "yyyy-MM-dd")
-    );
+    // Use consistent date format for comparison
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+    const todayLog = dailyLogs.find((log: DailyLog) => {
+      // Ensure log date is also processed as YYYY-MM-DD local time
+      let logDate;
+      if (typeof log.date === "string") {
+        // Handle string date format
+        // Add T00:00:00 to ensure it's parsed in local timezone
+        logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+      } else {
+        // Handle Date object
+        logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+      }
+
+      const logDateString = format(logDate, "yyyy-MM-dd");
+      return (
+        log.metric_id === metric.id && logDateString === selectedDateString
+      );
+    });
 
     if (!todayLog) return false;
 
@@ -193,12 +223,16 @@ const QuickMetricLogger = () => {
   const toggleMetricCompletion = async (metric: Metric) => {
     if (metric.type !== "boolean") return;
 
-    const todayLog = dailyLogs.find(
-      (log: DailyLog) =>
-        log.metric_id === metric.id &&
-        format(new Date(log.date), "yyyy-MM-dd") ===
-          format(selectedDate, "yyyy-MM-dd")
-    );
+    // Use consistent date format for comparison
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+    const todayLog = dailyLogs.find((log: DailyLog) => {
+      const logDate = new Date(log.date);
+      const logDateString = format(logDate, "yyyy-MM-dd");
+      return (
+        log.metric_id === metric.id && logDateString === selectedDateString
+      );
+    });
 
     try {
       // If log exists, toggle its value
@@ -249,10 +283,6 @@ const QuickMetricLogger = () => {
 
   // Toggle calendar tracking for a metric
   const toggleCalendarTracking = async (metric: Metric) => {
-    // This would update your metric settings to include/exclude from calendar tracking
-    // For this implementation, we'll assume a special value in schedule_days array (-1) means "not tracked in calendar"
-    // You might want to implement this differently based on your data model
-
     try {
       let scheduleDays = [...(metric.schedule_days || [])];
 
@@ -322,7 +352,14 @@ const QuickMetricLogger = () => {
           <Input
             type="date"
             value={format(selectedDate, "yyyy-MM-dd")}
-            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            onChange={(e) => {
+              if (e.target.value) {
+                // Create a date object at midnight local time for the selected date
+                const newDate = new Date(e.target.value + "T00:00:00");
+                newDate.setHours(0, 0, 0, 0);
+                setSelectedDate(newDate);
+              }
+            }}
             className="w-40"
           />
 
