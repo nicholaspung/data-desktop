@@ -1,172 +1,410 @@
-// src/features/dashboard/daily-metrics-summary.tsx
-import { useState, useEffect } from "react";
-import { useStore } from "@tanstack/react-store";
-import { format } from "date-fns";
-import { CalendarCheck, ArrowRight, CheckCircle2, Circle } from "lucide-react";
-import { Link } from "@tanstack/react-router";
-import dataStore from "@/store/data-store";
-import {
-  isMetricScheduledForDate,
-  parseScheduleDays,
-} from "@/features/daily-tracker/schedule-utils";
+// src/features/dashboard/daily-tracking-dashboard-summary.tsx
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { CalendarCheck, Clock, Edit } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
+import { format, isSameDay, startOfDay } from "date-fns";
+import { toast } from "sonner";
+import { ApiService } from "@/services/api";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ProtectedField } from "@/components/security/protected-content";
 
 export default function DailyTrackingDashboardSummary() {
-  const [todaysMetrics, setTodaysMetrics] = useState<
-    Array<{
-      metric: Metric;
-      isCompleted: boolean;
-      log: DailyLog | null;
-    }>
-  >([]);
+  const [todayLogs, setTodayLogs] = useState<Record<string, DailyLog>>({});
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentMetric, setCurrentMetric] = useState<Metric | null>(null);
+  const [metricValue, setMetricValue] = useState<string | number>("");
+  const [metricNotes, setMetricNotes] = useState("");
 
-  const metrics = useStore(dataStore, (state) => state.metrics) || [];
+  // Get data from store
+  const allMetrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
+  const today = startOfDay(new Date());
 
-  const today = new Date();
-
+  // Load metrics and today's logs
   useEffect(() => {
-    // Filter metrics that should be visible today
-    const metricsForToday = metrics.filter((metric: Metric) => {
-      if (!metric.active) return false;
+    // Get active metrics that are scheduled for today
+    const activeMetrics = allMetrics
+      .filter(
+        (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
+      )
+      .slice(0, 4); // Just get first 4 for dashboard
 
-      // Skip metrics that are marked as "do not show in calendar"
-      const doNotShow = metric.schedule_days
-        ? Boolean(metric.schedule_days.find((el) => el === -1))
-        : false;
+    setMetrics(activeMetrics);
 
-      if (doNotShow) return false;
+    // Get logs for today
+    const logsMap: Record<string, DailyLog> = {};
 
-      // Parse schedule days
-      const scheduleDays = parseScheduleDays(metric.schedule_days);
-
-      // Create a metric object with parsed schedule days
-      const metricWithParsedSchedule = {
-        ...metric,
-        schedule_days: scheduleDays,
-      };
-
-      // Check if metric is scheduled for today
-      return isMetricScheduledForDate(metricWithParsedSchedule, today);
+    dailyLogs.forEach((log) => {
+      const logDate = new Date(log.date);
+      if (
+        isSameDay(logDate, today) &&
+        activeMetrics.some((m) => m.id === log.metric_id)
+      ) {
+        logsMap[log.metric_id] = log;
+      }
     });
 
-    // Find completion status for each metric
-    const metricsWithStatus = metricsForToday.map((metric) => {
-      const todayLogs = dailyLogs.filter((log: DailyLog) => {
-        const logDate = new Date(log.date);
-        return (
-          format(logDate, "yyyy-MM-dd") === format(today, "yyyy-MM-dd") &&
-          log.metric_id === metric.id
-        );
-      });
+    setTodayLogs(logsMap);
+  }, [allMetrics, dailyLogs]);
 
-      const log = todayLogs.length > 0 ? todayLogs[0] : null;
-      let isCompleted = false;
+  // Toggle boolean metric completion
+  const toggleMetric = async (metric: Metric) => {
+    if (metric.type !== "boolean") {
+      // For non-boolean metrics, open the modal
+      setCurrentMetric(metric);
 
-      if (log) {
-        // For boolean metrics, check if value is true
-        if (metric.type === "boolean") {
-          try {
-            isCompleted = JSON.parse(log.value) === true;
-          } catch (e) {
-            console.error(e);
-            isCompleted = log.value === "true";
-          }
-        } else {
-          // For other metrics, consider them completed if there's a log
-          isCompleted = true;
+      // Set initial values if there's an existing log
+      const existingLog = todayLogs[metric.id];
+      if (existingLog) {
+        try {
+          setMetricValue(JSON.parse(existingLog.value));
+          setMetricNotes(existingLog.notes || "");
+        } catch {
+          setMetricValue(existingLog.value || "");
+          setMetricNotes(existingLog.notes || "");
         }
+      } else {
+        // Set default value for new log
+        setMetricValue(metric.default_value || "");
+        setMetricNotes("");
       }
 
-      return {
-        metric,
-        isCompleted,
-        log,
-      };
-    });
+      setModalOpen(true);
+      return;
+    }
 
-    setTodaysMetrics(metricsWithStatus);
-  }, [metrics, dailyLogs]);
+    // For boolean metrics, toggle completion
+    setLoading((prev) => ({ ...prev, [metric.id]: true }));
 
-  const completedCount = todaysMetrics.filter(
-    (item) => item.isCompleted
-  ).length;
-  const totalCount = todaysMetrics.length;
-  const completionPercentage =
-    totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+    try {
+      const existingLog = todayLogs[metric.id];
+
+      if (existingLog) {
+        // Toggle existing log
+        let currentValue;
+        try {
+          currentValue = JSON.parse(existingLog.value);
+        } catch {
+          currentValue = existingLog.value === "true";
+        }
+
+        const newValue = !currentValue;
+
+        const response = await ApiService.updateRecord(existingLog.id, {
+          ...existingLog,
+          value: JSON.stringify(newValue),
+        });
+
+        if (response) {
+          updateEntry(existingLog.id, response, "daily_logs");
+          setTodayLogs((prev) => ({
+            ...prev,
+            [metric.id]: response as DailyLog,
+          }));
+
+          toast.success(
+            `${metric.private ? "Metric" : metric.name} ${newValue ? "completed" : "uncompleted"}`
+          );
+        }
+      } else {
+        // Create new log
+        const newLog = {
+          date: today,
+          metric_id: metric.id,
+          value: "true", // JSON.stringify(true)
+          notes: "",
+        };
+
+        const response = await ApiService.addRecord("daily_logs", newLog);
+
+        if (response) {
+          addEntry(response, "daily_logs");
+          setTodayLogs((prev) => ({
+            ...prev,
+            [metric.id]: response as DailyLog,
+          }));
+
+          toast.success(`${metric.private ? "Metric" : metric.name} completed`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating metric:", error);
+      toast.error("Failed to update metric");
+    } finally {
+      setLoading((prev) => ({ ...prev, [metric.id]: false }));
+    }
+  };
+
+  // Save non-boolean metric value
+  const saveMetricValue = async () => {
+    if (!currentMetric) return;
+
+    setLoading((prev) => ({ ...prev, [currentMetric.id]: true }));
+
+    try {
+      const existingLog = todayLogs[currentMetric.id];
+
+      if (existingLog) {
+        // Update existing log
+        const response = await ApiService.updateRecord(existingLog.id, {
+          ...existingLog,
+          value: JSON.stringify(metricValue),
+          notes: metricNotes,
+        });
+
+        if (response) {
+          updateEntry(existingLog.id, response, "daily_logs");
+          setTodayLogs((prev) => ({
+            ...prev,
+            [currentMetric.id]: response as DailyLog,
+          }));
+
+          toast.success(
+            `${currentMetric.private ? "Metric" : currentMetric.name} updated`
+          );
+        }
+      } else {
+        // Create new log
+        const newLog = {
+          date: today,
+          metric_id: currentMetric.id,
+          value: JSON.stringify(metricValue),
+          notes: metricNotes,
+        };
+
+        const response = await ApiService.addRecord("daily_logs", newLog);
+
+        if (response) {
+          addEntry(response, "daily_logs");
+          setTodayLogs((prev) => ({
+            ...prev,
+            [currentMetric.id]: response as DailyLog,
+          }));
+
+          toast.success(
+            `${currentMetric.private ? "Metric" : currentMetric.name} logged`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error updating metric:", error);
+      toast.error("Failed to update metric");
+    } finally {
+      setLoading((prev) => ({ ...prev, [currentMetric.id]: false }));
+      setModalOpen(false);
+      setCurrentMetric(null);
+    }
+  };
+
+  // Check if a boolean metric is completed
+  const isMetricCompleted = (metric: Metric): boolean => {
+    const log = todayLogs[metric.id];
+    if (!log) return false;
+
+    if (metric.type === "boolean") {
+      try {
+        return JSON.parse(log.value) === true;
+      } catch {
+        return log.value === "true";
+      }
+    }
+
+    // For non-boolean metrics, consider it completed if a log exists
+    return true;
+  };
+
+  // Get display value for a non-boolean metric
+  const getMetricDisplayValue = (metric: Metric): string => {
+    const log = todayLogs[metric.id];
+    if (!log) return "-";
+
+    try {
+      const value = JSON.parse(log.value);
+      return `${value}${metric.unit ? ` ${metric.unit}` : ""}`;
+    } catch {
+      return `${log.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+    }
+  };
+
+  // Get completion count
+  const getCompletedCount = (): number => {
+    return metrics.filter((metric) => isMetricCompleted(metric)).length;
+  };
 
   return (
-    <div className="border rounded-lg p-4 bg-card">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <CalendarCheck className="h-5 w-5 mr-2 text-primary" />
-          <h3 className="font-medium text-lg">Today's Metrics</h3>
-        </div>
-        <Badge variant={completionPercentage === 100 ? "success" : "outline"}>
-          {completedCount}/{totalCount} completed
-        </Badge>
-      </div>
-
-      <Separator className="my-2" />
-
-      {todaysMetrics.length === 0 ? (
-        <div className="py-8 text-center text-muted-foreground">
-          <p>No metrics scheduled for today</p>
-          <p className="text-sm mt-1">Add metrics in the Daily Tracker</p>
-        </div>
-      ) : (
-        <div className="space-y-2 mt-3 max-h-64 overflow-y-auto">
-          {todaysMetrics.map(({ metric, isCompleted }) => (
-            <div
-              key={metric.id}
-              className="flex items-center justify-between p-2 rounded-md hover:bg-muted/50"
-            >
-              <div className="flex items-center">
-                {metric.type === "boolean" ? (
-                  isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mr-2" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground mr-2" />
-                  )
-                ) : (
-                  <div className="h-5 w-5 mr-2 flex items-center justify-center">
-                    {isCompleted ? "✓" : "○"}
-                  </div>
-                )}
-                <span
-                  className={
-                    isCompleted ? "line-through text-muted-foreground" : ""
-                  }
-                >
-                  {metric.private ? (
-                    <ProtectedField>{metric.name}</ProtectedField>
-                  ) : (
-                    metric.name
-                  )}
-                </span>
+    <>
+      <Card className="col-span-1 row-span-1">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Today's Tracking
+          </CardTitle>
+          <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            {/* Summary count */}
+            <div className="flex items-end justify-between">
+              <div>
+                <div className="text-2xl font-bold">
+                  {getCompletedCount()}/{metrics.length}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Items completed for {format(today, "MMM d")}
+                </p>
               </div>
-              {metric.category_id_data && (
-                <Badge variant="outline" className="text-xs">
-                  {metric.category_id_data.name}
-                </Badge>
+
+              <Link to="/calendar">
+                <Button variant="outline" size="sm" className="h-8">
+                  View All
+                </Button>
+              </Link>
+            </div>
+
+            {/* Metrics list */}
+            {metrics.length === 0 ? (
+              <div className="text-center text-muted-foreground py-2">
+                <p className="text-sm">No tracking items for today</p>
+              </div>
+            ) : (
+              <div className="space-y-2 pt-2">
+                {metrics.map((metric) => (
+                  <div
+                    key={metric.id}
+                    className="flex items-center justify-between py-1 cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      {metric.type === "boolean" ? (
+                        <Checkbox
+                          checked={isMetricCompleted(metric)}
+                          disabled={loading[metric.id]}
+                          className="pointer-events-none"
+                          onClick={() => toggleMetric(metric)}
+                        />
+                      ) : (
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          {metric.type === "time" ? (
+                            <Clock className="h-3 w-3 text-muted-foreground" />
+                          ) : (
+                            <Edit className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                      )}
+                      <span className="text-sm">
+                        {metric.private ? (
+                          <ProtectedField>{metric.name}</ProtectedField>
+                        ) : (
+                          metric.name
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      {metric.type === "boolean" ? (
+                        isMetricCompleted(metric) ? (
+                          <Badge className="text-xs bg-green-500 hover:bg-green-600">
+                            Done
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">
+                            To Do
+                          </Badge>
+                        )
+                      ) : (
+                        <span className="text-xs font-medium">
+                          {getMetricDisplayValue(metric)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal for non-boolean metrics */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {currentMetric?.private ? (
+                <ProtectedField>{currentMetric?.name}</ProtectedField>
+              ) : (
+                currentMetric?.name
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="value">
+                Value{currentMetric?.unit ? ` (${currentMetric.unit})` : ""}
+              </Label>
+              {currentMetric?.type === "number" ||
+              currentMetric?.type === "percentage" ||
+              currentMetric?.type === "time" ? (
+                <Input
+                  id="value"
+                  type="number"
+                  value={metricValue}
+                  onChange={(e) =>
+                    setMetricValue(parseFloat(e.target.value) || 0)
+                  }
+                />
+              ) : (
+                <Input
+                  id="value"
+                  value={metricValue}
+                  onChange={(e) => setMetricValue(e.target.value)}
+                />
               )}
             </div>
-          ))}
-        </div>
-      )}
 
-      <div className="mt-4">
-        <Link to="/calendar">
-          <Button variant="outline" className="w-full">
-            Go to Daily Tracker
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
-      </div>
-    </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Input
+                id="notes"
+                value={metricNotes}
+                onChange={(e) => setMetricNotes(e.target.value)}
+                placeholder="Add notes..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setModalOpen(false)}
+              disabled={loading[currentMetric?.id || ""]}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveMetricValue}
+              disabled={loading[currentMetric?.id || ""]}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

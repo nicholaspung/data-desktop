@@ -99,6 +99,7 @@ export default function BloodMarkerInput({
           )}
         </div>
         <div className="text-xs text-muted-foreground flex flex-wrap gap-x-4 mb-1">
+          {marker.description ? <span>{marker.description}</span> : ""}
           {marker.unit && <span>Unit: {marker.unit}</span>}
           {referenceRange !== "No range set" && (
             <span>Reference: {referenceRange}</span>

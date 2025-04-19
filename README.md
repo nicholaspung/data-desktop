@@ -14,12 +14,10 @@
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
-in quick-metric-logger, improve the button layout for hide from calendar, edit/delete
+- in quick-metric-logger, improve the button layout for hide from calendar, edit/delete
+- in bloodwork add inputs, add virtualization
 
 ### IN PROGRESS
-
-- in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route
-- in daily metric logging, cannot log item 
 
 ### DONE
 
@@ -119,5 +117,8 @@ in quick-metric-logger, improve the button layout for hide from calendar, edit/d
 - in `index.tsx`, add a quick stat part where it shows the dataset information in a list view, with the information: dataset name, last updated, and how many total records, with a button that can navigate the user to the dataset route [DONE 2025-04-18]
 - in `index.tsx`, add a "log a random metric", which allows a user to search for the metric and log it there that navigates the user to the metric route [DONE 2025-04-19]
 - in quick metric logger, not sure if the logging is logging the right date in date selection calendar [DONE 2025-04-19]
+- in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route [DONE 2025-04-19]
+- in daily metric logging, cannot log item [DONE 2025-04-19]
+- in add bloodwork, I can't type in the input [DONE 2025-04-19]
 
 ### GAVE UP

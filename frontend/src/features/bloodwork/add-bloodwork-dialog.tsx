@@ -162,7 +162,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       // Reset form data when selecting a non-existing date
       resetFormData();
     }
-  }, [date, existingDates, existingBloodwork, bloodResults]);
+  }, [date]);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -255,7 +255,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       }
 
       // 2. Create blood result records for each filled marker
-      const resultPromises = Object.keys(markerValues)
+      const filteredMarkerValues = Object.keys(markerValues)
         .filter((key) => {
           const data = markerValues[key];
           // Skip empty values
@@ -267,25 +267,23 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           if (!existingBloodworkId) return true;
           // Only add results for markers that don't have results yet
           return !resultExistsForMarker(markerId);
-        })
-        .map(async (markerId) => {
-          const data = markerValues[markerId];
-          const resultData = {
-            blood_test_id: bloodworkId,
-            blood_marker_id: markerId,
-            value_number: data.valueType === "number" ? Number(data.value) : 0,
-            value_text: data.valueType === "text" ? String(data.value) : "",
-          };
-
-          // Use await to wait for the response
-          return await ApiService.addRecord("blood_results", resultData);
         });
+      for (let i = 0; i < filteredMarkerValues.length; i += 1) {
+        const markerId = filteredMarkerValues[i];
+        const data = markerValues[markerId];
+        const resultData = {
+          blood_test_id: bloodworkId,
+          blood_marker_id: markerId,
+          value_number: data.valueType === "number" ? Number(data.value) : 0,
+          value_text: data.valueType === "text" ? String(data.value) : "",
+        };
 
-      await Promise.all(resultPromises);
-
-      loadData();
+        // Use await to wait for the response
+        await ApiService.addRecord("blood_results", resultData);
+      }
 
       toast.success("Bloodwork results added successfully");
+      loadData();
 
       // Reset form and close dialog
       resetFormData();
