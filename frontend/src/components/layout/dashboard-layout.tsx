@@ -161,7 +161,7 @@ export default function DashboardLayout({
               {finalSidebarItems.map((item) =>
                 isExpanded ? (
                   <Link
-                    key={item.href}
+                    key={`final-sidebar${item.href}`}
                     to={item.href}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -174,7 +174,7 @@ export default function DashboardLayout({
                     <span>{item.title}</span>
                   </Link>
                 ) : (
-                  <Tooltip key={item.href}>
+                  <Tooltip key={`final-sidebar${item.href}`}>
                     <TooltipTrigger asChild>
                       <Link
                         key={item.href}
@@ -217,7 +217,7 @@ export default function DashboardLayout({
           <div className="space-y-1 p-2">
             {sidebarItems.map((item) => (
               <Link
-                key={item.href}
+                key={`sidebar-item${item.href}`}
                 to={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",

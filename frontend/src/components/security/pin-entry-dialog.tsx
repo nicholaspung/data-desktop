@@ -1,17 +1,9 @@
 // src/components/security/pin-entry-dialog.tsx
 import { useState, useRef, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Lock, UnlockKeyhole } from "lucide-react";
+import { UnlockKeyhole } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 
 export function PinEntryDialog({
@@ -29,10 +21,8 @@ export function PinEntryDialog({
   const [attempt, setAttempt] = useState(0);
   const pinInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
-      // Small delay to ensure the dialog is fully rendered
       const timeout = setTimeout(() => {
         if (pinInputRef.current) {
           pinInputRef.current.focus();
@@ -41,16 +31,12 @@ export function PinEntryDialog({
 
       return () => clearTimeout(timeout);
     } else {
-      // Reset state when dialog closes
       setPin("");
       setIsSubmitting(false);
     }
   }, [open]);
 
-  // Handle PIN submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (pin.length < 4) return;
 
     setIsSubmitting(true);
@@ -60,16 +46,11 @@ export function PinEntryDialog({
 
       if (success) {
         setPin("");
-
-        // Important: Set state first, then close dialog
-        // This prevents race conditions and focus issues
         setIsSubmitting(false);
 
-        // Use setTimeout to ensure state is updated before dialog closes
         setTimeout(() => {
           onOpenChange(false);
 
-          // Another small delay before calling success callback
           if (onSuccess) {
             setTimeout(onSuccess, 50);
           }
@@ -85,37 +66,22 @@ export function PinEntryDialog({
     }
   };
 
-  // Handle dialog close
-  const handleOpenChange = (newOpen: boolean) => {
-    // Prevent closing during submission
-    if (isSubmitting && !newOpen) return;
-
-    // Otherwise, propagate the change
-    onOpenChange(newOpen);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-[350px]"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking outside while submitting
-          if (isSubmitting) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-primary" />
-            Enter PIN
-          </DialogTitle>
-          <DialogDescription>
-            Enter your PIN to unlock protected data
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <ReusableDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      showTrigger={false}
+      title="Enter PIN"
+      description="Enter your PIN to unlock protected data"
+      confirmText="Unlock"
+      confirmIcon={<UnlockKeyhole className="h-4 w-4" />}
+      onConfirm={handleSubmit}
+      footerActionDisabled={pin.length < 4 || isSubmitting}
+      footerActionLoadingText="Unlocking..."
+      loading={isSubmitting}
+      contentClassName="sm:max-w-[350px]"
+      customContent={
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="pin">PIN</Label>
             <Input
@@ -139,23 +105,8 @@ export function PinEntryDialog({
               Incorrect PIN. Please try again.
             </p>
           )}
-
-          <DialogFooter className="flex-col sm:flex-col gap-2">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={pin.length < 4 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <UnlockKeyhole className="h-4 w-4 mr-2" />
-              )}
-              Unlock
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      }
+    />
   );
 }

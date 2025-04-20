@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ProtectedField } from "@/components/security/protected-content";
+import { Separator } from "@/components/ui/separator";
 
 export default function DailyTrackingDashboardSummary() {
   const [todayLogs, setTodayLogs] = useState<Record<string, DailyLog>>({});
@@ -251,14 +252,25 @@ export default function DailyTrackingDashboardSummary() {
   return (
     <>
       <Card className="col-span-1 row-span-1">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            Today's Tracking
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarCheck className="h-5 w-5" />
+              Today's Tracking
+            </div>
+            <Link
+              to="/calendar"
+              className="text-sm text-primary hover:underline"
+            >
+              View All
+            </Link>
           </CardTitle>
-          <CalendarCheck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
+
+        <Separator />
+
         <CardContent>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 pt-4">
             {/* Summary count */}
             <div className="flex items-end justify-between">
               <div>
@@ -269,12 +281,6 @@ export default function DailyTrackingDashboardSummary() {
                   Items completed for {format(today, "MMM d")}
                 </p>
               </div>
-
-              <Link to="/calendar">
-                <Button variant="outline" size="sm" className="h-8">
-                  View All
-                </Button>
-              </Link>
             </div>
 
             {/* Metrics list */}

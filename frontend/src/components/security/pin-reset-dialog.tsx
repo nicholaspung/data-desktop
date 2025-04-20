@@ -1,17 +1,9 @@
 // src/components/security/pin-reset-dialog.tsx
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, KeyRound, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
 
 export function PinResetDialog({
@@ -28,12 +20,9 @@ export function PinResetDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError(null);
 
-    // Basic validation
     if (!password) {
       setError("Please enter your recovery password");
       return;
@@ -55,15 +44,11 @@ export function PinResetDialog({
       const success = await resetPin(password, newPin);
 
       if (success) {
-        // Reset form and close dialog
         setPassword("");
         setNewPin("");
         setConfirmNewPin("");
-
-        // Use setTimeout to avoid race conditions with state updates
         setTimeout(() => onOpenChange(false), 50);
       } else {
-        // Error is handled in the resetPin function with toast message
         setIsSubmitting(false);
       }
     } catch (error) {
@@ -73,12 +58,9 @@ export function PinResetDialog({
     }
   };
 
-  // Handle dialog close
   const handleOpenChange = (newOpen: boolean) => {
-    // Prevent closing during submission
     if (isSubmitting && !newOpen) return;
 
-    // Reset form when dialog closes
     if (!newOpen) {
       setPassword("");
       setNewPin("");
@@ -86,37 +68,29 @@ export function PinResetDialog({
       setError(null);
     }
 
-    // Propagate the change
     onOpenChange(newOpen);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        onPointerDownOutside={(e) => {
-          // Prevent closing when clicking outside while submitting
-          if (isSubmitting) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5 text-primary" />
-            Reset Your PIN
-          </DialogTitle>
-          <DialogDescription>
-            Enter your recovery password to reset your PIN.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <ReusableDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      showTrigger={false}
+      title="Reset Your PIN"
+      description="Enter your recovery password to reset your PIN."
+      confirmText="Reset PIN"
+      confirmIcon={<RefreshCcw className="h-4 w-4" />}
+      onConfirm={handleSubmit}
+      footerActionDisabled={isSubmitting}
+      footerActionLoadingText="Resetting..."
+      loading={isSubmitting}
+      contentClassName="sm:max-w-[425px]"
+      customContent={
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
           {error && (
             <p className="text-sm font-medium text-destructive">{error}</p>
           )}
 
-          {/* Recovery Password */}
           <div className="space-y-2">
             <Label htmlFor="password">Recovery Password</Label>
             <Input
@@ -132,7 +106,6 @@ export function PinResetDialog({
             </p>
           </div>
 
-          {/* New PIN Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="newPin">New PIN</Label>
@@ -161,27 +134,8 @@ export function PinResetDialog({
               />
             </div>
           </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <RefreshCcw className="h-4 w-4 mr-2" />
-              )}
-              Reset PIN
-            </Button>
-          </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      }
+    />
   );
 }

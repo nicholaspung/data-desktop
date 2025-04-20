@@ -74,7 +74,7 @@ export function PinLockButton({
       <Button
         variant={variant}
         size={size}
-        className={className}
+        className={cn("animate-sparkle", className)}
         onClick={openPinSetupDialog}
         title="Set up security"
       >

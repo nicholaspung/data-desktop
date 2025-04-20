@@ -19,6 +19,8 @@
 
 ### IN PROGRESS
 
+- create end to end test to make sure the inputs are all working correctly
+
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
@@ -120,5 +122,17 @@
 - in `index.tsx`, add the daily metrics requiring logging, with a button that navigates to the full view, the calendar route [DONE 2025-04-19]
 - in daily metric logging, cannot log item [DONE 2025-04-19]
 - in add bloodwork, I can't type in the input [DONE 2025-04-19]
+- in experiments dashboard summary, dexa scan summary, and bloodwork summary, make the "create your first experiment" link a button with indication that it sends user to another route [DONE 2025-04-20]
+- in quick metric dashboard summary, when I click "search metrics", it doesn't close when I click out of it [DONE 2025-04-20]
+- bug: cannot close "set up pin" modal when clicking "x" [DONE 2025-04-20]
+- in bloodwork tracker, if no bloodmarkers are found, it should show "create bloodmarker" button [DONE 2025-04-20]
+- in dexa scan, if no dexa scan is found, it should show "create dexa" button [DONE 2025-04-20]
+- in quick metric dashboard summary, if no metrics are found, it should ask the user to make first metric [DONE 2025-04-20]
+- in quick metric logger, if no metrics are found, it should show "create metric" button [DONE 2025-04-20]
+- in daily tracking, if no metrics are found, it should show "create metric" button [DONE 2025-04-20]
+- make sure when everything has no data, it looks decent with "add xxx" everywhere necessary [DONE 2025-04-20]
+- add a "help" button that shows an onboarding modal [DONE 2025-04-20]
+- add an onboarding modal to the application [DONE 2025-04-20]
+- when a user first launched the application, it will show an onboarding modal, then once it's done, the security button will animate for 5 seconds for the user to click if they want to set up a pin [DONE 2025-04-20]
 
 ### GAVE UP

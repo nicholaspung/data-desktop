@@ -8,6 +8,8 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { Toaster } from "./components/ui/sonner";
 import { SecurityProvider } from "./components/security/security-provider";
+import { OnboardingProvider } from "./contexts/onboarding-provider";
+import OnboardingModal from "./components/onboarding/onboarding-modal";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -25,9 +27,12 @@ if (rootElement && !rootElement?.innerHTML) {
     <StrictMode>
       <SecurityProvider>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <div className="min-h-screen bg-background text-foreground">
-            <RouterProvider router={router} />
-          </div>
+          <OnboardingProvider>
+            <div className="min-h-screen bg-background text-foreground">
+              <RouterProvider router={router} />
+              <OnboardingModal />
+            </div>
+          </OnboardingProvider>
           <Toaster richColors />
         </ThemeProvider>
       </SecurityProvider>

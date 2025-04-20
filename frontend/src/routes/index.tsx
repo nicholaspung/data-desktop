@@ -143,7 +143,11 @@ function Home() {
             ))
           : // Data summaries
             summaries.map((summary) => (
-              <Link to={summary.href} search={{ datasetId: summary.id }}>
+              <Link
+                to={summary.href}
+                search={{ datasetId: summary.id }}
+                key={summary.id}
+              >
                 <ReusableCard
                   key={summary.id}
                   showHeader={false}

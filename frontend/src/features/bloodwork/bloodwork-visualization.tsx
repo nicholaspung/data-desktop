@@ -13,6 +13,7 @@ import BloodMarkerCard from "./blood-marker-card";
 import { hasAnyRangeDefined } from "./bloodwork-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { InfoPanel } from "@/components/reusable/info-panel";
+import BloodMarkerManager from "./blood-marker-manager";
 
 // Create the main visualization component
 const BloodworkVisualizations: React.FC = () => {
@@ -313,11 +314,18 @@ const BloodworkVisualizations: React.FC = () => {
       {Object.keys(groupedMarkers).length === 0 ? (
         <Card>
           <CardContent className="flex justify-center items-center h-40">
-            <p className="text-muted-foreground">
-              {bloodMarkers.length === 0
-                ? "No blood markers found. Please add some markers first."
-                : "No markers match your filter criteria."}
-            </p>
+            {bloodMarkers.length === 0 ? (
+              <div className="space-y-2 text-center">
+                <p className="text-muted-foreground">
+                  No blood markers found. Please add some markers first.
+                </p>
+                <BloodMarkerManager />
+              </div>
+            ) : (
+              <p className="text-muted-foreground">
+                No markers match your filter criteria.
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (

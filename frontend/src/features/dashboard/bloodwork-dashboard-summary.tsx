@@ -1,18 +1,20 @@
-// src/components/dashboard/bloodwork-summary.tsx
+// src/features/dashboard/bloodwork-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingDown, TrendingUp, AlertTriangle } from "lucide-react";
+import {
+  TrendingDown,
+  TrendingUp,
+  AlertTriangle,
+  HeartPulse,
+} from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
-import { Link } from "@tanstack/react-router";
-import { Badge } from "@/components/ui/badge";
 import {
   BloodResult,
   BloodworkTest,
   BloodMarker,
 } from "@/store/bloodwork-definitions";
+import ReusableSummary from "@/components/reusable/reusable-summary";
 
 export default function BloodworkDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -137,133 +139,122 @@ export default function BloodworkDashboardSummary() {
   const getStatusColor = (status: "high" | "low" | "optimal") => {
     switch (status) {
       case "high":
-        return "text-red-500 bg-red-100 dark:bg-red-900/30";
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
       case "low":
-        return "text-amber-500 bg-amber-100 dark:bg-amber-900/30";
+        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
       case "optimal":
-        return "text-green-500 bg-green-100 dark:bg-green-900/30";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      default:
+        return "";
     }
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center justify-between">
-          Bloodwork Summary
-          <Link
-            to="/bloodwork"
-            className="text-sm text-primary hover:underline"
-          >
-            View All
-          </Link>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ) : !latestTest ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <p>No bloodwork data available</p>
-            <Link
-              to="/bloodwork"
-              className="text-primary hover:underline text-sm mt-2 inline-block"
-            >
-              Add your first blood test
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Latest Test</p>
-              <div className="flex items-center justify-between">
-                <p className="text-xl font-semibold">
-                  {latestTest ? formatDate(latestTest.date) : "N/A"}
-                </p>
-                <Badge variant={latestTest.fasted ? "success" : "outline"}>
-                  {latestTest.fasted ? "Fasted" : "Non-fasted"}
-                </Badge>
-              </div>
-              {latestTest.lab_name && (
-                <p className="text-sm text-muted-foreground">
-                  {latestTest.lab_name}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <p className="font-medium">Flagged Markers</p>
-              </div>
-
-              {flaggedMarkers.length > 0 ? (
-                <div className="space-y-2 mt-1">
-                  {flaggedMarkers.map((flagged, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        {flagged.status === "high" ? (
-                          <TrendingUp className="h-4 w-4 text-red-500" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-amber-500" />
-                        )}
-                        <span>
-                          {flagged.result.marker?.name || "Unknown Marker"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {flagged.result.value_number}{" "}
-                          {flagged.result.marker?.unit}
-                        </span>
-                        <Badge className={getStatusColor(flagged.status)}>
-                          {flagged.status === "high" ? "HIGH" : "LOW"}
-                        </Badge>
-                      </div>
+    <ReusableSummary
+      title="Bloodwork Summary"
+      linkTo="/bloodwork"
+      loading={loading}
+      titleIcon={<HeartPulse className="h-5 w-5" />}
+      emptyState={
+        !latestTest
+          ? {
+              message: "No bloodwork data available",
+              actionText: "Add your first blood test",
+              actionTo: "/bloodwork",
+            }
+          : undefined
+      }
+      mainSection={
+        latestTest
+          ? {
+              title: "Latest Test",
+              value: formatDate(latestTest.date),
+              subText: latestTest.lab_name,
+              badge: {
+                variant: latestTest.fasted ? "success" : "outline",
+                children: latestTest.fasted ? "Fasted" : "Non-fasted",
+              },
+            }
+          : undefined
+      }
+      sections={[
+        ...(flaggedMarkers.length > 0
+          ? [
+              {
+                title: (
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <span>Flagged Markers</span>
+                  </div>
+                ),
+                items: flaggedMarkers.map((flagged) => ({
+                  label: (
+                    <div className="flex items-center gap-2">
+                      {flagged.status === "high" ? (
+                        <TrendingUp className="h-4 w-4 text-red-500" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-amber-500" />
+                      )}
+                      <span>
+                        {flagged.result.marker?.name || "Unknown Marker"}
+                      </span>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No markers outside optimal range
-                </p>
-              )}
-            </div>
-
-            <div className="pt-3 border-t">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Markers</p>
-                  <p className="font-medium">
-                    {
-                      bloodResults.filter(
-                        (r) => r.blood_test_id === latestTest.id
-                      ).length
-                    }
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Out of Range</p>
-                  <p className="font-medium">{flaggedMarkers.length}</p>
-                </div>
-              </div>
-            </div>
-
-            {latestTest.notes && (
-              <div className="pt-2 border-t">
-                <p className="text-sm text-muted-foreground">Notes</p>
-                <p className="text-sm">{latestTest.notes}</p>
-              </div>
-            )}
+                  ),
+                  value: (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {flagged.result.value_number}{" "}
+                        {flagged.result.marker?.unit}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(flagged.status)}`}
+                      >
+                        {flagged.status === "high" ? "HIGH" : "LOW"}
+                      </span>
+                    </div>
+                  ),
+                })),
+              },
+            ]
+          : [
+              {
+                items: [
+                  {
+                    label: "No markers outside optimal range",
+                    value: "",
+                  },
+                ],
+              },
+            ]),
+        ...(latestTest
+          ? [
+              {
+                columns: 2 as const,
+                className: "pt-3 border-t",
+                items: [
+                  {
+                    label: "Total Markers",
+                    value: bloodResults.filter(
+                      (r) => r.blood_test_id === latestTest.id
+                    ).length,
+                  },
+                  {
+                    label: "Out of Range",
+                    value: flaggedMarkers.length,
+                  },
+                ],
+              },
+            ]
+          : []),
+      ]}
+      footer={
+        latestTest?.notes ? (
+          <div className="pt-2 border-t">
+            <p className="text-sm text-muted-foreground">Notes</p>
+            <p className="text-sm">{latestTest.notes}</p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        ) : undefined
+      }
+    />
   );
 }

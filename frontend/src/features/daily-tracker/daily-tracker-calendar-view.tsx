@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import DailyTrackerCalendarGrid from "./daily-tracker-calendar-grid";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
 import { DailyLog, MetricWithLog } from "@/store/experiment-definitions";
+import AddMetricModal from "./add-metric-modal";
+import AddCategoryDialog from "./add-category-dialog";
 
 interface MetricWithLogWithChange extends MetricWithLog {
   isScheduledForToday: boolean;
@@ -360,6 +362,18 @@ export default function DailyTrackerCalendarView() {
                 </TabsContent>
               </Tabs>
             </div>
+
+            {!metricsData.length && (
+              <div className="space-y-2 text-center flex flex-col items-center">
+                <p className="text-muted-foreground py-8 text-center">
+                  No metrics found. Add your first metric.
+                </p>
+                <div className="flex items-center space-x-2">
+                  <AddMetricModal buttonLabel="Add Metric" />
+                  <AddCategoryDialog />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

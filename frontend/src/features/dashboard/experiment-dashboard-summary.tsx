@@ -1,16 +1,15 @@
-// src/components/dashboard/experiments-summary.tsx
+// src/features/dashboard/experiment-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "@tanstack/react-router";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Beaker, Calendar } from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
 import { Experiment } from "@/store/experiment-definitions";
 import { ProtectedField } from "@/components/security/protected-content";
+import ReusableSummary from "@/components/reusable/reusable-summary";
+import { Link } from "@tanstack/react-router";
+import { Progress } from "@/components/ui/progress";
 
 export default function ExperimentDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -97,118 +96,127 @@ export default function ExperimentDashboardSummary() {
     return diffDays <= 0 ? "Ended" : `${diffDays} days left`;
   };
 
+  const currentExperiment = activeExperiments.find(
+    (exp) => exp.id === selectedExperiment
+  );
+
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Beaker className="h-5 w-5" />
-            Active Experiments
-          </div>
-          <Link
-            to="/experiments"
-            className="text-sm text-primary hover:underline"
-          >
-            View All
-          </Link>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        ) : activeExperiments.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <p>No active experiments</p>
-            <Link
-              to="/experiments"
-              className="text-primary hover:underline text-sm mt-2 inline-block"
-            >
-              Create your first experiment
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Experiment selector */}
-            {activeExperiments.length > 1 && (
-              <div className="flex flex-wrap gap-2">
-                {activeExperiments.map((exp) => (
-                  <Badge
-                    key={exp.id}
-                    variant={
-                      selectedExperiment === exp.id ? "default" : "outline"
-                    }
-                    className="cursor-pointer"
-                    onClick={() => setSelectedExperiment(exp.id)}
-                  >
-                    <ProtectedField>{exp.name}</ProtectedField>
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {selectedExperiment && (
-              <div className="pt-2 space-y-4">
-                {/* Experiment header */}
-                {activeExperiments
-                  .filter((e) => e.id === selectedExperiment)
-                  .map((exp) => (
-                    <div key={exp.id} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <h3 className="font-medium">
-                          <ProtectedField>{exp.name}</ProtectedField>
-                        </h3>
-                        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {getDaysRemaining(exp)}
-                        </Badge>
+    <ReusableSummary
+      title="Active Experiments"
+      titleIcon={<Beaker className="h-5 w-5" />}
+      linkTo="/experiments"
+      loading={loading}
+      emptyState={
+        activeExperiments.length === 0
+          ? {
+              message: "No active experiments",
+              actionText: "Create your first experiment",
+              actionTo: "/experiments",
+            }
+          : undefined
+      }
+      sections={[
+        ...(activeExperiments.length > 1
+          ? [
+              {
+                items: [
+                  {
+                    label: "",
+                    value: (
+                      <div className="flex flex-wrap gap-2">
+                        {activeExperiments.map((exp) => (
+                          <Badge
+                            key={exp.id}
+                            variant={
+                              selectedExperiment === exp.id
+                                ? "default"
+                                : "outline"
+                            }
+                            className="cursor-pointer"
+                            onClick={() => setSelectedExperiment(exp.id)}
+                          >
+                            <ProtectedField>{exp.name}</ProtectedField>
+                          </Badge>
+                        ))}
                       </div>
-
-                      <div className="text-sm flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          <span>Started {formatDate(exp.start_date)}</span>
+                    ),
+                  },
+                ],
+              },
+            ]
+          : []),
+        ...(currentExperiment
+          ? [
+              {
+                className: "pt-2",
+                items: [
+                  {
+                    label: "",
+                    value: (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">
+                            <ProtectedField>
+                              {currentExperiment.name}
+                            </ProtectedField>
+                          </h3>
+                          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {getDaysRemaining(currentExperiment)}
+                          </Badge>
                         </div>
-                        {exp.end_date && (
+
+                        <div className="text-sm flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3.5 w-3.5" />
-                            <span>Ends {formatDate(exp.end_date)}</span>
+                            <span>
+                              Started {formatDate(currentExperiment.start_date)}
+                            </span>
                           </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>Time Progress</span>
-                          <span>{Math.round(exp.progress)}%</span>
+                          {currentExperiment.end_date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span>
+                                Ends {formatDate(currentExperiment.end_date)}
+                              </span>
+                            </div>
+                          )}
                         </div>
-                        <Progress value={exp.progress} className="h-2" />
-                      </div>
 
-                      {exp.description && (
-                        <p className="text-sm text-muted-foreground">
-                          {exp.description}
-                        </p>
-                      )}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-sm">
+                            <span>Time Progress</span>
+                            <span>
+                              {Math.round(currentExperiment.progress)}%
+                            </span>
+                          </div>
+                          <Progress
+                            value={currentExperiment.progress}
+                            className="h-2"
+                          />
+                        </div>
 
-                      {/* Quick action */}
-                      <div className="pt-2">
-                        <Link
-                          to="/calendar"
-                          className="text-sm text-primary hover:underline"
-                        >
-                          Log data for this experiment
-                        </Link>
+                        {currentExperiment.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {currentExperiment.description}
+                          </p>
+                        )}
+
+                        <div className="pt-2">
+                          <Link
+                            to="/calendar"
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Log data for this experiment
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                    ),
+                  },
+                ],
+              },
+            ]
+          : []),
+      ]}
+    />
   );
 }

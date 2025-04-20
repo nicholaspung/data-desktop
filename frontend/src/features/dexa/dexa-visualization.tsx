@@ -16,6 +16,7 @@ import { DEXAScan } from "@/store/dexa-definitions";
 import { cn } from "@/lib/utils";
 import ReusableCard from "@/components/reusable/reusable-card";
 import BoneDensityTab from "./visualization/bone-density-tab";
+import AddDexaScanButton from "./add-dexa-scan-button";
 
 export default function DexaVisualization({
   className = "",
@@ -76,12 +77,13 @@ export default function DexaVisualization({
         cardClassName={className}
         contentClassName="py-10"
         content={
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <h3 className="text-lg font-medium">No Data Available</h3>
             <p className="text-muted-foreground mt-2">
               No DEXA scan data has been added yet. Add your first scan to see
               visualizations.
             </p>
+            <AddDexaScanButton />
           </div>
         }
       />

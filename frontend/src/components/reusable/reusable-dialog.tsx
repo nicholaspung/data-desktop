@@ -107,9 +107,10 @@ export default function ReusableDialog({
               </Button>
             )}
           </div>
-          {description && (
-            <AlertDialogDescription>{description}</AlertDialogDescription>
-          )}
+          {/* Always render AlertDialogDescription for accessibility */}
+          <AlertDialogDescription className={!description ? "sr-only" : ""}>
+            {description || title}
+          </AlertDialogDescription>
         </AlertDialogHeader>
 
         {/* Custom content area */}

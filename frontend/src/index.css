@@ -225,3 +225,23 @@
   background-color: hsl(47.9 95.8% 53.1%);
   color: hsl(26 83.3% 14.1%);
 }
+
+@layer utilities {
+  @keyframes sparkle {
+    0%,
+    100% {
+      /* Use the CSS variable for primary color and apply 0% opacity */
+      /* Assumes HSL format: hsl(var(--primary) / <alpha>) */
+      box-shadow: 0 0 0 0px hsl(var(--primary) / 0%);
+    }
+    50% {
+      /* Adjust color (primary variable), spread (6px), and opacity (50%) */
+      box-shadow: 0 0 0 6px hsl(var(--primary) / 50%);
+    }
+  }
+
+  .animate-sparkle {
+    /* Adjust duration (1.5s) and timing function as needed */
+    animation: sparkle 1.5s infinite ease-in-out;
+  }
+}

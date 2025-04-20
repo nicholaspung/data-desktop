@@ -325,6 +325,8 @@ const QuickMetricLogger = () => {
     }
   };
 
+  const hasNoMetrics = metrics.length ? false : true;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -441,7 +443,18 @@ const QuickMetricLogger = () => {
         </div>
       </div>
 
-      {Object.keys(groupedMetrics).length === 0 ? (
+      {hasNoMetrics && (
+        <div className="space-y-2 text-center flex flex-col items-center">
+          <p className="text-muted-foreground py-8 text-center">
+            No metrics found. Add your first metric.
+          </p>
+          <div className="flex items-center space-x-2">
+            <AddMetricModal buttonLabel="Add Metric" />
+            <AddCategoryDialog />
+          </div>
+        </div>
+      )}
+      {!hasNoMetrics && Object.keys(groupedMetrics).length === 0 ? (
         <ReusableCard
           title="No metrics found"
           content={
