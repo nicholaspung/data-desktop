@@ -24,6 +24,8 @@ const experimentsGuideContent = [
 Experiments allow you to track the effects of specific actions or changes in your routine. An experiment has:
 
 - A **clear goal** (what you want to achieve)
+- A **starting state** (what the current situation is)
+- A **ending state** (what the resulting situation is)
 - A **defined start date** (when you begin)
 - An optional **end date** (when you plan to finish)
 - **Metrics** to measure progress and results
@@ -39,9 +41,10 @@ Use experiments to determine if certain changes in your habits, diet, exercise r
 To create a successful experiment:
 
 1. **Define a specific goal** - Be clear about what you're trying to achieve
-2. **Select appropriate metrics** - Choose metrics that will effectively measure your progress
-3. **Set a reasonable timeframe** - Allow enough time to see meaningful results
-4. **Be consistent** - Track your metrics regularly throughout the experiment
+2. **Define a starting state** - Document your current situation 
+3. **Select appropriate metrics** - Choose metrics that will effectively measure your progress
+4. **Set a reasonable timeframe** - Allow enough time to see meaningful results
+5. **Be consistent** - Track your metrics regularly throughout the experiment
 
 The more precisely you define your experiment, the more valuable your results will be.
     `,
@@ -113,11 +116,16 @@ export default function ExperimentsPage() {
 
           <CompactInfoPanel title="How to Use Experiments" variant="info">
             <ol>
-              <li>1. Create an experiment with a clear goal</li>
+              <li>
+                1. Create an experiment with a clear goal and a starting state
+              </li>
               <li>2. Attach metrics to measure progress</li>
               <li>3. Track your metrics consistently</li>
               <li>4. Review your results in the experiment details</li>
-              <li>5. Change status to "Completed" when finished</li>
+              <li>
+                5. Change status to "Completed" when finished and write down the
+                end state
+              </li>
             </ol>
           </CompactInfoPanel>
 

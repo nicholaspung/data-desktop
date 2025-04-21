@@ -21,6 +21,20 @@ export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       isOptional: true,
     },
     {
+      key: "start_state",
+      type: "text",
+      displayName: "Start State",
+      description: "Start state of the experiment",
+      isOptional: true,
+    },
+    {
+      key: "end_state",
+      type: "text",
+      displayName: "End State",
+      description: "End state of the experiment",
+      isOptional: true,
+    },
+    {
       key: "start_date",
       type: "date",
       displayName: "Start Date",

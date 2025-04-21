@@ -1,5 +1,6 @@
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Button } from "@/components/ui/button";
+import { dateStrToLocalDate } from "@/lib/date-utils";
 import { DailyLog, Metric } from "@/store/experiment-definitions";
 import { format } from "date-fns";
 import { ListTodo } from "lucide-react";
@@ -43,7 +44,7 @@ export default function ExperimentDashboardLogs({
               .map(([dateStr, logs]) => (
                 <div key={dateStr} className="space-y-2">
                   <h3 className="font-medium">
-                    {format(new Date(dateStr), "EEEE, MMMM d, yyyy")}
+                    {format(dateStrToLocalDate(dateStr), "EEEE, MMMM d, yyyy")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                     {logs.map((log) => {

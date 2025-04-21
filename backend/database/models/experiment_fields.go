@@ -22,6 +22,18 @@ func GetExperimentFields() []database.FieldDefinition {
 			Description: "Description of the experiment",
 		},
 		{
+			Key:         "start_state",
+			Type:        database.FieldTypeText,
+			DisplayName: "Start State",
+			Description: "Start state of the experiment",
+		},
+		{
+			Key:         "end_state",
+			Type:        database.FieldTypeText,
+			DisplayName: "End State",
+			Description: "End state of the experiment",
+		},
+		{
 			Key:          "start_date",
 			Type:         database.FieldTypeDate,
 			DisplayName:  "Start Date",

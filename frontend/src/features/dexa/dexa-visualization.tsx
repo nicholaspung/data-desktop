@@ -94,7 +94,7 @@ export default function DexaVisualization({
 
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row lg:flex-col justify-between gap-4 mb-6">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

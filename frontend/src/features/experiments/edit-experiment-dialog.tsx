@@ -32,6 +32,8 @@ export default function EditExperimentDialog({
   // Form state
   const [name, setName] = useState(experiment?.name || "");
   const [description, setDescription] = useState(experiment?.description || "");
+  const [startState, setStartState] = useState(experiment?.start_state || "");
+  const [endState, setEndState] = useState(experiment?.end_state || "");
   const [goal, setGoal] = useState(experiment?.goal || "");
   const [startDate, setStartDate] = useState<Date>(
     experiment?.start_date ? new Date(experiment.start_date) : new Date()
@@ -49,6 +51,8 @@ export default function EditExperimentDialog({
     if (experiment) {
       setName(experiment.name || "");
       setDescription(experiment.description || "");
+      setStartState(experiment.start_state || "");
+      setEndState(experiment.end_state || "");
       setGoal(experiment.goal || "");
       setStartDate(
         experiment.start_date ? new Date(experiment.start_date) : new Date()
@@ -60,11 +64,22 @@ export default function EditExperimentDialog({
     }
   }, [experiment]);
 
-  // Handle form submission
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     // Validate form
     if (!name.trim()) {
       toast.error("Experiment name is required");
+      return;
+    }
+
+    if (!startState.trim()) {
+      toast.error("Experiment start state is required");
+      return;
+    }
+
+    if (experiment.status === "completed" && !endState.trim()) {
+      toast.error("Experiment end state is required");
       return;
     }
 
@@ -86,11 +101,15 @@ export default function EditExperimentDialog({
         ...experiment,
         name: name.trim(),
         description: description.trim(),
+        start_state: startState.trim(),
         goal: goal.trim(),
         start_date: startDate,
         end_date: endDate,
         private: isPrivate,
       };
+      if (experiment.status === "completed") {
+        updatedExperiment.end_state = endState.trim();
+      }
 
       // Update experiment
       const response = await ApiService.updateRecord(
@@ -129,6 +148,7 @@ export default function EditExperimentDialog({
       triggerText="Edit Details"
       title="Edit Experiment Details"
       description="Update the details of this experiment."
+      contentClassName="max-w-3xl max-h-[90vh] overflow-y-auto"
       customContent={
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -152,6 +172,30 @@ export default function EditExperimentDialog({
               rows={3}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="start-state">Start State</Label>
+            <Textarea
+              id="start-state"
+              placeholder="Describe what the start state of the experiment is about..."
+              value={startState}
+              onChange={(e) => setStartState(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          {experiment.status === "completed" && (
+            <div className="space-y-2">
+              <Label htmlFor="end-state">End State</Label>
+              <Textarea
+                id="end-state"
+                placeholder="Describe what the end state of the experiment is about..."
+                value={endState}
+                onChange={(e) => setEndState(e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="goal">Goal</Label>

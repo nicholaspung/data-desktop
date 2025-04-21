@@ -47,6 +47,7 @@ export function PinEntryDialog({
       if (success) {
         setPin("");
         setIsSubmitting(false);
+        setAttempt(0);
 
         setTimeout(() => {
           onOpenChange(false);

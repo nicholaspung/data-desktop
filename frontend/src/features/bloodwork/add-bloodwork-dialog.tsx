@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import BloodMarkerInput from "./blood-marker-input";
 import useLoadData from "@/hooks/useLoadData";
 import { useFieldDefinitions } from "../field-definitions/field-definitions-store";
+import { dateStrToLocalDate } from "@/lib/date-utils";
 
 export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   const { getDatasetFields } = useFieldDefinitions();
@@ -370,33 +371,15 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {existingDates.slice(0, 5).map((dateStr) => {
-                        const [year, monthPlus1, day] = dateStr.split("-");
-
+                        const localDate = dateStrToLocalDate(dateStr);
                         return (
                           <Button
                             key={dateStr}
                             variant="outline"
                             size="sm"
-                            onClick={() =>
-                              setDate(
-                                new Date(
-                                  new Date(
-                                    Number(year),
-                                    Number(monthPlus1) - 1,
-                                    Number(day)
-                                  )
-                                )
-                              )
-                            }
+                            onClick={() => setDate(localDate)}
                           >
-                            {format(
-                              new Date(
-                                Number(year),
-                                Number(monthPlus1) - 1,
-                                Number(day)
-                              ),
-                              "MMM d, yyyy"
-                            )}
+                            {format(localDate, "MMM d, yyyy")}
                           </Button>
                         );
                       })}

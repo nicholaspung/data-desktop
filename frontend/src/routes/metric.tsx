@@ -5,6 +5,8 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { InfoPanel, CompactInfoPanel } from "@/components/reusable/info-panel";
+import AddCategoryDialog from "@/features/daily-tracker/add-category-dialog";
+import AddMetricModal from "@/features/daily-tracker/add-metric-modal";
 import QuickMetricLogger from "@/features/daily-tracker/quick-metric-logger";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, Tag, PlusSquare, List, Grid } from "lucide-react";
@@ -67,7 +69,10 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           description="Log and manage metrics on-demand, regardless of schedule"
           guideContent={metricLoggerGuideContent}
           storageKey="quick-metric-logger"
-        />
+        >
+          <AddMetricModal buttonLabel="Add Metric" />
+          <AddCategoryDialog />
+        </FeatureHeader>
       }
       sidebar={
         <HelpSidebar title="Using Quick Metric Logger">

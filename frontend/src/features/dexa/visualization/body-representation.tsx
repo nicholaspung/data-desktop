@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BodyPart } from "../dexa";
 import { DEXAScan } from "@/store/dexa-definitions";
@@ -13,8 +12,6 @@ export default function BodyRepresentation({
   title?: string;
   className?: string;
 }) {
-  const [hoveredPart, setHoveredPart] = useState<string | null>(null);
-
   // Function to format percentages properly
   const formatPercentage = (value: number | undefined) => {
     if (value === undefined) return "N/A";
@@ -265,22 +262,20 @@ export default function BodyRepresentation({
             {bodyParts.map((part) => (
               <ReusableTooltip
                 key={part.id}
-                delayDuration={0}
+                delayDuration={1}
                 renderTrigger={
                   <circle
                     cx={part.x}
                     cy={part.y}
-                    r={hoveredPart === part.id ? 10 : 8}
+                    r={8}
                     fill={part.dataPoints[0].color || "#8884d8"}
-                    opacity={hoveredPart === part.id ? 0.9 : 0.7}
+                    opacity={0.7}
                     stroke="#fff"
                     strokeWidth="2"
                     style={{
                       cursor: "pointer",
                       transition: "r 0.2s, opacity 0.2s",
                     }}
-                    onMouseEnter={() => setHoveredPart(part.id)}
-                    onMouseLeave={() => setHoveredPart(null)}
                   />
                 }
                 renderContent={
@@ -305,7 +300,7 @@ export default function BodyRepresentation({
                     </div>
                   </div>
                 }
-                contentClassName="p-0"
+                contentClassName="p-0 z-2"
                 side="right"
                 align="center"
               />

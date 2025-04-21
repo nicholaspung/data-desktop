@@ -35,6 +35,7 @@ export default function AddExperimentForm({
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [startState, setStartState] = useState("");
   const [goal, setGoal] = useState("");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -56,6 +57,11 @@ export default function AddExperimentForm({
       return;
     }
 
+    if (!startState.trim()) {
+      toast.error("Experiment start state is required");
+      return;
+    }
+
     if (!goal.trim()) {
       toast.error("Experiment goal is required");
       return;
@@ -73,6 +79,7 @@ export default function AddExperimentForm({
       const experimentData: Partial<Experiment> = {
         name: name.trim(),
         description: description.trim(),
+        start_state: startState.trim(),
         goal: goal.trim(),
         start_date: startDate,
         end_date: endDate,
@@ -111,6 +118,7 @@ export default function AddExperimentForm({
   const resetForm = () => {
     setName("");
     setDescription("");
+    setStartState("");
     setGoal("");
     setStartDate(new Date());
     setEndDate(undefined);
@@ -138,6 +146,17 @@ export default function AddExperimentForm({
           placeholder="Describe what this experiment is about..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="start-state">Start State</Label>
+        <Textarea
+          id="start-state"
+          placeholder="Describe what the starting state of the experiment is..."
+          value={startState}
+          onChange={(e) => setStartState(e.target.value)}
           rows={3}
         />
       </div>

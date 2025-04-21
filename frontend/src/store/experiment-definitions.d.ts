@@ -9,6 +9,8 @@ export interface Experiment {
   goal: string;
   status: "active" | "paused" | "completed";
   private: boolean;
+  start_state: string;
+  end_state: string;
 
   // Metadata fields
   id: string;

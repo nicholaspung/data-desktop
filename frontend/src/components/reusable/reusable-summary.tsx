@@ -106,7 +106,7 @@ export default function ReusableSummary({
         </CardTitle>
       </CardHeader>
       <Separator />
-      <CardContent>
+      <CardContent className="pt-4">
         {loading ? (
           <div className="space-y-4">
             <Skeleton className="h-4 w-full" />

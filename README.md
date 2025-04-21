@@ -1,6 +1,25 @@
 # Data Desktop
 
-- Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet.
+This application helps track any sort of data that I want to track. The current features implemented for tracking are the following:
+
+- DEXA Scan information
+- Bloodwork information
+- Metrics that I want to be tracked
+- Experiments tied to metrics that I want to be tracked
+
+The idea is to create a desktop application where all your data is stored locally, not encrypted, so that the user is able to aggregate any data they want to track.
+
+Application is built for my own personal use, but may be useful to others if they want to follow the same process used by the application. Here are some considerations when using the application:
+
+- DEXA Scan information is using data from BodySpec scans
+- Bloodwork information requires you to input your blood markers before anything. This is because multiple lab providers have different bloodmarker names for the same blood marker. You have to decide which one you want to use and then track it accordingly
+- For metrics and experiments, it's been tested to use true/false values. The other inputs have not been tested yet
+- We recommend you add a PIN if you want to track data that should be private if you have the application opened, but leave the computer for a while, and you don't want people to look at it
+  - Although visually, the data seems to be protected, if someone accessed your database, they will be able to view it
+
+This application will be optimized as I find it a pain to do certain actions. Thanks for checking out the application!
+
+- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet.
 
 ## Project management
 
@@ -10,16 +29,21 @@
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
-- add time tracking, and also tie it with a metric if possible
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
 - in quick-metric-logger, improve the button layout for hide from calendar, edit/delete
 - in bloodwork add inputs, add virtualization
+- create end to end test to make sure the inputs are all working correctly
+- see why the line chart doesn't show the x data for the one right next to the last x data description
+- in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
+- when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
 
 ### IN PROGRESS
 
-- create end to end test to make sure the inputs are all working correctly
+- add time tracking, and also tie it with a metric if possible
+- add "gratitude jorunaling", "daily questions", "affirmation talking" and "creativity journal" as a metric, and format the metric UI for these things
+- for "daily questions", added a list somewhere locally
 
 ### DONE
 
@@ -134,5 +158,16 @@
 - add a "help" button that shows an onboarding modal [DONE 2025-04-20]
 - add an onboarding modal to the application [DONE 2025-04-20]
 - when a user first launched the application, it will show an onboarding modal, then once it's done, the security button will animate for 5 seconds for the user to click if they want to set up a pin [DONE 2025-04-20]
+- in `quick-metrics-logger-dashboard-summary`, I cannot log a metric [DONE 2025-04-20]
+- need to add `pt-4` in `reusable-summary.tsx` after `separator` [DONE 2025-04-20]
+- add a "today" button for `quick-metrics-logger` [DONE 2025-04-20]
+- adjust the `quick-metrics-logger` header to be next to the guide button [DONE 2025-04-20]
+- in `experiment-detail`, when I click "edit-status" and change the status, it re-renders the modal [DONE 2025-04-20]
+- in `body-anatomy-tab`, when I hover over a dot, it doesn't show a popover [DONE 2025-04-20]
+- in `experiment-detail`, the progress change is showing the wrong data for progress (actually turns out when I toggle a metric on the front page, it's not attaching the experiment to it, so in actuality, it seems to be working fine) [DONE 2025-04-20]
+- in `dexa-visualizations`, if the tabs are too long, it goes into the "guide" area [DONE 2025-04-20]
+- when an experiment changed status to completed, it should allow the user to write down the end result of the experiment (also need to add a field to the data model) [DONE 2025-04-20]
+- when an experiment is created, make the description instructions say "please write down the starting metrics of the experiment you are creating" [DONE 2025-04-20]
+- in the experiment instructions/guide, make it explicit that when a user creates an experiment, they should add the starting "data" for them to try and improve, so that when they complete the experiment, they can write down the end result of it [DONE 2025-04-20]
 
 ### GAVE UP

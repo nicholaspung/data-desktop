@@ -41,3 +41,8 @@ export const formatDate = (date: Date | string): string => {
 
   return format(dateObj, "MMM d, yyyy");
 };
+
+export const dateStrToLocalDate = (dateStr: string): Date => {
+  const [year, monthPlus1, day] = dateStr.split("-");
+  return new Date(new Date(Number(year), Number(monthPlus1) - 1, Number(day)));
+};

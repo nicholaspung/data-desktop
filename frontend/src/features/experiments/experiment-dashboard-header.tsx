@@ -83,16 +83,19 @@ export default function ExperimentDashboardHeader({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <h3 className="font-medium">Start State</h3>
+              <p className="text-muted-foreground">{experiment.start_state}</p>
+            </div>
+            <div>
+              <h3 className="font-medium">End State</h3>
+              <p className="text-muted-foreground">
+                {experiment.end_state || "Not completed"}
+              </p>
+            </div>
+            <div>
               <h3 className="font-medium">Goal</h3>
               <p className="text-muted-foreground">
                 {experiment.goal || "No goal specified"}
-              </p>
-            </div>
-
-            <div className="md:col-span-2">
-              <h3 className="font-medium">Description</h3>
-              <p className="text-muted-foreground">
-                {experiment.description || "No description provided"}
               </p>
             </div>
           </div>

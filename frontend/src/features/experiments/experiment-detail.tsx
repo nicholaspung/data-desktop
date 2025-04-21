@@ -6,14 +6,13 @@ import { useStore } from "@tanstack/react-store";
 import dataStore, { deleteEntry, updateEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
-import { Edit, CheckCircle, XCircle, Loader2, ChevronLeft } from "lucide-react";
+import { Loader2, ChevronLeft } from "lucide-react";
 import ExperimentDashboard from "./experiment-dashboard";
-import ReusableSelect from "@/components/reusable/reusable-select";
-import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Experiment } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
 import EditExperimentDialog from "./edit-experiment-dialog";
+import ChangeStatusDialog from "./change-status-dialog";
 
 const ExperimentDetail = ({
   experimentId,
@@ -29,9 +28,6 @@ const ExperimentDetail = ({
   // State
   const [experiment, setExperiment] = useState<Experiment | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [newStatus, setNewStatus] = useState<"active" | "completed" | "paused">(
-    "active"
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -53,9 +49,6 @@ const ExperimentDetail = ({
       );
       if (experimentData) {
         setExperiment(experimentData);
-        setNewStatus(
-          experimentData.status as "active" | "completed" | "paused"
-        );
       }
     } catch (error) {
       console.error("Error loading experiment:", error);
@@ -88,7 +81,10 @@ const ExperimentDetail = ({
   };
 
   // Handle status change
-  const handleStatusChange = async () => {
+  const handleStatusChange = async (
+    newStatus: "active" | "completed" | "paused",
+    endState?: string
+  ) => {
     setIsSubmitting(true);
 
     try {
@@ -96,6 +92,9 @@ const ExperimentDetail = ({
         ...experiment,
         status: newStatus,
       };
+      if (newStatus === "completed" && endState) {
+        updatedExperiment.end_state = endState;
+      }
 
       await ApiService.updateRecord(experimentId, updatedExperiment);
       updateEntry(experimentId, updatedExperiment, "experiments");
@@ -158,60 +157,12 @@ const ExperimentDetail = ({
             experiment={experiment}
             onSuccess={loadExperiment}
           />
-          <ReusableDialog
-            open={statusDialogOpen}
+          <ChangeStatusDialog
+            experiment={experiment}
+            isOpen={statusDialogOpen}
             onOpenChange={setStatusDialogOpen}
-            variant="outline"
-            triggerIcon={<Edit className="h-4 w-4 mr-2" />}
-            triggerText="Change Status"
-            title="Change Experiment Status"
-            description="Update the status of this experiment."
-            customContent={
-              <div className="py-4">
-                <ReusableSelect
-                  options={[
-                    { id: "active", label: "Active" },
-                    { id: "paused", label: "Paused" },
-                    { id: "completed", label: "Completed" },
-                  ]}
-                  value={newStatus}
-                  onChange={(value) =>
-                    setNewStatus(value as "active" | "completed" | "paused")
-                  }
-                  title={"status"}
-                  renderItem={(option) => (
-                    <div className="flex items-center">
-                      {option.id === "active" && (
-                        <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      )}
-                      {option.id === "paused" && (
-                        <XCircle className="h-4 w-4 mr-2 text-yellow-600" />
-                      )}
-                      {option.id === "completed" && (
-                        <CheckCircle className="h-4 w-4 mr-2 text-blue-600" />
-                      )}
-                      {option.label}
-                    </div>
-                  )}
-                />
-                <div className="mt-2 text-sm text-muted-foreground">
-                  {newStatus === "active" &&
-                    "Mark this experiment as active and in progress."}
-                  {newStatus === "paused" &&
-                    "Temporarily pause this experiment."}
-                  {newStatus === "completed" &&
-                    "Mark this experiment as completed."}
-                </div>
-              </div>
-            }
-            onCancel={() => setStatusDialogOpen(false)}
-            onConfirm={handleStatusChange}
-            footerActionDisabled={
-              isSubmitting || newStatus === experiment.status
-            }
-            loading={isSubmitting}
-            footerActionLoadingText="Updating..."
-            confirmText="Update Status"
+            onStatusChange={handleStatusChange}
+            isSubmitting={isSubmitting}
           />
 
           <ConfirmDeleteDialog

@@ -54,7 +54,9 @@ export default function ReusableDialog({
   title?: string;
   description?: string;
   customContent?: ReactNode;
-  onConfirm?: () => void;
+  onConfirm?:
+    | (() => void)
+    | ((e: React.MouseEvent<HTMLButtonElement>) => Promise<void>);
   onCancel?: () => void;
   confirmText?: string;
   cancelText?: string;

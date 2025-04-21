@@ -329,15 +329,6 @@ const QuickMetricLogger = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Quick Metric Logger</h1>
-
-        <div className="flex items-center space-x-2">
-          <AddMetricModal buttonLabel="Add Metric" />
-          <AddCategoryDialog />
-        </div>
-      </div>
-
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative w-full md:w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -364,6 +355,18 @@ const QuickMetricLogger = () => {
             }}
             className="w-40"
           />
+
+          <Button
+            onClick={() => {
+              const newDate = new Date();
+              newDate.setHours(0, 0, 0, 0);
+              setSelectedDate(newDate);
+            }}
+            size="sm"
+            variant="outline"
+          >
+            Today
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

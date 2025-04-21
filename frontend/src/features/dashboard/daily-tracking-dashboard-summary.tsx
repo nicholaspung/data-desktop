@@ -36,7 +36,30 @@ export default function DailyTrackingDashboardSummary() {
   // Get data from store
   const allMetrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
+  const experimentMetrics =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
+  const experiments = useStore(dataStore, (state) => state.experiments) || [];
   const today = startOfDay(new Date());
+
+  // Helper function to find the experiment ID for a given metric
+  const findExperimentForMetric = (metricId: string): string | undefined => {
+    // Find all experiment metrics for this metric
+    const metricExperiments = experimentMetrics.filter(
+      (em) => em.metric_id === metricId
+    );
+
+    // Get the active experiments
+    const activeExperiments = experiments.filter(
+      (exp) => exp.status === "active"
+    );
+
+    // Find the first active experiment that includes this metric
+    const activeExperimentMetric = metricExperiments.find((em) =>
+      activeExperiments.some((exp) => exp.id === em.experiment_id)
+    );
+
+    return activeExperimentMetric?.experiment_id;
+  };
 
   // Load metrics and today's logs
   useEffect(() => {
@@ -96,6 +119,7 @@ export default function DailyTrackingDashboardSummary() {
 
     try {
       const existingLog = todayLogs[metric.id];
+      const experimentId = findExperimentForMetric(metric.id);
 
       if (existingLog) {
         // Toggle existing log
@@ -111,6 +135,7 @@ export default function DailyTrackingDashboardSummary() {
         const response = await ApiService.updateRecord(existingLog.id, {
           ...existingLog,
           value: JSON.stringify(newValue),
+          experiment_id: experimentId, // Attach experiment ID
         });
 
         if (response) {
@@ -129,6 +154,7 @@ export default function DailyTrackingDashboardSummary() {
         const newLog = {
           date: today,
           metric_id: metric.id,
+          experiment_id: experimentId, // Attach experiment ID
           value: "true", // JSON.stringify(true)
           notes: "",
         };
@@ -161,6 +187,7 @@ export default function DailyTrackingDashboardSummary() {
 
     try {
       const existingLog = todayLogs[currentMetric.id];
+      const experimentId = findExperimentForMetric(currentMetric.id);
 
       if (existingLog) {
         // Update existing log
@@ -168,6 +195,7 @@ export default function DailyTrackingDashboardSummary() {
           ...existingLog,
           value: JSON.stringify(metricValue),
           notes: metricNotes,
+          experiment_id: experimentId, // Attach experiment ID
         });
 
         if (response) {
@@ -186,6 +214,7 @@ export default function DailyTrackingDashboardSummary() {
         const newLog = {
           date: today,
           metric_id: currentMetric.id,
+          experiment_id: experimentId, // Attach experiment ID
           value: JSON.stringify(metricValue),
           notes: metricNotes,
         };
@@ -300,7 +329,6 @@ export default function DailyTrackingDashboardSummary() {
                         <Checkbox
                           checked={isMetricCompleted(metric)}
                           disabled={loading[metric.id]}
-                          className="pointer-events-none"
                           onClick={() => toggleMetric(metric)}
                         />
                       ) : (
