@@ -14,6 +14,7 @@ import {
   CalendarCheck,
   Beaker,
   ClipboardCheck,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,16 +37,6 @@ const sidebarItems: SidebarItem[] = [
     href: "/",
   },
   {
-    title: "DEXA Scans",
-    icon: <PieChart className="h-5 w-5" />,
-    href: "/dexa",
-  },
-  {
-    title: "Bloodwork",
-    icon: <HeartPulse className="h-5 w-5" />,
-    href: "/bloodwork",
-  },
-  {
     title: "Daily Tracker",
     icon: <CalendarCheck className="h-5 w-5" />,
     href: "/calendar",
@@ -59,6 +50,21 @@ const sidebarItems: SidebarItem[] = [
     title: "Experiments",
     icon: <Beaker className="h-5 w-5" />,
     href: "/experiments",
+  },
+  {
+    title: "Journaling",
+    icon: <BookOpen className="h-5 w-5" />,
+    href: "/journaling",
+  },
+  {
+    title: "DEXA Scans",
+    icon: <PieChart className="h-5 w-5" />,
+    href: "/dexa",
+  },
+  {
+    title: "Bloodwork",
+    icon: <HeartPulse className="h-5 w-5" />,
+    href: "/bloodwork",
   },
   {
     title: "Datasets",

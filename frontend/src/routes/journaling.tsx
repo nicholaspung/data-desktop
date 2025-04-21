@@ -1,0 +1,93 @@
+// src/routes/journaling.tsx
+import { createFileRoute } from "@tanstack/react-router";
+import {
+  FeatureHeader,
+  FeatureLayout,
+  HelpSidebar,
+} from "@/components/layout/feature-layout";
+import { CompactInfoPanel } from "@/components/reusable/info-panel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookHeart, Lightbulb, HandHeart, Presentation } from "lucide-react";
+import GratitudeJournalView from "@/features/journaling/gratitude-journal-view";
+import CreativityJournalView from "@/features/journaling/creativity-journal-view";
+import QuestionJournalView from "@/features/journaling/question-journal-view";
+import AffirmationView from "@/features/journaling/affirmation-view";
+
+export const Route = createFileRoute("/journaling")({
+  component: JournalingPage,
+});
+
+function JournalingPage() {
+  return (
+    <FeatureLayout
+      header={
+        <FeatureHeader
+          title="Journaling"
+          description="Record your thoughts, ideas, gratitude, and affirmations"
+          storageKey="journaling-page"
+        />
+      }
+      sidebar={
+        <HelpSidebar title="About Journaling">
+          <CompactInfoPanel title="Gratitude Journal" variant="info">
+            Record things you are grateful for each day to cultivate a positive
+            mindset and increase overall happiness.
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Creativity Journal" variant="tip">
+            Capture your creative ideas, inspirations, and thoughts to nurture
+            your creativity and track your insights.
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Question Journal" variant="info">
+            Explore important questions and record your reflections to deepen
+            your understanding and personal growth.
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Daily Affirmations" variant="tip">
+            Create positive statements to reinforce your goals, beliefs, and
+            self-image.
+          </CompactInfoPanel>
+        </HelpSidebar>
+      }
+      sidebarPosition="right"
+    >
+      <Tabs defaultValue="gratitude" className="w-full">
+        <TabsList className="mb-4 grid grid-cols-4 w-full">
+          <TabsTrigger value="gratitude" className="flex gap-2 items-center">
+            <HandHeart className="h-4 w-4" />
+            <span className="hidden sm:inline">Gratitude</span>
+          </TabsTrigger>
+          <TabsTrigger value="creativity" className="flex gap-2 items-center">
+            <Lightbulb className="h-4 w-4" />
+            <span className="hidden sm:inline">Creativity</span>
+          </TabsTrigger>
+          <TabsTrigger value="questions" className="flex gap-2 items-center">
+            <Presentation className="h-4 w-4" />
+            <span className="hidden sm:inline">Questions</span>
+          </TabsTrigger>
+          <TabsTrigger value="affirmations" className="flex gap-2 items-center">
+            <BookHeart className="h-4 w-4" />
+            <span className="hidden sm:inline">Affirmations</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="gratitude">
+          <GratitudeJournalView />
+        </TabsContent>
+
+        <TabsContent value="creativity">
+          <CreativityJournalView />
+        </TabsContent>
+
+        <TabsContent value="questions">
+          <QuestionJournalView />
+        </TabsContent>
+
+        <TabsContent value="affirmations">
+          <AffirmationView />
+        </TabsContent>
+      </Tabs>
+    </FeatureLayout>
+  );
+}
