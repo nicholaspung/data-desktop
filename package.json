@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Desktop application for data, including import/export, analysis, and graphs.",
   "scripts": {
-    "release": "node ./scripts/release.js",
+    "release": "node ./release.js",
     "generate-field-definitions": "node ./scripts/field-sync-generator-2.js dexa bloodwork markers results experiment metric daily_log metric_category experiment_metric",
     "transform": "node ./scripts/csv-transformer.js",
     "transform:comma": "node ./scripts/csv-transformer.js --comma",
