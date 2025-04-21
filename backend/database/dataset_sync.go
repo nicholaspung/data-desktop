@@ -119,6 +119,50 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Experiment Metrics dataset: %w", err)
 	}
 
+	err = CreateOrUpdateDataset(
+		DatasetIDGratitudeJournal,
+		"Gratitude Journal",
+		"Record things you are grateful for",
+		DatasetTypeGratitudeJournal,
+		GetGratitudeJournalFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Gratitude Journal dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDAffirmation,
+		"Affirmation",
+		"What affirmation do you want to repeat today?",
+		DatasetTypeAffirmation,
+		GetAffirmationFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Affirmation dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDCreativityJournal,
+		"Creativity Journal",
+		"Creativity journal for daily thoughts",
+		DatasetTypeCreativityJournal,
+		GetCreativityJournalFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Affirmation dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDQuestionJournal,
+		"Question Journal",
+		"Journal for daily questions",
+		DatasetTypeQuestionJournal,
+		GetQuestionJournalFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Affirmation dataset: %w", err)
+	}
+
 	fmt.Println("Dataset sync completed successfully")
 	return nil
 }

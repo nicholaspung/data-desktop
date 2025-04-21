@@ -95,6 +95,14 @@ export async function parseCSV(
                       case "date":
                         processedRow[field.key] = new Date();
                         break;
+                      case "markdown":
+                        // Treat markdown same as text
+                        if (typeof value !== "string") {
+                          processedRow[field.key] = String(value);
+                        } else {
+                          processedRow[field.key] = value;
+                        }
+                        break;
                       case "text":
                       default:
                         processedRow[field.key] = "";

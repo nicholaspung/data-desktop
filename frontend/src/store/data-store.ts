@@ -15,6 +15,12 @@ import {
   Metric,
   MetricCategory,
 } from "./experiment-definitions";
+import {
+  Affirmation,
+  CreativityJournalEntry,
+  GratitudeJournalEntry,
+  QuestionJournalEntry,
+} from "./journaling-definitions";
 
 // Define the types for the data store
 export type DataStoreName =
@@ -26,7 +32,11 @@ export type DataStoreName =
   | "metrics"
   | "daily_logs"
   | "metric_categories"
-  | "experiment_metrics";
+  | "experiment_metrics"
+  | "gratitude_journal"
+  | "question_journal"
+  | "creativity_journal"
+  | "affirmation";
 
 type DataStoreType = {
   dexa: DEXAScan[];
@@ -38,6 +48,10 @@ type DataStoreType = {
   daily_logs: DailyLog[];
   metric_categories: MetricCategory[];
   experiment_metrics: ExperimentMetric[];
+  gratitude_journal: GratitudeJournalEntry[];
+  question_journal: QuestionJournalEntry[];
+  creativity_journal: CreativityJournalEntry[];
+  affirmation: Affirmation[];
 };
 
 // Initial state for the data store
@@ -46,12 +60,15 @@ const initialState: DataStoreType = {
   bloodwork: [],
   blood_markers: [],
   blood_results: [],
-  // Initialize experiment-related data arrays
   experiments: [],
   metrics: [],
   daily_logs: [],
   metric_categories: [],
   experiment_metrics: [],
+  gratitude_journal: [],
+  question_journal: [],
+  creativity_journal: [],
+  affirmation: [],
 };
 
 // Create the data store

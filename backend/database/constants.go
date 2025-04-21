@@ -3,16 +3,17 @@ package database
 
 // Dataset ID constants - ensure these match with frontend expectations
 const (
-	// Existing datasets
-	DatasetIDDEXA        = "dexa"
-	DatasetIDBloodwork   = "bloodwork"
-	DatasetIDBloodMarker = "blood_markers"
-	DatasetIDBloodResult = "blood_results"
-
-	// New experiment-related datasets
-	DatasetIDExperiment       = "experiments"
-	DatasetIDMetric           = "metrics"
-	DatasetIDDailyLog         = "daily_logs"
-	DatasetIDMetricCategory   = "metric_categories"
-	DatasetIDExperimentMetric = "experiment_metrics"
+	DatasetIDDEXA              = "dexa"
+	DatasetIDBloodwork         = "bloodwork"
+	DatasetIDBloodMarker       = "blood_markers"
+	DatasetIDBloodResult       = "blood_results"
+	DatasetIDExperiment        = "experiments"
+	DatasetIDMetric            = "metrics"
+	DatasetIDDailyLog          = "daily_logs"
+	DatasetIDMetricCategory    = "metric_categories"
+	DatasetIDExperimentMetric  = "experiment_metrics"
+	DatasetIDGratitudeJournal  = "gratitude_journal"
+	DatasetIDAffirmation       = "affirmation"
+	DatasetIDCreativityJournal = "creativity_journal"
+	DatasetIDQuestionJournal   = "question_journal"
 )

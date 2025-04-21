@@ -21,6 +21,7 @@ export default function DataFormContent({
     text: FieldDefinition[];
     selectSingle: FieldDefinition[];
     selectMultiple: FieldDefinition[];
+    markdown: FieldDefinition[];
   };
   hideSubmitButton: boolean;
   isSubmitting: boolean;
@@ -50,11 +51,13 @@ export default function DataFormContent({
       {/* Numeric and text fields in a grid */}
       {(fieldsByType.numeric.length > 0 ||
         fieldsByType.text.length > 0 ||
+        fieldsByType.markdown.length > 0 ||
         fieldsByType.selectSingle.length > 0 ||
         fieldsByType.selectMultiple.length > 0) && (
         <div className="grid gap-4 md:grid-cols-2">
           {fieldsByType.numeric.map(renderField)}
           {fieldsByType.text.map(renderField)}
+          {fieldsByType.markdown.map(renderField)}
           {fieldsByType.selectSingle.map(renderField)}
           {fieldsByType.selectMultiple.map(renderField)}
         </div>

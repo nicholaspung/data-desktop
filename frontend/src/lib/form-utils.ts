@@ -11,6 +11,7 @@ export const hasNonEmptyValues = (
 
     switch (field.type) {
       case "text":
+      case "markdown":
         if (value && value.trim() !== "") return true;
         break;
       case "number":
@@ -67,6 +68,7 @@ export const createFreshDefaultValues = (fields: FieldDefinition[]) => {
         freshDefaults[field.key] = 0;
         break;
       case "text":
+      case "markdown":
         freshDefaults[field.key] = "";
         break;
       case "select-single":

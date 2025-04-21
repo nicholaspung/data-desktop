@@ -96,6 +96,9 @@ export function exportToCSV(
         ) {
           // Handle percentages stored as decimals
           processedRow[key] = (value * 100).toFixed(2);
+        } else if (field.type === "markdown") {
+          // For markdown, strip markdown syntax for CSV export
+          processedRow[key] = value ? value.replace(/[#*_`[\]()]/g, "") : "";
         } else {
           processedRow[key] =
             value !== undefined && value !== null ? value : "";

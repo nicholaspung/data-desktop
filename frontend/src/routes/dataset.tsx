@@ -40,6 +40,10 @@ function RouteComponent() {
   const metricFields = getDatasetFields("metrics");
   const dailyLogFields = getDatasetFields("daily_logs");
   const categoryFields = getDatasetFields("metric_categories");
+  const gratitudeJournalFields = getDatasetFields("gratitude_journal");
+  const questionJournalFields = getDatasetFields("question_journal");
+  const creativityJournalFields = getDatasetFields("creativity_journal");
+  const affirmationFields = getDatasetFields("affirmation");
 
   const datasets: DatasetConfig[] = [
     {
@@ -113,6 +117,38 @@ function RouteComponent() {
       fields: categoryFields,
       icon: <TagIcon className="h-4 w-4" />,
       addLabel: "Add Category",
+    },
+    {
+      id: "gratitude_journal",
+      title: "Gratitude Journal",
+      description: "Record things you are grateful for.",
+      fields: gratitudeJournalFields,
+      icon: <TagIcon className="h-4 w-4" />,
+      addLabel: "Add Gratitude Journal Entry",
+    },
+    {
+      id: "creativity_journal",
+      title: "Creativity Journal",
+      description: "Record your creative thoughts.",
+      fields: creativityJournalFields,
+      icon: <TagIcon className="h-4 w-4" />,
+      addLabel: "Add Creativity Journal Entry",
+    },
+    {
+      id: "question_journal",
+      title: "Question Journal",
+      description: "Record your answers to questions.",
+      fields: questionJournalFields,
+      icon: <TagIcon className="h-4 w-4" />,
+      addLabel: "Add Question Journal Entry",
+    },
+    {
+      id: "affirmation",
+      title: "Affirmation",
+      description: "Record your daily affirmations.",
+      fields: affirmationFields,
+      icon: <TagIcon className="h-4 w-4" />,
+      addLabel: "Add Affirmation Entry",
     },
   ];
 

@@ -31,6 +31,7 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
       }
       return value.join(", ");
     case "text":
+    case "markdown":
     default:
       return value;
   }

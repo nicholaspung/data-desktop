@@ -35,6 +35,7 @@ import SavedDataBadge from "../reusable/saved-data-badge";
 import DataFormContent from "./data-form-content";
 import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
+import { FormMarkdownField } from "./markdown-field";
 
 export default function DataForm({
   datasetId,
@@ -301,6 +302,7 @@ export default function DataForm({
                 .max(100, "Must be less than 100");
           break;
         case "text":
+        case "markdown":
           schemaObj[field.key] = isOptional
             ? z.string().optional()
             : z.string().min(1, `${field.displayName} is required`);
@@ -420,6 +422,7 @@ export default function DataForm({
       (field) => field.type === "number" || field.type === "percentage"
     ),
     text: fields.filter((field) => field.type === "text"),
+    markdown: fields.filter((field) => field.type === "markdown"),
     selectSingle: fields.filter((field) => field.type === "select-single"),
     selectMultiple: fields.filter((field) => field.type === "select-multiple"),
   };
@@ -688,6 +691,14 @@ export default function DataForm({
           />
         );
 
+      case "markdown":
+        return (
+          <FormMarkdownField
+            key={field.key}
+            field={field}
+            control={form.control}
+          />
+        );
       default:
         return null;
     }

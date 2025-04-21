@@ -9,16 +9,17 @@ type FieldDefinitionFunc func() []FieldDefinition
 
 // These variables will be populated by the models package
 var (
-	// Existing fields
-	GetDEXAFields        FieldDefinitionFunc
-	GetBloodworkFields   FieldDefinitionFunc
-	GetBloodMarkerFields FieldDefinitionFunc
-	GetBloodResultFields FieldDefinitionFunc
-
-	// New experiment-related fields
-	GetExperimentFields       FieldDefinitionFunc
-	GetMetricFields           FieldDefinitionFunc
-	GetDailyLogFields         FieldDefinitionFunc
-	GetMetricCategoryFields   FieldDefinitionFunc
-	GetExperimentMetricFields FieldDefinitionFunc
+	GetDEXAFields              FieldDefinitionFunc
+	GetBloodworkFields         FieldDefinitionFunc
+	GetBloodMarkerFields       FieldDefinitionFunc
+	GetBloodResultFields       FieldDefinitionFunc
+	GetExperimentFields        FieldDefinitionFunc
+	GetMetricFields            FieldDefinitionFunc
+	GetDailyLogFields          FieldDefinitionFunc
+	GetMetricCategoryFields    FieldDefinitionFunc
+	GetExperimentMetricFields  FieldDefinitionFunc
+	GetGratitudeJournalFields  FieldDefinitionFunc
+	GetAffirmationFields       FieldDefinitionFunc
+	GetCreativityJournalFields FieldDefinitionFunc
+	GetQuestionJournalFields   FieldDefinitionFunc
 )

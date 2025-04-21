@@ -16,6 +16,12 @@ import {
   METRIC_CATEGORY_FIELD_DEFINITIONS,
   EXPERIMENT_METRIC_FIELD_DEFINITIONS,
 } from "./experiment-definitions";
+import {
+  AFFIRMATION_FIELD_DEFINITIONS,
+  CREATIVITY_JOURNAL_FIELD_DEFINITIONS,
+  GRATITUDE_JOURNAL_FIELD_DEFINITIONS,
+  QUESTION_JOURNAL_FIELD_DEFINITIONS,
+} from "./journaling-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
@@ -24,12 +30,15 @@ const initialState: FieldDefinitionsState = {
     bloodwork: BLOODWORK_FIELD_DEFINITIONS,
     blood_markers: BLOOD_MARKERS_FIELD_DEFINITIONS,
     blood_results: BLOOD_RESULTS_FIELD_DEFINITIONS,
-    // Add experiment-related datasets
     experiments: EXPERIMENT_FIELD_DEFINITIONS,
     metrics: METRIC_FIELD_DEFINITIONS,
     daily_logs: DAILY_LOG_FIELD_DEFINITIONS,
     metric_categories: METRIC_CATEGORY_FIELD_DEFINITIONS,
     experiment_metrics: EXPERIMENT_METRIC_FIELD_DEFINITIONS,
+    gratitude_journal: GRATITUDE_JOURNAL_FIELD_DEFINITIONS,
+    question_journal: QUESTION_JOURNAL_FIELD_DEFINITIONS,
+    creativity_journal: CREATIVITY_JOURNAL_FIELD_DEFINITIONS,
+    affirmation: AFFIRMATION_FIELD_DEFINITIONS,
   },
 };
 

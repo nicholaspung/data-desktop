@@ -10,12 +10,15 @@ const initialState = {
   bloodwork: false,
   blood_markers: false,
   blood_results: false,
-  // Add experiment-related loading states
   experiments: false,
   metrics: false,
   daily_logs: false,
   metric_categories: false,
   experiment_metrics: false,
+  gratitude_journal: false,
+  question_journal: false,
+  creativity_journal: false,
+  affirmation: false,
 };
 
 // Create the loading store

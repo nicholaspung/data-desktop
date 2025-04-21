@@ -240,7 +240,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         return (
           <div
             className="truncate"
-            style={{ maxWidth: "100%" }}
+            style={{ maxWidth: "100%", whiteSpace: "pre-wrap" }}
             title={
               typeof value === "string" || typeof value === "number"
                 ? String(value)
@@ -490,7 +490,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                           <td
                             key={cell.id}
                             className={cn(
-                              "p-2 align-middle",
+                              "p-2 align-middle whitespace-pre-wrap",
                               isFirstColumn &&
                                 "sticky left-0 z-10 bg-background border-r",
                               // Add editable-cell class if in edit mode and not in select column

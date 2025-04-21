@@ -12,16 +12,17 @@ import (
 // to make the field definitions accessible outside this package.
 
 func init() {
-	// Register existing field definition functions with the database package
 	database.GetDEXAFields = GetDEXAFields
 	database.GetBloodworkFields = GetBloodworkFields
 	database.GetBloodMarkerFields = GetBloodMarkerFields
 	database.GetBloodResultFields = GetBloodResultFields
-
-	// Register new experiment-related field definition functions
 	database.GetExperimentFields = GetExperimentFields
 	database.GetMetricFields = GetMetricFields
 	database.GetDailyLogFields = GetDailyLogFields
 	database.GetMetricCategoryFields = GetMetricCategoryFields
 	database.GetExperimentMetricFields = GetExperimentMetricFields
+	database.GetGratitudeJournalFields = GetGratitudeJournalFields
+	database.GetAffirmationFields = GetAffirmationFields
+	database.GetCreativityJournalFields = GetCreativityJournalFields
+	database.GetQuestionJournalFields = GetQuestionJournalFields
 }

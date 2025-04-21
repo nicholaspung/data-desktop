@@ -15,7 +15,8 @@ export type FieldType =
   | "percentage"
   | "text"
   | "select-single"
-  | "select-multiple";
+  | "select-multiple"
+  | "markdown";
 
 export interface SelectOption {
   id: string;
