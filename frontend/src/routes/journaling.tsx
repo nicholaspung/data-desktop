@@ -12,6 +12,8 @@ import GratitudeJournalView from "@/features/journaling/gratitude-journal-view";
 import CreativityJournalView from "@/features/journaling/creativity-journal-view";
 import QuestionJournalView from "@/features/journaling/question-journal-view";
 import AffirmationView from "@/features/journaling/affirmation-view";
+import JournalingMetricsSync from "@/features/journaling/journaling-metrics-sync";
+import CreateDefaultMetricsButton from "@/features/daily-tracker/create-default-metrics-form";
 
 export const Route = createFileRoute("/journaling")({
   component: JournalingPage,
@@ -25,7 +27,9 @@ function JournalingPage() {
           title="Journaling"
           description="Record your thoughts, ideas, gratitude, and affirmations"
           storageKey="journaling-page"
-        />
+        >
+          <CreateDefaultMetricsButton />
+        </FeatureHeader>
       }
       sidebar={
         <HelpSidebar title="About Journaling">
@@ -52,6 +56,8 @@ function JournalingPage() {
       }
       sidebarPosition="right"
     >
+      <JournalingMetricsSync />
+
       <Tabs defaultValue="gratitude" className="w-full">
         <TabsList className="mb-4 grid grid-cols-4 w-full">
           <TabsTrigger value="gratitude" className="flex gap-2 items-center">
