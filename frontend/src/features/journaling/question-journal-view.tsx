@@ -1,65 +1,54 @@
-// src/features/journaling/question-journal-view.tsx
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import dataStore from "@/store/data-store";
-import { useStore } from "@tanstack/react-store";
-import { QuestionJournalEntry } from "@/store/journaling-definitions";
-import { formatDate } from "@/lib/date-utils";
+// src/features/journaling/question-journal-page.tsx
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Presentation, History, MessageSquare } from "lucide-react";
+import QuestionOfTheDay from "./question-of-the-day";
+import SameQuestionAnswers from "./same-question-answers";
+import QuestionJournalHistory from "./question-journal-history";
+import { InfoPanel } from "@/components/reusable/info-panel";
 
 export default function QuestionJournalView() {
-  const entries = useStore(
-    dataStore,
-    (state) => state.question_journal as QuestionJournalEntry[]
-  );
-
-  const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  const [activeTab, setActiveTab] = useState("today");
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Question Journal</h2>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Entry
-        </Button>
-      </div>
+      <h2 className="text-2xl font-bold">Question Journaling</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sortedEntries.length > 0 ? (
-          sortedEntries.map((entry) => (
-            <Card key={entry.id} className="overflow-hidden">
-              <CardHeader className="bg-primary/10 pb-2">
-                <CardTitle className="text-md flex justify-between">
-                  <span>{formatDate(entry.date)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(
-                      entry.createdAt || entry.date
-                    ).toLocaleTimeString()}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="prose dark:prose-invert">{entry.entry}</div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="col-span-full">
-            <CardContent className="py-6 text-center">
-              <p className="text-muted-foreground">
-                No question journal entries yet.
-              </p>
-              <Button variant="outline" className="mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Entry
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <InfoPanel title="About Question Journaling" defaultExpanded={true}>
+        Question journaling is a powerful tool for self-reflection and personal
+        growth. By answering thought-provoking questions, you can gain insights
+        into your thoughts, feelings, and experiences. This practice can help
+        you develop a deeper understanding of yourself and your life journey.
+      </InfoPanel>
+
+      <Tabs defaultValue="today" onValueChange={setActiveTab} value={activeTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="today" className="flex gap-2 items-center">
+            <Presentation className="h-4 w-4" />
+            <span>Today's Question</span>
+          </TabsTrigger>
+          <TabsTrigger value="same" className="flex gap-2 items-center">
+            <MessageSquare className="h-4 w-4" />
+            <span>Same Question Answers</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex gap-2 items-center">
+            <History className="h-4 w-4" />
+            <span>History</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="today" className="mt-6">
+          <QuestionOfTheDay setActiveTab={setActiveTab} />
+        </TabsContent>
+
+        <TabsContent value="same" className="mt-6">
+          <SameQuestionAnswers />
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <QuestionJournalHistory />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

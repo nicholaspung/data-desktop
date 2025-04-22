@@ -43,7 +43,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add time tracking, and also tie it with a metric if possible
 - add "gratitude jorunaling", "daily questions", "affirmation talking" and "creativity journal" as a metric, and format the metric UI for these things
-- for "daily questions", added a list somewhere locally
+- in quick-metric-logger, add a way to create pre-populated metrics that are tied to the journaling feature
+- for gratitude journaling, tie a metric (pre-created) for 3 total entries, every new entry for that date increments the metric by 1
+- for affirmation, add a button that says "completed affirmation for the day" and tie it to a metric (pre-created)
+- for creativity journal, when the user completes the entry, tie it to a metric (pre-created) and complete it (don't allow deleting or editing)
+- for daily questions, tie a metric (pre-created) to be completed when a user enters an entry
 
 ### DONE
 
@@ -169,5 +173,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - when an experiment changed status to completed, it should allow the user to write down the end result of the experiment (also need to add a field to the data model) [DONE 2025-04-20]
 - when an experiment is created, make the description instructions say "please write down the starting metrics of the experiment you are creating" [DONE 2025-04-20]
 - in the experiment instructions/guide, make it explicit that when a user creates an experiment, they should add the starting "data" for them to try and improve, so that when they complete the experiment, they can write down the end result of it [DONE 2025-04-20]
+- for gratitude journaling, allow user to log 3 gratitude journals, but if the user want to log more, they can [DONE 2025-04-22]
+- for gratitude journaling, have 2 views - an input view for today for 3 entries and it only shows the entries for today, and a history view (don't allow editing or editing) [DONE 2025-04-22]
+- for affirmation, allow a user to view the last created affirmation, and when the user updates it, it creates a new entry [DONE 2025-04-22]
+- for creativity journal, have 2 views - an input view for today and it only shows the entry for today, and a history view [DONE 2025-04-22]
+- for "daily questions", added a list somewhere locally [DONE 2025-04-22]
+- for daily questions, have 3 views, an input view for today and it only shows the input for today, a "view history of the question answered for today", and  a view all entries [DONE 2025-04-22]
 
 ### GAVE UP

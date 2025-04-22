@@ -1,65 +1,22 @@
-// src/features/journaling/creativity-journal-view.tsx
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+// src/features/journaling/gratitude-journal-view.tsx
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
-import { CreativityJournalEntry } from "@/store/journaling-definitions";
-import { formatDate } from "@/lib/date-utils";
+import JournalTabs from "./journal-tabs";
+import CreativityJournalForm from "./creativity-journal-form";
 
-export default function CreativityJournalView() {
-  const entries = useStore(
-    dataStore,
-    (state) => state.creativity_journal as CreativityJournalEntry[]
-  );
-
-  const sortedEntries = [...entries].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+export default function GratitudeJournalView() {
+  const entries = useStore(dataStore, (state) => state.creativity_journal);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Creativity Journal</h2>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Entry
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sortedEntries.length > 0 ? (
-          sortedEntries.map((entry) => (
-            <Card key={entry.id} className="overflow-hidden">
-              <CardHeader className="bg-primary/10 pb-2">
-                <CardTitle className="text-md flex justify-between">
-                  <span>{formatDate(entry.date)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(
-                      entry.createdAt || entry.date
-                    ).toLocaleTimeString()}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4">
-                <div className="prose dark:prose-invert">{entry.entry}</div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <Card className="col-span-full">
-            <CardContent className="py-6 text-center">
-              <p className="text-muted-foreground">
-                No creativity journal entries yet.
-              </p>
-              <Button variant="outline" className="mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Your First Entry
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </div>
+    <JournalTabs
+      title="Creativity Journal"
+      entries={entries}
+      contentKey="entry"
+      addEntryForm={<CreativityJournalForm />}
+      emptyStateText="No creativity journal entries yet."
+      addButtonText="Add Creativity Journal Entry"
+      infoTitle="Creativity Journal"
+      infoText="This is a creativity journal where you can add and view your entries. Expressing creativity can help improve your mood and overall well-being."
+    />
   );
 }
