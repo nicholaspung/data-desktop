@@ -22,4 +22,6 @@ var (
 	GetAffirmationFields       FieldDefinitionFunc
 	GetCreativityJournalFields FieldDefinitionFunc
 	GetQuestionJournalFields   FieldDefinitionFunc
+	GetTimeEntriesFields       FieldDefinitionFunc
+	GetTimeCategoriesFields    FieldDefinitionFunc
 )

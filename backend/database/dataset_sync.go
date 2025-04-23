@@ -123,7 +123,7 @@ func SyncDatasets() error {
 		DatasetIDGratitudeJournal,
 		"Gratitude Journal",
 		"Record things you are grateful for",
-		DatasetTypeGratitudeJournal,
+		DatasetTypeJournaling,
 		GetGratitudeJournalFields(),
 	)
 	if err != nil {
@@ -134,7 +134,7 @@ func SyncDatasets() error {
 		DatasetIDAffirmation,
 		"Affirmation",
 		"What affirmation do you want to repeat today?",
-		DatasetTypeAffirmation,
+		DatasetTypeJournaling,
 		GetAffirmationFields(),
 	)
 	if err != nil {
@@ -145,7 +145,7 @@ func SyncDatasets() error {
 		DatasetIDCreativityJournal,
 		"Creativity Journal",
 		"Creativity journal for daily thoughts",
-		DatasetTypeCreativityJournal,
+		DatasetTypeJournaling,
 		GetCreativityJournalFields(),
 	)
 	if err != nil {
@@ -156,11 +156,34 @@ func SyncDatasets() error {
 		DatasetIDQuestionJournal,
 		"Question Journal",
 		"Journal for daily questions",
-		DatasetTypeQuestionJournal,
+		DatasetTypeJournaling,
 		GetQuestionJournalFields(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to sync Affirmation dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDTimeEntries,
+		"Time Entries",
+		"Track time spent on various activities",
+		DatasetTypeTimeTracking,
+		GetTimeEntriesFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Time Entries dataset: %w", err)
+	}
+
+	// Sync Time Categories dataset
+	err = CreateOrUpdateDataset(
+		DatasetIDTimeCategories,
+		"Time Categories",
+		"Categories for time tracking activities",
+		DatasetTypeTimeTracking,
+		GetTimeCategoriesFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Time Categories dataset: %w", err)
 	}
 
 	fmt.Println("Dataset sync completed successfully")

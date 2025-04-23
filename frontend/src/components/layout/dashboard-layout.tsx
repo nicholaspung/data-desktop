@@ -15,6 +15,7 @@ import {
   Beaker,
   ClipboardCheck,
   BookOpen,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,11 @@ const sidebarItems: SidebarItem[] = [
     title: "Home",
     icon: <Home className="h-5 w-5" />,
     href: "/",
+  },
+  {
+    title: "Time Tracker",
+    icon: <Clock className="h-5 w-5" />,
+    href: "/time-tracker",
   },
   {
     title: "Daily Tracker",

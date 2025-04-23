@@ -6,8 +6,10 @@ import {
   Activity,
   Beaker,
   ClipboardList,
+  Clock,
   FileDiff,
   TagIcon,
+  Tags,
 } from "lucide-react";
 
 interface DatasetSearchParams {
@@ -44,6 +46,8 @@ function RouteComponent() {
   const questionJournalFields = getDatasetFields("question_journal");
   const creativityJournalFields = getDatasetFields("creativity_journal");
   const affirmationFields = getDatasetFields("affirmation");
+  const timeEntryFields = getDatasetFields("time_entries");
+  const timeCategoryFields = getDatasetFields("time_categories");
 
   const datasets: DatasetConfig[] = [
     {
@@ -149,6 +153,22 @@ function RouteComponent() {
       fields: affirmationFields,
       icon: <TagIcon className="h-4 w-4" />,
       addLabel: "Add Affirmation Entry",
+    },
+    {
+      id: "time_entries",
+      title: "Time Entries",
+      description: "Track time spent on various activities",
+      fields: timeEntryFields,
+      icon: <Clock className="h-4 w-4" />,
+      addLabel: "Add Time Entry",
+    },
+    {
+      id: "time_categories",
+      title: "Time Categories",
+      description: "Categories for time tracking activities",
+      fields: timeCategoryFields,
+      icon: <Tags className="h-4 w-4" />,
+      addLabel: "Add Category",
     },
   ];
 

@@ -12,15 +12,13 @@ import (
 type DatasetType string
 
 const (
-	DatasetTypeDEXA              DatasetType = "dexa"
-	DatasetTypeBloodwork         DatasetType = "bloodwork"
-	DatasetTypeExperiment        DatasetType = "experiment"
-	DatasetTypeMetric            DatasetType = "metric"
-	DatasetTypeDailyLog          DatasetType = "daily_log"
-	DatasetTypeGratitudeJournal  DatasetType = "gratitude_journal"
-	DatasetTypeAffirmation       DatasetType = "affirmation"
-	DatasetTypeCreativityJournal DatasetType = "creativity_journal"
-	DatasetTypeQuestionJournal   DatasetType = "question_journal"
+	DatasetTypeDEXA         DatasetType = "dexa"
+	DatasetTypeBloodwork    DatasetType = "bloodwork"
+	DatasetTypeExperiment   DatasetType = "experiment"
+	DatasetTypeMetric       DatasetType = "metric"
+	DatasetTypeDailyLog     DatasetType = "daily_log"
+	DatasetTypeJournaling   DatasetType = "journaling"
+	DatasetTypeTimeTracking DatasetType = "time_tracking"
 )
 
 // FieldType represents the type of a field

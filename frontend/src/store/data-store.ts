@@ -21,6 +21,7 @@ import {
   GratitudeJournalEntry,
   QuestionJournalEntry,
 } from "./journaling-definitions";
+import { TimeCategory, TimeEntry } from "./time-tracking-definitions";
 
 // Define the types for the data store
 export type DataStoreName =
@@ -36,7 +37,9 @@ export type DataStoreName =
   | "gratitude_journal"
   | "question_journal"
   | "creativity_journal"
-  | "affirmation";
+  | "affirmation"
+  | "time_entries"
+  | "time_categories";
 
 type DataStoreType = {
   dexa: DEXAScan[];
@@ -52,6 +55,8 @@ type DataStoreType = {
   question_journal: QuestionJournalEntry[];
   creativity_journal: CreativityJournalEntry[];
   affirmation: Affirmation[];
+  time_entries: TimeEntry[];
+  time_categories: TimeCategory[];
 };
 
 // Initial state for the data store
@@ -69,6 +74,8 @@ const initialState: DataStoreType = {
   question_journal: [],
   creativity_journal: [],
   affirmation: [],
+  time_entries: [],
+  time_categories: [],
 };
 
 // Create the data store

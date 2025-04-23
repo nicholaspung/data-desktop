@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as TimeTrackerImport } from './routes/time-tracker'
 import { Route as MetricImport } from './routes/metric'
 import { Route as JournalingImport } from './routes/journaling'
 import { Route as ExperimentsImport } from './routes/experiments'
@@ -22,6 +23,12 @@ import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const TimeTrackerRoute = TimeTrackerImport.update({
+  id: '/time-tracker',
+  path: '/time-tracker',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const MetricRoute = MetricImport.update({
   id: '/metric',
@@ -144,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricImport
       parentRoute: typeof rootRoute
     }
+    '/time-tracker': {
+      id: '/time-tracker'
+      path: '/time-tracker'
+      fullPath: '/time-tracker'
+      preLoaderRoute: typeof TimeTrackerImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -159,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/time-tracker': typeof TimeTrackerRoute
 }
 
 export interface FileRoutesByTo {
@@ -171,6 +186,7 @@ export interface FileRoutesByTo {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/time-tracker': typeof TimeTrackerRoute
 }
 
 export interface FileRoutesById {
@@ -184,6 +200,7 @@ export interface FileRoutesById {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/time-tracker': typeof TimeTrackerRoute
 }
 
 export interface FileRouteTypes {
@@ -198,6 +215,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/time-tracker'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -209,6 +227,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/time-tracker'
   id:
     | '__root__'
     | '/'
@@ -220,6 +239,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/time-tracker'
   fileRoutesById: FileRoutesById
 }
 
@@ -233,6 +253,7 @@ export interface RootRouteChildren {
   ExperimentsRoute: typeof ExperimentsRoute
   JournalingRoute: typeof JournalingRoute
   MetricRoute: typeof MetricRoute
+  TimeTrackerRoute: typeof TimeTrackerRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -245,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExperimentsRoute: ExperimentsRoute,
   JournalingRoute: JournalingRoute,
   MetricRoute: MetricRoute,
+  TimeTrackerRoute: TimeTrackerRoute,
 }
 
 export const routeTree = rootRoute
@@ -265,7 +287,8 @@ export const routeTree = rootRoute
         "/dexa",
         "/experiments",
         "/journaling",
-        "/metric"
+        "/metric",
+        "/time-tracker"
       ]
     },
     "/": {
@@ -294,6 +317,9 @@ export const routeTree = rootRoute
     },
     "/metric": {
       "filePath": "metric.tsx"
+    },
+    "/time-tracker": {
+      "filePath": "time-tracker.tsx"
     }
   }
 }

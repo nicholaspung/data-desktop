@@ -22,6 +22,10 @@ import {
   GRATITUDE_JOURNAL_FIELD_DEFINITIONS,
   QUESTION_JOURNAL_FIELD_DEFINITIONS,
 } from "./journaling-definitions";
+import {
+  TIME_CATEGORIES_FIELD_DEFINITIONS,
+  TIME_ENTRIES_FIELD_DEFINITIONS,
+} from "./time-tracking-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
@@ -39,6 +43,8 @@ const initialState: FieldDefinitionsState = {
     question_journal: QUESTION_JOURNAL_FIELD_DEFINITIONS,
     creativity_journal: CREATIVITY_JOURNAL_FIELD_DEFINITIONS,
     affirmation: AFFIRMATION_FIELD_DEFINITIONS,
+    time_entries: TIME_ENTRIES_FIELD_DEFINITIONS,
+    time_categories: TIME_CATEGORIES_FIELD_DEFINITIONS,
   },
 };
 

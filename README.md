@@ -46,6 +46,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add time tracking, and also tie it with a metric if possible
 - adjust how the metric looks like for value number
+- in daily tracker calendar view, it shows the dates in the wrong weekday slot
 
 ### DONE
 

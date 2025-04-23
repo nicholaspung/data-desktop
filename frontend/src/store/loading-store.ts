@@ -19,6 +19,8 @@ const initialState = {
   question_journal: false,
   creativity_journal: false,
   affirmation: false,
+  time_entries: false,
+  time_categories: false,
 };
 
 // Create the loading store

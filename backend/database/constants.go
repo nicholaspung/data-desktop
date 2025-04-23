@@ -16,4 +16,6 @@ const (
 	DatasetIDAffirmation       = "affirmation"
 	DatasetIDCreativityJournal = "creativity_journal"
 	DatasetIDQuestionJournal   = "question_journal"
+	DatasetIDTimeEntries       = "time_entries"
+	DatasetIDTimeCategories    = "time_categories"
 )
