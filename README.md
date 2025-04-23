@@ -38,16 +38,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - see why the line chart doesn't show the x data for the one right next to the last x data description
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
 - when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
+- make the dashnoard able to be in like "specific card heights and card widths" or just hardcode it in
+- add a way to enable/disable certain features from showing
+- add a way to select the database you want to use
 
 ### IN PROGRESS
 
 - add time tracking, and also tie it with a metric if possible
-- add "gratitude jorunaling", "daily questions", "affirmation talking" and "creativity journal" as a metric, and format the metric UI for these things
-- in quick-metric-logger, add a way to create pre-populated metrics that are tied to the journaling feature
-- for gratitude journaling, tie a metric (pre-created) for 3 total entries, every new entry for that date increments the metric by 1
-- for affirmation, add a button that says "completed affirmation for the day" and tie it to a metric (pre-created)
-- for creativity journal, when the user completes the entry, tie it to a metric (pre-created) and complete it (don't allow deleting or editing)
-- for daily questions, tie a metric (pre-created) to be completed when a user enters an entry
+- adjust how the metric looks like for value number
 
 ### DONE
 
@@ -179,5 +177,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - for creativity journal, have 2 views - an input view for today and it only shows the entry for today, and a history view [DONE 2025-04-22]
 - for "daily questions", added a list somewhere locally [DONE 2025-04-22]
 - for daily questions, have 3 views, an input view for today and it only shows the input for today, a "view history of the question answered for today", and  a view all entries [DONE 2025-04-22]
+- add "gratitude jorunaling", "daily questions", "affirmation talking" and "creativity journal" as a metric, and format the metric UI for these things [DONE 2025-04-22]
+- in quick-metric-logger, add a way to create pre-populated metrics that are tied to the journaling feature [DONE 2025-04-22]
+- for gratitude journaling, tie a metric (pre-created) for 3 total entries, every new entry for that date increments the metric by 1 [DONE 2025-04-22]
+- for affirmation, add a button that says "completed affirmation for the day" and tie it to a metric (pre-created) [DONE 2025-04-22]
+- for creativity journal, when the user completes the entry, tie it to a metric (pre-created) and complete it (don't allow deleting or editing) [DONE 2025-04-22]
+- for daily questions, tie a metric (pre-created) to be completed when a user enters an entry [DONE 2025-04-22]
 
 ### GAVE UP

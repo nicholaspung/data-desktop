@@ -1,4 +1,4 @@
-// src/features/journaling/gratitude-journal-view.tsx
+// src/features/journaling/gratitude-journal-form.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,12 @@ import { GratitudeJournalEntry } from "@/store/journaling-definitions";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { useJournalingMetricsSync } from "@/hooks/useJournalingMetricsSync";
 
 export default function GratitudeJournalForm() {
   const [entry, setEntry] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { syncJournalingMetrics } = useJournalingMetricsSync();
 
   const entries = useStore(
     dataStore,
@@ -58,6 +60,11 @@ export default function GratitudeJournalForm() {
         addEntry(result, "gratitude_journal");
         toast.success("Gratitude journal entry added!");
         setEntry("");
+
+        // Sync metrics after adding a new entry
+        setTimeout(() => {
+          syncJournalingMetrics();
+        }, 500);
       }
     } catch (error) {
       console.error("Error adding gratitude entry:", error);
@@ -104,7 +111,14 @@ export default function GratitudeJournalForm() {
         <div className="lg:w-1/3">
           <Card className="h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-md">Today's Entries</CardTitle>
+              <CardTitle className="text-md">
+                Today's Entries ({todaysEntries.length})
+                {todaysEntries.length >= 3 && (
+                  <span className="ml-2 text-sm text-green-500 font-normal">
+                    ✓ Goal reached!
+                  </span>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {todaysEntries.length > 0 ? (
@@ -131,7 +145,7 @@ export default function GratitudeJournalForm() {
                 <div className="text-center py-6 text-muted-foreground">
                   <p>No entries for today yet.</p>
                   <p className="mt-2 text-sm">
-                    What are you grateful for today?
+                    What are you grateful for today? (Goal: 3 entries)
                   </p>
                 </div>
               )}

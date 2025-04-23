@@ -17,11 +17,12 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     schedule_frequency: "daily",
   },
   {
-    name: "Completed 3 Gratitude Entries",
-    description: "Logged at least three things you're grateful for today",
-    type: "boolean",
-    unit: "",
-    default_value: "false",
+    name: "Gratitude Journal Entries",
+    description: "Number of gratitude entries recorded today",
+    type: "number", // Numeric metric
+    unit: "entries",
+    default_value: "0",
+    category_id: "journaling", // You'll need to ensure this category exists
     active: true,
     private: false,
     schedule_frequency: "daily",

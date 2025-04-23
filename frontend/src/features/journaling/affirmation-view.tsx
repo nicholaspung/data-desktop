@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PenSquare, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { Affirmation } from "@/store/journaling-definitions";
@@ -13,6 +13,7 @@ import { InfoPanel } from "@/components/reusable/info-panel";
 
 export default function AffirmationView() {
   const [isEditing, setIsEditing] = useState(false);
+  const [hasTodaysAffirmation, setHasTodaysAffirmation] = useState(false);
 
   const entries = useStore(
     dataStore,
@@ -26,6 +27,25 @@ export default function AffirmationView() {
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )[0]
       : null;
+
+  // Check if we already have an affirmation for today
+  useEffect(() => {
+    if (entries.length === 0) {
+      setHasTodaysAffirmation(false);
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayEntry = entries.find((entry) => {
+      const entryDate = new Date(entry.date);
+      entryDate.setHours(0, 0, 0, 0);
+      return entryDate.getTime() === today.getTime();
+    });
+
+    setHasTodaysAffirmation(!!todayEntry);
+  }, [entries]);
 
   // Handle logging the affirmation practice
   const handleLogPractice = async () => {
@@ -43,9 +63,9 @@ export default function AffirmationView() {
 
   // Display explanation info card
   const InfoCard = () => (
-    <InfoPanel title="About Gratitude Journaling" defaultExpanded={true}>
+    <InfoPanel title="About Daily Affirmations" defaultExpanded={true}>
       Create an affirmation to reflect on daily, then track each time you
-      practice it.
+      practice it. You can create or update one affirmation per day.
     </InfoPanel>
   );
 
@@ -59,6 +79,7 @@ export default function AffirmationView() {
           size="sm"
           className="h-8 w-8 p-0"
           onClick={() => setIsEditing(true)}
+          title={"Edit"}
         >
           <PenSquare className="h-4 w-4" />
           <span className="sr-only">Edit</span>
@@ -69,16 +90,23 @@ export default function AffirmationView() {
           <ReactMarkdown>{latestAffirmation?.affirmation || ""}</ReactMarkdown>
         </div>
 
-        <div className="mt-6 border-t pt-4">
-          <Button
-            className="w-full"
-            variant="default"
-            onClick={handleLogPractice}
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Log Today's Practice
-          </Button>
-        </div>
+        {!hasTodaysAffirmation ? (
+          <div className="mt-6 border-t pt-4">
+            <Button
+              className="w-full"
+              variant="default"
+              onClick={handleLogPractice}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Log Today's Practice
+            </Button>
+          </div>
+        ) : (
+          <div className="border-t pt-2 mt-2 text-center text-sm text-muted-foreground">
+            You've already completed today's affirmation. You can update again
+            tomorrow.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -94,6 +122,7 @@ export default function AffirmationView() {
         <AffirmationForm
           latestAffirmation={latestAffirmation}
           setIsEditing={setIsEditing}
+          hasTodaysAffirmation={hasTodaysAffirmation}
         />
       ) : (
         <CurrentAffirmation />

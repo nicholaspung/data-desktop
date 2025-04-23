@@ -64,11 +64,9 @@ export default function DailyTrackingDashboardSummary() {
   // Load metrics and today's logs
   useEffect(() => {
     // Get active metrics that are scheduled for today
-    const activeMetrics = allMetrics
-      .filter(
-        (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
-      )
-      .slice(0, 4); // Just get first 4 for dashboard
+    const activeMetrics = allMetrics.filter(
+      (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
+    );
 
     setMetrics(activeMetrics);
 

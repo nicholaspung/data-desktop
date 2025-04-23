@@ -1,5 +1,5 @@
 // src/hooks/useJournalingMetricsSync.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -66,7 +66,7 @@ export function useJournalingMetricsSync() {
   }, []);
 
   // Function to sync journaling activities with metrics
-  const syncJournalingMetrics = async () => {
+  const syncJournalingMetrics = useCallback(async () => {
     if (isLoading || metrics.length === 0) return;
 
     try {
@@ -114,15 +114,52 @@ export function useJournalingMetricsSync() {
         const existingLog = todayLogs.find(
           (log) => log.metric_id === metric.id
         );
+
+        const metricName = metric.name?.toLowerCase();
+
+        // Handle different metrics based on their name
+        if (metricName === "gratitude journal entries") {
+          // This is our numeric gratitude counter
+          const gratitudeCount = todayGratitudeEntries.length;
+          const isCompleted = gratitudeCount >= 3; // Consider 3+ entries as "completed"
+
+          // For numeric metrics, store the actual count rather than just boolean
+          if (existingLog) {
+            const currentValue = parseInt(existingLog.value) || 0;
+            // Only update if the count has changed
+            if (currentValue !== gratitudeCount) {
+              const response = await ApiService.updateRecord(existingLog.id, {
+                ...existingLog,
+                value: JSON.stringify(gratitudeCount),
+                // Add note about completion status
+                notes: `${gratitudeCount} entries today. ${isCompleted ? "Goal reached!" : "Goal: 3 entries"}`,
+              });
+              if (response) {
+                updateEntry(existingLog.id, response, "daily_logs");
+              }
+            }
+          } else if (gratitudeCount > 0) {
+            // Create new log with the current count
+            const response = await ApiService.addRecord("daily_logs", {
+              date: today,
+              metric_id: metric.id,
+              value: JSON.stringify(gratitudeCount),
+              notes: `${gratitudeCount} entries today. ${isCompleted ? "Goal reached!" : "Goal: 3 entries"}`,
+            });
+            if (response) {
+              addEntry(response, "daily_logs");
+            }
+          }
+          continue; // Skip the rest of the loop for this metric
+        }
+
+        // Handle boolean metrics as before
         let completed = false;
 
         // Determine if the metric is completed based on journaling activity
-        switch (metric.name?.toLowerCase()) {
+        switch (metricName) {
           case "completed daily question":
             completed = !!todayQuestionEntry;
-            break;
-          case "completed 3 gratitude entries":
-            completed = todayGratitudeEntries.length >= 3;
             break;
           case "completed creativity journal":
             completed = !!todayCreativityEntry;
@@ -130,9 +167,13 @@ export function useJournalingMetricsSync() {
           case "completed daily affirmation":
             completed = !!todayAffirmation;
             break;
+          case "completed 3 gratitude entries":
+            // For backward compatibility, keep the boolean version too
+            completed = todayGratitudeEntries.length >= 3;
+            break;
         }
 
-        // Update or create log as needed
+        // Update or create log as needed for boolean metrics
         if (existingLog) {
           // Only update if the completion status changed
           const currentValue = JSON.parse(existingLog.value);
@@ -161,7 +202,15 @@ export function useJournalingMetricsSync() {
     } catch (error) {
       console.error("Error syncing journaling metrics:", error);
     }
-  };
+  }, [
+    isLoading,
+    metrics,
+    gratitudeEntries,
+    questionEntries,
+    creativityEntries,
+    affirmations,
+    dailyLogs,
+  ]);
 
   // Return the sync function and loading state
   return { syncJournalingMetrics, isLoading };
