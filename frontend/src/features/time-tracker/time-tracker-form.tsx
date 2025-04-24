@@ -3,13 +3,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Play, Save } from "lucide-react";
+import { Play, Save, Clock, TimerOff, PlusCircle } from "lucide-react";
 import { TimeCategory } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes, formatDuration } from "@/lib/time-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { Switch } from "@/components/ui/switch";
 import ReusableCard from "@/components/reusable/reusable-card";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -67,10 +69,17 @@ export default function TimeTrackerForm({
 
   // Start the timer
   const handleStartTimer = () => {
-    if (!description) return;
+    const now = new Date();
 
     setIsTimerActive(true);
-    setTimerStartTime(new Date());
+    setTimerStartTime(now);
+
+    const formattedNow = new Date(
+      now.getTime() - now.getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16);
+    setStartTime(formattedNow);
   };
 
   // Save the active timer
@@ -104,7 +113,7 @@ export default function TimeTrackerForm({
 
   // Handle manual entry save
   const handleManualSave = async () => {
-    if (!description || !startTime || !endTime) return;
+    if (!startTime || !endTime) return;
 
     try {
       setIsSaving(true);
@@ -155,11 +164,37 @@ export default function TimeTrackerForm({
   // Render form with tabs when timer is not active
   return (
     <ReusableCard
+      showHeader={false}
+      cardClassName={cn(
+        "border-2 shadow-lg transition-all duration-300",
+        isTimerActive
+          ? "border-green-500 dark:border-green-600 shadow-green-100 dark:shadow-green-900/20"
+          : "border-blue-400 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/10 hover:border-blue-500"
+      )}
       content={
         <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-row justify-end">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="add-state" className="cursor-pointer">
+          <div className="flex flex-row justify-between pt-2">
+            <h3 className="text-xl font-bold flex items-center">
+              {isTimerActive ? (
+                <span className="text-green-600 dark:text-green-500 flex items-center">
+                  <Clock className="mr-2 h-5 w-5 animate-pulse" />
+                  Recording Time
+                </span>
+              ) : (
+                <span className="text-blue-600 dark:text-blue-500 flex items-center">
+                  <PlusCircle className="mr-2 h-5 w-5 text-blue-500 dark:text-blue-400" />
+                  New Time Entry
+                </span>
+              )}
+            </h3>
+            <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1 shadow-sm">
+              <Label
+                htmlFor="add-state"
+                className={cn(
+                  "cursor-pointer text-sm font-medium",
+                  addState !== "timer" && "text-primary"
+                )}
+              >
                 Manual
               </Label>
               <Switch
@@ -173,25 +208,36 @@ export default function TimeTrackerForm({
                   }
                 }}
               />
-              <Label htmlFor="add-state" className="cursor-pointer">
+              <Label
+                htmlFor="add-state"
+                className={cn(
+                  "cursor-pointer text-sm font-medium",
+                  addState === "timer" && "text-primary"
+                )}
+              >
                 Timer
               </Label>
             </div>
           </div>
-          <div className="flex flex-row gap-4 items-end">
+          <Separator className="bg-muted" />
+          <div className="flex flex-row gap-4 items-end flex-wrap md:flex-nowrap">
             <div className="flex-1 space-y-2">
-              <Label htmlFor="description">What are you working on?</Label>
+              <Label htmlFor="description" className="text-sm font-medium">
+                What are you working on?
+              </Label>
               <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Task description"
-                className="h-10"
+                className="h-10 focus:ring-2 focus:ring-primary/50"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category" className="text-sm font-medium">
+                Category
+              </Label>
               <ReusableSelect
                 options={categories.map((category) => ({
                   id: category.id,
@@ -206,51 +252,68 @@ export default function TimeTrackerForm({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <div className="space-y-2 flex-1">
+              <Label htmlFor="tags" className="text-sm font-medium">
+                Tags (comma-separated)
+              </Label>
               <Input
                 id="tags"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
                 placeholder="project, meeting, etc."
-                className="h-10"
+                className="h-10 focus:ring-2 focus:ring-primary/50"
               />
             </div>
 
             {addState === "timer" && (
-              <div className="text-3xl font-mono font-bold">
+              <div
+                className={cn(
+                  "text-3xl font-mono font-bold tracking-tight text-center px-3 py-1 rounded-lg",
+                  isTimerActive
+                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                    : "text-muted-foreground"
+                )}
+              >
                 {formatDuration(elapsedSeconds)}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="start-time">Start Time</Label>
+              <Label htmlFor="start-time" className="text-sm font-medium">
+                Start Time
+              </Label>
               <Input
                 id="start-time"
                 type="datetime-local"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 onFocus={setDefaultStartTime}
-                className="h-10"
+                className="h-10 focus:ring-2 focus:ring-primary/50"
               />
             </div>
 
             {addState === "manual" && (
               <div className="space-y-2">
-                <Label htmlFor="end-time">End Time</Label>
+                <Label htmlFor="end-time" className="text-sm font-medium">
+                  End Time
+                </Label>
                 <Input
                   id="end-time"
                   type="datetime-local"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="h-10"
+                  className="h-10 focus:ring-2 focus:ring-primary/50"
                 />
               </div>
             )}
 
             <div>
               {!isTimerActive && addState === "timer" ? (
-                <Button onClick={handleStartTimer} size="sm" className="px-4">
+                <Button
+                  onClick={handleStartTimer}
+                  size="sm"
+                  className="px-6 py-5 bg-blue-600 hover:bg-blue-700 font-medium"
+                >
                   <Play className="mr-2 h-4 w-4" />
                   Start Timer
                 </Button>
@@ -269,10 +332,24 @@ export default function TimeTrackerForm({
                       ? isSaving
                       : !startTime || !endTime || isSaving
                   }
-                  className="px-4"
+                  className={cn(
+                    "px-6 py-5 font-medium",
+                    isTimerActive
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  )}
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? "Saving..." : "Save"}
+                  {isTimerActive ? (
+                    <>
+                      <TimerOff className="h-4 w-4 mr-2" />
+                      {isSaving ? "Saving..." : "Stop & Save"}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? "Saving..." : "Save"}
+                    </>
+                  )}
                 </Button>
               )}
             </div>
