@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Play, Save, Clock, TimerOff, PlusCircle } from "lucide-react";
-import { TimeCategory } from "@/store/time-tracking-definitions";
+import { Play, Save, Clock, TimerOff, PlusCircle, History } from "lucide-react";
+import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes, formatDuration } from "@/lib/time-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -22,6 +24,12 @@ export default function TimeTrackerForm({
   categories,
   onDataChange,
 }: TimeTrackerFormProps) {
+  // Get time entries from store for previous entry reference
+  const timeEntries = useStore(
+    dataStore,
+    (state) => state.time_entries as TimeEntry[]
+  );
+
   // Form state
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
@@ -39,6 +47,13 @@ export default function TimeTrackerForm({
 
   // Add state
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
+
+  // Initialize current time when switching to manual mode
+  useEffect(() => {
+    if (addState === "manual" && !startTime) {
+      setCurrentTimeAsStartTime();
+    }
+  }, [addState]);
 
   useEffect(() => {
     // Timer interval for active timer
@@ -74,12 +89,44 @@ export default function TimeTrackerForm({
     setIsTimerActive(true);
     setTimerStartTime(now);
 
-    const formattedNow = new Date(
-      now.getTime() - now.getTimezoneOffset() * 60000
-    )
+    const formattedNow = formatDateForInput(now);
+    setStartTime(formattedNow);
+  };
+
+  // Helper to format date for datetime-local input
+  const formatDateForInput = (date: Date): string => {
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
+  };
+
+  // Set current time as start time
+  const setCurrentTimeAsStartTime = () => {
+    const now = new Date();
+    const formattedNow = formatDateForInput(now);
     setStartTime(formattedNow);
+  };
+
+  // Set end time of last entry as start time for this entry
+  const setLastEntryEndTimeAsStartTime = () => {
+    if (timeEntries.length === 0) {
+      // If no previous entries, use current time
+      setCurrentTimeAsStartTime();
+      return;
+    }
+
+    // Sort entries by end time, descending
+    const sortedEntries = [...timeEntries].sort((a, b) => {
+      return new Date(b.end_time).getTime() - new Date(a.end_time).getTime();
+    });
+
+    // Get the most recent entry
+    const lastEntry = sortedEntries[0];
+    if (lastEntry && lastEntry.end_time) {
+      const lastEndTime = new Date(lastEntry.end_time);
+      const formattedTime = formatDateForInput(lastEndTime);
+      setStartTime(formattedTime);
+    }
   };
 
   // Save the active timer
@@ -145,19 +192,6 @@ export default function TimeTrackerForm({
       console.error("Error saving time entry:", error);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  // Set default start time for manual entry
-  const setDefaultStartTime = () => {
-    if (!startTime) {
-      const now = new Date();
-      const formattedNow = new Date(
-        now.getTime() - now.getTimezoneOffset() * 60000
-      )
-        .toISOString()
-        .slice(0, 16);
-      setStartTime(formattedNow);
     }
   };
 
@@ -279,24 +313,62 @@ export default function TimeTrackerForm({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="start-time" className="text-sm font-medium">
-                Start Time
-              </Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="start-time" className="text-sm font-medium">
+                  Start Time
+                </Label>
+                <div className="flex space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={setCurrentTimeAsStartTime}
+                    title="Set to current time"
+                  >
+                    Now
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs flex items-center"
+                    onClick={setLastEntryEndTimeAsStartTime}
+                    title="Continue from last entry"
+                    disabled={timeEntries.length === 0}
+                  >
+                    <History className="h-3 w-3 mr-1" />
+                    Last
+                  </Button>
+                </div>
+              </div>
               <Input
                 id="start-time"
                 type="datetime-local"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                onFocus={setDefaultStartTime}
                 className="h-10 focus:ring-2 focus:ring-primary/50"
               />
             </div>
 
             {addState === "manual" && (
               <div className="space-y-2">
-                <Label htmlFor="end-time" className="text-sm font-medium">
-                  End Time
-                </Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="end-time" className="text-sm font-medium">
+                    End Time
+                  </Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      const now = new Date();
+                      const formattedNow = formatDateForInput(now);
+                      setEndTime(formattedNow);
+                    }}
+                    title="Set to current time"
+                  >
+                    Now
+                  </Button>
+                </div>
                 <Input
                   id="end-time"
                   type="datetime-local"
