@@ -6,6 +6,8 @@ This application helps track any sort of data that I want to track. The current 
 - Bloodwork information
 - Metrics that I want to be tracked
 - Experiments tied to metrics that I want to be tracked
+- Journaling that can be tied to metrics
+- Time tracking that can be tied to metrics
 
 The idea is to create a desktop application where all your data is stored locally, not encrypted, so that the user is able to aggregate any data they want to track.
 
@@ -14,12 +16,14 @@ Application is built for my own personal use, but may be useful to others if the
 - DEXA Scan information is using data from BodySpec scans
 - Bloodwork information requires you to input your blood markers before anything. This is because multiple lab providers have different bloodmarker names for the same blood marker. You have to decide which one you want to use and then track it accordingly
 - For metrics and experiments, it's been tested to use true/false values. The other inputs have not been tested yet
+- For journaling, the idea is to do those actions if only to give some time for yourself to reflect and also exercise some thinking muscles
+- Time tracking is for you to understand how much time you spend on what task
 - We recommend you add a PIN if you want to track data that should be private if you have the application opened, but leave the computer for a while, and you don't want people to look at it
   - Although visually, the data seems to be protected, if someone accessed your database, they will be able to view it
 
 This application will be optimized as I find it a pain to do certain actions. Thanks for checking out the application!
 
-- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet.
+- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet is still like a junior engineer that needs help occasionally to make things nice.)
 
 ## Project management
 
@@ -41,12 +45,30 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make the dashnoard able to be in like "specific card heights and card widths" or just hardcode it in
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
+- update icons for the datasets
 
 ### IN PROGRESS
 
 - add time tracking, and also tie it with a metric if possible
+- in time tracking, in entries, show the category
+- in time tracking, display a calendar view of the day of time tracking, and also a weekly view
+- add a "time tracking" button at the header, and make it easy to track time, and make it reusable, so if I click in header, it pop ups, while also in the page, it can be used like normal
+- allow the user to add a time entry without a description
+- make the description kind of autocomplete
+- tie time tracking and allow a user to select a metric to tie it to, to complete, metric can only be metric type time, so it should filter only for that metric, that's active
+- when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
 - adjust how the metric looks like for value number
 - in daily tracker calendar view, it shows the dates in the wrong weekday slot
+- in quick-metrics-logger, add a way to add notes
+- in quick-metrics-logger, have a way to show the inactive metrics
+- make the markdown CSS better looking
+- in same question answers, only show the current day's question
+- in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it
+- for some reason,, in daily tracking, the journaling metrics are not being categorized correctly
+- in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?)
+- add journaling information to onboarding modal and help modal
+- add time tracking information to onboarding modal and help modal
+- add time tracking info panel information
 
 ### DONE
 

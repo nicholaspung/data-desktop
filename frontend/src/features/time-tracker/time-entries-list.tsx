@@ -1,16 +1,15 @@
 // src/features/time-tracker/time-entries-list.tsx
 import { useMemo, useState } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash, Calendar, Tag } from "lucide-react";
+import { Calendar, Tag } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditTimeEntryDialog from "./edit-time-entry-dialog";
-import { formatTimeString, groupEntriesByDate } from "@/lib/time-utils";
+import { groupEntriesByDate } from "@/lib/time-utils";
 import { deleteEntry } from "@/store/data-store";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableCard from "@/components/reusable/reusable-card";
+import TimeEntriesListItem from "./time-entries-list-item";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -103,11 +102,10 @@ export default function TimeEntriesList({
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-5 w-40" />
-            </CardHeader>
-            <CardContent>
+          <ReusableCard
+            key={i}
+            title={<Skeleton className="h-5 w-40" />}
+            content={
               <div className="space-y-2">
                 {[1, 2].map((j) => (
                   <div key={j} className="flex justify-between">
@@ -116,8 +114,8 @@ export default function TimeEntriesList({
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            }
+          />
         ))}
       </div>
     );
@@ -125,16 +123,18 @@ export default function TimeEntriesList({
 
   if (entries.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
+      <ReusableCard
+        showHeader={false}
+        contentClassName="pt-6"
+        content={
           <div className="text-center py-6">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">
               No time entries yet. Start tracking your time!
             </p>
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
@@ -166,78 +166,13 @@ export default function TimeEntriesList({
       )}
 
       {groupDates.map((dateStr) => (
-        <Card key={dateStr}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {new Date(dateStr).toLocaleDateString(undefined, {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {groupedEntries[dateStr].map((entry) => {
-                const category = getCategoryById(entry.category_id);
-                const startTime = new Date(entry.start_time);
-                const endTime = new Date(entry.end_time);
-
-                return (
-                  <div
-                    key={entry.id}
-                    className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b last:border-b-0"
-                  >
-                    <div className="space-y-1 mb-2 sm:mb-0">
-                      <div className="font-medium">{entry.description}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatTimeString(startTime)} -{" "}
-                        {formatTimeString(endTime)}({entry.duration_minutes}{" "}
-                        min)
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {category && (
-                          <Badge
-                            style={{
-                              backgroundColor: category.color || "#3b82f6",
-                            }}
-                            className="text-white"
-                          >
-                            {category.name}
-                          </Badge>
-                        )}
-                        {entry.tags &&
-                          entry.tags.split(",").map((tag) => (
-                            <Badge key={tag.trim()} variant="outline">
-                              {tag.trim()}
-                            </Badge>
-                          ))}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingEntry(entry)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(entry)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        <TimeEntriesListItem
+          dateStr={dateStr}
+          groupedEntries={groupedEntries}
+          getCategoryById={getCategoryById}
+          handleDelete={handleDelete}
+          setEditingEntry={setEditingEntry}
+        />
       ))}
     </div>
   );

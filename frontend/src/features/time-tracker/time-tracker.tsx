@@ -1,30 +1,20 @@
 // src/features/time-tracker/time-tracker.tsx
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
-import TimeEntryForm from "./time-entry-form";
+import TimeTrackerForm from "./time-tracker-form";
 import TimeEntriesList from "./time-entries-list";
 import TimeCategoryManager from "./time-category-manager";
-import ActiveTimer from "./active-timer";
 import useLoadData from "@/hooks/useLoadData";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
+import ReusableTabs, { TabItem } from "@/components/reusable/reusable-tabs";
 
 export default function TimeTracker() {
   const { getDatasetFields } = useFieldDefinitions();
   const timeEntryFields = getDatasetFields("time_entries");
   const timeCategoryFields = getDatasetFields("time_categories");
-
-  const [isActive, setIsActive] = useState(false);
-  const [activeDescription, setActiveDescription] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | undefined>(
-    undefined
-  );
-  const [activeTags, setActiveTags] = useState<string>("");
-  const [startTime, setStartTime] = useState<Date | null>(null);
 
   const timeEntries = useStore(
     dataStore,
@@ -57,26 +47,6 @@ export default function TimeTracker() {
     fetchDataNow: true,
   });
 
-  const handleStartTimer = (
-    description: string,
-    categoryId?: string,
-    tags?: string
-  ) => {
-    setIsActive(true);
-    setActiveDescription(description);
-    setActiveCategory(categoryId);
-    setActiveTags(tags || "");
-    setStartTime(new Date());
-  };
-
-  const handleStopTimer = () => {
-    setIsActive(false);
-    setActiveDescription("");
-    setActiveCategory(undefined);
-    setActiveTags("");
-    setStartTime(null);
-  };
-
   const refreshData = () => {
     loadTimeEntries();
     loadCategories();
@@ -86,53 +56,37 @@ export default function TimeTracker() {
     refreshData();
   }, []);
 
+  const tabs: TabItem[] = [
+    {
+      id: "entries",
+      label: "Time Entries",
+      content: (
+        <TimeEntriesList
+          entries={timeEntries}
+          categories={categories}
+          isLoading={isLoadingEntries}
+          onDataChange={refreshData}
+        />
+      ),
+    },
+    {
+      id: "categories",
+      label: "Categories",
+      content: (
+        <TimeCategoryManager
+          categories={categories}
+          isLoading={isLoadingCategories}
+          onDataChange={refreshData}
+        />
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-6">
-          {isActive ? (
-            <ActiveTimer
-              description={activeDescription}
-              categoryId={activeCategory}
-              tags={activeTags}
-              startTime={startTime!}
-              onStop={handleStopTimer}
-              onComplete={refreshData}
-              categories={categories}
-            />
-          ) : (
-            <TimeEntryForm
-              onStartTimer={handleStartTimer}
-              onManualSave={refreshData}
-              categories={categories}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <TimeTrackerForm categories={categories} onDataChange={refreshData} />
 
-      <Tabs defaultValue="entries">
-        <TabsList>
-          <TabsTrigger value="entries">Time Entries</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="entries">
-          <TimeEntriesList
-            entries={timeEntries}
-            categories={categories}
-            isLoading={isLoadingEntries}
-            onDataChange={refreshData}
-          />
-        </TabsContent>
-
-        <TabsContent value="categories">
-          <TimeCategoryManager
-            categories={categories}
-            isLoading={isLoadingCategories}
-            onDataChange={refreshData}
-          />
-        </TabsContent>
-      </Tabs>
+      <ReusableTabs tabs={tabs} defaultTabId="entries" fullWidth={true} />
     </div>
   );
 }

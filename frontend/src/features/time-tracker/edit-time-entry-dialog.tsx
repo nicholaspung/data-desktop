@@ -1,26 +1,14 @@
 // src/features/time-tracker/edit-time-entry-dialog.tsx
 import { useState, useEffect } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes } from "@/lib/time-utils";
 import { updateEntry } from "@/store/data-store";
+import ReusableDialog from "@/components/reusable/reusable-dialog";
+import ReusableSelect from "@/components/reusable/reusable-select";
+import { Save } from "lucide-react";
 
 interface EditTimeEntryDialogProps {
   entry: TimeEntry;
@@ -94,13 +82,22 @@ export default function EditTimeEntryDialog({
     }
   };
 
-  return (
-    <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>Edit Time Entry</DialogTitle>
-        </DialogHeader>
+  const categoryOptions = categories.map((category) => ({
+    id: category.id,
+    label: category.name,
+  }));
 
+  return (
+    <ReusableDialog
+      title="Edit Time Entry"
+      open={true}
+      onOpenChange={(open) => !open && onCancel()}
+      onConfirm={handleSave}
+      confirmText="Save Changes"
+      confirmIcon={<Save className="h-4 w-4" />}
+      loading={isSaving}
+      footerActionDisabled={!description || !startTime || !endTime || isSaving}
+      customContent={
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="edit-description">Description</Label>
@@ -134,19 +131,14 @@ export default function EditTimeEntryDialog({
 
           <div className="space-y-2">
             <Label htmlFor="edit-category">Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger id="edit-category">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">None</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ReusableSelect
+              options={categoryOptions}
+              value={categoryId || ""}
+              onChange={setCategoryId}
+              placeholder="Select category"
+              title="category"
+              noDefault={false}
+            />
           </div>
 
           <div className="space-y-2">
@@ -159,19 +151,7 @@ export default function EditTimeEntryDialog({
             />
           </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!description || !startTime || !endTime || isSaving}
-          >
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      }
+    />
   );
 }
