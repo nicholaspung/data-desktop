@@ -1,4 +1,4 @@
-// src/features/time-tracker/time-tracker-form.tsx
+// src/features/time-tracker/time-tracker-form.tsx - Updated to use global timer data
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,16 +13,23 @@ import ReusableCard from "@/components/reusable/reusable-card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useStore } from "@tanstack/react-store";
-import dataStore from "@/store/data-store";
+import dataStore, { addEntry } from "@/store/data-store";
+import {
+  timeTrackerStore,
+  getTimerData,
+  startTimer as startGlobalTimer,
+} from "./time-tracker-store";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
   onDataChange: () => void;
+  inPopover?: boolean;
 }
 
 export default function TimeTrackerForm({
   categories,
   onDataChange,
+  inPopover = false,
 }: TimeTrackerFormProps) {
   // Get time entries from store for previous entry reference
   const timeEntries = useStore(
@@ -30,17 +37,30 @@ export default function TimeTrackerForm({
     (state) => state.time_entries as TimeEntry[]
   );
 
-  // Form state
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
-  const [tags, setTags] = useState("");
+  // Get global timer state
+  const globalTimerData = getTimerData();
+
+  // Initialize form with global timer data if timer is active
+  const [description, setDescription] = useState(
+    globalTimerData.isActive ? globalTimerData.description : ""
+  );
+  const [categoryId, setCategoryId] = useState<string | undefined>(
+    globalTimerData.isActive ? globalTimerData.categoryId : undefined
+  );
+  const [tags, setTags] = useState(
+    globalTimerData.isActive ? globalTimerData.tags : ""
+  );
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  // Timer state
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Timer state - sync with global state if timer is active
+  const [isTimerActive, setIsTimerActive] = useState(globalTimerData.isActive);
+  const [timerStartTime, setTimerStartTime] = useState<Date | null>(
+    globalTimerData.isActive ? globalTimerData.startTime : null
+  );
+  const [elapsedSeconds, setElapsedSeconds] = useState(
+    globalTimerData.isActive ? globalTimerData.elapsedSeconds : 0
+  );
 
   // Loading state
   const [isSaving, setIsSaving] = useState(false);
@@ -55,6 +75,33 @@ export default function TimeTrackerForm({
     }
   }, [addState]);
 
+  // Update local timer state when global state changes
+  useEffect(() => {
+    const unsubscribe = timeTrackerStore.subscribe((state) => {
+      if (state.currentVal.isTimerActive) {
+        setIsTimerActive(true);
+        setTimerStartTime(state.currentVal.startTime);
+        setElapsedSeconds(state.currentVal.elapsedSeconds);
+        setDescription(state.currentVal.description);
+        setCategoryId(state.currentVal.categoryId);
+        setTags(state.currentVal.tags);
+
+        if (state.currentVal.startTime) {
+          const formattedTime = formatDateForInput(state.currentVal.startTime);
+          setStartTime(formattedTime);
+        }
+      } else {
+        // Only reset if we were previously tracking time
+        if (isTimerActive) {
+          resetForm();
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Local timer tick for immediate feedback
   useEffect(() => {
     // Timer interval for active timer
     if (isTimerActive && timerStartTime) {
@@ -86,11 +133,15 @@ export default function TimeTrackerForm({
   const handleStartTimer = () => {
     const now = new Date();
 
+    // Set local state
     setIsTimerActive(true);
     setTimerStartTime(now);
 
     const formattedNow = formatDateForInput(now);
     setStartTime(formattedNow);
+
+    // Set global state
+    startGlobalTimer(description, categoryId, tags);
   };
 
   // Helper to format date for datetime-local input
@@ -139,7 +190,7 @@ export default function TimeTrackerForm({
       const endTime = new Date();
       const durationMinutes = Math.floor(elapsedSeconds / 60);
 
-      await ApiService.addRecord("time_entries", {
+      const response = await ApiService.addRecord("time_entries", {
         description,
         start_time: timerStartTime.toISOString(),
         end_time: endTime.toISOString(),
@@ -148,6 +199,10 @@ export default function TimeTrackerForm({
         tags,
         private: false,
       });
+
+      if (response) {
+        addEntry(response, "time_entries");
+      }
 
       resetForm();
       onDataChange();
@@ -176,7 +231,7 @@ export default function TimeTrackerForm({
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
 
-      await ApiService.addRecord("time_entries", {
+      const response = await ApiService.addRecord("time_entries", {
         description,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
@@ -185,6 +240,10 @@ export default function TimeTrackerForm({
         tags,
         private: false,
       });
+
+      if (response) {
+        addEntry(response, "time_entries");
+      }
 
       resetForm();
       onDataChange();
@@ -195,12 +254,13 @@ export default function TimeTrackerForm({
     }
   };
 
-  // Render form with tabs when timer is not active
   return (
     <ReusableCard
       showHeader={false}
       cardClassName={cn(
-        "border-2 shadow-lg transition-all duration-300",
+        inPopover
+          ? "border-0 shadow-none"
+          : "border-2 shadow-lg transition-all duration-300",
         isTimerActive
           ? "border-green-500 dark:border-green-600 shadow-green-100 dark:shadow-green-900/20"
           : "border-blue-400 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/10 hover:border-blue-500"
