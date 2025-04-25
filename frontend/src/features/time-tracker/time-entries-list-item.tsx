@@ -35,7 +35,7 @@ export default function TimeEntryListItem({
   };
 
   return (
-    <div className="flex justify-between items-center py-2 border-b last:border-b-0">
+    <div className="flex justify-between items-center py-2 px-3">
       <div className="flex-1 mr-4">
         <div className="flex items-center flex-wrap gap-2">
           <span className="font-medium">{entry.description}</span>
@@ -51,7 +51,7 @@ export default function TimeEntryListItem({
           )}
           {entry.tags &&
             entry.tags.split(",").map((tag) => (
-              <Badge key={tag.trim()} variant="outline">
+              <Badge key={tag.trim()} variant="outline" className="text-xs">
                 {tag.trim()}
               </Badge>
             ))}
@@ -60,7 +60,7 @@ export default function TimeEntryListItem({
 
       <div className="text-right flex items-center gap-3">
         <div>
-          <div className="font-medium">{entry.duration_minutes} minutes</div>
+          <div className="font-medium">{entry.duration_minutes} min</div>
           <div className="text-sm text-muted-foreground">
             {formatTimeString(startTime)} - {formatTimeString(endTime)}
           </div>

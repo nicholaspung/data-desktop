@@ -2,8 +2,16 @@
 import { useMemo, useState } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Tag } from "lucide-react";
+import {
+  Calendar,
+  Tag,
+  ChevronDown,
+  ChevronUp,
+  LayoutList,
+  LayoutGrid,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import EditTimeEntryDialog from "./edit-time-entry-dialog";
 import { groupEntriesByDate } from "@/lib/time-utils";
 import TimeEntryListItem from "./time-entries-list-item";
@@ -16,6 +24,13 @@ interface TimeEntriesListProps {
   onDataChange: () => void;
 }
 
+interface GroupedEntry {
+  key: string;
+  entries: TimeEntry[];
+  isExpanded: boolean;
+  totalDuration: number;
+}
+
 export default function TimeEntriesList({
   entries,
   categories,
@@ -24,6 +39,10 @@ export default function TimeEntriesList({
 }: TimeEntriesListProps) {
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [tagFilter, setTagFilter] = useState("");
+  const [isGrouped, setIsGrouped] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Sort entries by start time, newest first
   const sortedEntries = [...entries].sort((a, b) => {
@@ -79,6 +98,44 @@ export default function TimeEntriesList({
     b.localeCompare(a)
   );
 
+  // Group entries by description and category within each day
+  const groupEntriesByDescriptionAndCategory = (
+    entries: TimeEntry[]
+  ): GroupedEntry[] => {
+    const groups: Record<string, GroupedEntry> = {};
+
+    entries.forEach((entry) => {
+      // Create a key combining description and category
+      const groupKey = `${entry.description}|${entry.category_id || "none"}`;
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = {
+          key: groupKey,
+          entries: [],
+          isExpanded: expandedGroups[groupKey] || false,
+          totalDuration: 0,
+        };
+      }
+
+      groups[groupKey].entries.push(entry);
+      groups[groupKey].totalDuration += entry.duration_minutes;
+    });
+
+    // Sort groups by the start time of the first entry in each group (newest first)
+    return Object.values(groups).sort((a, b) => {
+      const aTime = new Date(a.entries[0].start_time).getTime();
+      const bTime = new Date(b.entries[0].start_time).getTime();
+      return bTime - aTime;
+    });
+  };
+
+  const toggleGroupExpansion = (groupKey: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupKey]: !prev[groupKey],
+    }));
+  };
+
   const getCategoryById = (id?: string) => {
     if (!id) return null;
     return categories.find((cat) => cat.id === id) || null;
@@ -125,17 +182,38 @@ export default function TimeEntriesList({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2 mb-4">
-        <Tag className="h-4 w-4 text-muted-foreground" />
-        <div className="text-sm font-medium">Filter by tag:</div>
-        <ReusableSelect
-          options={tagOptions}
-          value={tagFilter}
-          onChange={setTagFilter}
-          placeholder="Filter by tag"
-          triggerClassName="w-[180px]"
-          noDefault={false}
-        />
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Tag className="h-4 w-4 text-muted-foreground" />
+          <div className="text-sm font-medium">Filter by tag:</div>
+          <ReusableSelect
+            options={tagOptions}
+            value={tagFilter}
+            onChange={setTagFilter}
+            placeholder="Filter by tag"
+            triggerClassName="w-[180px]"
+            noDefault={false}
+          />
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsGrouped(!isGrouped)}
+          className="gap-2"
+        >
+          {isGrouped ? (
+            <>
+              <LayoutList className="h-4 w-4" />
+              <span className="hidden sm:inline">Ungroup</span>
+            </>
+          ) : (
+            <>
+              <LayoutGrid className="h-4 w-4" />
+              <span className="hidden sm:inline">Group similar</span>
+            </>
+          )}
+        </Button>
       </div>
 
       {editingEntry && (
@@ -165,15 +243,79 @@ export default function TimeEntriesList({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {groupedEntries[dateStr].map((entry) => (
-                <TimeEntryListItem
-                  key={entry.id}
-                  entry={entry}
-                  category={getCategoryById(entry.category_id)}
-                  onEdit={() => setEditingEntry(entry)}
-                  onDelete={onDataChange}
-                />
-              ))}
+              {isGrouped
+                ? // Grouped view
+                  groupEntriesByDescriptionAndCategory(
+                    groupedEntries[dateStr]
+                  ).map((group) => {
+                    const firstEntry = group.entries[0];
+                    const category = getCategoryById(firstEntry.category_id);
+
+                    return (
+                      <div
+                        key={group.key}
+                        className="border rounded-md overflow-hidden"
+                      >
+                        {/* Group header */}
+                        <div
+                          className="flex justify-between items-center p-3 bg-accent/30 cursor-pointer"
+                          onClick={() => toggleGroupExpansion(group.key)}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">
+                              {firstEntry.description}
+                            </span>
+                            {category && (
+                              <span
+                                className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                                style={{
+                                  backgroundColor: category.color || "#3b82f6",
+                                }}
+                              >
+                                {category.name}
+                              </span>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              ({group.entries.length} entries,{" "}
+                              {group.totalDuration} min total)
+                            </span>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            {expandedGroups[group.key] ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Expanded entries */}
+                        {expandedGroups[group.key] && (
+                          <div className="divide-y">
+                            {group.entries.map((entry) => (
+                              <TimeEntryListItem
+                                key={entry.id}
+                                entry={entry}
+                                category={category}
+                                onEdit={() => setEditingEntry(entry)}
+                                onDelete={onDataChange}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                : // Regular view
+                  groupedEntries[dateStr].map((entry) => (
+                    <TimeEntryListItem
+                      key={entry.id}
+                      entry={entry}
+                      category={getCategoryById(entry.category_id)}
+                      onEdit={() => setEditingEntry(entry)}
+                      onDelete={onDataChange}
+                    />
+                  ))}
             </div>
           </CardContent>
         </Card>
