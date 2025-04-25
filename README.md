@@ -46,14 +46,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
 - update icons for the datasets
+- if an associated record gets updated, figure out a way to update the top level record
 
 ### IN PROGRESS
 
 - add time tracking, and also tie it with a metric if possible
-- in time tracking, in entries, show the category [DONE 2025-04-25]
 - in time tracking, display a calendar view of the day of time tracking, and also a weekly view
-- add a "time tracking" button at the header, and make it easy to track time, and make it reusable, so if I click in header, it pop ups, while also in the page, it can be used like normal
-- allow the user to add a time entry without a description [DONE 2025-04-25]
 - make the description kind of autocomplete
 - tie time tracking and allow a user to select a metric to tie it to, to complete, metric can only be metric type time, so it should filter only for that metric, that's active
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
@@ -206,5 +204,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - for affirmation, add a button that says "completed affirmation for the day" and tie it to a metric (pre-created) [DONE 2025-04-22]
 - for creativity journal, when the user completes the entry, tie it to a metric (pre-created) and complete it (don't allow deleting or editing) [DONE 2025-04-22]
 - for daily questions, tie a metric (pre-created) to be completed when a user enters an entry [DONE 2025-04-22]
+- in time tracking, in entries, show the category [DONE 2025-04-25]
+- add a "time tracking" button at the header, and make it easy to track time, and make it reusable, so if I click in header, it pop ups, while also in the page, it can be used like normal [DONE 2025-04-25]
+- allow the user to add a time entry without a description [DONE 2025-04-25]
 
 ### GAVE UP

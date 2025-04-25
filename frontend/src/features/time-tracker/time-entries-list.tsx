@@ -16,6 +16,8 @@ import EditTimeEntryDialog from "./edit-time-entry-dialog";
 import { groupEntriesByDate } from "@/lib/time-utils";
 import TimeEntryListItem from "./time-entries-list-item";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import { dateStrToLocalDate } from "@/lib/date-utils";
+import { format } from "date-fns";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -180,6 +182,8 @@ export default function TimeEntriesList({
     );
   }
 
+  console.log(groupDates);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -233,12 +237,7 @@ export default function TimeEntriesList({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              {new Date(dateStr).toLocaleDateString(undefined, {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {format(dateStrToLocalDate(dateStr), "EEEE, MMMM d, yyyy")}
             </CardTitle>
           </CardHeader>
           <CardContent>
