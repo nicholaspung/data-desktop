@@ -1,94 +1,85 @@
-import ReusableCard from "@/components/reusable/reusable-card";
+// src/features/time-tracker/time-entries-list-item.tsx
+import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import { formatTimeString } from "@/lib/time-utils";
-import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
-import { Calendar, Edit, Trash } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import { ApiService } from "@/services/api";
+import { deleteEntry } from "@/store/data-store";
 
-export default function TimeEntriesListItem({
-  dateStr,
-  groupedEntries,
-  getCategoryById,
-  handleDelete,
-  setEditingEntry,
-}: {
-  dateStr: string;
-  groupedEntries: Record<string, TimeEntry[]>;
-  getCategoryById: (id?: string) => TimeCategory | null;
-  handleDelete: (entry: TimeEntry) => Promise<void>;
-  setEditingEntry: React.Dispatch<React.SetStateAction<TimeEntry | null>>;
-}) {
+interface TimeEntryListItemProps {
+  entry: TimeEntry;
+  category: TimeCategory | null;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+export default function TimeEntryListItem({
+  entry,
+  category,
+  onEdit,
+  onDelete,
+}: TimeEntryListItemProps) {
+  const startTime = new Date(entry.start_time);
+  const endTime = new Date(entry.end_time);
+
+  const handleDelete = async () => {
+    try {
+      await ApiService.deleteRecord(entry.id);
+      deleteEntry(entry.id, "time_entries");
+      onDelete();
+    } catch (error) {
+      console.error("Error deleting time entry:", error);
+    }
+  };
+
   return (
-    <ReusableCard
-      title={
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          {new Date(dateStr).toLocaleDateString(undefined, {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+    <div className="flex justify-between items-center py-2 border-b last:border-b-0">
+      <div className="flex-1 mr-4">
+        <div className="flex items-center flex-wrap gap-2">
+          <span className="font-medium">{entry.description}</span>
+          {category && (
+            <Badge
+              style={{
+                backgroundColor: category.color || "#3b82f6",
+              }}
+              className="text-white"
+            >
+              {category.name}
+            </Badge>
+          )}
+          {entry.tags &&
+            entry.tags.split(",").map((tag) => (
+              <Badge key={tag.trim()} variant="outline">
+                {tag.trim()}
+              </Badge>
+            ))}
         </div>
-      }
-      content={
-        <div className="space-y-3">
-          {groupedEntries[dateStr].map((entry) => {
-            const category = getCategoryById(entry.category_id);
-            const startTime = new Date(entry.start_time);
-            const endTime = new Date(entry.end_time);
+      </div>
 
-            return (
-              <div
-                key={entry.id}
-                className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2 border-b last:border-b-0"
-              >
-                <div className="space-y-1 mb-2 sm:mb-0">
-                  <div className="font-medium">{entry.description}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatTimeString(startTime)} - {formatTimeString(endTime)}(
-                    {entry.duration_minutes} min)
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {category && (
-                      <Badge
-                        style={{
-                          backgroundColor: category.color || "#3b82f6",
-                        }}
-                        className="text-white"
-                      >
-                        {category.name}
-                      </Badge>
-                    )}
-                    {entry.tags &&
-                      entry.tags.split(",").map((tag) => (
-                        <Badge key={tag.trim()} variant="outline">
-                          {tag.trim()}
-                        </Badge>
-                      ))}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingEntry(entry)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(entry)}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+      <div className="text-right flex items-center gap-3">
+        <div>
+          <div className="font-medium">{entry.duration_minutes} minutes</div>
+          <div className="text-sm text-muted-foreground">
+            {formatTimeString(startTime)} - {formatTimeString(endTime)}
+          </div>
         </div>
-      }
-    />
+
+        <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={onEdit}>
+            <Edit className="h-4 w-4" />
+          </Button>
+
+          <ConfirmDeleteDialog
+            title="Delete Time Entry"
+            description="Are you sure you want to delete this time entry? This action cannot be undone."
+            onConfirm={handleDelete}
+            size="icon"
+            variant="ghost"
+          />
+        </div>
+      </div>
+    </div>
   );
 }

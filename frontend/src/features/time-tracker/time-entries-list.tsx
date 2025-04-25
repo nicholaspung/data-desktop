@@ -1,15 +1,13 @@
 // src/features/time-tracker/time-entries-list.tsx
 import { useMemo, useState } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Tag } from "lucide-react";
-import { ApiService } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import EditTimeEntryDialog from "./edit-time-entry-dialog";
 import { groupEntriesByDate } from "@/lib/time-utils";
-import { deleteEntry } from "@/store/data-store";
+import TimeEntryListItem from "./time-entries-list-item";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import ReusableCard from "@/components/reusable/reusable-card";
-import TimeEntriesListItem from "./time-entries-list-item";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -86,26 +84,15 @@ export default function TimeEntriesList({
     return categories.find((cat) => cat.id === id) || null;
   };
 
-  const handleDelete = async (entry: TimeEntry) => {
-    if (!confirm("Are you sure you want to delete this time entry?")) return;
-
-    try {
-      await ApiService.deleteRecord(entry.id);
-      deleteEntry(entry.id, "time_entries");
-      onDataChange();
-    } catch (error) {
-      console.error("Error deleting time entry:", error);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <ReusableCard
-            key={i}
-            title={<Skeleton className="h-5 w-40" />}
-            content={
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-5 w-40" />
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
                 {[1, 2].map((j) => (
                   <div key={j} className="flex justify-between">
@@ -114,8 +101,8 @@ export default function TimeEntriesList({
                   </div>
                 ))}
               </div>
-            }
-          />
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -123,18 +110,16 @@ export default function TimeEntriesList({
 
   if (entries.length === 0) {
     return (
-      <ReusableCard
-        showHeader={false}
-        contentClassName="pt-6"
-        content={
+      <Card>
+        <CardContent className="pt-6">
           <div className="text-center py-6">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">
               No time entries yet. Start tracking your time!
             </p>
           </div>
-        }
-      />
+        </CardContent>
+      </Card>
     );
   }
 
@@ -166,13 +151,32 @@ export default function TimeEntriesList({
       )}
 
       {groupDates.map((dateStr) => (
-        <TimeEntriesListItem
-          dateStr={dateStr}
-          groupedEntries={groupedEntries}
-          getCategoryById={getCategoryById}
-          handleDelete={handleDelete}
-          setEditingEntry={setEditingEntry}
-        />
+        <Card key={dateStr}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              {new Date(dateStr).toLocaleDateString(undefined, {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {groupedEntries[dateStr].map((entry) => (
+                <TimeEntryListItem
+                  key={entry.id}
+                  entry={entry}
+                  category={getCategoryById(entry.category_id)}
+                  onEdit={() => setEditingEntry(entry)}
+                  onDelete={onDataChange}
+                />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
