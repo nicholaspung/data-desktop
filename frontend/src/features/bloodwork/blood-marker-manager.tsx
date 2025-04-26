@@ -1,4 +1,3 @@
-// src/features/bloodwork/blood-marker-manager.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Plus } from "lucide-react";
@@ -9,10 +8,9 @@ import { useFieldDefinitions } from "@/features/field-definitions/field-definiti
 import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
-import { BloodMarker } from "./bloodwork";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 export default function BloodMarkerManager() {
   const [open, setOpen] = useState(false);
@@ -22,20 +20,15 @@ export default function BloodMarkerManager() {
   const { getDatasetFields } = useFieldDefinitions();
   const bloodMarkerFields = getDatasetFields("blood_markers");
 
-  const markers = useStore(
-    dataStore,
-    (state) => state.blood_markers as BloodMarker[]
-  );
+  const markers = useStore(dataStore, (state) => state.blood_markers);
 
-  // Create options for the selection dropdown, sorted alphabetically by name
   const markerOptions = markers
     .map((marker) => ({
       id: marker.id,
       label: marker.name,
     }))
-    .sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
+    .sort((a, b) => a.label.localeCompare(b.label));
 
-  // Get the selected marker data
   const selectedMarkerData = markers.find(
     (marker) => marker.id === selectedMarker
   );
@@ -71,7 +64,6 @@ export default function BloodMarkerManager() {
     setOpen(newOpen);
     if (!newOpen) {
       setSelectedMarker("");
-      // Reset to add tab when closing
       setTimeout(() => setActiveTab("add"), 300);
     }
   };
@@ -91,95 +83,102 @@ export default function BloodMarkerManager() {
       }
       customContent={
         <div className="p-4 overflow-y-auto max-h-[70vh]">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="add" className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                Add New Marker
-              </TabsTrigger>
-              <TabsTrigger
-                value="edit"
-                className="flex items-center gap-1"
-                disabled={markers.length === 0}
-              >
-                <Edit className="h-4 w-4" />
-                Edit Marker
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="add" className="pt-2">
-              <DataForm
-                datasetId="blood_markers"
-                fields={bloodMarkerFields}
-                onSuccess={handleAddSuccess}
-                submitLabel="Add Blood Marker"
-                mode="add"
-                title="Add New Blood Marker"
-              />
-            </TabsContent>
-
-            <TabsContent value="edit" className="pt-2">
-              {markers.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  No blood markers available to edit. Please add a marker first.
-                </div>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <h3 className="text-sm font-medium mb-2">
-                      Select Blood Marker to Edit:
-                    </h3>
-                    <ReusableSelect
-                      options={markerOptions}
-                      value={selectedMarker}
-                      onChange={setSelectedMarker}
-                      title="Blood Marker"
-                      placeholder="Select a blood marker..."
-                    />
-
-                    {/* Delete button appears when a marker is selected */}
-                    {selectedMarker && (
-                      <div className="mt-3">
-                        <ConfirmDeleteDialog
-                          title="Delete Blood Marker"
-                          description="Are you sure you want to delete this blood marker? This will also delete all results associated with this marker. This action cannot be undone."
-                          onConfirm={handleDelete}
-                          loading={isDeleting}
-                          triggerText="Delete Selected Marker"
-                          variant="destructive"
-                          size="default"
-                        />
-                      </div>
-                    )}
+          <ReusableTabs
+            tabs={[
+              {
+                id: "add",
+                label: (
+                  <div className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    Add New Marker
                   </div>
-
-                  {selectedMarker && selectedMarkerData ? (
+                ),
+                content: (
+                  <div className="pt-2">
                     <DataForm
                       datasetId="blood_markers"
                       fields={bloodMarkerFields}
-                      initialValues={selectedMarkerData}
-                      onSuccess={handleEditSuccess}
-                      onCancel={() => setSelectedMarker("")}
-                      submitLabel="Update Blood Marker"
-                      mode="edit"
-                      recordId={selectedMarker}
+                      onSuccess={handleAddSuccess}
+                      submitLabel="Add Blood Marker"
+                      mode="add"
+                      title="Add New Blood Marker"
                     />
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      Select a marker to edit its details
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
+                  </div>
+                ),
+              },
+              {
+                id: "edit",
+                label: (
+                  <div className="flex items-center gap-1">
+                    <Edit className="h-4 w-4" />
+                    Edit Marker
+                  </div>
+                ),
+                content: (
+                  <div className="pt-2">
+                    {markers.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        No blood markers available to edit. Please add a marker
+                        first.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-6">
+                          <h3 className="text-sm font-medium mb-2">
+                            Select Blood Marker to Edit:
+                          </h3>
+                          <ReusableSelect
+                            options={markerOptions}
+                            value={selectedMarker}
+                            onChange={setSelectedMarker}
+                            title="Blood Marker"
+                            placeholder="Select a blood marker..."
+                          />
+                          {selectedMarker && (
+                            <div className="mt-3">
+                              <ConfirmDeleteDialog
+                                title="Delete Blood Marker"
+                                description="Are you sure you want to delete this blood marker? This will also delete all results associated with this marker. This action cannot be undone."
+                                onConfirm={handleDelete}
+                                loading={isDeleting}
+                                triggerText="Delete Selected Marker"
+                                variant="destructive"
+                                size="default"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        {selectedMarker && selectedMarkerData ? (
+                          <DataForm
+                            datasetId="blood_markers"
+                            fields={bloodMarkerFields}
+                            initialValues={selectedMarkerData}
+                            onSuccess={handleEditSuccess}
+                            onCancel={() => setSelectedMarker("")}
+                            submitLabel="Update Blood Marker"
+                            mode="edit"
+                            recordId={selectedMarker}
+                          />
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            Select a marker to edit its details
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+            defaultTabId={activeTab}
+            onChange={setActiveTab}
+            className="w-full"
+            tabsListClassName="grid w-full grid-cols-2 mb-4"
+            tabsContentClassName="mt-0"
+          />
         </div>
       }
-      customFooter={<div />} // Empty div to remove default footer
+      customFooter={<div />}
     />
   );
 }

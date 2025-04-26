@@ -46,7 +46,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
 - update icons for the datasets
-- if an associated record gets updated, figure out a way to update the top level record
 
 ### IN PROGRESS
 

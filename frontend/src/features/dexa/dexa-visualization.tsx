@@ -1,42 +1,26 @@
-// src/features/dexa/dexa-visualization.tsx
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import BodyCompositionTab from "./visualization/body-composition-tab";
 import TrendsTab from "./visualization/trends-tab";
 import RegionalAnalysisTab from "./visualization/regional-analysis-tab";
 import SymmetryTab from "./visualization/symmetry-tab";
-import BodyAnatomyTab from "./visualization/body-anatomy-tab"; // Import the new Body Anatomy tab
+import BodyAnatomyTab from "./visualization/body-anatomy-tab";
 import GoalTab from "./goal/goal-tab";
-import dataStore, { DataStoreName } from "@/store/data-store";
+import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import { DEXAScan } from "@/store/dexa-definitions";
-import { cn } from "@/lib/utils";
 import ReusableCard from "@/components/reusable/reusable-card";
 import BoneDensityTab from "./visualization/bone-density-tab";
 import AddDexaScanButton from "./add-dexa-scan-button";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
-export default function DexaVisualization({
-  className = "",
-  datasetId,
-}: {
-  className?: string;
-  datasetId: DataStoreName;
-}) {
-  const data =
-    useStore(
-      dataStore,
-      (state) => state[datasetId as DataStoreName] as DEXAScan[]
-    ) || []; // Get data from the store
-  const isLoading =
-    useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
-    false; // Get data from the loading store
+export default function DexaVisualization() {
+  const data = useStore(dataStore, (state) => state.dexa) || [];
+  const isLoading = useStore(loadingStore, (state) => state.dexa) || false;
   const [activeTab, setActiveTab] = useState("bodyComp");
   const [timeRange, setTimeRange] = useState("all");
 
-  // Filter data based on time range
   const getFilteredData = () => {
     if (timeRange === "all" || data.length === 0) return data;
 
@@ -61,10 +45,49 @@ export default function DexaVisualization({
     return data.filter((item: any) => item.date && item.date >= startDate);
   };
 
+  const filteredData = getFilteredData();
+
+  const tabDefs = [
+    {
+      id: "bodyComp",
+      label: "Body Composition",
+      content: <BodyCompositionTab data={filteredData} />,
+    },
+    {
+      id: "bodyAnatomy",
+      label: "Body Anatomy",
+      content: <BodyAnatomyTab data={filteredData} />,
+    },
+    {
+      id: "boneDensity",
+      label: "Bone Density",
+      content: <BoneDensityTab data={filteredData} />,
+    },
+    {
+      id: "trends",
+      label: "Trends",
+      content: <TrendsTab data={filteredData} />,
+    },
+    {
+      id: "regional",
+      label: "Regional Analysis",
+      content: <RegionalAnalysisTab data={filteredData} />,
+    },
+    {
+      id: "symmetry",
+      label: "Symmetry",
+      content: <SymmetryTab data={filteredData} />,
+    },
+    {
+      id: "goals",
+      label: "Goals",
+      content: <GoalTab data={filteredData} />,
+    },
+  ];
+
   if (isLoading) {
     return (
       <ReusableCard
-        cardClassName={className}
         contentClassName="flex items-center justify-center py-10"
         content={<Loader2 className="h-8 w-8 animate-spin text-primary" />}
       />
@@ -74,7 +97,6 @@ export default function DexaVisualization({
   if (data.length === 0) {
     return (
       <ReusableCard
-        cardClassName={className}
         contentClassName="py-10"
         content={
           <div className="text-center space-y-4">
@@ -90,29 +112,16 @@ export default function DexaVisualization({
     );
   }
 
-  const filteredData = getFilteredData();
-
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row lg:flex-col justify-between gap-4 mb-6">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
+        <ReusableTabs
+          tabs={tabDefs}
+          defaultTabId={activeTab}
+          onChange={setActiveTab}
           className="space-y-4"
-        >
-          <TabsList>
-            <TabsTrigger value="bodyComp">Body Composition</TabsTrigger>
-            <TabsTrigger value="bodyAnatomy">Body Anatomy</TabsTrigger>
-            <TabsTrigger value="boneDensity">Bone Density</TabsTrigger>{" "}
-            {/* New tab */}
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="regional">Regional Analysis</TabsTrigger>
-            <TabsTrigger value="symmetry">Symmetry</TabsTrigger>
-            <TabsTrigger value="goals">Goals</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        />
 
-        {/* Only show time range selector for trends and regional analysis tabs */}
         {(activeTab === "trends" || activeTab === "regional") && (
           <div className="flex gap-2">
             <ReusableSelect
@@ -130,22 +139,6 @@ export default function DexaVisualization({
             />
           </div>
         )}
-      </div>
-
-      {/* Use direct conditional rendering instead of TabsContent */}
-      <div className="space-y-6">
-        {activeTab === "bodyComp" && <BodyCompositionTab data={filteredData} />}
-        {activeTab === "bodyAnatomy" && <BodyAnatomyTab data={filteredData} />}
-        {activeTab === "boneDensity" && (
-          <BoneDensityTab data={filteredData} />
-        )}{" "}
-        {/* New tab content */}
-        {activeTab === "trends" && <TrendsTab data={filteredData} />}
-        {activeTab === "regional" && (
-          <RegionalAnalysisTab data={filteredData} />
-        )}
-        {activeTab === "symmetry" && <SymmetryTab data={filteredData} />}
-        {activeTab === "goals" && <GoalTab data={filteredData} />}
       </div>
     </div>
   );

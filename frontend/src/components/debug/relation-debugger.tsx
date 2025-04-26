@@ -6,7 +6,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import {
@@ -20,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { database } from "../../../wailsjs/go/models";
 import ReusableSelect from "../reusable/reusable-select";
 import { Record, RelatedData, RelationStats } from "./debug";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const RelationDebugger: React.FC = () => {
   const [datasets, setDatasets] = useState<database.Dataset[]>([]);
@@ -34,12 +34,10 @@ const RelationDebugger: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<Record | null>(null);
   const [relatedData, setRelatedData] = useState<RelatedData>({});
 
-  // Load datasets on component mount
   useEffect(() => {
     loadDatasets();
   }, []);
 
-  // Load datasets
   const loadDatasets = async () => {
     try {
       setIsLoading(true);
@@ -53,7 +51,6 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Load dataset details
   const loadDatasetDetails = async (datasetId: string) => {
     if (!datasetId) return;
 
@@ -63,7 +60,6 @@ const RelationDebugger: React.FC = () => {
       const data = await GetDataset(datasetId);
       setDatasetDetails(data);
 
-      // Reset records when dataset changes
       setRecords([]);
       setRelationStats({});
       setSelectedRecord(null);
@@ -75,7 +71,6 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Load records with relations
   const loadRecordsWithRelations = async () => {
     if (!selectedDataset) return;
 
@@ -87,17 +82,14 @@ const RelationDebugger: React.FC = () => {
       const data = await GetRecordsWithRelations(selectedDataset);
       setRecords((data as Record[]) || []);
 
-      // Calculate relation stats
       if (data && data.length > 0 && datasetDetails) {
         const stats = {} as any;
 
-        // Get relation fields
         const relationFields = datasetDetails.fields.filter(
           (f) => f.isRelation
         );
 
         relationFields.forEach((field: any) => {
-          // Count successful resolutions (where _data field exists and isn't null)
           const fieldStats = {
             total: data.length,
             resolved: 0,
@@ -110,7 +102,6 @@ const RelationDebugger: React.FC = () => {
             const relDataKey = `${field.key}_data`;
             const relID = record[field.key];
 
-            // Track unique values
             if (relID) {
               fieldStats.values.add(relID);
             }
@@ -134,7 +125,6 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Load related record by ID
   const loadRelatedRecord = async (datasetId: string, recordId: string) => {
     if (!datasetId || !recordId) return null;
 
@@ -149,17 +139,14 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Handle dataset selection
   const handleDatasetChange = (value: any) => {
     setSelectedDataset(value);
     loadDatasetDetails(value);
   };
 
-  // Handle record selection
   const handleRecordSelect = async (record: any) => {
     setSelectedRecord(record);
 
-    // Load related records
     if (datasetDetails) {
       const newRelatedData = {} as any;
       const relationFields = datasetDetails.fields.filter((f) => f.isRelation);
@@ -179,7 +166,6 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Format JSON for display
   const formatJSON = (json: any) => {
     try {
       return JSON.stringify(json, null, 2);
@@ -188,11 +174,9 @@ const RelationDebugger: React.FC = () => {
     }
   };
 
-  // Test if a string looks like a date
   const looksLikeDate = (str: any) => {
     if (!str || typeof str !== "string") return false;
 
-    // Check for common date formats
     return (
       // MM/DD/YYYY or M/D/YYYY
       /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str) ||
@@ -216,7 +200,6 @@ const RelationDebugger: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Dataset Selection */}
             <div className="flex items-end space-x-2">
               <div className="flex-1">
                 <label className="text-sm font-medium mb-1 block">
@@ -240,8 +223,6 @@ const RelationDebugger: React.FC = () => {
                 <RefreshCcw className="h-4 w-4" />
               </Button>
             </div>
-
-            {/* Dataset Fields */}
             {datasetDetails && (
               <div className="border rounded-md p-4 space-y-2">
                 <h3 className="font-medium">Dataset Fields</h3>
@@ -265,8 +246,6 @@ const RelationDebugger: React.FC = () => {
                 </div>
               </div>
             )}
-
-            {/* Load Records Button */}
             <Button
               onClick={loadRecordsWithRelations}
               disabled={!selectedDataset || isLoading}
@@ -274,8 +253,6 @@ const RelationDebugger: React.FC = () => {
             >
               {isLoading ? "Loading..." : "Load Records with Relations"}
             </Button>
-
-            {/* Error Display */}
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
@@ -286,8 +263,6 @@ const RelationDebugger: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Relations Stats */}
       {Object.keys(relationStats).length > 0 && (
         <Card>
           <CardHeader>
@@ -310,8 +285,6 @@ const RelationDebugger: React.FC = () => {
                       </Badge>
                     </div>
                   </div>
-
-                  {/* Progress bar */}
                   <div className="w-full bg-muted rounded-full h-2.5 mb-2">
                     <div
                       className="bg-primary h-2.5 rounded-full"
@@ -320,8 +293,6 @@ const RelationDebugger: React.FC = () => {
                       }}
                     ></div>
                   </div>
-
-                  {/* Values analysis */}
                   <div className="mt-2">
                     <h4 className="text-sm font-medium mb-1">Value Analysis</h4>
                     <div className="max-h-[150px] overflow-y-auto text-xs p-2 bg-muted rounded-md">
@@ -345,181 +316,194 @@ const RelationDebugger: React.FC = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Records Display */}
       {records.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle>Records ({records.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="list">
-              <TabsList>
-                <TabsTrigger value="list">Record List</TabsTrigger>
-                <TabsTrigger value="detail">Record Detail</TabsTrigger>
-              </TabsList>
+            <ReusableTabs
+              tabs={[
+                {
+                  id: "list",
+                  label: "Record List",
+                  content: (
+                    <div className="space-y-4 pt-4">
+                      <div className="border rounded-md overflow-hidden">
+                        <div className="max-h-[400px] overflow-auto">
+                          <table className="w-full border-collapse">
+                            <thead className="bg-muted sticky top-0">
+                              <tr>
+                                <th className="p-2 text-left">ID</th>
+                                {datasetDetails &&
+                                  datasetDetails.fields
+                                    .filter((f) => f.isRelation)
+                                    .map((field) => (
+                                      <th
+                                        key={field.key}
+                                        className="p-2 text-left"
+                                      >
+                                        {field.displayName}
+                                      </th>
+                                    ))}
+                                <th className="p-2 text-left">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {records.slice(0, 20).map((record) => (
+                                <tr
+                                  key={record.id}
+                                  className="border-t hover:bg-muted/50"
+                                >
+                                  <td className="p-2">
+                                    <code className="text-xs">
+                                      {record.id.substring(0, 8)}...
+                                    </code>
+                                  </td>
+                                  {datasetDetails &&
+                                    datasetDetails.fields
+                                      .filter((f) => f.isRelation)
+                                      .map((field) => {
+                                        const relDataKey = `${field.key}_data`;
+                                        const hasRelation =
+                                          !!record[relDataKey];
 
-              <TabsContent value="list" className="space-y-4 pt-4">
-                <div className="border rounded-md overflow-hidden">
-                  <div className="max-h-[400px] overflow-auto">
-                    <table className="w-full border-collapse">
-                      <thead className="bg-muted sticky top-0">
-                        <tr>
-                          <th className="p-2 text-left">ID</th>
-                          {datasetDetails &&
-                            datasetDetails.fields
-                              .filter((f) => f.isRelation)
-                              .map((field) => (
-                                <th key={field.key} className="p-2 text-left">
-                                  {field.displayName}
-                                </th>
+                                        return (
+                                          <td key={field.key} className="p-2">
+                                            <div className="flex items-center space-x-2">
+                                              <Badge
+                                                variant={
+                                                  hasRelation
+                                                    ? "outline"
+                                                    : "destructive"
+                                                }
+                                              >
+                                                {hasRelation ? "✓" : "✗"}
+                                              </Badge>
+                                              <span className="text-xs font-mono truncate max-w-[150px]">
+                                                {record[field.key]}
+                                              </span>
+                                            </div>
+                                          </td>
+                                        );
+                                      })}
+                                  <td className="p-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleRecordSelect(record)}
+                                    >
+                                      View
+                                    </Button>
+                                  </td>
+                                </tr>
                               ))}
-                          <th className="p-2 text-left">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {records.slice(0, 20).map((record) => (
-                          <tr
-                            key={record.id}
-                            className="border-t hover:bg-muted/50"
-                          >
-                            <td className="p-2">
-                              <code className="text-xs">
-                                {record.id.substring(0, 8)}...
-                              </code>
-                            </td>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  id: "detail",
+                  label: "Record Detail",
+                  content: (
+                    <div className="pt-4">
+                      {selectedRecord ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-4">
+                            <h3 className="font-medium">Record Details</h3>
+                            <div className="border rounded-md p-2">
+                              <pre className="text-xs overflow-auto max-h-[500px]">
+                                {formatJSON(selectedRecord)}
+                              </pre>
+                            </div>
+                          </div>
+                          <div className="space-y-4">
+                            <h3 className="font-medium">Related Records</h3>
                             {datasetDetails &&
                               datasetDetails.fields
                                 .filter((f) => f.isRelation)
                                 .map((field) => {
-                                  const relDataKey = `${field.key}_data`;
-                                  const hasRelation = !!record[relDataKey];
+                                  const relId = selectedRecord[field.key];
+                                  const relData = relatedData[field.key];
+                                  const relatedDataExists =
+                                    !!selectedRecord[`${field.key}_data`];
 
                                   return (
-                                    <td key={field.key} className="p-2">
-                                      <div className="flex items-center space-x-2">
+                                    <div
+                                      key={field.key}
+                                      className="border rounded-md overflow-hidden"
+                                    >
+                                      <div className="bg-muted p-2 flex justify-between items-center">
+                                        <span className="font-medium">
+                                          {field.displayName}
+                                        </span>
                                         <Badge
                                           variant={
-                                            hasRelation
-                                              ? "outline"
+                                            relatedDataExists
+                                              ? "default"
                                               : "destructive"
                                           }
                                         >
-                                          {hasRelation ? "✓" : "✗"}
+                                          {relatedDataExists
+                                            ? "Resolved"
+                                            : "Failed"}
                                         </Badge>
-                                        <span className="text-xs font-mono truncate max-w-[150px]">
-                                          {record[field.key]}
-                                        </span>
                                       </div>
-                                    </td>
+                                      <div className="p-2 text-sm">
+                                        <div className="flex items-center space-x-2 mb-2">
+                                          <span>ID:</span>
+                                          <code className="text-xs bg-muted p-1 rounded">
+                                            {relId || "N/A"}
+                                          </code>
+                                          {looksLikeDate(relId) && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              Looks like a date
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        {relData ? (
+                                          <div className="border rounded-md p-2">
+                                            <pre className="text-xs overflow-auto max-h-[200px]">
+                                              {formatJSON(relData)}
+                                            </pre>
+                                          </div>
+                                        ) : (
+                                          <div className="bg-muted p-2 rounded-md text-xs">
+                                            {relId ? (
+                                              <span>
+                                                Failed to load related record
+                                                with ID: {relId}
+                                              </span>
+                                            ) : (
+                                              <span>
+                                                No relation ID provided
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
                                   );
                                 })}
-                            <td className="p-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRecordSelect(record)}
-                              >
-                                View
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="detail" className="pt-4">
-                {selectedRecord ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-4">
-                      <h3 className="font-medium">Record Details</h3>
-                      <div className="border rounded-md p-2">
-                        <pre className="text-xs overflow-auto max-h-[500px]">
-                          {formatJSON(selectedRecord)}
-                        </pre>
-                      </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-8 text-muted-foreground">
+                          Select a record from the list to view details
+                        </div>
+                      )}
                     </div>
-
-                    <div className="space-y-4">
-                      <h3 className="font-medium">Related Records</h3>
-                      {datasetDetails &&
-                        datasetDetails.fields
-                          .filter((f) => f.isRelation)
-                          .map((field) => {
-                            const relId = selectedRecord[field.key];
-                            const relData = relatedData[field.key];
-                            const relatedDataExists =
-                              !!selectedRecord[`${field.key}_data`];
-
-                            return (
-                              <div
-                                key={field.key}
-                                className="border rounded-md overflow-hidden"
-                              >
-                                <div className="bg-muted p-2 flex justify-between items-center">
-                                  <span className="font-medium">
-                                    {field.displayName}
-                                  </span>
-                                  <Badge
-                                    variant={
-                                      relatedDataExists
-                                        ? "default"
-                                        : "destructive"
-                                    }
-                                  >
-                                    {relatedDataExists ? "Resolved" : "Failed"}
-                                  </Badge>
-                                </div>
-                                <div className="p-2 text-sm">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <span>ID:</span>
-                                    <code className="text-xs bg-muted p-1 rounded">
-                                      {relId || "N/A"}
-                                    </code>
-                                    {looksLikeDate(relId) && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        Looks like a date
-                                      </Badge>
-                                    )}
-                                  </div>
-
-                                  {relData ? (
-                                    <div className="border rounded-md p-2">
-                                      <pre className="text-xs overflow-auto max-h-[200px]">
-                                        {formatJSON(relData)}
-                                      </pre>
-                                    </div>
-                                  ) : (
-                                    <div className="bg-muted p-2 rounded-md text-xs">
-                                      {relId ? (
-                                        <span>
-                                          Failed to load related record with ID:{" "}
-                                          {relId}
-                                        </span>
-                                      ) : (
-                                        <span>No relation ID provided</span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-8 text-muted-foreground">
-                    Select a record from the list to view details
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                  ),
+                },
+              ]}
+              defaultTabId="list"
+            />
           </CardContent>
         </Card>
       )}

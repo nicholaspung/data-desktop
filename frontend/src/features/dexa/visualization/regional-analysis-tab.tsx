@@ -1,6 +1,4 @@
-// src/features/dexa/visualization/regional-analysis-tab.tsx
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { COLORS, formatDate } from "@/lib/date-utils";
 import { ComparisonSelector } from "./comparison-selector";
 import { format } from "date-fns";
@@ -9,17 +7,16 @@ import CustomLineChart from "@/components/charts/line-chart";
 import CustomRadarChart from "@/components/charts/radar-chart";
 import CustomBarChart from "@/components/charts/bar-chart";
 import { DEXAScan } from "@/store/dexa-definitions";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
   const [activeTab, setActiveTab] = useState("percentage");
   const [selectedScan, setSelectedScan] = useState<string>("");
 
-  // Add state for comparison mode
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [primaryDate, setPrimaryDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
 
-  // Define metrics for percentage and absolute values
   const percentageMetrics = [
     { key: "arms_total_region_fat_percentage", name: "Arms" },
     { key: "legs_total_region_fat_percentage", name: "Legs" },
@@ -42,20 +39,17 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     { key: "trunk_lean_tissue_lbs", name: "Trunk Lean" },
   ];
 
-  // Date options for the scan selector
   const dateOptions = data
     .map((scan) => ({
       value: scan.id,
       label: formatDate(scan.date),
       date: new Date(scan.date),
     }))
-    .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  // Find selected scans
   const primaryScan = data.find((scan) => scan.id === primaryDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
-  // Set default scan when component loads
   if (dateOptions.length > 0) {
     if (!selectedScan) {
       setSelectedScan(dateOptions[0].value ?? "");
@@ -68,7 +62,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     }
   }
 
-  // Get comparison data for line charts
   const getPercentageComparisonData = () => {
     return data
       .map((item) => {
@@ -87,7 +80,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get absolute comparison data for line charts
   const getAbsoluteComparisonData = () => {
     return data
       .map((item) => {
@@ -106,7 +98,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get lean mass comparison data for line charts
   const getLeanMassComparisonData = () => {
     return data
       .map((item) => {
@@ -125,20 +116,17 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get current scan data for radar chart
   const getScanDataForRadar = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
-    // For percentage data
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         subject: metric.name,
         value: (scan[metric.key as keyof DEXAScan] as number) * 100 || 0,
-        fullMark: 40, // Typical max for body fat percentage in most regions
+        fullMark: 40,
       }));
     }
 
-    // For absolute data
     if (activeTab === "absolute") {
       return [...absoluteMetrics, ...leanMassMetrics].map((metric) => ({
         subject: metric.name,
@@ -146,14 +134,13 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
         fullMark:
           Math.max(
             ...data.map((s) => (s[metric.key as keyof DEXAScan] as number) || 0)
-          ) * 1.2, // Scale based on max values
+          ) * 1.2,
       }));
     }
 
     return [];
   };
 
-  // Get comparison data for radar
   const getComparisonRadarData = () => {
     if (!primaryScan || !comparisonScan) return [];
 
@@ -163,7 +150,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       "MMM d, yyyy"
     );
 
-    // For percentage data
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         subject: metric.name,
@@ -174,7 +160,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       }));
     }
 
-    // For absolute data
     if (activeTab === "absolute") {
       return [...absoluteMetrics, ...leanMassMetrics].map((metric) => ({
         subject: metric.name,
@@ -188,11 +173,9 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     return [];
   };
 
-  // Get data for bar chart comparison
   const getBarChartComparisonData = () => {
     if (!primaryScan || !comparisonScan) return [];
 
-    // For percentage data
     if (activeTab === "percentage") {
       return percentageMetrics.map((metric) => ({
         name: metric.name,
@@ -203,7 +186,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
       }));
     }
 
-    // For absolute data
     if (activeTab === "absolute") {
       const metrics = [...absoluteMetrics, ...leanMassMetrics];
       return metrics.map((metric) => ({
@@ -217,7 +199,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     return [];
   };
 
-  // Convert percentage metrics to line configs
   const getPercentageLineConfigs = () => {
     return percentageMetrics.map((metric, index) => ({
       dataKey: metric.name,
@@ -227,7 +208,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     }));
   };
 
-  // Convert absolute metrics to line configs
   const getAbsoluteLineConfigs = () => {
     return absoluteMetrics.map((metric, index) => ({
       dataKey: metric.name,
@@ -237,17 +217,15 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     }));
   };
 
-  // Convert lean mass metrics to line configs
   const getLeanMassLineConfigs = () => {
     return leanMassMetrics.map((metric, index) => ({
       dataKey: metric.name,
       name: metric.name,
-      stroke: COLORS[(index + 5) % COLORS.length], // Use different colors
+      stroke: COLORS[(index + 5) % COLORS.length],
       unit: " lbs",
     }));
   };
 
-  // Custom tooltip formatter based on data type
   const tooltipFormatter = (value: any, name: string) => {
     const displayValue = Number(value).toFixed(2);
     if (activeTab === "percentage" || name.includes("%")) {
@@ -256,7 +234,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     return `${displayValue} lbs`;
   };
 
-  // Get the list of radar configs for comparison
   const getRadarComparisonConfigs = () => {
     if (!primaryScan || !comparisonScan) return [];
 
@@ -284,7 +261,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Get current scan bars
   const getCurrentScanBars = () => {
     return [
       {
@@ -295,7 +271,6 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Get comparison bars
   const getComparisonBars = () => {
     return [
       {
@@ -313,164 +288,171 @@ const RegionalAnalysisTab = ({ data }: { data: DEXAScan[] }) => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full md:w-[400px] grid-cols-2">
-          <TabsTrigger value="percentage">Fat Percentage</TabsTrigger>
-          <TabsTrigger value="absolute">Mass Distribution</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="percentage" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Regional Fat % Comparison Over Time */}
-            <CustomLineChart
-              data={getPercentageComparisonData()}
-              lines={getPercentageLineConfigs()}
-              xAxisKey="date"
-              yAxisUnit="%"
-              title="Regional Fat Percentage Comparison"
-              height={400}
-              tooltipFormatter={tooltipFormatter}
-              className="md:col-span-2"
-            />
-
-            {/* Comparison selector for distribution charts */}
-            <div className="md:col-span-2">
-              <ComparisonSelector
-                data={data}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                selectedDate={primaryDate}
-                comparisonDate={comparisonDate}
-                onSelectedDateChange={setPrimaryDate}
-                onComparisonDateChange={setComparisonDate}
-              />
-            </div>
-
-            {viewMode === "single" ? (
-              <>
-                {/* Current Scan Regional Distribution - Single Mode */}
-                <CustomRadarChart
-                  data={getScanDataForRadar(primaryScan)}
-                  radars={[
-                    {
-                      dataKey: "value",
-                      name: "Fat %",
-                      fill: "#8884d8",
-                      stroke: "#8884d8",
-                      fillOpacity: 0.6,
-                    },
-                  ]}
-                  title="Current Distribution"
-                  height={300}
-                  outerRadius={90}
-                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
-                />
-
-                {/* Current Scan Bar Chart - Single Mode */}
-                <CustomBarChart
-                  data={getScanDataForRadar(primaryScan)}
-                  bars={getCurrentScanBars()}
-                  xAxisKey="subject"
-                  yAxisUnit="%"
-                  title="Region Comparison"
-                  height={300}
-                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
-                />
-              </>
-            ) : (
-              <>
-                {/* Current Scan Regional Distribution - Comparison Mode */}
-                <CustomRadarChart
-                  data={getComparisonRadarData()}
-                  radars={getRadarComparisonConfigs()}
-                  title="Distribution Comparison"
-                  height={300}
-                  outerRadius={90}
-                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
-                />
-
-                {/* Current Scan Bar Chart - Comparison Mode */}
-                <CustomBarChart
-                  data={getBarChartComparisonData()}
-                  bars={getComparisonBars()}
-                  xAxisKey="name"
-                  yAxisUnit="%"
-                  title="Region Comparison"
-                  height={300}
-                  tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
-                />
-              </>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="absolute" className="mt-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Regional Fat Mass Comparison Over Time */}
-            <CustomLineChart
-              data={getAbsoluteComparisonData()}
-              lines={getAbsoluteLineConfigs()}
-              xAxisKey="date"
-              yAxisUnit=" lbs"
-              title="Fat Tissue Distribution (lbs)"
-              height={400}
-              tooltipFormatter={tooltipFormatter}
-              className="md:col-span-2"
-            />
-
-            {/* Regional Lean Mass Comparison Over Time */}
-            <CustomLineChart
-              data={getLeanMassComparisonData()}
-              lines={getLeanMassLineConfigs()}
-              xAxisKey="date"
-              yAxisUnit=" lbs"
-              title="Lean Tissue Distribution (lbs)"
-              height={400}
-              tooltipFormatter={tooltipFormatter}
-              className="md:col-span-2"
-            />
-
-            {/* Comparison selector for distribution charts */}
-            <div className="md:col-span-2">
-              <ComparisonSelector
-                data={data}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                selectedDate={primaryDate}
-                comparisonDate={comparisonDate}
-                onSelectedDateChange={setPrimaryDate}
-                onComparisonDateChange={setComparisonDate}
-              />
-            </div>
-
-            {viewMode === "single" ? (
-              /* Single scan view */
-              <CustomBarChart
-                data={getScanDataForRadar(primaryScan)}
-                bars={getCurrentScanBars()}
-                xAxisKey="subject"
-                yAxisUnit=" lbs"
-                title="Current Distribution (lbs)"
-                height={300}
-                tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
-                className="md:col-span-2"
-              />
-            ) : (
-              /* Comparison view */
-              <CustomBarChart
-                data={getBarChartComparisonData()}
-                bars={getComparisonBars()}
-                xAxisKey="name"
-                yAxisUnit=" lbs"
-                title="Distribution Comparison (lbs)"
-                height={300}
-                tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
-                className="md:col-span-2"
-              />
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
+      <ReusableTabs
+        tabs={[
+          {
+            id: "percentage",
+            label: "Fat Percentage",
+            content: (
+              <div className="mt-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <CustomLineChart
+                    data={getPercentageComparisonData()}
+                    lines={getPercentageLineConfigs()}
+                    xAxisKey="date"
+                    yAxisUnit="%"
+                    title="Regional Fat Percentage Comparison"
+                    height={400}
+                    tooltipFormatter={tooltipFormatter}
+                    className="md:col-span-2"
+                  />
+                  <div className="md:col-span-2">
+                    <ComparisonSelector
+                      data={data}
+                      viewMode={viewMode}
+                      onViewModeChange={setViewMode}
+                      selectedDate={primaryDate}
+                      comparisonDate={comparisonDate}
+                      onSelectedDateChange={setPrimaryDate}
+                      onComparisonDateChange={setComparisonDate}
+                    />
+                  </div>
+                  {viewMode === "single" ? (
+                    <>
+                      <CustomRadarChart
+                        data={getScanDataForRadar(primaryScan)}
+                        radars={[
+                          {
+                            dataKey: "value",
+                            name: "Fat %",
+                            fill: "#8884d8",
+                            stroke: "#8884d8",
+                            fillOpacity: 0.6,
+                          },
+                        ]}
+                        title="Current Distribution"
+                        height={300}
+                        outerRadius={90}
+                        tooltipFormatter={(value) =>
+                          `${Number(value).toFixed(2)}%`
+                        }
+                      />
+                      <CustomBarChart
+                        data={getScanDataForRadar(primaryScan)}
+                        bars={getCurrentScanBars()}
+                        xAxisKey="subject"
+                        yAxisUnit="%"
+                        title="Region Comparison"
+                        height={300}
+                        tooltipFormatter={(value) =>
+                          `${Number(value).toFixed(2)}%`
+                        }
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <CustomRadarChart
+                        data={getComparisonRadarData()}
+                        radars={getRadarComparisonConfigs()}
+                        title="Distribution Comparison"
+                        height={300}
+                        outerRadius={90}
+                        tooltipFormatter={(value) =>
+                          `${Number(value).toFixed(2)}%`
+                        }
+                      />
+                      <CustomBarChart
+                        data={getBarChartComparisonData()}
+                        bars={getComparisonBars()}
+                        xAxisKey="name"
+                        yAxisUnit="%"
+                        title="Region Comparison"
+                        height={300}
+                        tooltipFormatter={(value) =>
+                          `${Number(value).toFixed(2)}%`
+                        }
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: "absolute",
+            label: "Mass Distribution",
+            content: (
+              <div className="mt-6">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <CustomLineChart
+                    data={getAbsoluteComparisonData()}
+                    lines={getAbsoluteLineConfigs()}
+                    xAxisKey="date"
+                    yAxisUnit=" lbs"
+                    title="Fat Tissue Distribution (lbs)"
+                    height={400}
+                    tooltipFormatter={tooltipFormatter}
+                    className="md:col-span-2"
+                  />
+                  <CustomLineChart
+                    data={getLeanMassComparisonData()}
+                    lines={getLeanMassLineConfigs()}
+                    xAxisKey="date"
+                    yAxisUnit=" lbs"
+                    title="Lean Tissue Distribution (lbs)"
+                    height={400}
+                    tooltipFormatter={tooltipFormatter}
+                    className="md:col-span-2"
+                  />
+                  <div className="md:col-span-2">
+                    <ComparisonSelector
+                      data={data}
+                      viewMode={viewMode}
+                      onViewModeChange={setViewMode}
+                      selectedDate={primaryDate}
+                      comparisonDate={comparisonDate}
+                      onSelectedDateChange={setPrimaryDate}
+                      onComparisonDateChange={setComparisonDate}
+                    />
+                  </div>
+                  {viewMode === "single" ? (
+                    <CustomBarChart
+                      data={getScanDataForRadar(primaryScan)}
+                      bars={getCurrentScanBars()}
+                      xAxisKey="subject"
+                      yAxisUnit=" lbs"
+                      title="Current Distribution (lbs)"
+                      height={300}
+                      tooltipFormatter={(value) =>
+                        `${Number(value).toFixed(2)} lbs`
+                      }
+                      className="md:col-span-2"
+                    />
+                  ) : (
+                    <CustomBarChart
+                      data={getBarChartComparisonData()}
+                      bars={getComparisonBars()}
+                      xAxisKey="name"
+                      yAxisUnit=" lbs"
+                      title="Distribution Comparison (lbs)"
+                      height={300}
+                      tooltipFormatter={(value) =>
+                        `${Number(value).toFixed(2)} lbs`
+                      }
+                      className="md:col-span-2"
+                    />
+                  )}
+                </div>
+              </div>
+            ),
+          },
+        ]}
+        defaultTabId={activeTab}
+        onChange={setActiveTab}
+        className="w-full"
+        tabsListClassName="grid w-full md:w-[400px] grid-cols-2"
+        tabsContentClassName=""
+      />
     </div>
   );
 };

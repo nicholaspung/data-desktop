@@ -188,7 +188,7 @@ export default function DexaPage() {
       }
       sidebarPosition="right"
     >
-      <DexaVisualization datasetId="dexa" />
+      <DexaVisualization />
     </FeatureLayout>
   );
 }

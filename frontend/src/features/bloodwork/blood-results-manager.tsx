@@ -1,4 +1,3 @@
-// src/features/bloodwork/blood-results-manager.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Plus } from "lucide-react";
@@ -11,7 +10,7 @@ import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { format } from "date-fns";
 
 export default function BloodResultsManager() {
@@ -26,10 +25,8 @@ export default function BloodResultsManager() {
   const markers = useStore(dataStore, (state) => state.blood_markers);
   const tests = useStore(dataStore, (state) => state.bloodwork);
 
-  // Create options for the selection dropdown with display information
   const resultOptions = results
     .map((result) => {
-      // Find associated test and marker
       const test =
         result.blood_test_id_data ||
         tests.find((t) => t.id === result.blood_test_id);
@@ -37,15 +34,12 @@ export default function BloodResultsManager() {
         result.blood_marker_id_data ||
         markers.find((m) => m.id === result.blood_marker_id);
 
-      // Format date from test
       const testDate = test?.date
         ? format(new Date(test.date), "MMM d, yyyy")
         : "Unknown date";
 
-      // Format marker name or placeholder
       const markerName = marker?.name || "Unknown marker";
 
-      // Format value (numeric or text)
       const value =
         result.value_text && result.value_text.trim() !== ""
           ? result.value_text
@@ -54,20 +48,17 @@ export default function BloodResultsManager() {
       return {
         id: result.id,
         label: `${testDate} - ${markerName}: ${value}`,
-        testDate: test?.date ? new Date(test.date) : new Date(0), // For sorting
+        testDate: test?.date ? new Date(test.date) : new Date(0),
         markerName,
       };
     })
     .sort((a, b) => {
-      // First sort by test date (newest first)
       const dateCompare = b.testDate.getTime() - a.testDate.getTime();
       if (dateCompare !== 0) return dateCompare;
 
-      // Then sort by marker name (alphabetically)
       return a.markerName.localeCompare(b.markerName);
     });
 
-  // Get the selected result data
   const selectedResultData = results.find(
     (result) => result.id === selectedResult
   );
@@ -103,7 +94,6 @@ export default function BloodResultsManager() {
     setOpen(newOpen);
     if (!newOpen) {
       setSelectedResult("");
-      // Reset to add tab when closing
       setTimeout(() => setActiveTab("add"), 300);
     }
   };
@@ -123,105 +113,112 @@ export default function BloodResultsManager() {
       }
       customContent={
         <div className="p-4 overflow-y-auto max-h-[70vh]">
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="add" className="flex items-center gap-1">
-                <Plus className="h-4 w-4" />
-                Add New Result
-              </TabsTrigger>
-              <TabsTrigger
-                value="edit"
-                className="flex items-center gap-1"
-                disabled={results.length === 0}
-              >
-                <Edit className="h-4 w-4" />
-                Edit Result
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="add" className="pt-2">
-              {tests.length === 0 || markers.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  {tests.length === 0 && markers.length === 0
-                    ? "You need to add both blood tests and markers before you can add results."
-                    : tests.length === 0
-                      ? "You need to add a blood test before you can add results."
-                      : "You need to add blood markers before you can add results."}
-                </div>
-              ) : (
-                <DataForm
-                  datasetId="blood_results"
-                  fields={bloodResultFields}
-                  onSuccess={handleAddSuccess}
-                  submitLabel="Add Blood Result"
-                  mode="add"
-                  title="Add New Blood Result"
-                />
-              )}
-            </TabsContent>
-
-            <TabsContent value="edit" className="pt-2">
-              {results.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  No blood results available to edit. Please add a result first.
-                </div>
-              ) : (
-                <>
-                  <div className="mb-6">
-                    <h3 className="text-sm font-medium mb-2">
-                      Select Blood Result to Edit:
-                    </h3>
-                    <ReusableSelect
-                      options={resultOptions}
-                      value={selectedResult}
-                      onChange={setSelectedResult}
-                      title="Blood Result"
-                      placeholder="Select a blood result..."
-                    />
-
-                    {/* Delete button appears when a result is selected */}
-                    {selectedResult && (
-                      <div className="mt-3">
-                        <ConfirmDeleteDialog
-                          title="Delete Blood Result"
-                          description="Are you sure you want to delete this blood result? This action cannot be undone."
-                          onConfirm={handleDelete}
-                          loading={isDeleting}
-                          triggerText="Delete Selected Result"
-                          variant="destructive"
-                          size="default"
-                        />
+          <ReusableTabs
+            tabs={[
+              {
+                id: "add",
+                label: (
+                  <div className="flex items-center gap-1">
+                    <Plus className="h-4 w-4" />
+                    Add New Result
+                  </div>
+                ),
+                content: (
+                  <div className="pt-2">
+                    {tests.length === 0 || markers.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        {tests.length === 0 && markers.length === 0
+                          ? "You need to add both blood tests and markers before you can add results."
+                          : tests.length === 0
+                            ? "You need to add a blood test before you can add results."
+                            : "You need to add blood markers before you can add results."}
                       </div>
+                    ) : (
+                      <DataForm
+                        datasetId="blood_results"
+                        fields={bloodResultFields}
+                        onSuccess={handleAddSuccess}
+                        submitLabel="Add Blood Result"
+                        mode="add"
+                        title="Add New Blood Result"
+                      />
                     )}
                   </div>
-
-                  {selectedResult && selectedResultData ? (
-                    <DataForm
-                      datasetId="blood_results"
-                      fields={bloodResultFields}
-                      initialValues={selectedResultData}
-                      onSuccess={handleEditSuccess}
-                      onCancel={() => setSelectedResult("")}
-                      submitLabel="Update Blood Result"
-                      mode="edit"
-                      recordId={selectedResult}
-                    />
-                  ) : (
-                    <div className="text-center py-4 text-muted-foreground">
-                      Select a result to edit its details
-                    </div>
-                  )}
-                </>
-              )}
-            </TabsContent>
-          </Tabs>
+                ),
+              },
+              {
+                id: "edit",
+                label: (
+                  <div className="flex items-center gap-1">
+                    <Edit className="h-4 w-4" />
+                    Edit Result
+                  </div>
+                ),
+                content: (
+                  <div className="pt-2">
+                    {results.length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground">
+                        No blood results available to edit. Please add a result
+                        first.
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-6">
+                          <h3 className="text-sm font-medium mb-2">
+                            Select Blood Result to Edit:
+                          </h3>
+                          <ReusableSelect
+                            options={resultOptions}
+                            value={selectedResult}
+                            onChange={setSelectedResult}
+                            title="Blood Result"
+                            placeholder="Select a blood result..."
+                          />
+                          {selectedResult && (
+                            <div className="mt-3">
+                              <ConfirmDeleteDialog
+                                title="Delete Blood Result"
+                                description="Are you sure you want to delete this blood result? This action cannot be undone."
+                                onConfirm={handleDelete}
+                                loading={isDeleting}
+                                triggerText="Delete Selected Result"
+                                variant="destructive"
+                                size="default"
+                              />
+                            </div>
+                          )}
+                        </div>
+                        {selectedResult && selectedResultData ? (
+                          <DataForm
+                            datasetId="blood_results"
+                            fields={bloodResultFields}
+                            initialValues={selectedResultData}
+                            onSuccess={handleEditSuccess}
+                            onCancel={() => setSelectedResult("")}
+                            submitLabel="Update Blood Result"
+                            mode="edit"
+                            recordId={selectedResult}
+                          />
+                        ) : (
+                          <div className="text-center py-4 text-muted-foreground">
+                            Select a result to edit its details
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ),
+              },
+            ]}
+            defaultTabId={activeTab}
+            onChange={setActiveTab}
+            className="w-full"
+            tabsListClassName="grid w-full grid-cols-2 mb-4"
+            tabsContentClassName="mt-0"
+          />
         </div>
       }
-      customFooter={<div />} // Empty div to remove default footer
+      customFooter={<div />}
     />
   );
 }

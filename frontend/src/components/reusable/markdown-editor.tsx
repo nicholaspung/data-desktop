@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Textarea } from "../ui/textarea";
+import ReusableTabs from "./reusable-tabs";
 
 interface MarkdownEditorProps {
   value: string;
@@ -35,23 +35,27 @@ export function MarkdownEditor({
   };
 
   return preview ? (
-    <Tabs defaultValue="edit" className={className}>
-      <TabsList className="mb-2">
-        <TabsTrigger value="edit">Edit</TabsTrigger>
-        <TabsTrigger value="preview">Preview</TabsTrigger>
-      </TabsList>
-      <TabsContent value="edit" className="mt-0">
-        <Textarea
-          value={localValue}
-          onChange={handleChange}
-          placeholder={placeholder}
-          style={{ minHeight, maxHeight }}
-          className="font-mono"
-        />
-      </TabsContent>
-      <TabsContent value="preview" className="mt-0">
-        <div
-          className="prose dark:prose-invert max-w-none
+    <ReusableTabs
+      tabs={[
+        {
+          id: "edit",
+          label: "Edit",
+          content: (
+            <Textarea
+              value={localValue}
+              onChange={handleChange}
+              placeholder={placeholder}
+              style={{ minHeight, maxHeight }}
+              className="font-mono"
+            />
+          ),
+        },
+        {
+          id: "preview",
+          label: "Preview",
+          content: (
+            <div
+              className="prose dark:prose-invert max-w-none
                    prose-headings:font-semibold prose-headings:text-foreground
                    prose-p:text-foreground
                    prose-a:text-primary prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-primary/80
@@ -61,16 +65,22 @@ export function MarkdownEditor({
                    prose-pre:bg-muted prose-pre:text-foreground prose-pre:font-mono prose-pre:rounded-md prose-pre:p-4 prose-pre:overflow-x-auto
                    prose-li:marker:text-muted-foreground
                    prose-hr:border-border max-w-none border rounded-md p-3 overflow-auto"
-          style={{ minHeight, maxHeight }}
-        >
-          {localValue ? (
-            <ReactMarkdown>{localValue}</ReactMarkdown>
-          ) : (
-            <div className="text-muted-foreground">{placeholder}</div>
-          )}
-        </div>
-      </TabsContent>
-    </Tabs>
+              style={{ minHeight, maxHeight }}
+            >
+              {localValue ? (
+                <ReactMarkdown>{localValue}</ReactMarkdown>
+              ) : (
+                <div className="text-muted-foreground">{placeholder}</div>
+              )}
+            </div>
+          ),
+        },
+      ]}
+      defaultTabId="edit"
+      className={className}
+      tabsListClassName="mb-2"
+      tabsContentClassName="mt-0"
+    />
   ) : (
     <Textarea
       value={localValue}

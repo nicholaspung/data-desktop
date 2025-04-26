@@ -1,6 +1,4 @@
-// src/components/journaling/journal-tabs.tsx
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PenLine, List } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ExpandableJournalEntries from "./expandable-journal-entries";
@@ -10,6 +8,7 @@ import {
   CreativityJournalEntry,
   GratitudeJournalEntry,
 } from "@/store/journaling-definitions";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 export default function JournalTabs({
   title,
@@ -34,38 +33,49 @@ export default function JournalTabs({
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{title}</h2>
-
       <InfoPanel title={infoTitle} defaultExpanded={true}>
         {infoText}
       </InfoPanel>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-2 mb-4">
-          <TabsTrigger value="add" className="flex gap-2 items-center">
-            <PenLine className="h-4 w-4" />
-            <span>Add New</span>
-          </TabsTrigger>
-          <TabsTrigger value="view" className="flex gap-2 items-center">
-            <List className="h-4 w-4" />
-            <span>View All</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="add" className="mt-0">
-          <Card>
-            <CardContent className="pt-6">{addEntryForm}</CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="view" className="mt-0">
-          <ExpandableJournalEntries
-            title=""
-            entries={entries}
-            contentKey={contentKey}
-            emptyStateText={emptyStateText}
-          />
-        </TabsContent>
-      </Tabs>
+      <ReusableTabs
+        tabs={[
+          {
+            id: "add",
+            label: (
+              <span className="flex gap-2 items-center">
+                <PenLine className="h-4 w-4" />
+                <span>Add New</span>
+              </span>
+            ),
+            content: (
+              <Card>
+                <CardContent className="pt-6">{addEntryForm}</CardContent>
+              </Card>
+            ),
+          },
+          {
+            id: "view",
+            label: (
+              <span className="flex gap-2 items-center">
+                <List className="h-4 w-4" />
+                <span>View All</span>
+              </span>
+            ),
+            content: (
+              <ExpandableJournalEntries
+                title=""
+                entries={entries}
+                contentKey={contentKey}
+                emptyStateText={emptyStateText}
+              />
+            ),
+          },
+        ]}
+        defaultTabId={activeTab}
+        onChange={setActiveTab}
+        className="w-full"
+        tabsListClassName="grid grid-cols-2 mb-4"
+        tabsContentClassName="mt-0"
+      />
     </div>
   );
 }

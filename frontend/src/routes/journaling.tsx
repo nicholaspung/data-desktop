@@ -1,4 +1,3 @@
-// src/routes/journaling.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import {
   FeatureHeader,
@@ -6,7 +5,7 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { BookHeart, Lightbulb, HandHeart, Presentation } from "lucide-react";
 import GratitudeJournalView from "@/features/journaling/gratitude-journal-view";
 import CreativityJournalView from "@/features/journaling/creativity-journal-view";
@@ -57,43 +56,53 @@ function JournalingPage() {
       sidebarPosition="right"
     >
       <JournalingMetricsSync />
-
-      <Tabs defaultValue="gratitude" className="w-full">
-        <TabsList className="mb-4 grid grid-cols-4 w-full">
-          <TabsTrigger value="gratitude" className="flex gap-2 items-center">
-            <HandHeart className="h-4 w-4" />
-            <span className="hidden sm:inline">Gratitude</span>
-          </TabsTrigger>
-          <TabsTrigger value="creativity" className="flex gap-2 items-center">
-            <Lightbulb className="h-4 w-4" />
-            <span className="hidden sm:inline">Creativity</span>
-          </TabsTrigger>
-          <TabsTrigger value="questions" className="flex gap-2 items-center">
-            <Presentation className="h-4 w-4" />
-            <span className="hidden sm:inline">Questions</span>
-          </TabsTrigger>
-          <TabsTrigger value="affirmations" className="flex gap-2 items-center">
-            <BookHeart className="h-4 w-4" />
-            <span className="hidden sm:inline">Affirmations</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="gratitude">
-          <GratitudeJournalView />
-        </TabsContent>
-
-        <TabsContent value="creativity">
-          <CreativityJournalView />
-        </TabsContent>
-
-        <TabsContent value="questions">
-          <QuestionJournalView />
-        </TabsContent>
-
-        <TabsContent value="affirmations">
-          <AffirmationView />
-        </TabsContent>
-      </Tabs>
+      <ReusableTabs
+        tabs={[
+          {
+            id: "gratitude",
+            label: (
+              <span className="flex gap-2 items-center">
+                <HandHeart className="h-4 w-4" />
+                <span className="hidden sm:inline">Gratitude</span>
+              </span>
+            ),
+            content: <GratitudeJournalView />,
+          },
+          {
+            id: "creativity",
+            label: (
+              <span className="flex gap-2 items-center">
+                <Lightbulb className="h-4 w-4" />
+                <span className="hidden sm:inline">Creativity</span>
+              </span>
+            ),
+            content: <CreativityJournalView />,
+          },
+          {
+            id: "questions",
+            label: (
+              <span className="flex gap-2 items-center">
+                <Presentation className="h-4 w-4" />
+                <span className="hidden sm:inline">Questions</span>
+              </span>
+            ),
+            content: <QuestionJournalView />,
+          },
+          {
+            id: "affirmations",
+            label: (
+              <span className="flex gap-2 items-center">
+                <BookHeart className="h-4 w-4" />
+                <span className="hidden sm:inline">Affirmations</span>
+              </span>
+            ),
+            content: <AffirmationView />,
+          },
+        ]}
+        defaultTabId="gratitude"
+        className="w-full"
+        tabsListClassName="mb-4 grid grid-cols-4 w-full"
+      />
     </FeatureLayout>
   );
 }

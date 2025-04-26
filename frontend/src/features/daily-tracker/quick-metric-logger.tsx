@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ReusableCard from "@/components/reusable/reusable-card";
 import dataStore, {
   addEntry,
@@ -29,6 +28,7 @@ import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
 import QuickMetricLoggerCardItem from "./quick-metric-logger-card-item";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const QuickMetricLogger = () => {
   // State
@@ -39,26 +39,21 @@ const QuickMetricLogger = () => {
     "all" | "tracked" | "nottracked"
   >("all");
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
-    // Create a date at midnight local time to avoid timezone issues
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today;
   });
   const [viewMode, setViewMode] = useState<"list" | "cards">("cards");
 
-  // Access store data
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
 
-  // Ensure selected date stays in sync with startOfDay
   useEffect(() => {
-    // Keep selected date at start of day to avoid time-of-day complications
     setSelectedDate(startOfDay(selectedDate));
   }, []);
 
-  // Get all unique categories from metrics
   const uniqueCategories = useMemo(() => {
     const categorySet = new Set<string>();
     metrics.forEach((metric: Metric) => {
@@ -72,20 +67,16 @@ const QuickMetricLogger = () => {
     return Array.from(categorySet).sort();
   }, [metrics, categories]);
 
-  // Filter metrics based on search, categories, and completion status
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
-      // Skip inactive metrics
       if (!metric.active) return false;
 
-      // Check search term
       const matchesSearch =
         !searchTerm ||
         metric.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (metric.description &&
           metric.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      // Check categories
       const matchesCategory =
         selectedCategories.length === 0 ||
         (metric.category_id &&
@@ -93,7 +84,6 @@ const QuickMetricLogger = () => {
             categories.find((c) => c.id === metric.category_id)?.name || ""
           ));
 
-      // Check if metric has a calendar display attribute
       const matchesCalendarTracked =
         showCalendarTracked === "all" ||
         (showCalendarTracked === "tracked" &&
@@ -101,9 +91,7 @@ const QuickMetricLogger = () => {
         (showCalendarTracked === "nottracked" &&
           metric.schedule_days?.includes(-1));
 
-      // Check if metric is completed for today
       if (showOnlyIncomplete) {
-        // Use startOfDay format for consistent date comparison
         const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
         const todayLog = dailyLogs.find((log: DailyLog) => {
@@ -114,7 +102,6 @@ const QuickMetricLogger = () => {
           );
         });
 
-        // For boolean metrics, we consider them incomplete if there's no log or the log value is false
         if (metric.type === "boolean") {
           if (!todayLog)
             return matchesSearch && matchesCategory && matchesCalendarTracked;
@@ -132,7 +119,6 @@ const QuickMetricLogger = () => {
           }
         }
 
-        // For non-boolean metrics, we consider them incomplete if there's no log
         return (
           !todayLog &&
           matchesSearch &&
@@ -154,7 +140,6 @@ const QuickMetricLogger = () => {
     categories,
   ]);
 
-  // Group metrics by category for card view
   const groupedMetrics = useMemo(() => {
     const result: Record<string, Metric[]> = {};
 
@@ -170,7 +155,6 @@ const QuickMetricLogger = () => {
       result[categoryName].push(metric);
     });
 
-    // Sort metrics by name within each category
     Object.keys(result).forEach((category) => {
       result[category].sort((a, b) => a.name.localeCompare(b.name));
     });
@@ -178,21 +162,15 @@ const QuickMetricLogger = () => {
     return result;
   }, [filteredMetrics, categories]);
 
-  // Check if a metric is completed for the selected date
   const isMetricCompleted = (metric: Metric) => {
-    // Use consistent date format for comparison
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
     const todayLog = dailyLogs.find((log: DailyLog) => {
-      // Ensure log date is also processed as YYYY-MM-DD local time
       let logDate;
       if (typeof log.date === "string") {
-        // Handle string date format
-        // Add T00:00:00 to ensure it's parsed in local timezone
         logDate = new Date(log.date);
         logDate.setHours(0, 0, 0, 0);
       } else {
-        // Handle Date object
         logDate = new Date(log.date);
         logDate.setHours(0, 0, 0, 0);
       }
@@ -205,7 +183,6 @@ const QuickMetricLogger = () => {
 
     if (!todayLog) return false;
 
-    // For boolean metrics, we check if the value is true
     if (metric.type === "boolean") {
       try {
         return JSON.parse(todayLog.value) === true;
@@ -215,15 +192,12 @@ const QuickMetricLogger = () => {
       }
     }
 
-    // For other metrics, we consider them completed if there's a log
     return true;
   };
 
-  // Toggle completion for a boolean metric
   const toggleMetricCompletion = async (metric: Metric) => {
     if (metric.type !== "boolean") return;
 
-    // Use consistent date format for comparison
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
     const todayLog = dailyLogs.find((log: DailyLog) => {
@@ -235,7 +209,6 @@ const QuickMetricLogger = () => {
     });
 
     try {
-      // If log exists, toggle its value
       if (todayLog) {
         let currentValue;
         try {
@@ -259,13 +232,11 @@ const QuickMetricLogger = () => {
             `${metric.name} ${newValue ? "completed" : "uncompleted"}`
           );
         }
-      }
-      // If no log exists, create a new one
-      else {
+      } else {
         const newLog = {
           date: selectedDate,
           metric_id: metric.id,
-          value: "true", // JSON.stringify(true)
+          value: "true",
           notes: "",
         };
 
@@ -281,17 +252,13 @@ const QuickMetricLogger = () => {
     }
   };
 
-  // Toggle calendar tracking for a metric
   const toggleCalendarTracking = async (metric: Metric) => {
     try {
       let scheduleDays = [...(metric.schedule_days || [])];
 
-      // If -1 exists, remove it (enable calendar tracking)
       if (scheduleDays.includes(-1)) {
         scheduleDays = scheduleDays.filter((day) => day !== -1);
-      }
-      // Otherwise, add it (disable calendar tracking)
-      else {
+      } else {
         scheduleDays.push(-1);
       }
 
@@ -313,7 +280,6 @@ const QuickMetricLogger = () => {
     }
   };
 
-  // Delete a metric
   const handleDeleteMetric = async (metric: Metric) => {
     try {
       await ApiService.deleteRecord(metric.id);
@@ -340,7 +306,6 @@ const QuickMetricLogger = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         <div className="flex flex-wrap gap-2 items-center">
           <Input
             type="date"
@@ -355,7 +320,6 @@ const QuickMetricLogger = () => {
             }}
             className="w-40"
           />
-
           <Button
             onClick={() => {
               const newDate = new Date();
@@ -367,7 +331,6 @@ const QuickMetricLogger = () => {
           >
             Today
           </Button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -394,9 +357,7 @@ const QuickMetricLogger = () => {
                   {category}
                 </DropdownMenuCheckboxItem>
               ))}
-
               <DropdownMenuSeparator />
-
               <DropdownMenuLabel>Options</DropdownMenuLabel>
               <div className="p-2">
                 <div className="flex items-center justify-between">
@@ -408,22 +369,20 @@ const QuickMetricLogger = () => {
                   />
                 </div>
               </div>
-
               <DropdownMenuSeparator />
-
               <DropdownMenuLabel>Calendar Tracking</DropdownMenuLabel>
               <div className="p-2">
-                <Tabs
-                  value={showCalendarTracked}
-                  onValueChange={(v) => setShowCalendarTracked(v as any)}
+                <ReusableTabs
+                  tabs={[
+                    { id: "all", label: "All", content: null },
+                    { id: "tracked", label: "Tracked", content: null },
+                    { id: "nottracked", label: "Not Tracked", content: null },
+                  ]}
+                  defaultTabId={showCalendarTracked}
+                  onChange={(v) => setShowCalendarTracked(v as any)}
                   className="w-full"
-                >
-                  <TabsList className="w-full grid grid-cols-3">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="tracked">Tracked</TabsTrigger>
-                    <TabsTrigger value="nottracked">Not Tracked</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                  tabsListClassName="w-full grid grid-cols-3"
+                />
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -445,7 +404,6 @@ const QuickMetricLogger = () => {
           </Button>
         </div>
       </div>
-
       {hasNoMetrics && (
         <div className="space-y-2 text-center flex flex-col items-center">
           <p className="text-muted-foreground py-8 text-center">

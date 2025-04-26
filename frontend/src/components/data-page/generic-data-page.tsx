@@ -1,6 +1,4 @@
-// src/components/data-page/generic-data-page.tsx
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, Table, ListPlus } from "lucide-react";
 import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
@@ -9,6 +7,7 @@ import { FieldDefinition } from "@/types/types";
 import { cn } from "@/lib/utils";
 import { DataStoreName } from "@/store/data-store";
 import { CustomTab } from "./data-page";
+import ReusableTabs, { TabItem } from "@/components/reusable/reusable-tabs";
 
 export default function GenericDataPage({
   datasetId,
@@ -41,7 +40,6 @@ export default function GenericDataPage({
 }) {
   const [key, setKey] = useState(0); // Used to force refresh components
 
-  // Function to refresh data when changes are made
   const handleDataChange = () => {
     setKey((prev) => prev + 1);
     if (onDataChange) {
@@ -49,13 +47,11 @@ export default function GenericDataPage({
     }
   };
 
-  // Organize custom tabs by position
   const beforeTabs = customTabs.filter(
     (tab) => tab.position === "before" || !tab.position
   );
   const afterTabs = customTabs.filter((tab) => tab.position === "after");
 
-  // Generate the list of standard tabs based on disabled options
   const standardTabsList = [
     !disableTableView
       ? {
@@ -110,10 +106,15 @@ export default function GenericDataPage({
       : null,
   ].filter((tab): tab is NonNullable<typeof tab> => tab !== null);
 
-  // Combine tabs in order: beforeTabs, standard tabs, afterTabs
-  const allTabs = [...beforeTabs, ...standardTabsList, ...afterTabs];
+  const allTabs = [...beforeTabs, ...standardTabsList, ...afterTabs].map(
+    (tab): TabItem => ({
+      id: tab.id,
+      label: tab.label,
+      icon: tab.icon,
+      content: tab.content,
+    })
+  );
 
-  // Ensure default tab exists in the tabs list
   const validDefaultTab = allTabs.some((tab) => tab.id === defaultTab)
     ? defaultTab
     : allTabs.length > 0
@@ -132,30 +133,15 @@ export default function GenericDataPage({
       </div>
 
       {allTabs.length > 0 ? (
-        <Tabs defaultValue={validDefaultTab} className="w-full space-y-6">
-          <TabsList
-            className={cn("w-full", {
-              "overflow-x-auto": allTabs.length > 4,
-            })}
-          >
-            {allTabs.map((tab) => (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className="flex items-center gap-2"
-              >
-                {tab.icon}
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {allTabs.map((tab) => (
-            <TabsContent key={tab.id} value={tab.id} className="mt-6 w-full">
-              {tab.content}
-            </TabsContent>
-          ))}
-        </Tabs>
+        <ReusableTabs
+          tabs={allTabs}
+          defaultTabId={validDefaultTab}
+          className="w-full space-y-6"
+          tabsListClassName={cn({
+            "overflow-x-auto": allTabs.length > 4,
+          })}
+          tabsContentClassName="mt-6 w-full"
+        />
       ) : (
         <div className="text-center p-12 border rounded-md bg-muted/10 w-full">
           <p className="text-muted-foreground">

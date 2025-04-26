@@ -1,15 +1,13 @@
-// src/features/dexa/visualization/trends-tab.tsx
 import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/date-utils";
 import CustomLineChart from "@/components/charts/line-chart";
 import CustomComposedChart from "@/components/charts/composed-chart";
 import { DEXAScan } from "@/store/dexa-definitions";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
   const [activeTab, setActiveTab] = useState("bodyFat");
 
-  // Get body weight trend data
   const getBodyWeightTrendData = () => {
     return data
       .map((item) => ({
@@ -20,7 +18,6 @@ const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get lean vs fat trend data
   const getLeanVsFatTrendData = () => {
     return data
       .map((item) => ({
@@ -33,7 +30,6 @@ const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get symmetry trend data
   const getSymmetryTrendData = () => {
     return data
       .map((item) => ({
@@ -61,9 +57,7 @@ const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Custom tooltip formatter for percentage values
   const bodyFatTooltipFormatter = (value: any) => {
-    // If the value is stored as decimal (less than 1), convert to percentage
     if (value < 1 && value > 0) {
       return `${(value * 100).toFixed(1)}%`;
     }
@@ -72,144 +66,162 @@ const TrendsTab = ({ data }: { data: DEXAScan[] }) => {
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="bodyFat">Body Fat %</TabsTrigger>
-          <TabsTrigger value="bodyWeight">Body Weight</TabsTrigger>
-          <TabsTrigger value="leanFat">Lean vs Fat</TabsTrigger>
-          <TabsTrigger value="symmetry">Symmetry</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="bodyFat" className="mt-6">
-          <div className="space-y-6">
-            <CustomLineChart
-              data={data
-                .map((item) => ({
-                  date: formatDate(item.date),
-                  bodyFat: item.total_body_fat_percentage * 100 || 0,
-                  dateObj: item.date,
-                }))
-                .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())}
-              lines={[
-                {
-                  dataKey: "bodyFat",
-                  name: "Body Fat",
-                  color: "#8884d8",
-                  unit: "%",
-                  strokeWidth: 2,
-                  activeDot: { r: 8 },
-                },
-              ]}
-              xAxisKey="date"
-              yAxisUnit="%"
-              title="Body Fat Percentage Trend"
-              tooltipFormatter={bodyFatTooltipFormatter}
-              height={400}
-            />
-
-            <CustomLineChart
-              data={data
-                .map((item) => ({
-                  date: formatDate(item.date),
-                  vatMass: item.vat_mass_lbs || 0,
-                  dateObj: item.date,
-                }))
-                .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())}
-              lines={[
-                {
-                  dataKey: "vatMass",
-                  name: "VAT Mass",
-                  color: "#FF8042",
-                  unit: " lbs",
-                  strokeWidth: 2,
-                  activeDot: { r: 8 },
-                },
-              ]}
-              xAxisKey="date"
-              yAxisUnit=" lbs"
-              title="VAT Mass Trend"
-              height={400}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="bodyWeight" className="mt-6">
-          <CustomLineChart
-            data={getBodyWeightTrendData()}
-            lines={[
-              {
-                dataKey: "weight",
-                name: "Body Weight",
-                color: "#FF8042",
-                unit: "lbs",
-                strokeWidth: 2,
-                activeDot: { r: 8 },
-              },
-            ]}
-            xAxisKey="date"
-            yAxisUnit=" lbs"
-            title="Body Weight Trend"
-            height={400}
-          />
-        </TabsContent>
-
-        <TabsContent value="leanFat" className="mt-6">
-          <CustomComposedChart
-            data={getLeanVsFatTrendData()}
-            elements={[
-              {
-                type: "area",
-                dataKey: "Total Weight",
-                color: "#8884d8",
-                opacity: 0.2,
-              },
-              {
-                type: "bar",
-                dataKey: "Fat Tissue",
-                color: "#FF8042",
-                barSize: 20,
-              },
-              {
-                type: "line",
-                dataKey: "Lean Tissue",
-                color: "#82ca9d",
-                strokeWidth: 2,
-              },
-            ]}
-            xAxisKey="date"
-            yAxisUnit=" lbs"
-            title="Lean vs Fat Tissue Trend"
-            height={400}
-          />
-        </TabsContent>
-
-        <TabsContent value="symmetry" className="mt-6">
-          <CustomLineChart
-            data={getSymmetryTrendData()}
-            lines={[
-              {
-                dataKey: "Arms Symmetry",
-                color: "#8884d8",
-                strokeWidth: 2,
-                activeDot: { r: 8 },
-                unit: "%",
-              },
-              {
-                dataKey: "Legs Symmetry",
-                color: "#82ca9d",
-                strokeWidth: 2,
-                activeDot: { r: 8 },
-                unit: "%",
-              },
-            ]}
-            xAxisKey="date"
-            yAxisUnit="%"
-            yAxisDomain={[0, 100]}
-            title="Body Symmetry Trend"
-            height={400}
-          />
-        </TabsContent>
-      </Tabs>
+      <ReusableTabs
+        tabs={[
+          {
+            id: "bodyFat",
+            label: "Body Fat %",
+            content: (
+              <div className="mt-6 space-y-6">
+                <CustomLineChart
+                  data={data
+                    .map((item) => ({
+                      date: formatDate(item.date),
+                      bodyFat: item.total_body_fat_percentage * 100 || 0,
+                      dateObj: item.date,
+                    }))
+                    .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())}
+                  lines={[
+                    {
+                      dataKey: "bodyFat",
+                      name: "Body Fat",
+                      color: "#8884d8",
+                      unit: "%",
+                      strokeWidth: 2,
+                      activeDot: { r: 8 },
+                    },
+                  ]}
+                  xAxisKey="date"
+                  yAxisUnit="%"
+                  title="Body Fat Percentage Trend"
+                  tooltipFormatter={bodyFatTooltipFormatter}
+                  height={400}
+                />
+                <CustomLineChart
+                  data={data
+                    .map((item) => ({
+                      date: formatDate(item.date),
+                      vatMass: item.vat_mass_lbs || 0,
+                      dateObj: item.date,
+                    }))
+                    .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime())}
+                  lines={[
+                    {
+                      dataKey: "vatMass",
+                      name: "VAT Mass",
+                      color: "#FF8042",
+                      unit: " lbs",
+                      strokeWidth: 2,
+                      activeDot: { r: 8 },
+                    },
+                  ]}
+                  xAxisKey="date"
+                  yAxisUnit=" lbs"
+                  title="VAT Mass Trend"
+                  height={400}
+                />
+              </div>
+            ),
+          },
+          {
+            id: "bodyWeight",
+            label: "Body Weight",
+            content: (
+              <div className="mt-6">
+                <CustomLineChart
+                  data={getBodyWeightTrendData()}
+                  lines={[
+                    {
+                      dataKey: "weight",
+                      name: "Body Weight",
+                      color: "#FF8042",
+                      unit: "lbs",
+                      strokeWidth: 2,
+                      activeDot: { r: 8 },
+                    },
+                  ]}
+                  xAxisKey="date"
+                  yAxisUnit=" lbs"
+                  title="Body Weight Trend"
+                  height={400}
+                />
+              </div>
+            ),
+          },
+          {
+            id: "leanFat",
+            label: "Lean vs Fat",
+            content: (
+              <div className="mt-6">
+                <CustomComposedChart
+                  data={getLeanVsFatTrendData()}
+                  elements={[
+                    {
+                      type: "area",
+                      dataKey: "Total Weight",
+                      color: "#8884d8",
+                      opacity: 0.2,
+                    },
+                    {
+                      type: "bar",
+                      dataKey: "Fat Tissue",
+                      color: "#FF8042",
+                      barSize: 20,
+                    },
+                    {
+                      type: "line",
+                      dataKey: "Lean Tissue",
+                      color: "#82ca9d",
+                      strokeWidth: 2,
+                    },
+                  ]}
+                  xAxisKey="date"
+                  yAxisUnit=" lbs"
+                  title="Lean vs Fat Tissue Trend"
+                  height={400}
+                />
+              </div>
+            ),
+          },
+          {
+            id: "symmetry",
+            label: "Symmetry",
+            content: (
+              <div className="mt-6">
+                <CustomLineChart
+                  data={getSymmetryTrendData()}
+                  lines={[
+                    {
+                      dataKey: "Arms Symmetry",
+                      color: "#8884d8",
+                      strokeWidth: 2,
+                      activeDot: { r: 8 },
+                      unit: "%",
+                    },
+                    {
+                      dataKey: "Legs Symmetry",
+                      color: "#82ca9d",
+                      strokeWidth: 2,
+                      activeDot: { r: 8 },
+                      unit: "%",
+                    },
+                  ]}
+                  xAxisKey="date"
+                  yAxisUnit="%"
+                  yAxisDomain={[0, 100]}
+                  title="Body Symmetry Trend"
+                  height={400}
+                />
+              </div>
+            ),
+          },
+        ]}
+        defaultTabId={activeTab}
+        onChange={setActiveTab}
+        className="w-full"
+        tabsListClassName="grid w-full grid-cols-4"
+        tabsContentClassName=""
+      />
     </div>
   );
 };

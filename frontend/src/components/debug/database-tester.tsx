@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   GetDatasets,
   GetRecords,
@@ -17,6 +16,7 @@ import {
 } from "../../../wailsjs/go/backend/App";
 import { Search, RefreshCw } from "lucide-react";
 import ReusableSelect from "../reusable/reusable-select";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const DatabaseTester = () => {
   const [datasets, setDatasets] = useState([]);
@@ -28,12 +28,10 @@ const DatabaseTester = () => {
   const [useRelations, setUseRelations] = useState(true);
   const [error, setError] = useState("");
 
-  // Load datasets on component mount
   useEffect(() => {
     loadDatasets();
   }, []);
 
-  // Load datasets from backend
   const loadDatasets = async () => {
     try {
       setIsLoading(true);
@@ -48,7 +46,6 @@ const DatabaseTester = () => {
     }
   };
 
-  // Load records for selected dataset
   const loadRecords = async () => {
     if (!selectedDataset) return;
 
@@ -57,7 +54,6 @@ const DatabaseTester = () => {
       setError("");
       setRecords([]);
 
-      // Choose whether to fetch with relations or not
       const data = useRelations
         ? await GetRecordsWithRelations(selectedDataset)
         : await GetRecords(selectedDataset);
@@ -71,7 +67,6 @@ const DatabaseTester = () => {
     }
   };
 
-  // Load specific record by ID
   const loadRecordById = async () => {
     if (!recordId) {
       setError("Please enter a record ID");
@@ -93,12 +88,10 @@ const DatabaseTester = () => {
     }
   };
 
-  // Format JSON for display
   const formatJSON = (json: any) => {
     return JSON.stringify(json, null, 2);
   };
 
-  // Handle dataset selection
   const handleDatasetChange = (value: any) => {
     setSelectedDataset(value);
     setRecords([]);
@@ -116,7 +109,6 @@ const DatabaseTester = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Dataset Selection */}
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium">Select Dataset:</label>
               <div className="flex space-x-2">
@@ -139,8 +131,6 @@ const DatabaseTester = () => {
                 </Button>
               </div>
             </div>
-
-            {/* Relations Toggle */}
             <div className="flex items-center space-x-2">
               <Button
                 variant={useRelations ? "default" : "outline"}
@@ -157,8 +147,6 @@ const DatabaseTester = () => {
                 No Relations
               </Button>
             </div>
-
-            {/* Load Records Button */}
             <Button
               onClick={loadRecords}
               disabled={!selectedDataset || isLoading}
@@ -166,8 +154,6 @@ const DatabaseTester = () => {
             >
               {isLoading ? "Loading..." : "Load Records"}
             </Button>
-
-            {/* Record ID Search */}
             <div className="flex space-x-2">
               <Input
                 placeholder="Enter record ID"
@@ -178,8 +164,6 @@ const DatabaseTester = () => {
                 <Search className="h-4 w-4" />
               </Button>
             </div>
-
-            {/* Error Display */}
             {error && (
               <div className="p-2 text-sm text-white bg-red-500 rounded">
                 {error}
@@ -188,85 +172,91 @@ const DatabaseTester = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Results Display */}
-      <Tabs defaultValue="records">
-        <TabsList>
-          <TabsTrigger value="records">Records ({records.length})</TabsTrigger>
-          <TabsTrigger value="record">Single Record</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="records" className="space-y-4">
-          {records.length > 0 ? (
-            <Card>
-              <CardContent className="p-4">
-                <div className="overflow-auto max-h-[500px]">
-                  {records.slice(0, 5).map((record: any, index) => (
-                    <div key={record.id} className="mb-4">
-                      <h3 className="font-bold">
-                        Record {index + 1} (ID: {record.id})
-                      </h3>
-
-                      {/* Display relation fields separately */}
-                      <div className="mb-2">
-                        <h4 className="text-sm font-semibold text-muted-foreground">
-                          Relation Fields:
-                        </h4>
-                        <ul className="text-sm">
-                          {Object.keys(record)
-                            .filter((key) => key.endsWith("_data"))
-                            .map((key) => (
-                              <li key={key}>
-                                <span className="font-medium">
-                                  {key.replace("_data", "")}:{" "}
-                                </span>
-                                {record[key] ? "✅ Resolved" : "❌ Failed"}
-                              </li>
-                            ))}
-                        </ul>
+      <ReusableTabs
+        tabs={[
+          {
+            id: "records",
+            label: `Records (${records.length})`,
+            content: (
+              <div className="space-y-4">
+                {records.length > 0 ? (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="overflow-auto max-h-[500px]">
+                        {records.slice(0, 5).map((record: any, index) => (
+                          <div key={record.id} className="mb-4">
+                            <h3 className="font-bold">
+                              Record {index + 1} (ID: {record.id})
+                            </h3>
+                            <div className="mb-2">
+                              <h4 className="text-sm font-semibold text-muted-foreground">
+                                Relation Fields:
+                              </h4>
+                              <ul className="text-sm">
+                                {Object.keys(record)
+                                  .filter((key) => key.endsWith("_data"))
+                                  .map((key) => (
+                                    <li key={key}>
+                                      <span className="font-medium">
+                                        {key.replace("_data", "")}:{" "}
+                                      </span>
+                                      {record[key]
+                                        ? "✅ Resolved"
+                                        : "❌ Failed"}
+                                    </li>
+                                  ))}
+                              </ul>
+                            </div>
+                            <pre className="p-2 text-xs bg-muted rounded overflow-auto max-h-[300px]">
+                              {formatJSON(record)}
+                            </pre>
+                          </div>
+                        ))}
+                        {records.length > 5 && (
+                          <div className="text-center text-muted-foreground">
+                            Showing 5 of {records.length} records
+                          </div>
+                        )}
                       </div>
-
-                      <pre className="p-2 text-xs bg-muted rounded overflow-auto max-h-[300px]">
-                        {formatJSON(record)}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center p-8 text-muted-foreground">
+                    No records to display. Select a dataset and click "Load
+                    Records".
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            id: "record",
+            label: "Single Record",
+            content: (
+              <>
+                {selectedRecord ? (
+                  <Card>
+                    <CardContent className="p-4">
+                      <h3 className="font-bold mb-2">
+                        Record ID: {selectedRecord.id}
+                      </h3>
+                      <pre className="p-2 text-xs bg-muted rounded overflow-auto max-h-[500px]">
+                        {formatJSON(selectedRecord)}
                       </pre>
-                    </div>
-                  ))}
-
-                  {records.length > 5 && (
-                    <div className="text-center text-muted-foreground">
-                      Showing 5 of {records.length} records
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="text-center p-8 text-muted-foreground">
-              No records to display. Select a dataset and click "Load Records".
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="record">
-          {selectedRecord ? (
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-bold mb-2">
-                  Record ID: {selectedRecord.id}
-                </h3>
-                <pre className="p-2 text-xs bg-muted rounded overflow-auto max-h-[500px]">
-                  {formatJSON(selectedRecord)}
-                </pre>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="text-center p-8 text-muted-foreground">
-              No record to display. Enter a record ID and click the search
-              button.
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="text-center p-8 text-muted-foreground">
+                    No record to display. Enter a record ID and click the search
+                    button.
+                  </div>
+                )}
+              </>
+            ),
+          },
+        ]}
+        defaultTabId="records"
+      />
     </div>
   );
 };
