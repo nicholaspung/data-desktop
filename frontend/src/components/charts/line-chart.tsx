@@ -1,4 +1,3 @@
-// src/components/charts/line-chart.tsx
 import React from "react";
 import {
   LineChart,
@@ -12,8 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { COLORS } from "@/lib/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { DataPoint, LineConfig, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
@@ -44,16 +42,14 @@ export default function CustomLineChart({
   className?: string;
 }) {
   return (
-    <Card className={cn("", className)}>
-      {title && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
-        </CardHeader>
-      )}
-      <CardContent>
+    <ReusableCard
+      showHeader={!!title}
+      title={title}
+      description={
+        description && <p className="text-muted-foreground">{description}</p>
+      }
+      cardClassName={className}
+      content={
         <div style={{ height: `${height}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
@@ -66,7 +62,6 @@ export default function CustomLineChart({
                 )}
               />
               <Legend />
-
               {lines.map((line, index) => (
                 <Line
                   key={`line-${line.dataKey}`}
@@ -80,7 +75,6 @@ export default function CustomLineChart({
                   connectNulls={line.connectNulls || false}
                 />
               ))}
-
               {referenceLines.map((refLine, index) => (
                 <ReferenceLine
                   key={`ref-line-${index}`}
@@ -96,7 +90,7 @@ export default function CustomLineChart({
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

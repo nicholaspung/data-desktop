@@ -1,4 +1,3 @@
-// src/components/charts/bar-chart.tsx
 import React from "react";
 import {
   BarChart,
@@ -13,8 +12,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { COLORS } from "@/lib/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { BarConfig, DataPoint, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter, defaultGetColorByValue } from "./chart-utils";
@@ -47,16 +45,14 @@ export default function CustomBarChart({
   className?: string;
 }) {
   return (
-    <Card className={cn("", className)}>
-      {title && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
-        </CardHeader>
-      )}
-      <CardContent>
+    <ReusableCard
+      showHeader={!!title}
+      title={title}
+      description={
+        description && <p className="text-muted-foreground">{description}</p>
+      }
+      cardClassName={className}
+      content={
         <div style={{ height: `${height}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
@@ -70,7 +66,6 @@ export default function CustomBarChart({
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-
               {layout === "horizontal" ? (
                 <>
                   <XAxis dataKey={xAxisKey} />
@@ -82,14 +77,12 @@ export default function CustomBarChart({
                   <YAxis dataKey={xAxisKey} type="category" width={100} />
                 </>
               )}
-
               <Tooltip
                 content={(props) => (
                   <CustomTooltip {...props} formatter={tooltipFormatter} />
                 )}
               />
               <Legend />
-
               {bars.map((bar, index) => (
                 <Bar
                   key={`bar-${bar.dataKey}`}
@@ -112,7 +105,6 @@ export default function CustomBarChart({
                     ))}
                 </Bar>
               ))}
-
               {referenceLines.map((refLine, index) => (
                 <ReferenceLine
                   key={`ref-line-${index}`}
@@ -129,7 +121,7 @@ export default function CustomBarChart({
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

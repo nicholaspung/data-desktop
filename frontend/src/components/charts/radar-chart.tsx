@@ -1,4 +1,3 @@
-// src/components/charts/radar-chart.tsx
 import React from "react";
 import {
   RadarChart as RechartsRadarChart,
@@ -11,8 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { COLORS } from "@/lib/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
 import { RadarConfig, RadarDataPoint } from "./charts";
@@ -49,16 +47,14 @@ export default function CustomRadarChart({
   className?: string;
 }) {
   return (
-    <Card className={cn("", className)}>
-      {title && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
-        </CardHeader>
-      )}
-      <CardContent>
+    <ReusableCard
+      showHeader={!!title}
+      title={title}
+      description={
+        description && <p className="text-muted-foreground">{description}</p>
+      }
+      cardClassName={className}
+      content={
         <div
           style={{
             height: `${height}px`,
@@ -74,7 +70,6 @@ export default function CustomRadarChart({
                 domain={polarRadiusProps.domain}
                 orientation={polarRadiusProps.orientation}
               />
-
               {radars.map((radar, index) => (
                 <Radar
                   key={`radar-${radar.dataKey}`}
@@ -85,7 +80,6 @@ export default function CustomRadarChart({
                   fillOpacity={radar.fillOpacity || 0.6}
                 />
               ))}
-
               <Tooltip
                 content={(props) => (
                   <CustomTooltip {...props} formatter={tooltipFormatter} />
@@ -95,7 +89,7 @@ export default function CustomRadarChart({
             </RechartsRadarChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

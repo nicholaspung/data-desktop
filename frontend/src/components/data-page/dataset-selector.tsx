@@ -1,9 +1,8 @@
-// src/components/data-page/dataset-selector.tsx
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import GenericDataPage from "@/components/data-page/generic-data-page";
 import ReusableSelect from "../reusable/reusable-select";
 import { DatasetConfig } from "./data-page";
+import ReusableCard from "../reusable/reusable-card";
 
 export function DatasetSelector({
   datasets,
@@ -22,23 +21,22 @@ export function DatasetSelector({
 
   if (datasets.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-center text-muted-foreground">
+      <ReusableCard
+        showHeader={false}
+        content={
+          <p className="text-center text-muted-foreground pt-6">
             No datasets configured
           </p>
-        </CardContent>
-      </Card>
+        }
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <ReusableCard
+        title={title}
+        content={
           <ReusableSelect
             options={datasets}
             value={selectedDatasetId}
@@ -52,9 +50,8 @@ export function DatasetSelector({
             placeholder={"Select a dataset"}
             triggerClassName="w-full md:w-[300px]"
           />
-        </CardContent>
-      </Card>
-
+        }
+      />
       {selectedDataset && (
         <GenericDataPage
           key={selectedDataset.id}

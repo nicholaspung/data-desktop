@@ -1,4 +1,3 @@
-// src/components/charts/composed-chart.tsx
 import React from "react";
 import {
   ComposedChart as RechartsComposedChart,
@@ -14,8 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { COLORS } from "@/lib/date-utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { ChartElement, DataPoint, ReferenceLineConfig } from "./charts";
 import { CustomTooltip } from "./custom-tooltip";
 import { defaultFormatter } from "./chart-utils";
@@ -45,7 +43,6 @@ export default function CustomComposedChart({
   tooltipFormatter?: (value: any, name: string, props: any) => React.ReactNode;
   height?: number;
   referenceLines?: ReferenceLineConfig[];
-  // Dual y-axis support
   secondYAxis?: {
     unit?: string;
     domain?: [number | string, number | string];
@@ -101,16 +98,14 @@ export default function CustomComposedChart({
   };
 
   return (
-    <Card className={cn("", className)}>
-      {title && (
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && (
-            <p className="text-muted-foreground">{description}</p>
-          )}
-        </CardHeader>
-      )}
-      <CardContent>
+    <ReusableCard
+      showHeader={!!title}
+      title={title}
+      description={
+        description && <p className="text-muted-foreground">{description}</p>
+      }
+      cardClassName={className}
+      content={
         <div style={{ height: `${height}px` }}>
           <ResponsiveContainer width="100%" height="100%">
             <RechartsComposedChart
@@ -167,7 +162,7 @@ export default function CustomComposedChart({
             </RechartsComposedChart>
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

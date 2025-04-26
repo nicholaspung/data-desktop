@@ -1,8 +1,6 @@
-// src/components/data-table/batch-entry-table.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Save, Trash, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -35,6 +33,7 @@ import { useStore } from "@tanstack/react-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
+import ReusableCard from "../reusable/reusable-card";
 
 export function BatchEntryTable({
   datasetId,
@@ -58,21 +57,17 @@ export function BatchEntryTable({
     datasetId,
     title,
   });
-  // Create a storage key specific to this dataset
   const storageKey = `batch_entry_${datasetId}`;
 
-  // Main state for entries
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
 
-  // Find relation fields
   const relationFields = fields.filter(
     (field) => field.isRelation && field.relatedDataset
   );
 
-  // Function to create a new empty entry
   function getEmptyEntry(): Record<string, any> {
     const entry: Record<string, any> = { id: crypto.randomUUID() };
 
@@ -97,14 +92,12 @@ export function BatchEntryTable({
     return entry;
   }
 
-  // Load entries from localStorage on initial render
   useEffect(() => {
     try {
       const savedEntries = localStorage.getItem(storageKey);
       if (savedEntries) {
         const parsedEntries = JSON.parse(savedEntries);
 
-        // Process the entries to convert date strings back to Date objects
         const processedEntries = parsedEntries.map(
           (entry: Record<string, any>) => {
             const processedEntry = { ...entry };
@@ -121,20 +114,16 @@ export function BatchEntryTable({
 
         setEntries(processedEntries);
 
-        // Only set hasSavedData to true if there are meaningful entries
-        // (more than 1 entry or 1 entry that has some filled data)
         const hasRealData = hasNonEmptyEntries(processedEntries);
         setHasSavedData(hasRealData);
 
         if (hasRealData) {
           toast.info("Loaded saved entries from your previous session");
         } else {
-          // If there's only empty data, remove it from storage to clean up
           localStorage.removeItem(storageKey);
           setEntries([getEmptyEntry()]);
         }
       } else {
-        // Initialize with a single empty entry if no saved data
         setEntries([getEmptyEntry()]);
       }
     } catch (error) {
@@ -143,16 +132,12 @@ export function BatchEntryTable({
     }
   }, [datasetId, fields]);
 
-  // Helper function to check if entries have meaningful data
   const hasNonEmptyEntries = (entriesArray: Record<string, any>[]) => {
-    // If there are multiple entries, we definitely have data
     if (entriesArray.length > 1) return true;
 
-    // If there's only one entry, check if it has any non-default values
     if (entriesArray.length === 1) {
       const entry = entriesArray[0];
 
-      // Check each field to see if it's been modified from default
       for (const field of fields) {
         const value = entry[field.key];
 
@@ -162,35 +147,26 @@ export function BatchEntryTable({
             break;
           case "number":
           case "percentage":
-            // If the value is significantly different from 0, it's been changed
             if (value !== 0 && value !== null && value !== undefined)
               return true;
             break;
           case "boolean":
-            // If boolean is true, it's been changed from default false
             if (value === true) return true;
             break;
           case "select-single":
-            // For select fields, check if a non-default option was selected
-            // If it has options and the first option is not selected (assuming first is default)
             if (field.options && field.options.length > 0) {
               const defaultValue = field.options[0].id;
               if (value && value !== defaultValue) return true;
-            }
-            // If there's a value but no options defined (should be rare)
-            else if (value && value.trim() !== "") {
+            } else if (value && value.trim() !== "") {
               return true;
             }
             break;
           case "select-multiple":
-            // For multi-select fields, check if the array has any items
             if (Array.isArray(value) && value.length > 0) {
               return true;
             }
             break;
           case "date":
-            // Date is more complex - most entries will have a date
-            // Here we could add special logic if needed
             break;
         }
       }
@@ -199,15 +175,12 @@ export function BatchEntryTable({
     return false;
   };
 
-  // Save entries to localStorage whenever they change
   useEffect(() => {
     if (entries.length > 0) {
       try {
-        // Check if there's meaningful data worth saving
         const hasData = hasNonEmptyEntries(entries);
 
         if (hasData) {
-          // Convert Date objects to ISO strings for safe storage
           const entriesToSave = entries.map((entry) => {
             const entryCopy = { ...entry };
 
@@ -226,7 +199,6 @@ export function BatchEntryTable({
           localStorage.setItem(storageKey, JSON.stringify(entriesToSave));
           setHasSavedData(true);
         } else {
-          // No meaningful data, remove from storage and don't show badge
           localStorage.removeItem(storageKey);
           setHasSavedData(false);
         }
@@ -236,7 +208,6 @@ export function BatchEntryTable({
     }
   }, [entries, datasetId, fields]);
 
-  // Add a new empty entry
   const addEntry = () => {
     if (entries.length >= maxBatchSize) {
       toast.warning(
@@ -247,12 +218,10 @@ export function BatchEntryTable({
     setEntries([...entries, getEmptyEntry()]);
   };
 
-  // Remove an entry
   const removeEntry = (index: number) => {
     const newEntries = [...entries];
     newEntries.splice(index, 1);
 
-    // If removing the last entry, add an empty one
     if (newEntries.length === 0) {
       newEntries.push(getEmptyEntry());
     }
@@ -260,7 +229,6 @@ export function BatchEntryTable({
     setEntries(newEntries);
   };
 
-  // Update an entry field
   const updateEntryField = (
     entryIndex: number,
     fieldKey: string,
@@ -271,22 +239,17 @@ export function BatchEntryTable({
     setEntries(newEntries);
   };
 
-  // Resolve relation display values to IDs using our utility function
   const resolveRelationRefs = async (entriesData: Record<string, any>[]) => {
-    // If no relation fields, just return the original data
     if (relationFields.length === 0) return entriesData;
 
     try {
-      // Use our utility function to resolve references
       return await resolveRelationReferences(entriesData, fields);
     } catch (error) {
       console.error("Error resolving relation references:", error);
-      // Return the original data if there's an error
       return entriesData;
     }
   };
 
-  // Submit all entries to the backend
   const submitEntries = async () => {
     if (entries.length === 0) {
       toast.error("No entries to submit");
@@ -296,37 +259,30 @@ export function BatchEntryTable({
     setIsSubmitting(true);
 
     try {
-      // Resolve relation references before submission
       const processedEntries = await resolveRelationRefs(entries);
 
-      // Prepare entries for submission (remove temporary id)
       const entriesToSubmit = processedEntries.map((entry) => {
         const rest = { ...entry };
-        delete rest.id; // Remove the temporary ID for submission
+        delete rest.id;
         return rest;
       });
 
-      // Use the importRecords API to batch import
       const count = await ApiService.importRecords(datasetId, entriesToSubmit);
 
       if (count > 0) {
         toast.success(`Successfully added ${count} ${title} records`);
 
-        // Clear entries from localStorage
         localStorage.removeItem(storageKey);
         setHasSavedData(false);
 
-        // Reset entries to a single empty one
         setEntries([getEmptyEntry()]);
 
-        await loadData(); // Reload data to reflect changes
+        await loadData();
 
-        // Call the success callback if provided
         if (onSuccess) {
           onSuccess();
         }
 
-        // Navigate to the data table view if handler is provided
         if (onNavigateToTable) {
           onNavigateToTable();
         }
@@ -341,7 +297,6 @@ export function BatchEntryTable({
     }
   };
 
-  // Clear all entries
   const clearEntries = () => {
     setEntries([getEmptyEntry()]);
     localStorage.removeItem(storageKey);
@@ -349,7 +304,6 @@ export function BatchEntryTable({
     toast.info("All entries cleared");
   };
 
-  // Handle CSV import with relation field resolution
   const handleImportCSV = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -359,17 +313,13 @@ export function BatchEntryTable({
     setIsSubmitting(true);
 
     try {
-      // Parse the CSV file
       const parsedData = await parseCSV(file, fields);
 
-      // Process relation fields
       const processedData = await resolveRelationRefs(parsedData);
 
-      // Limit to max batch size
       const limitedData = processedData.slice(0, maxBatchSize);
 
       if (limitedData.length > 0) {
-        // Add temporary IDs for React keys
         const dataWithIds = limitedData.map((item) => ({
           ...item,
           id: crypto.randomUUID(),
@@ -392,14 +342,12 @@ export function BatchEntryTable({
       toast.error("Failed to parse CSV file");
     } finally {
       setIsSubmitting(false);
-      // Reset file input
       if (event.target) {
         event.target.value = "";
       }
     }
   };
 
-  // Handle template download
   const handleDownloadTemplate = () => {
     const csvContent = createCSVTemplate(fields);
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -412,7 +360,6 @@ export function BatchEntryTable({
     document.body.removeChild(link);
   };
 
-  // Render a table cell based on the field type
   const renderCell = (
     entry: Record<string, any>,
     field: FieldDefinition,
@@ -420,21 +367,17 @@ export function BatchEntryTable({
   ) => {
     const value = entry[field.key];
 
-    // Set a minimum width for all cell contents
     const cellStyle = { minWidth: "80px", width: "100%" };
 
-    // Handle relation fields with dropdown
     if (field.isRelation && field.relatedDataset) {
       const options = generateOptionsForLoadRelationOptions(
         allData[field.relatedDataset as DataStoreName] || [],
         field
       );
 
-      // Convert empty string to placeholder value for display purposes
       const displayValue = value === "" ? "_none_" : value || "_none_";
 
       const onValueChange = (newValue: string) => {
-        // Convert placeholder value back to appropriate value when saving
         const valueToSave = newValue === "_none_" ? "" : newValue;
         updateEntryField(entryIndex, field.key, valueToSave);
       };
@@ -453,7 +396,6 @@ export function BatchEntryTable({
       );
     }
 
-    // Handle other field types
     switch (field.type) {
       case "text":
         return (
@@ -467,7 +409,6 @@ export function BatchEntryTable({
             />
           </div>
         );
-
       case "number":
       case "percentage":
         return (
@@ -487,7 +428,6 @@ export function BatchEntryTable({
             />
           </div>
         );
-
       case "boolean":
         return (
           <div className="flex justify-center" style={cellStyle}>
@@ -499,7 +439,6 @@ export function BatchEntryTable({
             />
           </div>
         );
-
       case "date":
         return (
           <div style={cellStyle}>
@@ -525,7 +464,6 @@ export function BatchEntryTable({
             </Popover>
           </div>
         );
-
       case "select-single":
         return (
           <ReusableSelect
@@ -536,7 +474,6 @@ export function BatchEntryTable({
             triggerClassName="w-full"
           />
         );
-
       case "select-multiple":
         return (
           <div style={{ minWidth: "500px", width: "100%" }}>
@@ -550,37 +487,34 @@ export function BatchEntryTable({
             />
           </div>
         );
-
       default:
         return <span style={cellStyle}>{JSON.stringify(value)}</span>;
     }
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CardTitle>{title} Batch Entry</CardTitle>
-          {hasSavedData && <SavedDataBadge />}
+    <ReusableCard
+      title={
+        <div className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            {title} Batch Entry
+            {hasSavedData && <SavedDataBadge />}
+          </div>
+          <BatchEntryImportButtons
+            fileInputRef={fileInputRef}
+            isSubmitting={isSubmitting}
+            handleImportCSV={handleImportCSV}
+            handleDownloadTemplate={handleDownloadTemplate}
+          />
         </div>
-        <BatchEntryImportButtons
-          fileInputRef={fileInputRef}
-          isSubmitting={isSubmitting}
-          handleImportCSV={handleImportCSV}
-          handleDownloadTemplate={handleDownloadTemplate}
-        />
-      </CardHeader>
-
-      <CardContent>
+      }
+      content={
         <div className="flex flex-col space-y-4">
-          {/* Status bar */}
           <div className="flex items-center justify-between">
             <Badge variant="outline">
               {entries.length} {entries.length === 1 ? "entry" : "entries"}
             </Badge>
-
             <div className="flex gap-2">
-              {/* Add Entry Button */}
               <Button
                 variant="outline"
                 size="sm"
@@ -590,8 +524,6 @@ export function BatchEntryTable({
                 <Plus className="h-4 w-4 mr-2" />
                 Add Entry
               </Button>
-
-              {/* Reset/Clear Button */}
               <ConfirmResetDialog
                 onConfirm={clearEntries}
                 trigger={
@@ -605,18 +537,15 @@ export function BatchEntryTable({
               />
             </div>
           </div>
-
-          {/* Table of entries */}
           <div className="border rounded-md">
             <div className="overflow-auto max-h-[500px]">
               <div style={{ minWidth: "100%", overflowX: "auto" }}>
                 <Table>
                   <TableHeader className="sticky top-0 bg-background">
                     <TableRow>
-                      {/* Delete Button Header */}
-                      <TableHead style={{ minWidth: "50px", width: "50px" }}>
-                        {/* Empty header for delete button column */}
-                      </TableHead>
+                      <TableHead
+                        style={{ minWidth: "50px", width: "50px" }}
+                      ></TableHead>
                       {fields.map((field) => (
                         <TableHead
                           key={field.key}
@@ -628,11 +557,9 @@ export function BatchEntryTable({
                       ))}
                     </TableRow>
                   </TableHeader>
-
                   <TableBody>
                     {entries.map((entry, entryIndex) => (
                       <TableRow key={entry.id}>
-                        {/* Delete Button Cell */}
                         <TableCell
                           style={{
                             minWidth: "50px",
@@ -667,8 +594,6 @@ export function BatchEntryTable({
               </div>
             </div>
           </div>
-
-          {/* Submit Button */}
           <div className="flex justify-end">
             <Button
               onClick={submitEntries}
@@ -689,7 +614,7 @@ export function BatchEntryTable({
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }
