@@ -82,11 +82,13 @@ export default function TimeTrackerForm({
       }
     });
 
-    // Convert to options array for the autocomplete
+    // Convert to options array for the autocomplete with all related data
     return Array.from(uniqueDescriptions.values()).map((entry) => ({
-      id: entry.description,
+      id: entry.id,
       label: entry.description,
       entry: entry,
+      // Include category information if available (from relation data)
+      category_id_data: entry.category_id_data,
     }));
   }, [timeEntries]);
 
@@ -371,6 +373,8 @@ export default function TimeTrackerForm({
                 placeholder="Task description"
                 inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
                 emptyMessage="Type to start tracking a new task or select a previous one"
+                showRecentOptions={true}
+                maxRecentOptions={7}
               />
             </div>
 

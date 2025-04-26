@@ -3,8 +3,9 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Clock, Tag, FolderIcon } from "lucide-react";
 import { SelectOption } from "@/types/types";
+import { Badge } from "@/components/ui/badge";
 
 export default function AutocompleteInput({
   label,
@@ -21,12 +22,14 @@ export default function AutocompleteInput({
   description,
   required = false,
   emptyMessage = "No options found.",
+  showRecentOptions = true,
+  maxRecentOptions = 7,
 }: {
   label?: string;
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (option: SelectOption) => void;
-  options: SelectOption[];
+  onSelect?: (option: SelectOption & { [key: string]: any }) => void;
+  options: (SelectOption & { [key: string]: any })[];
   placeholder?: string;
   id?: string;
   className?: string;
@@ -36,16 +39,36 @@ export default function AutocompleteInput({
   description?: string;
   required?: boolean;
   emptyMessage?: string;
+  showRecentOptions?: boolean;
+  maxRecentOptions?: number;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Filter options based on input value
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(value.toLowerCase())
-  );
+  // Get recent options (limited by maxRecentOptions)
+  const recentOptions = showRecentOptions
+    ? [...options]
+        .sort((a, b) => {
+          if (a.entry?.lastModified && b.entry?.lastModified) {
+            return (
+              new Date(b.entry.lastModified).getTime() -
+              new Date(a.entry.lastModified).getTime()
+            );
+          }
+          return 0;
+        })
+        .slice(0, maxRecentOptions)
+    : [];
+
+  // Filter options based on input value if user has typed something
+  const filteredOptions =
+    value.length > 0
+      ? options.filter((option) =>
+          option.label.toLowerCase().includes(value.toLowerCase())
+        )
+      : recentOptions;
 
   // Focus input on mount if autofocus is true
   useEffect(() => {
@@ -74,7 +97,7 @@ export default function AutocompleteInput({
   }, []);
 
   // Handle selection from suggestions
-  const handleSelect = (option: SelectOption) => {
+  const handleSelect = (option: SelectOption & { [key: string]: any }) => {
     if (onSelect) {
       onSelect(option);
     } else {
@@ -122,6 +145,65 @@ export default function AutocompleteInput({
     }
   };
 
+  // Render option with additional information (category, tags)
+  const renderOption = (
+    option: SelectOption & { [key: string]: any },
+    isActive: boolean
+  ) => {
+    const entry = option.entry;
+
+    return (
+      <div
+        className={cn(
+          "w-full",
+          isActive ? "bg-accent text-accent-foreground" : ""
+        )}
+      >
+        <div className="flex items-center justify-between">
+          <span className="font-medium">{option.label}</span>
+          {option.label.toLowerCase() === value.toLowerCase() && (
+            <Check className="h-4 w-4 text-primary" />
+          )}
+        </div>
+
+        {entry && (
+          <div className="flex flex-wrap gap-1 mt-1 text-xs text-muted-foreground">
+            {entry.category_id_data && (
+              <div className="flex items-center gap-1">
+                <FolderIcon className="h-3 w-3" />
+                <span>{entry.category_id_data.name}</span>
+              </div>
+            )}
+
+            {entry.tags && (
+              <div className="flex items-center gap-1">
+                <Tag className="h-3 w-3" />
+                <div className="flex flex-wrap gap-1">
+                  {entry.tags.split(",").map((tag: string, idx: number) => (
+                    <Badge
+                      key={idx}
+                      variant="outline"
+                      className="text-[0.65rem] py-0 px-1"
+                    >
+                      {tag.trim()}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {entry.lastModified && (
+              <div className="flex items-center gap-1 ml-auto">
+                <Clock className="h-3 w-3" />
+                <span>{new Date(entry.lastModified).toLocaleDateString()}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={cn("space-y-2 relative", className)}>
       {label && (
@@ -146,19 +228,11 @@ export default function AutocompleteInput({
           }}
           onChange={(e) => {
             onChange(e.target.value);
-
-            // Show suggestions if we have input and matches
-            if (e.target.value.length > 0) {
-              setShowSuggestions(true);
-              setActiveIndex(-1);
-            } else {
-              setShowSuggestions(false);
-            }
+            setShowSuggestions(true);
+            setActiveIndex(-1);
           }}
           onFocus={() => {
-            if (value.length > 0 && filteredOptions.length > 0) {
-              setShowSuggestions(true);
-            }
+            setShowSuggestions(true);
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
@@ -171,25 +245,23 @@ export default function AutocompleteInput({
         {showSuggestions && filteredOptions.length > 0 && (
           <div
             ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-y-auto"
+            className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto"
           >
+            <div className="p-1 text-xs text-muted-foreground border-b">
+              {value.length > 0 ? "Search results" : "Recent entries"}
+            </div>
             <ul className="py-1">
               {filteredOptions.map((option, index) => (
                 <li
                   key={option.id}
                   className={cn(
-                    "px-3 py-2 text-sm cursor-pointer flex items-center justify-between",
-                    activeIndex === index
-                      ? "bg-accent text-accent-foreground"
-                      : "hover:bg-accent/50"
+                    "px-3 py-2 text-sm cursor-pointer",
+                    activeIndex === index ? "bg-accent" : "hover:bg-accent/50"
                   )}
                   onClick={() => handleSelect(option)}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  <span>{option.label}</span>
-                  {option.label.toLowerCase() === value.toLowerCase() && (
-                    <Check className="h-4 w-4 text-primary" />
-                  )}
+                  {renderOption(option, activeIndex === index)}
                 </li>
               ))}
             </ul>
