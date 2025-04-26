@@ -115,13 +115,6 @@ export default function DexaVisualization() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row lg:flex-col justify-between gap-4 mb-6">
-        <ReusableTabs
-          tabs={tabDefs}
-          defaultTabId={activeTab}
-          onChange={setActiveTab}
-          className="space-y-4"
-        />
-
         {(activeTab === "trends" || activeTab === "regional") && (
           <div className="flex gap-2">
             <ReusableSelect
@@ -139,6 +132,12 @@ export default function DexaVisualization() {
             />
           </div>
         )}
+        <ReusableTabs
+          tabs={tabDefs}
+          defaultTabId={activeTab}
+          onChange={setActiveTab}
+          className="space-y-4"
+        />
       </div>
     </div>
   );

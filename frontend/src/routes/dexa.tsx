@@ -144,7 +144,6 @@ export default function DexaPage() {
             input your data by clicking "Add DEXA Scan". Once added, the graphs
             will automatically update to visualize your body composition trends.
           </CompactInfoPanel>
-
           <CompactInfoPanel title="Essential Metrics" variant="tip">
             The most important metrics to track are:
             <ul className="mt-2 ml-4 list-disc">
@@ -154,13 +153,11 @@ export default function DexaPage() {
               <li>Bone mineral density</li>
             </ul>
           </CompactInfoPanel>
-
           <CompactInfoPanel title="Managing Data" variant="info">
             To edit a previous scan, click "Edit DEXA Scan", select the date you
             want to modify, and update the values. To delete an incorrect
             record, use the delete button in the edit dialog.
           </CompactInfoPanel>
-
           <CompactInfoPanel title="Visualization Tips" variant="tip">
             <ul className="mt-2 ml-4 list-disc">
               <li>Use the tabs to view different aspects of your data</li>
@@ -169,7 +166,6 @@ export default function DexaPage() {
               <li>Track progress toward your body composition goals</li>
             </ul>
           </CompactInfoPanel>
-
           <CompactInfoPanel title="Best Practices" variant="warning">
             For most accurate tracking, take your DEXA scans:
             <ul className="mt-2 ml-4 list-disc">
@@ -179,7 +175,6 @@ export default function DexaPage() {
               <li>Every 3-6 months for optimal tracking</li>
             </ul>
           </CompactInfoPanel>
-
           <CompactInfoPanel title="Data Privacy" variant="info">
             All DEXA scan data is stored locally on your computer and is never
             sent to any server.
