@@ -1,5 +1,5 @@
 // src/features/time-tracker/time-tracker-form.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,8 @@ import {
   startTimer as startGlobalTimer,
   stopTimer as stopGlobalTimer,
 } from "./time-tracker-store";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
+import { SelectOption } from "@/types/types";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -68,6 +70,25 @@ export default function TimeTrackerForm({
 
   // Add state
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
+
+  // Generate options for autocomplete from previous entries
+  const descriptionOptions = useMemo(() => {
+    const uniqueDescriptions = new Map<string, TimeEntry>();
+
+    // Get the most recent entry for each unique description
+    timeEntries.forEach((entry) => {
+      if (!uniqueDescriptions.has(entry.description) && entry.description) {
+        uniqueDescriptions.set(entry.description, entry);
+      }
+    });
+
+    // Convert to options array for the autocomplete
+    return Array.from(uniqueDescriptions.values()).map((entry) => ({
+      id: entry.description,
+      label: entry.description,
+      entry: entry,
+    }));
+  }, [timeEntries]);
 
   // Initialize current time when switching to manual mode
   useEffect(() => {
@@ -259,6 +280,23 @@ export default function TimeTrackerForm({
     }
   };
 
+  // Handle selection of a previous entry from autocomplete
+  const handleDescriptionSelect = (
+    option: SelectOption & { entry?: TimeEntry }
+  ) => {
+    setDescription(option.label);
+
+    // Auto-populate category and tags if the entry has them
+    if (option.entry) {
+      if (option.entry.category_id) {
+        setCategoryId(option.entry.category_id);
+      }
+      if (option.entry.tags) {
+        setTags(option.entry.tags);
+      }
+    }
+  };
+
   return (
     <ReusableCard
       showHeader={false}
@@ -324,12 +362,15 @@ export default function TimeTrackerForm({
               <Label htmlFor="description" className="text-sm font-medium">
                 What are you working on?
               </Label>
-              <Input
+              <AutocompleteInput
                 id="description"
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
+                onSelect={handleDescriptionSelect}
+                options={descriptionOptions}
                 placeholder="Task description"
-                className="h-10 focus:ring-2 focus:ring-primary/50"
+                inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
+                emptyMessage="Type to start tracking a new task or select a previous one"
               />
             </div>
 

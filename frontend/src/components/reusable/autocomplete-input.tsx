@@ -77,8 +77,9 @@ export default function AutocompleteInput({
   const handleSelect = (option: SelectOption) => {
     if (onSelect) {
       onSelect(option);
+    } else {
+      onChange(option.label);
     }
-    onChange(option.label);
     setShowSuggestions(false);
 
     // Focus the input after selection
@@ -139,7 +140,10 @@ export default function AutocompleteInput({
           id={id}
           ref={inputRef}
           value={value}
-          onBlur={() => setShowSuggestions(false)}
+          onBlur={() => {
+            // Delay hiding suggestions to allow for click events
+            setTimeout(() => setShowSuggestions(false), 200);
+          }}
           onChange={(e) => {
             onChange(e.target.value);
 
