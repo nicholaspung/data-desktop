@@ -9,6 +9,7 @@ import {
   ChevronUp,
   LayoutList,
   LayoutGrid,
+  AlertTriangle,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,6 @@ import EditTimeEntryDialog from "./edit-time-entry-dialog";
 import { groupEntriesByDate } from "@/lib/time-utils";
 import TimeEntryListItem from "./time-entries-list-item";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import { dateStrToLocalDate } from "@/lib/date-utils";
-import { format } from "date-fns";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -42,30 +41,108 @@ export default function TimeEntriesList({
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [tagFilter, setTagFilter] = useState("");
   const [isGrouped, setIsGrouped] = useState(false);
+  const [showOverlaps, setShowOverlaps] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
 
+  // Find time overlaps in entries
+  const findOverlappingEntries = (entries: TimeEntry[]): TimeEntry[] => {
+    const result: TimeEntry[] = [];
+    // Sort entries by start time
+    const sortedEntries = [...entries].sort(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    );
+
+    // Check each entry against all others for overlaps
+    for (let i = 0; i < sortedEntries.length; i++) {
+      const entry = sortedEntries[i];
+      const startTime = new Date(entry.start_time).getTime();
+      const endTime = new Date(entry.end_time).getTime();
+
+      for (let j = 0; j < sortedEntries.length; j++) {
+        if (i === j) continue; // Skip comparing with self
+
+        const otherEntry = sortedEntries[j];
+        const otherStartTime = new Date(otherEntry.start_time).getTime();
+        const otherEndTime = new Date(otherEntry.end_time).getTime();
+
+        // Check if there's an overlap
+        if (
+          (startTime < otherEndTime && endTime > otherStartTime) ||
+          (otherStartTime < endTime && otherEndTime > startTime)
+        ) {
+          if (!result.includes(entry)) {
+            result.push(entry);
+          }
+          if (!result.includes(otherEntry)) {
+            result.push(otherEntry);
+          }
+        }
+      }
+    }
+
+    return result;
+  };
+
+  // Convert UTC dates to local dates for grouping
+  const convertToLocalDates = (entries: TimeEntry[]): TimeEntry[] => {
+    return entries.map((entry) => {
+      const startTime = new Date(entry.start_time);
+      const endTime = new Date(entry.end_time);
+
+      // Create a copy of the entry with local date string
+      return {
+        ...entry,
+        // Store original dates in new property for display
+        original_start_time: entry.start_time,
+        original_end_time: entry.end_time,
+        // Use local date strings for grouping
+        start_time: startTime,
+        end_time: endTime,
+      };
+    });
+  };
+
   // Sort entries by start time, newest first
-  const sortedEntries = [...entries].sort((a, b) => {
-    return new Date(b.start_time).getTime() - new Date(a.start_time).getTime();
-  });
-
-  // Create a filtered entries list based on tag
-  const filteredEntries = useMemo(() => {
-    if (!tagFilter.trim()) return sortedEntries;
-
-    return sortedEntries.filter((entry) => {
-      if (!entry.tags) return false;
-      const entryTags = entry.tags
-        .split(",")
-        .map((tag) => tag.trim().toLowerCase());
+  const sortedEntries = useMemo(() => {
+    return convertToLocalDates([...entries]).sort((a, b) => {
       return (
-        tagFilter === "_none_" ||
-        entryTags.includes(tagFilter.trim().toLowerCase())
+        new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
       );
     });
-  }, [sortedEntries, tagFilter]);
+  }, [entries]);
+
+  // Find overlapping entries
+  const overlappingEntries = useMemo(() => {
+    return findOverlappingEntries(sortedEntries);
+  }, [sortedEntries]);
+
+  // Create a filtered entries list based on tag and overlap filter
+  const filteredEntries = useMemo(() => {
+    let result = sortedEntries;
+
+    // Apply tag filter if set
+    if (tagFilter.trim() && tagFilter !== "_none_") {
+      result = result.filter((entry) => {
+        if (!entry.tags) return false;
+        const entryTags = entry.tags
+          .split(",")
+          .map((tag) => tag.trim().toLowerCase());
+        return entryTags.includes(tagFilter.trim().toLowerCase());
+      });
+    }
+
+    // Apply overlap filter if enabled
+    if (showOverlaps) {
+      result = result.filter((entry) =>
+        overlappingEntries.some((e) => e.id === entry.id)
+      );
+    }
+
+    return result;
+  }, [sortedEntries, tagFilter, showOverlaps, overlappingEntries]);
 
   // Get unique tags with the id/label format needed for ReusableSelect
   const tagOptions = useMemo(() => {
@@ -182,11 +259,9 @@ export default function TimeEntriesList({
     );
   }
 
-  console.log(groupDates);
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center space-x-2">
           <Tag className="h-4 w-4 text-muted-foreground" />
           <div className="text-sm font-medium">Filter by tag:</div>
@@ -200,25 +275,46 @@ export default function TimeEntriesList({
           />
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsGrouped(!isGrouped)}
-          className="gap-2"
-        >
-          {isGrouped ? (
-            <>
-              <LayoutList className="h-4 w-4" />
-              <span className="hidden sm:inline">Ungroup</span>
-            </>
-          ) : (
-            <>
-              <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Group similar</span>
-            </>
-          )}
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant={showOverlaps ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowOverlaps(!showOverlaps)}
+            className="gap-2"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span className="hidden sm:inline">Show Overlapping</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsGrouped(!isGrouped)}
+            className="gap-2"
+          >
+            {isGrouped ? (
+              <>
+                <LayoutList className="h-4 w-4" />
+                <span className="hidden sm:inline">Ungroup</span>
+              </>
+            ) : (
+              <>
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">Group Similar</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
+      {showOverlaps && overlappingEntries.length === 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 rounded-md">
+          <p className="text-yellow-700 dark:text-yellow-400 text-sm flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" />
+            No overlapping time entries found.
+          </p>
+        </div>
+      )}
 
       {editingEntry && (
         <EditTimeEntryDialog
@@ -232,93 +328,118 @@ export default function TimeEntriesList({
         />
       )}
 
-      {groupDates.map((dateStr) => (
-        <Card key={dateStr}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {format(dateStrToLocalDate(dateStr), "EEEE, MMMM d, yyyy")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {isGrouped
-                ? // Grouped view
-                  groupEntriesByDescriptionAndCategory(
-                    groupedEntries[dateStr]
-                  ).map((group) => {
-                    const firstEntry = group.entries[0];
-                    const category = getCategoryById(firstEntry.category_id);
-
-                    return (
-                      <div
-                        key={group.key}
-                        className="border rounded-md overflow-hidden"
-                      >
-                        {/* Group header */}
-                        <div
-                          className="flex justify-between items-center p-3 bg-accent/30 cursor-pointer"
-                          onClick={() => toggleGroupExpansion(group.key)}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium">
-                              {firstEntry.description}
-                            </span>
-                            {category && (
-                              <span
-                                className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                                style={{
-                                  backgroundColor: category.color || "#3b82f6",
-                                }}
-                              >
-                                {category.name}
-                              </span>
-                            )}
-                            <span className="text-sm text-muted-foreground">
-                              ({group.entries.length} entries,{" "}
-                              {group.totalDuration} min total)
-                            </span>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            {expandedGroups[group.key] ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-
-                        {/* Expanded entries */}
-                        {expandedGroups[group.key] && (
-                          <div className="divide-y">
-                            {group.entries.map((entry) => (
-                              <TimeEntryListItem
-                                key={entry.id}
-                                entry={entry}
-                                category={category}
-                                onEdit={() => setEditingEntry(entry)}
-                                onDelete={onDataChange}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                : // Regular view
-                  groupedEntries[dateStr].map((entry) => (
-                    <TimeEntryListItem
-                      key={entry.id}
-                      entry={entry}
-                      category={getCategoryById(entry.category_id)}
-                      onEdit={() => setEditingEntry(entry)}
-                      onDelete={onDataChange}
-                    />
-                  ))}
+      {filteredEntries.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-6">
+              <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                No time entries match your current filters.
+              </p>
             </div>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        groupDates.map((dateStr) => (
+          <Card key={dateStr}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                {new Date(dateStr).toLocaleDateString(undefined, {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {isGrouped
+                  ? // Grouped view
+                    groupEntriesByDescriptionAndCategory(
+                      groupedEntries[dateStr]
+                    ).map((group) => {
+                      const firstEntry = group.entries[0];
+                      const category = getCategoryById(firstEntry.category_id);
+
+                      return (
+                        <div
+                          key={group.key}
+                          className="border rounded-md overflow-hidden"
+                        >
+                          {/* Group header */}
+                          <div
+                            className="flex justify-between items-center p-3 bg-accent/30 cursor-pointer"
+                            onClick={() => toggleGroupExpansion(group.key)}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium">
+                                {firstEntry.description}
+                              </span>
+                              {category && (
+                                <span
+                                  className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                                  style={{
+                                    backgroundColor:
+                                      category.color || "#3b82f6",
+                                  }}
+                                >
+                                  {category.name}
+                                </span>
+                              )}
+                              <span className="text-sm text-muted-foreground">
+                                ({group.entries.length} entries,{" "}
+                                {group.totalDuration} min total)
+                              </span>
+                            </div>
+                            <Button variant="ghost" size="sm">
+                              {expandedGroups[group.key] ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
+
+                          {/* Expanded entries */}
+                          {expandedGroups[group.key] && (
+                            <div className="divide-y">
+                              {group.entries.map((entry) => (
+                                <TimeEntryListItem
+                                  key={entry.id}
+                                  entry={entry}
+                                  category={category}
+                                  onEdit={() => setEditingEntry(entry)}
+                                  onDelete={onDataChange}
+                                  isOverlapping={overlappingEntries.some(
+                                    (e) => e.id === entry.id
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  : // Regular view
+                    groupedEntries[dateStr].map((entry) => (
+                      <TimeEntryListItem
+                        key={entry.id}
+                        entry={entry}
+                        category={getCategoryById(entry.category_id)}
+                        onEdit={() => setEditingEntry(entry)}
+                        onDelete={onDataChange}
+                        isOverlapping={overlappingEntries.some(
+                          (e) => e.id === entry.id
+                        )}
+                      />
+                    ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

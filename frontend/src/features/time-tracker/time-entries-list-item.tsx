@@ -2,17 +2,19 @@
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
+import { Edit, AlertTriangle } from "lucide-react";
 import { formatTimeString } from "@/lib/time-utils";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
 import { deleteEntry } from "@/store/data-store";
+import { cn } from "@/lib/utils";
 
 interface TimeEntryListItemProps {
   entry: TimeEntry;
   category: TimeCategory | null;
   onEdit: () => void;
   onDelete: () => void;
+  isOverlapping?: boolean;
 }
 
 export default function TimeEntryListItem({
@@ -20,6 +22,7 @@ export default function TimeEntryListItem({
   category,
   onEdit,
   onDelete,
+  isOverlapping = false,
 }: TimeEntryListItemProps) {
   const startTime = new Date(entry.start_time);
   const endTime = new Date(entry.end_time);
@@ -35,10 +38,25 @@ export default function TimeEntryListItem({
   };
 
   return (
-    <div className="flex justify-between items-center py-2 px-3">
+    <div
+      className={cn(
+        "flex justify-between items-center py-2 px-3 border-l-4 border-grey-400",
+        isOverlapping &&
+          "bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400"
+      )}
+    >
       <div className="flex-1 mr-4">
         <div className="flex items-center flex-wrap gap-2">
           <span className="font-medium">{entry.description}</span>
+          {isOverlapping && (
+            <Badge
+              variant="outline"
+              className="bg-yellow-100 dark:bg-yellow-900 border-yellow-400"
+            >
+              <AlertTriangle className="h-3 w-3 mr-1 text-yellow-600 dark:text-yellow-400" />
+              Overlap
+            </Badge>
+          )}
           {category && (
             <Badge
               style={{

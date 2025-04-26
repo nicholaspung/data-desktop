@@ -36,7 +36,11 @@ export function formatTimeString(date: Date): string {
  * Formats a date to a date string (YYYY-MM-DD)
  */
 export function formatDateString(date: Date): string {
-  return date.toISOString().split("T")[0];
+  // Use local date for display and grouping
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -49,8 +53,7 @@ export function groupEntriesByDate<T extends { start_time: Date }>(
 
   entries.forEach((entry) => {
     // Use local date string as key
-    const date = new Date(entry.start_time);
-    const dateStr = formatDateString(date);
+    const dateStr = formatDateString(new Date(entry.start_time));
 
     if (!groupedEntries[dateStr]) {
       groupedEntries[dateStr] = [];

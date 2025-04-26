@@ -1,4 +1,4 @@
-// src/features/time-tracker/time-tracker-header-button.tsx - Fixed
+// src/features/time-tracker/time-tracker-header-button.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,7 +102,7 @@ export default function TimeTrackerHeaderButton({
         onDataChange();
       }
 
-      // Reset timer
+      // Reset timer - make sure we call stopTimer
       stopTimer();
     } catch (error) {
       console.error("Error saving time entry:", error);

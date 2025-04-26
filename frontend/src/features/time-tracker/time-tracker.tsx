@@ -1,4 +1,4 @@
-// src/features/time-tracker/time-tracker.tsx
+// src/features/time-tracker/time-tracker.tsx (updated with summary tab)
 import { useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -10,11 +10,18 @@ import TimeCategoryManager from "./time-category-manager";
 import useLoadData from "@/hooks/useLoadData";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 import ReusableTabs, { TabItem } from "@/components/reusable/reusable-tabs";
+import TimeEntriesCalendar from "./time-entries-calendar";
+import TimeEntriesSummary from "./time-entries-summary";
+import { Calendar, LayoutList, Tags, PieChart } from "lucide-react";
+import { useState } from "react";
+import EditTimeEntryDialog from "./edit-time-entry-dialog";
 
 export default function TimeTracker() {
   const { getDatasetFields } = useFieldDefinitions();
   const timeEntryFields = getDatasetFields("time_entries");
   const timeCategoryFields = getDatasetFields("time_categories");
+
+  const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
 
   const timeEntries = useStore(
     dataStore,
@@ -56,10 +63,40 @@ export default function TimeTracker() {
     refreshData();
   }, []);
 
+  const handleEditEntry = (entry: TimeEntry) => {
+    setEditingEntry(entry);
+  };
+
   const tabs: TabItem[] = [
     {
+      id: "summary",
+      label: "Summary",
+      icon: <PieChart className="h-4 w-4" />,
+      content: (
+        <TimeEntriesSummary
+          entries={timeEntries}
+          categories={categories}
+          isLoading={isLoadingEntries}
+        />
+      ),
+    },
+    {
+      id: "calendar",
+      label: "Calendar",
+      icon: <Calendar className="h-4 w-4" />,
+      content: (
+        <TimeEntriesCalendar
+          entries={timeEntries}
+          categories={categories}
+          isLoading={isLoadingEntries}
+          onEditEntry={handleEditEntry}
+        />
+      ),
+    },
+    {
       id: "entries",
-      label: "Time Entries",
+      label: "List",
+      icon: <LayoutList className="h-4 w-4" />,
       content: (
         <TimeEntriesList
           entries={timeEntries}
@@ -72,6 +109,7 @@ export default function TimeTracker() {
     {
       id: "categories",
       label: "Categories",
+      icon: <Tags className="h-4 w-4" />,
       content: (
         <TimeCategoryManager
           categories={categories}
@@ -86,7 +124,19 @@ export default function TimeTracker() {
     <div className="space-y-6">
       <TimeTrackerForm categories={categories} onDataChange={refreshData} />
 
-      <ReusableTabs tabs={tabs} defaultTabId="entries" fullWidth={true} />
+      {editingEntry && (
+        <EditTimeEntryDialog
+          entry={editingEntry}
+          categories={categories}
+          onSave={() => {
+            setEditingEntry(null);
+            refreshData();
+          }}
+          onCancel={() => setEditingEntry(null)}
+        />
+      )}
+
+      <ReusableTabs tabs={tabs} defaultTabId="summary" fullWidth={true} />
     </div>
   );
 }

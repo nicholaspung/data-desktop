@@ -1,4 +1,4 @@
-// src/features/time-tracker/time-tracker-form.tsx - Updated to use global timer data
+// src/features/time-tracker/time-tracker-form.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   timeTrackerStore,
   getTimerData,
   startTimer as startGlobalTimer,
+  stopTimer as stopGlobalTimer,
 } from "./time-tracker-store";
 
 interface TimeTrackerFormProps {
@@ -99,7 +100,7 @@ export default function TimeTrackerForm({
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isTimerActive]);
 
   // Local timer tick for immediate feedback
   useEffect(() => {
@@ -204,6 +205,10 @@ export default function TimeTrackerForm({
         addEntry(response, "time_entries");
       }
 
+      // Reset global timer state - this is the key fix
+      stopGlobalTimer();
+
+      // Reset local form state
       resetForm();
       onDataChange();
     } catch (error) {

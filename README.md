@@ -51,7 +51,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - add time tracking, and also tie it with a metric if possible
-- in time tracking, display a calendar view of the day of time tracking, and also a weekly view
 - make the description kind of autocomplete
 - tie time tracking and allow a user to select a metric to tie it to, to complete, metric can only be metric type time, so it should filter only for that metric, that's active
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
@@ -207,5 +206,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in time tracking, in entries, show the category [DONE 2025-04-25]
 - add a "time tracking" button at the header, and make it easy to track time, and make it reusable, so if I click in header, it pop ups, while also in the page, it can be used like normal [DONE 2025-04-25]
 - allow the user to add a time entry without a description [DONE 2025-04-25]
+- in time tracking, display a calendar view of the day of time tracking, and also a weekly view [DONE 2025-04-26]
+- for calendar view, allow the times to overlap [DONE 2025-04-26]
+- if there are times that overlap, make the user know [DONE 2025-04-26]
 
 ### GAVE UP

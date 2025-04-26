@@ -135,7 +135,11 @@ export default function ExperimentDashboardSummary() {
                             className="cursor-pointer"
                             onClick={() => setSelectedExperiment(exp.id)}
                           >
-                            <ProtectedField>{exp.name}</ProtectedField>
+                            {exp.private ? (
+                              <ProtectedField>{exp.name}</ProtectedField>
+                            ) : (
+                              exp.name
+                            )}
                           </Badge>
                         ))}
                       </div>
