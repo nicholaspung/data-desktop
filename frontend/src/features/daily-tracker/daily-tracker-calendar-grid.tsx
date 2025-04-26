@@ -1,4 +1,4 @@
-// Updated version of frontend/src/features/experiments/daily-tracker-calendar-grid.tsx
+// frontend/src/features/daily-tracker/daily-tracker-calendar-grid.tsx
 import ReusableTooltip from "@/components/reusable/reusable-tooltip";
 import {
   eachDayOfInterval,
@@ -9,7 +9,7 @@ import {
   isToday,
   startOfMonth,
 } from "date-fns";
-import { Beaker, Calendar } from "lucide-react";
+import { Beaker, Calendar, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,8 @@ export default function DailyTrackerCalendarGrid({
   const experimentsData =
     useStore(dataStore, (state) => state.experiments) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
+  const experimentMetricsData =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
   const { isUnlocked } = usePin();
 
   // Calculate metrics stats for a day
@@ -70,6 +72,62 @@ export default function DailyTrackerCalendarGrid({
         : isMetricScheduledForDate(metricWithParsedSchedule, day);
     });
 
+    // Calculate metrics with goals
+    const metricsWithGoals = scheduledMetrics.filter((metric: Metric) => {
+      // Check if metric has a daily goal from an experiment
+      return experimentMetricsData.some(
+        (em: any) =>
+          em.metric_id === metric.id && em.applies_as_daily_goal === true
+      );
+    });
+
+    const goalMetricsCount = metricsWithGoals.length;
+
+    // Count goal completion
+    const completedGoals = logsForDay.filter((log: any) => {
+      // Find if this log is for a metric with a goal
+      const hasGoal = experimentMetricsData.some(
+        (em: any) =>
+          em.metric_id === log.metric_id && em.applies_as_daily_goal === true
+      );
+
+      if (!hasGoal) return false;
+
+      // Get the related experiment metric
+      const experimentMetric = experimentMetricsData.find(
+        (em: any) =>
+          em.metric_id === log.metric_id && em.applies_as_daily_goal === true
+      );
+
+      if (!experimentMetric) return false;
+
+      // Get the metric
+      const metric = metricsData.find((m: any) => m.id === log.metric_id);
+      if (!metric) return false;
+
+      // Check if goal is complete based on the target type
+      try {
+        const logValue = JSON.parse(log.value);
+        const targetValue = JSON.parse(experimentMetric.target);
+
+        switch (experimentMetric.target_type) {
+          case "boolean":
+            return logValue === true;
+          case "atleast":
+            return logValue >= targetValue;
+          case "atmost":
+            return logValue <= targetValue;
+          case "exactly":
+            return logValue === targetValue;
+          default:
+            return false;
+        }
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+    }).length;
+
     const scheduledMetricsCount = scheduledMetrics.length;
     const totalMetricsCount = metricsData.filter((m: any) => m.active).length;
 
@@ -104,6 +162,10 @@ export default function DailyTrackerCalendarGrid({
         ? (completedBooleanCount / booleanMetrics.length) * 100
         : 0;
 
+    // Calculate goal completion percentage
+    const goalCompletionPercentage =
+      goalMetricsCount > 0 ? (completedGoals / goalMetricsCount) * 100 : 0;
+
     return {
       loggedMetricsCount,
       totalMetricsCount,
@@ -111,6 +173,9 @@ export default function DailyTrackerCalendarGrid({
       activeExperiments,
       completionPercentage,
       logsExist: logsForDay.length > 0,
+      goalMetricsCount,
+      completedGoals,
+      goalCompletionPercentage,
     };
   };
 
@@ -201,6 +266,23 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
+                {/* Goal completion indicator - if there are goals */}
+                {stats.goalMetricsCount > 0 && (
+                  <div className="absolute bottom-0.5 right-0.5">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "h-4 w-4 p-0 flex items-center justify-center",
+                        stats.goalCompletionPercentage >= 100
+                          ? "bg-green-100/50 dark:bg-green-900/50"
+                          : "bg-amber-100/50 dark:bg-amber-900/50"
+                      )}
+                    >
+                      <Target className="h-3 w-3" />
+                    </Badge>
+                  </div>
+                )}
+
                 {/* Scheduled metrics indicator */}
                 {stats.scheduledMetricsCount > 0 && (
                   <div className="absolute bottom-0.5 left-0.5">
@@ -215,7 +297,7 @@ export default function DailyTrackerCalendarGrid({
 
                 {/* Active experiments indicator */}
                 {stats.activeExperiments.length > 0 && (
-                  <div className="absolute bottom-0.5 right-0.5">
+                  <div className="absolute top-0.5 right-0.5">
                     <Badge
                       variant="outline"
                       className="h-4 w-4 p-0 flex items-center justify-center bg-primary/20"
@@ -236,6 +318,15 @@ export default function DailyTrackerCalendarGrid({
                     ? `${stats.loggedMetricsCount} of ${stats.scheduledMetricsCount} metrics logged`
                     : "No logs for this day"}
                 </p>
+
+                {/* Goals information */}
+                {stats.goalMetricsCount > 0 && (
+                  <p className="text-sm">
+                    <Target className="h-3 w-3 inline-block mr-1" />
+                    {stats.completedGoals} of {stats.goalMetricsCount} goals
+                    completed
+                  </p>
+                )}
 
                 {/* Scheduled metrics information */}
                 <p className="text-sm text-muted-foreground">

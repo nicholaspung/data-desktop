@@ -64,6 +64,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add journaling information to onboarding modal and help modal
 - add time tracking information to onboarding modal and help modal
 - add time tracking info panel information
+- update metrics information about metric daily log goals
 
 ### DONE
 

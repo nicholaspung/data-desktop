@@ -1,10 +1,11 @@
 // src/features/daily-tracker/add-metric-form.tsx
 import React, { useState, useEffect } from "react";
+import { Experiment, GoalType, Metric } from "@/store/experiment-definitions.d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Save, Plus } from "lucide-react";
+import { Loader2, Save, Plus, Target } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -12,7 +13,6 @@ import { toast } from "sonner";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
 import { Switch } from "@/components/ui/switch";
-import { Experiment, Metric } from "@/store/experiment-definitions";
 import { ProtectedField } from "@/components/security/protected-content";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
@@ -97,6 +97,11 @@ export default function AddMetricForm({
           .filter(Boolean)
       : []
   );
+
+  // Goal fields
+  const [hasDefaultGoal, setHasDefaultGoal] = useState<boolean>(false);
+  const [goalValue, setGoalValue] = useState<string>("");
+  const [goalType, setGoalType] = useState<string>(GoalType.MINIMUM);
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -294,6 +299,35 @@ export default function AddMetricForm({
         }
       }
 
+      // If the user set a default goal, create a default experiment metric
+      if (hasDefaultGoal && goalValue && response) {
+        const defaultGoalData = {
+          experiment_id: null, // No experiment for standalone default goal
+          metric_id: response.id,
+          target: JSON.stringify(
+            type === "boolean"
+              ? goalValue === "true"
+              : type === "number" || type === "percentage" || type === "time"
+                ? parseFloat(goalValue)
+                : goalValue
+          ),
+          target_type: type === "boolean" ? "boolean" : goalType,
+          importance: 5,
+          private: isPrivate,
+          applies_as_daily_goal: true, // This will be used as a daily goal
+        };
+
+        const goalResponse = await ApiService.addRecord(
+          "experiment_metrics",
+          defaultGoalData
+        );
+
+        if (goalResponse) {
+          addEntry(goalResponse, "experiment_metrics");
+          toast.success("Default goal created for metric");
+        }
+      }
+
       // Call success callback
       if (onSuccess) {
         onSuccess();
@@ -330,6 +364,9 @@ export default function AddMetricForm({
     setScheduleDays([]);
     setShowAdvancedOptions(false);
     setShowSchedulingOptions(false);
+    setHasDefaultGoal(false);
+    setGoalValue("");
+    setGoalType(GoalType.MINIMUM);
   };
 
   return (
@@ -538,6 +575,75 @@ export default function AddMetricForm({
                   private: exp.private,
                 }))}
             />
+          </div>
+        )}
+
+        {/* Default Goal Toggle */}
+        <div className="flex items-center justify-between space-x-2">
+          <div>
+            <Label htmlFor="has-default-goal" className="cursor-pointer">
+              <Target className="h-4 w-4 inline-block mr-1" />
+              Set Default Goal
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              This will set a default goal for this metric in the daily tracker
+            </p>
+          </div>
+          <Switch
+            id="has-default-goal"
+            checked={hasDefaultGoal}
+            onCheckedChange={setHasDefaultGoal}
+          />
+        </div>
+
+        {/* Default Goal Options */}
+        {hasDefaultGoal && (
+          <div className="pl-4 border-l-2 border-primary/30 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="goal-value">Goal Value</Label>
+              {type === "boolean" ? (
+                <ReusableSelect
+                  value={goalValue}
+                  onChange={setGoalValue}
+                  title="goal value"
+                  options={[
+                    { id: "true", label: "Yes / Completed" },
+                    { id: "false", label: "No / Not Completed" },
+                  ]}
+                />
+              ) : (
+                <Input
+                  id="goal-value"
+                  type={
+                    type === "time" ||
+                    type === "number" ||
+                    type === "percentage"
+                      ? "number"
+                      : "text"
+                  }
+                  placeholder="Goal value"
+                  value={goalValue}
+                  onChange={(e) => setGoalValue(e.target.value)}
+                />
+              )}
+            </div>
+
+            {/* Goal Type - only show if not boolean */}
+            {type !== "boolean" && (
+              <div className="space-y-2">
+                <Label htmlFor="goal-type">Goal Type</Label>
+                <ReusableSelect
+                  options={[
+                    { id: GoalType.MINIMUM, label: "At least (minimum)" },
+                    { id: GoalType.MAXIMUM, label: "At most (maximum)" },
+                    { id: GoalType.EXACT, label: "Exactly" },
+                  ]}
+                  value={goalType}
+                  onChange={setGoalType}
+                  title="goal type"
+                />
+              </div>
+            )}
           </div>
         )}
 

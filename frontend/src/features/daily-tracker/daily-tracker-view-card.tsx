@@ -6,11 +6,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import EditableCellConfirmButtons from "@/components/data-table/editable-cell-confirm-buttons";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Target } from "lucide-react";
 import { format } from "date-fns";
 import { MetricWithLog } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
 import MetricStreakDisplay from "./metric-streak-display";
+import { Progress } from "@/components/ui/progress";
 
 export default function DailyTrackerViewCard({
   metric,
@@ -37,6 +38,65 @@ export default function DailyTrackerViewCard({
   const endDateText = metric.schedule_end_date
     ? format(new Date(metric.schedule_end_date), "MMM d")
     : null;
+
+  // Check if metric has a goal
+  const hasGoal = metric.goal_value !== undefined && metric.goal_type;
+
+  // Calculate goal progress for visualization
+  const getGoalProgress = () => {
+    if (!hasGoal) return null;
+
+    // Handle different types of goals
+    switch (metric.goal_type) {
+      case "minimum":
+        if (metric.type === "number" || metric.type === "percentage") {
+          const current = parseFloat(metric.value) || 0;
+          const goal = parseFloat(metric.goal_value) || 0;
+          return {
+            progress: Math.min(100, (current / goal) * 100),
+            text: `${current}/${goal} (min)`,
+          };
+        }
+        break;
+      case "maximum":
+        if (metric.type === "number" || metric.type === "percentage") {
+          const current = parseFloat(metric.value) || 0;
+          const goal = parseFloat(metric.goal_value) || 0;
+          // For maximum, lower is better
+          return {
+            progress: Math.max(0, 100 - (current / goal) * 100),
+            text: `${current}/${goal} (max)`,
+          };
+        }
+        break;
+      case "exact":
+        if (metric.type === "number" || metric.type === "percentage") {
+          const current = parseFloat(metric.value) || 0;
+          const goal = parseFloat(metric.goal_value) || 0;
+          // For exact goals, calculate how close we are
+          const diff = Math.abs(current - goal);
+          const maxDiff = goal * 0.5; // 50% tolerance
+          return {
+            progress: Math.max(0, 100 - (diff / maxDiff) * 100),
+            text: `${current}/${goal} (exact)`,
+          };
+        }
+        break;
+      case "boolean":
+        if (metric.type === "boolean") {
+          const isComplete = !!metric.value;
+          return {
+            progress: isComplete ? 100 : 0,
+            text: isComplete ? "Completed" : "Not completed",
+          };
+        }
+        break;
+    }
+
+    return null;
+  };
+
+  const goalProgress = hasGoal ? getGoalProgress() : null;
 
   const Content = () => (
     <>
@@ -86,6 +146,30 @@ export default function DailyTrackerViewCard({
         style="badge"
         className="mb-3"
       />
+
+      {/* Show goal information if available */}
+      {hasGoal && (
+        <div className="mb-4">
+          <div className="flex items-center text-sm mb-1">
+            <Target className="h-4 w-4 mr-1 text-blue-500" />
+            <span className="font-medium">Goal: </span>
+            <span className="ml-1">{goalProgress?.text}</span>
+          </div>
+          {goalProgress && (
+            <Progress
+              value={goalProgress.progress}
+              className="h-2"
+              indicatorClassName={
+                goalProgress.progress >= 100
+                  ? "bg-green-500"
+                  : goalProgress.progress >= 66
+                    ? "bg-amber-500"
+                    : "bg-red-500"
+              }
+            />
+          )}
+        </div>
+      )}
 
       {/* Render appropriate input based on metric type */}
       <div className="mt-4">
@@ -156,6 +240,7 @@ export default function DailyTrackerViewCard({
       className={`
         ${!!metric.value && metric.log ? "border-green-500 border" : ""}
         ${!isScheduled ? "border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900" : ""}
+        ${hasGoal && goalProgress?.progress === 100 ? "border-green-500 border-2" : ""}
       `}
     >
       <CardContent className="p-4">

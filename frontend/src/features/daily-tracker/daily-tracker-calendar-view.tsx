@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Beaker, Calendar } from "lucide-react";
+import { Beaker, Calendar, Target } from "lucide-react";
 import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -15,10 +15,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import DailyTrackerCalendarGrid from "./daily-tracker-calendar-grid";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
-import { DailyLog, MetricWithLog } from "@/store/experiment-definitions";
+import {
+  DailyLog,
+  GoalType,
+  MetricWithLog,
+} from "@/store/experiment-definitions";
 import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
+import DailyGoalsTab from "./daily-goals-tab";
 
 interface MetricWithLogWithChange extends MetricWithLog {
   isScheduledForToday: boolean;
@@ -33,6 +38,7 @@ export default function DailyTrackerCalendarView() {
   const [selectedTab, setSelectedTab] = useState("all");
   const [showNotes, setShowNotes] = useState(false);
   const [showUnscheduled, setShowUnscheduled] = useState(false);
+  const [showOnlyWithGoals, setShowOnlyWithGoals] = useState(false);
 
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const experimentMetricsData =
@@ -49,7 +55,13 @@ export default function DailyTrackerCalendarView() {
     if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
     }
-  }, [dailyLogsData, selectedDate, metricsData, showUnscheduled]);
+  }, [
+    dailyLogsData,
+    selectedDate,
+    metricsData,
+    showUnscheduled,
+    showOnlyWithGoals,
+  ]);
 
   const processLogsForSelectedDate = (
     date: Date,
@@ -80,6 +92,36 @@ export default function DailyTrackerCalendarView() {
 
         const log = logsForDate.find((log) => log.metric_id === metric.id);
 
+        // Find if metric has a daily goal from experiment metrics
+        const relatedExperimentMetric = experimentMetricsData.find(
+          (em: any) =>
+            em.metric_id === metric.id && em.applies_as_daily_goal === true
+        );
+
+        let goal_value;
+        let goal_type;
+
+        if (relatedExperimentMetric) {
+          goal_value = parseMetricValue(
+            relatedExperimentMetric.target,
+            metric.type
+          );
+          goal_type =
+            relatedExperimentMetric.target_type === "boolean"
+              ? "boolean"
+              : relatedExperimentMetric.target_type === "atleast"
+                ? "minimum"
+                : relatedExperimentMetric.target_type === "atmost"
+                  ? "maximum"
+                  : "exact";
+        }
+
+        // If log has goal values, they take precedence over experiment metric goals
+        if (log && log.goal_value && log.goal_type) {
+          goal_value = parseMetricValue(log.goal_value, metric.type);
+          goal_type = log.goal_type;
+        }
+
         return {
           ...metric,
           schedule_days: scheduleDays,
@@ -90,9 +132,19 @@ export default function DailyTrackerCalendarView() {
           notes: log?.notes || "",
           hasChanged: false,
           isScheduledForToday: doNotShow ? false : isScheduledForToday,
+          goal_value,
+          goal_type: goal_type as GoalType,
         };
       })
-      .filter((metric) => showUnscheduled || metric.isScheduledForToday);
+      .filter((metric) => {
+        // Apply filters
+        const scheduledFilter = showUnscheduled || metric.isScheduledForToday;
+        const goalFilter =
+          !showOnlyWithGoals ||
+          (metric.goal_value !== undefined && metric.goal_type !== undefined);
+
+        return scheduledFilter && goalFilter;
+      });
 
     metricsWithLogsArray.sort((a, b) => {
       const catA = a.category_id_data?.name || "";
@@ -138,6 +190,26 @@ export default function DailyTrackerCalendarView() {
           }
         }
 
+        // Find daily goal for the metric
+        const relatedExperimentMetric = experimentMetricsData.find(
+          (em: any) =>
+            em.metric_id === metricId && em.applies_as_daily_goal === true
+        );
+
+        let goal_value, goal_type;
+
+        if (relatedExperimentMetric) {
+          goal_value = relatedExperimentMetric.target;
+          goal_type =
+            relatedExperimentMetric.target_type === "boolean"
+              ? "boolean"
+              : relatedExperimentMetric.target_type === "atleast"
+                ? "minimum"
+                : relatedExperimentMetric.target_type === "atmost"
+                  ? "maximum"
+                  : "exact";
+        }
+
         if (metricWithLogs.log) {
           const response = await ApiService.updateRecord(
             metricWithLogs.log.id,
@@ -149,6 +221,9 @@ export default function DailyTrackerCalendarView() {
                   : metricWithLogs.log.value,
               notes: key === "notes" ? value : metricWithLogs.log.notes,
               experiment_id: experimentId,
+              // Preserve existing goals unless they're being set for the first time
+              goal_value: metricWithLogs.log.goal_value || goal_value || null,
+              goal_type: metricWithLogs.log.goal_type || goal_type || null,
             }
           );
 
@@ -167,6 +242,9 @@ export default function DailyTrackerCalendarView() {
                 ? JSON.stringify(value)
                 : JSON.stringify(metricWithLogs.value),
             notes: key === "notes" ? value : metricWithLogs.notes,
+            // Include goal data from the experiment metric if available
+            goal_value: goal_value || null,
+            goal_type: goal_type || null,
           };
 
           const response = await ApiService.addRecord("daily_logs", newLog);
@@ -242,6 +320,12 @@ export default function DailyTrackerCalendarView() {
                   </div>
                   <span>Has Scheduled Metrics</span>
                 </div>
+                <div className="flex items-center">
+                  <div className="w-3 h-3 border flex items-center justify-center rounded-sm mr-1">
+                    <Target className="h-2 w-2" />
+                  </div>
+                  <span>Has Goals</span>
+                </div>
               </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -257,6 +341,15 @@ export default function DailyTrackerCalendarView() {
                     onCheckedChange={(checked) => setShowUnscheduled(!!checked)}
                   />
                   <Label>Show unscheduled metrics</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    checked={showOnlyWithGoals}
+                    onCheckedChange={(checked) =>
+                      setShowOnlyWithGoals(!!checked)
+                    }
+                  />
+                  <Label>Show only metrics with goals</Label>
                 </div>
               </div>
             </div>
@@ -295,6 +388,22 @@ export default function DailyTrackerCalendarView() {
                           </div>
                         ))}
                       </div>
+                    ),
+                  },
+                  {
+                    id: "goals",
+                    label: (
+                      <span className="rounded-full flex items-center">
+                        <Target className="h-4 w-4 mr-1" />
+                        Goals
+                      </span>
+                    ),
+                    content: (
+                      <DailyGoalsTab
+                        metricsWithLogs={metricsWithLogs}
+                        showNotes={showNotes}
+                        saveChanges={saveChanges}
+                      />
                     ),
                   },
                   ...categories.map((category) => ({
