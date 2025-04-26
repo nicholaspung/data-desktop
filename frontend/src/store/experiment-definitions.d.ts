@@ -56,6 +56,8 @@ export interface DailyLog {
   experiment_id?: string;
   value: string; // JSON-encoded value
   notes?: string;
+  goal_value?: string; // New field for goal value
+  goal_type?: string; // How to interpret the goal (min, max, exact)
 
   // Relation data that might be added when fetched
   metric_id_data?: Metric;
@@ -84,6 +86,7 @@ export interface ExperimentMetric {
   target: string; // JSON-encoded target value
   target_type: TargetType;
   importance: number; // 1-10 scale
+  applies_as_daily_goal: boolean; // New field: Whether this target applies as daily goal
 
   // Relation data
   experiment_id_data?: Experiment;
@@ -111,6 +114,16 @@ export interface MetricWithLog extends Metric {
   value: any; // Parsed value
   notes: string;
   hasChanged: boolean;
+  goal_value?: any; // Parsed goal value
+  goal_type?: GoalType; // How to interpret the goal
+}
+
+// Enum for goal types
+export enum GoalType {
+  MINIMUM = "minimum",
+  MAXIMUM = "maximum",
+  EXACT = "exact",
+  BOOLEAN = "boolean", // For yes/no metrics
 }
 
 // Partial types for form handling and updates

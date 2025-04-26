@@ -195,6 +195,20 @@ func GetDailyLogFields() []database.FieldDefinition {
 			DisplayName: "Notes",
 			Description: "Additional notes",
 		},
+		{
+			Key:         "goal_value",
+			Type:        database.FieldTypeText, // JSON encoded goal value
+			DisplayName: "Goal Value",
+			Description: "Target value for this metric log",
+			IsOptional:  true,
+		},
+		{
+			Key:         "goal_type",
+			Type:        database.FieldTypeText,
+			DisplayName: "Goal Type",
+			Description: "How to interpret the goal (minimum, maximum, exact, boolean)",
+			IsOptional:  true,
+		},
 	}
 }
 
@@ -257,6 +271,13 @@ func GetExperimentMetricFields() []database.FieldDefinition {
 			Type:        database.FieldTypeBoolean,
 			DisplayName: "Private",
 			Description: "Is experiment metric private?",
+		},
+		{
+			Key:         "applies_as_daily_goal",
+			Type:        database.FieldTypeBoolean,
+			DisplayName: "Apply As Daily Goal",
+			Description: "Whether this target applies as a daily goal for the metric",
+			IsOptional:  true,
 		},
 	}
 }
