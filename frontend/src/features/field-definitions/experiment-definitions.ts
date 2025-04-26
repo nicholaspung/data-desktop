@@ -179,6 +179,26 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
         { id: "custom", label: "Custom" },
       ],
     },
+    {
+      key: "goal_value",
+      type: "text",
+      displayName: "Goal Value",
+      description: "Default goal value for this metric",
+      isOptional: true,
+    },
+    {
+      key: "goal_type",
+      type: "select-single",
+      displayName: "Goal Type",
+      description: "How to interpret the goal",
+      isOptional: true,
+      options: [
+        { id: "minimum", label: "Minimum" },
+        { id: "maximum", label: "Maximum" },
+        { id: "exact", label: "Exact" },
+        { id: "boolean", label: "Boolean" },
+      ],
+    },
   ],
 };
 
@@ -319,13 +339,6 @@ export const EXPERIMENT_METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       type: "boolean",
       displayName: "Private",
       description: "Is experiment metric private?",
-    },
-    {
-      key: "applies_as_daily_goal",
-      type: "boolean",
-      displayName: "Apply As Daily Goal",
-      description: "Whether this target should be used as a daily goal",
-      isOptional: true,
     },
   ],
 };

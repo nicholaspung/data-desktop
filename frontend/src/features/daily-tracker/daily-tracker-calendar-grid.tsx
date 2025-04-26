@@ -33,8 +33,6 @@ export default function DailyTrackerCalendarGrid({
   const experimentsData =
     useStore(dataStore, (state) => state.experiments) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
-  const experimentMetricsData =
-    useStore(dataStore, (state) => state.experiment_metrics) || [];
   const { isUnlocked } = usePin();
 
   // Calculate metrics stats for a day
@@ -74,11 +72,8 @@ export default function DailyTrackerCalendarGrid({
 
     // Calculate metrics with goals
     const metricsWithGoals = scheduledMetrics.filter((metric: Metric) => {
-      // Check if metric has a daily goal from an experiment
-      return experimentMetricsData.some(
-        (em: any) =>
-          em.metric_id === metric.id && em.applies_as_daily_goal === true
-      );
+      // Check if the metric itself has goals
+      return metric.goal_value !== undefined && metric.goal_type !== undefined;
     });
 
     const goalMetricsCount = metricsWithGoals.length;
@@ -86,39 +81,23 @@ export default function DailyTrackerCalendarGrid({
     // Count goal completion
     const completedGoals = logsForDay.filter((log: any) => {
       // Find if this log is for a metric with a goal
-      const hasGoal = experimentMetricsData.some(
-        (em: any) =>
-          em.metric_id === log.metric_id && em.applies_as_daily_goal === true
-      );
-
-      if (!hasGoal) return false;
-
-      // Get the related experiment metric
-      const experimentMetric = experimentMetricsData.find(
-        (em: any) =>
-          em.metric_id === log.metric_id && em.applies_as_daily_goal === true
-      );
-
-      if (!experimentMetric) return false;
-
-      // Get the metric
       const metric = metricsData.find((m: any) => m.id === log.metric_id);
-      if (!metric) return false;
+      if (!metric || !metric.goal_value || !metric.goal_type) return false;
 
-      // Check if goal is complete based on the target type
+      // Check if goal is complete based on the goal type
       try {
         const logValue = JSON.parse(log.value);
-        const targetValue = JSON.parse(experimentMetric.target);
+        const goalValue = JSON.parse(metric.goal_value);
 
-        switch (experimentMetric.target_type) {
+        switch (metric.goal_type) {
           case "boolean":
             return logValue === true;
-          case "atleast":
-            return logValue >= targetValue;
-          case "atmost":
-            return logValue <= targetValue;
-          case "exactly":
-            return logValue === targetValue;
+          case "minimum":
+            return logValue >= goalValue;
+          case "maximum":
+            return logValue <= goalValue;
+          case "exact":
+            return logValue === goalValue;
           default:
             return false;
         }

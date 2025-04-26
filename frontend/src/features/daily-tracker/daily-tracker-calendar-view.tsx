@@ -92,31 +92,17 @@ export default function DailyTrackerCalendarView() {
 
         const log = logsForDate.find((log) => log.metric_id === metric.id);
 
-        // Find if metric has a daily goal from experiment metrics
-        const relatedExperimentMetric = experimentMetricsData.find(
-          (em: any) =>
-            em.metric_id === metric.id && em.applies_as_daily_goal === true
-        );
-
+        // Only use metric goals and log goals, not experiment metrics
         let goal_value;
         let goal_type;
 
-        if (relatedExperimentMetric) {
-          goal_value = parseMetricValue(
-            relatedExperimentMetric.target,
-            metric.type
-          );
-          goal_type =
-            relatedExperimentMetric.target_type === "boolean"
-              ? "boolean"
-              : relatedExperimentMetric.target_type === "atleast"
-                ? "minimum"
-                : relatedExperimentMetric.target_type === "atmost"
-                  ? "maximum"
-                  : "exact";
+        // Check if metric has goal values
+        if (metric.goal_value !== undefined && metric.goal_type !== undefined) {
+          goal_value = parseMetricValue(metric.goal_value, metric.type);
+          goal_type = metric.goal_type;
         }
 
-        // If log has goal values, they take precedence over experiment metric goals
+        // If log has goal values, they take precedence
         if (log && log.goal_value && log.goal_type) {
           goal_value = parseMetricValue(log.goal_value, metric.type);
           goal_type = log.goal_type;
@@ -190,26 +176,6 @@ export default function DailyTrackerCalendarView() {
           }
         }
 
-        // Find daily goal for the metric
-        const relatedExperimentMetric = experimentMetricsData.find(
-          (em: any) =>
-            em.metric_id === metricId && em.applies_as_daily_goal === true
-        );
-
-        let goal_value, goal_type;
-
-        if (relatedExperimentMetric) {
-          goal_value = relatedExperimentMetric.target;
-          goal_type =
-            relatedExperimentMetric.target_type === "boolean"
-              ? "boolean"
-              : relatedExperimentMetric.target_type === "atleast"
-                ? "minimum"
-                : relatedExperimentMetric.target_type === "atmost"
-                  ? "maximum"
-                  : "exact";
-        }
-
         if (metricWithLogs.log) {
           const response = await ApiService.updateRecord(
             metricWithLogs.log.id,
@@ -221,9 +187,9 @@ export default function DailyTrackerCalendarView() {
                   : metricWithLogs.log.value,
               notes: key === "notes" ? value : metricWithLogs.log.notes,
               experiment_id: experimentId,
-              // Preserve existing goals unless they're being set for the first time
-              goal_value: metricWithLogs.log.goal_value || goal_value || null,
-              goal_type: metricWithLogs.log.goal_type || goal_type || null,
+              // Keep existing goal values if already set
+              goal_value: metricWithLogs.log.goal_value || null,
+              goal_type: metricWithLogs.log.goal_type || null,
             }
           );
 
@@ -233,6 +199,9 @@ export default function DailyTrackerCalendarView() {
             toast.success("Log updated successfully");
           }
         } else {
+          // Get the metric to use its goals
+          const metric = metricsData.find((m) => m.id === metricId);
+
           const newLog = {
             date: selectedDate,
             metric_id: metricId,
@@ -242,9 +211,11 @@ export default function DailyTrackerCalendarView() {
                 ? JSON.stringify(value)
                 : JSON.stringify(metricWithLogs.value),
             notes: key === "notes" ? value : metricWithLogs.notes,
-            // Include goal data from the experiment metric if available
-            goal_value: goal_value || null,
-            goal_type: goal_type || null,
+            // Use metric's goal if available
+            goal_value: metric?.goal_value
+              ? JSON.stringify(metric.goal_value)
+              : null,
+            goal_type: metric?.goal_type || null,
           };
 
           const response = await ApiService.addRecord("daily_logs", newLog);

@@ -65,6 +65,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add time tracking information to onboarding modal and help modal
 - add time tracking info panel information
 - update metrics information about metric daily log goals
+- update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others
+- fix the display for the legend on daily tracker calendar view
 
 ### DONE
 
@@ -209,5 +211,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - for calendar view, allow the times to overlap [DONE 2025-04-26]
 - if there are times that overlap, make the user know [DONE 2025-04-26]
 - make the description kind of autocomplete [DONE 2025-04-26]
+- add a way to make a goal for a metric [DONE 2025-04-26]
 
 ### GAVE UP

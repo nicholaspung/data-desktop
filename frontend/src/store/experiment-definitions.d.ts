@@ -33,6 +33,9 @@ export interface Metric {
   };
   active: boolean;
   private: boolean;
+  // New goal fields
+  goal_value?: string;
+  goal_type?: string;
   // New scheduling fields
   schedule_start_date?: Date | null; // When to start showing this metric
   schedule_end_date?: Date | null; // When to stop showing this metric
@@ -86,7 +89,6 @@ export interface ExperimentMetric {
   target: string; // JSON-encoded target value
   target_type: TargetType;
   importance: number; // 1-10 scale
-  applies_as_daily_goal: boolean; // New field: Whether this target applies as daily goal
 
   // Relation data
   experiment_id_data?: Experiment;

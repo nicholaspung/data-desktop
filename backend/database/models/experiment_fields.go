@@ -151,6 +151,20 @@ func GetMetricFields() []database.FieldDefinition {
 			Description: "How often to show this metric (daily, weekly, custom)",
 			IsOptional:  true,
 		},
+		{
+			Key:         "goal_value",
+			Type:        database.FieldTypeText, // JSON encoded goal value
+			DisplayName: "Goal Value",
+			Description: "Default goal value for this metric",
+			IsOptional:  true,
+		},
+		{
+			Key:         "goal_type",
+			Type:        database.FieldTypeText,
+			DisplayName: "Goal Type",
+			Description: "How to interpret the goal (minimum, maximum, exact, boolean)",
+			IsOptional:  true,
+		},
 	}
 }
 
@@ -271,13 +285,6 @@ func GetExperimentMetricFields() []database.FieldDefinition {
 			Type:        database.FieldTypeBoolean,
 			DisplayName: "Private",
 			Description: "Is experiment metric private?",
-		},
-		{
-			Key:         "applies_as_daily_goal",
-			Type:        database.FieldTypeBoolean,
-			DisplayName: "Apply As Daily Goal",
-			Description: "Whether this target applies as a daily goal for the metric",
-			IsOptional:  true,
 		},
 	}
 }

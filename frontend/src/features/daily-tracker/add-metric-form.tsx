@@ -99,9 +99,19 @@ export default function AddMetricForm({
   );
 
   // Goal fields
-  const [hasDefaultGoal, setHasDefaultGoal] = useState<boolean>(false);
-  const [goalValue, setGoalValue] = useState<string>("");
-  const [goalType, setGoalType] = useState<string>(GoalType.MINIMUM);
+  const [hasDefaultGoal, setHasDefaultGoal] = useState<boolean>(
+    Boolean(metric?.goal_value && metric?.goal_type)
+  );
+  const [goalValue, setGoalValue] = useState<string>(
+    metric?.goal_value
+      ? String(metric.goal_value)
+      : type === "boolean"
+        ? "true"
+        : "0"
+  );
+  const [goalType, setGoalType] = useState<string>(
+    metric?.goal_type || GoalType.MINIMUM
+  );
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -141,10 +151,19 @@ export default function AddMetricForm({
     if (!isEditMode) {
       if (type === "boolean") {
         setDefaultValue("false");
+        setGoalValue("true"); // Set default goal value for boolean to true
       } else if (type === "number" || type === "percentage") {
         setDefaultValue("0");
+        // Keep existing goal value if it's appropriate for the new type
+        if (goalValue === "true" || goalValue === "false") {
+          setGoalValue("0");
+        }
       } else if (type === "time") {
         setDefaultValue("0");
+        // Keep existing goal value if it's appropriate for the new type
+        if (goalValue === "true" || goalValue === "false") {
+          setGoalValue("0");
+        }
       }
     }
   }, [type, isEditMode]);
@@ -207,6 +226,16 @@ export default function AddMetricForm({
         processedDefaultValue = defaultValue === "true" ? "true" : "false";
       }
 
+      // Process goal value based on type if hasDefaultGoal is true
+      let processedGoalValue = null;
+      if (hasDefaultGoal && goalValue) {
+        if (type === "boolean") {
+          processedGoalValue = goalValue === "true" ? "true" : "false";
+        } else {
+          processedGoalValue = goalValue;
+        }
+      }
+
       // Convert schedule days from string labels to numbers
       const numericScheduleDays = scheduleDays
         .map((day) => {
@@ -251,6 +280,13 @@ export default function AddMetricForm({
             ? new Date(scheduleEndDate)
             : null,
         schedule_days: showSchedulingOptions ? numericScheduleDays : null,
+        // Add goal fields if hasDefaultGoal is true
+        goal_value: hasDefaultGoal ? processedGoalValue : null,
+        goal_type: hasDefaultGoal
+          ? type === "boolean"
+            ? "boolean"
+            : goalType
+          : null,
       };
 
       let response;
@@ -274,57 +310,6 @@ export default function AddMetricForm({
           // Add to store
           addEntry(response, "metrics");
           toast.success("Metric created successfully");
-        }
-      }
-
-      // If response was successful and we have an experiment selected,
-      // create or update the experiment-metric relationship
-      if (response && experimentId && !isEditMode) {
-        const experimentMetricData = {
-          experiment_id: experimentId,
-          metric_id: response.id,
-          target: type === "boolean" ? "true" : "0",
-          target_type: type === "boolean" ? "boolean" : "atleast",
-          importance: 5, // Default importance
-          private: isPrivate,
-        };
-
-        const relationResponse = await ApiService.addRecord(
-          "experiment_metrics",
-          experimentMetricData
-        );
-
-        if (relationResponse) {
-          addEntry(relationResponse, "experiment_metrics");
-        }
-      }
-
-      // If the user set a default goal, create a default experiment metric
-      if (hasDefaultGoal && goalValue && response) {
-        const defaultGoalData = {
-          experiment_id: null, // No experiment for standalone default goal
-          metric_id: response.id,
-          target: JSON.stringify(
-            type === "boolean"
-              ? goalValue === "true"
-              : type === "number" || type === "percentage" || type === "time"
-                ? parseFloat(goalValue)
-                : goalValue
-          ),
-          target_type: type === "boolean" ? "boolean" : goalType,
-          importance: 5,
-          private: isPrivate,
-          applies_as_daily_goal: true, // This will be used as a daily goal
-        };
-
-        const goalResponse = await ApiService.addRecord(
-          "experiment_metrics",
-          defaultGoalData
-        );
-
-        if (goalResponse) {
-          addEntry(goalResponse, "experiment_metrics");
-          toast.success("Default goal created for metric");
         }
       }
 
@@ -624,6 +609,7 @@ export default function AddMetricForm({
                   placeholder="Goal value"
                   value={goalValue}
                   onChange={(e) => setGoalValue(e.target.value)}
+                  required={hasDefaultGoal}
                 />
               )}
             </div>
@@ -781,7 +767,12 @@ export default function AddMetricForm({
               Cancel
             </Button>
           )}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            disabled={
+              isSubmitting || !name || (hasDefaultGoal && !goalValue) // Add validation for goal value
+            }
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

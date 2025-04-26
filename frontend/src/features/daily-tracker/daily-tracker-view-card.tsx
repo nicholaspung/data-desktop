@@ -49,28 +49,41 @@ export default function DailyTrackerViewCard({
     // Handle different types of goals
     switch (metric.goal_type) {
       case "minimum":
-        if (metric.type === "number" || metric.type === "percentage") {
+        if (
+          metric.type === "number" ||
+          metric.type === "percentage" ||
+          metric.type === "time"
+        ) {
           const current = parseFloat(metric.value) || 0;
           const goal = parseFloat(metric.goal_value) || 0;
           return {
             progress: Math.min(100, (current / goal) * 100),
-            text: `${current}/${goal} (min)`,
+            text: `${current}${metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.unit ? ` ${metric.unit}` : ""} (min)`,
           };
         }
         break;
       case "maximum":
-        if (metric.type === "number" || metric.type === "percentage") {
+        if (
+          metric.type === "number" ||
+          metric.type === "percentage" ||
+          metric.type === "time"
+        ) {
           const current = parseFloat(metric.value) || 0;
           const goal = parseFloat(metric.goal_value) || 0;
           // For maximum, lower is better
           return {
-            progress: Math.max(0, 100 - (current / goal) * 100),
-            text: `${current}/${goal} (max)`,
+            progress:
+              goal === 0 ? 100 : Math.max(0, 100 - (current / goal) * 100),
+            text: `${current}${metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.unit ? ` ${metric.unit}` : ""} (max)`,
           };
         }
         break;
       case "exact":
-        if (metric.type === "number" || metric.type === "percentage") {
+        if (
+          metric.type === "number" ||
+          metric.type === "percentage" ||
+          metric.type === "time"
+        ) {
           const current = parseFloat(metric.value) || 0;
           const goal = parseFloat(metric.goal_value) || 0;
           // For exact goals, calculate how close we are
@@ -78,7 +91,7 @@ export default function DailyTrackerViewCard({
           const maxDiff = goal * 0.5; // 50% tolerance
           return {
             progress: Math.max(0, 100 - (diff / maxDiff) * 100),
-            text: `${current}/${goal} (exact)`,
+            text: `${current}${metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.unit ? ` ${metric.unit}` : ""} (exact)`,
           };
         }
         break;
