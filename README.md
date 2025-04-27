@@ -36,7 +36,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
-- in quick-metric-logger, improve the button layout for hide from calendar, edit/delete
 - in bloodwork add inputs, add virtualization
 - create end to end test to make sure the inputs are all working correctly
 - see why the line chart doesn't show the x data for the one right next to the last x data description
@@ -51,18 +50,18 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
-- adjust how the metric looks like for value number
-- in quick-metrics-logger, add a way to add notes
 - in same question answers, only show the current day's question
 - in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it
-- for some reason, in daily tracking, the journaling metrics are not being categorized correctly
-- in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?)
 - add journaling information to onboarding modal and help modal
-- add time tracking information to onboarding modal and help modal
-- add time tracking info panel information
-- update metrics information about metric daily log goals
+- add journaling summary to dashboard
 - update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others
 - fix the display for the legend on daily tracker calendar view
+- for some reason, in daily tracking, the journaling metrics are not being categorized correctly
+- in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?)
+- update metrics information about metric daily log goals
+- add time tracking information to onboarding modal and help modal
+- add time tracking info panel information
+- add time tracker summary to dashboard
 
 ### DONE
 
@@ -213,5 +212,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - test delete time entry, update time entry, fix auto timer auto increment metric [DONE 2025-04-26]
 - in daily tracker calendar view, it shows the dates in the wrong weekday slot [DONE 2025-04-26]
 - in quick-metrics-logger, have a way to show the inactive metrics [DONE 2025-04-26]
+- in quick-metrics-logger, add a way to add notes [DONE 2025-04-26]
+- adjust how the metric looks like for value number [DONE 2025-04-26]
+- in quick-metric-logger, improve the button layout for hide from calendar, edit/delete [DONE 2025-04-26]
 
 ### GAVE UP
