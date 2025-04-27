@@ -51,6 +51,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add time tracking, and also tie it with a metric if possible
 - tie time tracking and allow a user to select a metric to tie it to, to complete, metric can only be metric type time, so it should filter only for that metric, that's active
+- test delete time entry, update time entry, fix auto timer auto increment metric
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
 - adjust how the metric looks like for value number
 - in daily tracker calendar view, it shows the dates in the wrong weekday slot

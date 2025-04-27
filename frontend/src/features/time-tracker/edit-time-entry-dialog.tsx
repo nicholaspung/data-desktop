@@ -12,6 +12,7 @@ import { updateEntry } from "@/store/data-store";
 import { Clock, Save, ArrowLeft } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 
 interface EditTimeEntryDialogProps {
   entry: TimeEntry;
@@ -40,6 +41,8 @@ export default function EditTimeEntryDialog({
     dataStore,
     (state) => state.time_entries as TimeEntry[]
   );
+  const metricsData = useStore(dataStore, (state) => state.metrics) || [];
+  const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   useEffect(() => {
     // Format dates for datetime-local inputs
@@ -70,17 +73,31 @@ export default function EditTimeEntryDialog({
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
 
-      const updatedEntry = await ApiService.updateRecord(entry.id, {
+      // Store the original entry for comparison
+      const originalEntry = { ...entry };
+
+      const updatedEntry = {
+        ...entry,
         description,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
         duration_minutes: durationMinutes,
         category_id: categoryId,
         tags,
-      });
+      };
 
-      if (updatedEntry) {
-        updateEntry(entry.id, updatedEntry, "time_entries");
+      const response = await ApiService.updateRecord(entry.id, updatedEntry);
+
+      if (response) {
+        updateEntry(entry.id, response, "time_entries");
+
+        // Sync with time metrics, passing the original entry for comparison
+        await syncTimeEntryWithMetrics(
+          response as TimeEntry,
+          metricsData,
+          dailyLogsData,
+          originalEntry
+        );
       }
 
       onSave();

@@ -17,6 +17,12 @@ import EditTimeEntryDialog from "./edit-time-entry-dialog";
 import { groupEntriesByDate } from "@/lib/time-utils";
 import TimeEntryListItem from "./time-entries-list-item";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { deleteEntry } from "@/store/data-store";
+import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
+import { Metric } from "@/store/experiment-definitions";
+import { toast } from "sonner";
+import { ApiService } from "@/services/api";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -45,6 +51,13 @@ export default function TimeEntriesList({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
+
+  // Get metrics data
+  const metricsData = useStore(
+    dataStore,
+    (state) => state.metrics || []
+  ) as Metric[];
+  const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   // Find time overlaps in entries
   const findOverlappingEntries = (entries: TimeEntry[]): TimeEntry[] => {
@@ -168,6 +181,42 @@ export default function TimeEntriesList({
 
     return Array.from(tagsSet).sort();
   }
+
+  // Updated handleDelete function for time entries
+  const handleDelete = async (entry: TimeEntry) => {
+    try {
+      // Before deleting, we need to update any metrics this entry was incrementing
+      const matchingMetrics = metricsData.filter(
+        (metric: Metric) =>
+          metric.type === "time" &&
+          metric.active &&
+          metric.name.toLowerCase() === entry.description.toLowerCase()
+      );
+
+      if (matchingMetrics.length > 0) {
+        // Create a fake entry with 0 duration to "subtract" this time
+        const zeroEntry = {
+          ...entry,
+          duration_minutes: 0,
+        };
+
+        await syncTimeEntryWithMetrics(
+          zeroEntry,
+          metricsData,
+          dailyLogsData,
+          entry
+        );
+      }
+
+      // Now delete the entry
+      await ApiService.deleteRecord(entry.id);
+      deleteEntry(entry.id, "time_entries");
+      onDataChange();
+    } catch (error) {
+      console.error("Error deleting time entry:", error);
+      toast.error("Failed to delete time entry");
+    }
+  };
 
   // Use filteredEntries for grouping instead of sortedEntries
   const groupedEntries = groupEntriesByDate(filteredEntries);
@@ -410,8 +459,9 @@ export default function TimeEntriesList({
                                   key={entry.id}
                                   entry={entry}
                                   category={category}
+                                  metrics={metricsData}
                                   onEdit={() => setEditingEntry(entry)}
-                                  onDelete={onDataChange}
+                                  onDelete={() => handleDelete(entry)}
                                   isOverlapping={overlappingEntries.some(
                                     (e) => e.id === entry.id
                                   )}
@@ -428,8 +478,9 @@ export default function TimeEntriesList({
                         key={entry.id}
                         entry={entry}
                         category={getCategoryById(entry.category_id)}
+                        metrics={metricsData}
                         onEdit={() => setEditingEntry(entry)}
-                        onDelete={onDataChange}
+                        onDelete={() => handleDelete(entry)}
                         isOverlapping={overlappingEntries.some(
                           (e) => e.id === entry.id
                         )}

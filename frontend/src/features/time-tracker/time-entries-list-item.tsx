@@ -2,16 +2,16 @@
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, AlertTriangle } from "lucide-react";
+import { Edit, AlertTriangle, Clock as ClockIcon } from "lucide-react";
 import { formatTimeString } from "@/lib/time-utils";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
-import { ApiService } from "@/services/api";
-import { deleteEntry } from "@/store/data-store";
 import { cn } from "@/lib/utils";
+import { Metric } from "@/store/experiment-definitions";
 
 interface TimeEntryListItemProps {
   entry: TimeEntry;
   category: TimeCategory | null;
+  metrics: Metric[];
   onEdit: () => void;
   onDelete: () => void;
   isOverlapping?: boolean;
@@ -20,6 +20,7 @@ interface TimeEntryListItemProps {
 export default function TimeEntryListItem({
   entry,
   category,
+  metrics,
   onEdit,
   onDelete,
   isOverlapping = false,
@@ -27,27 +28,36 @@ export default function TimeEntryListItem({
   const startTime = new Date(entry.start_time);
   const endTime = new Date(entry.end_time);
 
-  const handleDelete = async () => {
-    try {
-      await ApiService.deleteRecord(entry.id);
-      deleteEntry(entry.id, "time_entries");
-      onDelete();
-    } catch (error) {
-      console.error("Error deleting time entry:", error);
-    }
-  };
+  // Check if this entry is linked to a time metric
+  const isTimeMetric = metrics.some(
+    (metric) =>
+      metric.type === "time" &&
+      metric.active &&
+      metric.name.toLowerCase() === entry.description.toLowerCase()
+  );
 
   return (
     <div
       className={cn(
         "flex justify-between items-center py-2 px-3 border-l-4 border-grey-400",
         isOverlapping &&
-          "bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400"
+          "bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400",
+        isTimeMetric &&
+          "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400"
       )}
     >
       <div className="flex-1 mr-4">
         <div className="flex items-center flex-wrap gap-2">
           <span className="font-medium">{entry.description}</span>
+          {isTimeMetric && (
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-900 border-blue-400"
+            >
+              <ClockIcon className="h-3 w-3 mr-1 text-blue-600 dark:text-blue-400" />
+              Time Metric
+            </Badge>
+          )}
           {isOverlapping && (
             <Badge
               variant="outline"
@@ -92,7 +102,7 @@ export default function TimeEntryListItem({
           <ConfirmDeleteDialog
             title="Delete Time Entry"
             description="Are you sure you want to delete this time entry? This action cannot be undone."
-            onConfirm={handleDelete}
+            onConfirm={onDelete}
             size="icon"
             variant="ghost"
           />

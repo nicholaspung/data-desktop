@@ -22,6 +22,9 @@ import {
 } from "./time-tracker-store";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import { SelectOption } from "@/types/types";
+import { Metric } from "@/store/experiment-definitions";
+import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
+import { Badge } from "@/components/ui/badge";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -39,6 +42,8 @@ export default function TimeTrackerForm({
     dataStore,
     (state) => state.time_entries as TimeEntry[]
   );
+  const metricsData = useStore(dataStore, (state) => state.metrics) || [];
+  const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   // Get global timer state
   const globalTimerData = getTimerData();
@@ -82,15 +87,32 @@ export default function TimeTrackerForm({
       }
     });
 
+    // Get time-type metrics to add to suggestions
+    const timeMetrics = metricsData
+      .filter((m: any) => m.type === "time" && m.active)
+      .map((metric: any) => ({
+        id: `metric-${metric.id}`,
+        label: metric.name,
+        isMetric: true,
+        metric: metric,
+        // Add icon or indication this is a metric
+      }));
+
     // Convert to options array for the autocomplete with all related data
-    return Array.from(uniqueDescriptions.values()).map((entry) => ({
-      id: entry.id,
-      label: entry.description,
-      entry: entry,
-      // Include category information if available (from relation data)
-      category_id_data: entry.category_id_data,
-    }));
-  }, [timeEntries]);
+    const entryOptions = Array.from(uniqueDescriptions.values()).map(
+      (entry) => ({
+        id: entry.id,
+        label: entry.description,
+        entry: entry,
+        isMetric: false,
+        // Include category information if available (from relation data)
+        category_id_data: entry.category_id_data,
+      })
+    );
+
+    // Combine metrics first, then previous entries
+    return [...timeMetrics, ...entryOptions];
+  }, [timeEntries, metricsData]);
 
   // Initialize current time when switching to manual mode
   useEffect(() => {
@@ -214,7 +236,7 @@ export default function TimeTrackerForm({
       const endTime = new Date();
       const durationMinutes = Math.floor(elapsedSeconds / 60);
 
-      const response = await ApiService.addRecord("time_entries", {
+      const newEntry = {
         description,
         start_time: timerStartTime.toISOString(),
         end_time: endTime.toISOString(),
@@ -222,13 +244,22 @@ export default function TimeTrackerForm({
         category_id: categoryId,
         tags,
         private: false,
-      });
+      };
+
+      const response = await ApiService.addRecord("time_entries", newEntry);
 
       if (response) {
         addEntry(response, "time_entries");
+
+        // Sync with time metrics
+        await syncTimeEntryWithMetrics(
+          response as TimeEntry,
+          metricsData,
+          dailyLogsData
+        );
       }
 
-      // Reset global timer state - this is the key fix
+      // Reset global timer state
       stopGlobalTimer();
 
       // Reset local form state
@@ -259,7 +290,7 @@ export default function TimeTrackerForm({
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
 
-      const response = await ApiService.addRecord("time_entries", {
+      const newEntry = {
         description,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
@@ -267,10 +298,19 @@ export default function TimeTrackerForm({
         category_id: categoryId,
         tags,
         private: false,
-      });
+      };
+
+      const response = await ApiService.addRecord("time_entries", newEntry);
 
       if (response) {
         addEntry(response, "time_entries");
+
+        // Sync with time metrics
+        await syncTimeEntryWithMetrics(
+          response as TimeEntry,
+          metricsData,
+          dailyLogsData
+        );
       }
 
       resetForm();
@@ -284,12 +324,20 @@ export default function TimeTrackerForm({
 
   // Handle selection of a previous entry from autocomplete
   const handleDescriptionSelect = (
-    option: SelectOption & { entry?: TimeEntry }
+    option: SelectOption & {
+      entry?: TimeEntry;
+      isMetric?: boolean;
+      metric?: Metric;
+    }
   ) => {
     setDescription(option.label);
 
-    // Auto-populate category and tags if the entry has them
-    if (option.entry) {
+    // If selecting a metric
+    if (option.isMetric && option.metric) {
+      // For metrics, no need to set category automatically
+    }
+    // For previous entries
+    else if (option.entry) {
       if (option.entry.category_id) {
         setCategoryId(option.entry.category_id);
       }
@@ -297,6 +345,15 @@ export default function TimeTrackerForm({
         setTags(option.entry.tags);
       }
     }
+  };
+
+  const isTimeMetric = (description: string) => {
+    return metricsData.some(
+      (metric: any) =>
+        metric.type === "time" &&
+        metric.active &&
+        metric.name.toLowerCase() === description.toLowerCase()
+    );
   };
 
   return (
@@ -361,8 +418,19 @@ export default function TimeTrackerForm({
           <Separator className="bg-muted" />
           <div className="flex flex-row gap-4 items-end flex-wrap md:flex-nowrap">
             <div className="flex-1 space-y-2">
-              <Label htmlFor="description" className="text-sm font-medium">
+              <Label
+                htmlFor="description"
+                className="text-sm font-medium flex items-center"
+              >
                 What are you working on?
+                {isTimeMetric(description) && (
+                  <Badge
+                    variant="outline"
+                    className="ml-2 bg-blue-100 dark:bg-blue-900 text-xs"
+                  >
+                    Time Metric
+                  </Badge>
+                )}
               </Label>
               <AutocompleteInput
                 id="description"
@@ -371,10 +439,25 @@ export default function TimeTrackerForm({
                 onSelect={handleDescriptionSelect}
                 options={descriptionOptions}
                 placeholder="Task description"
-                inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
+                inputClassName={`h-10 focus:ring-2 focus:ring-primary/50 ${
+                  isTimeMetric(description) ? "border-blue-500" : ""
+                }`}
                 emptyMessage="Type to start tracking a new task or select a previous one"
                 showRecentOptions={true}
                 maxRecentOptions={7}
+                renderItem={(option) => (
+                  <div className="flex items-center justify-between w-full">
+                    <span>{option.label}</span>
+                    {option.isMetric && (
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-100 dark:bg-blue-900 text-xs"
+                      >
+                        Time Metric
+                      </Badge>
+                    )}
+                  </div>
+                )}
               />
             </div>
 

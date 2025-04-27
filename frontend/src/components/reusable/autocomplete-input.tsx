@@ -24,6 +24,7 @@ export default function AutocompleteInput({
   emptyMessage = "No options found.",
   showRecentOptions = true,
   maxRecentOptions = 7,
+  renderItem,
 }: {
   label?: string;
   value: string;
@@ -41,6 +42,9 @@ export default function AutocompleteInput({
   emptyMessage?: string;
   showRecentOptions?: boolean;
   maxRecentOptions?: number;
+  renderItem?: (
+    option: SelectOption & { [key: string]: any }
+  ) => React.ReactNode;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -145,8 +149,8 @@ export default function AutocompleteInput({
     }
   };
 
-  // Render option with additional information (category, tags)
-  const renderOption = (
+  // Default render for option with additional information (category, tags)
+  const defaultRenderOption = (
     option: SelectOption & { [key: string]: any },
     isActive: boolean
   ) => {
@@ -261,7 +265,9 @@ export default function AutocompleteInput({
                   onClick={() => handleSelect(option)}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  {renderOption(option, activeIndex === index)}
+                  {renderItem
+                    ? renderItem(option)
+                    : defaultRenderOption(option, activeIndex === index)}
                 </li>
               ))}
             </ul>
