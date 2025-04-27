@@ -16,6 +16,7 @@ import ExperimentDashboardSummary from "@/features/dashboard/experiment-dashboar
 import { Link } from "@tanstack/react-router";
 import DailyTrackingDashboardSummary from "@/features/dashboard/daily-tracking-dashboard-summary";
 import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric-logger-dashboard-summary";
+import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -121,6 +122,7 @@ function Home() {
         <DailyTrackingDashboardSummary />
         <ExperimentDashboardSummary />
         <QuickMetricLoggerDashboardSummary />
+        <JournalingDashboardSummary />
         <DEXADashboardSummary />
         <BloodworkDashboardSummary />
       </div>

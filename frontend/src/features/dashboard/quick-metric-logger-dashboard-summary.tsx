@@ -1,22 +1,14 @@
-// src/features/dashboard/quick-metric-logger-summary.tsx
+// src/features/dashboard/quick-metric-logger-dashboard-summary.tsx
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import {
-  CheckCircle2,
-  Circle,
-  ArrowRight,
-  Lock,
-  ClipboardCheck,
-} from "lucide-react";
+import { CheckCircle2, Circle, Lock, ClipboardCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -32,8 +24,10 @@ import {
   ProtectedField,
 } from "@/components/security/protected-content";
 import { usePin } from "@/hooks/usePin";
+import ReusableSummary from "@/components/reusable/reusable-summary";
+import { Metric, DailyLog } from "@/store/experiment-definitions";
 
-export default function QuickMetricLoggerSummary() {
+export default function QuickMetricLoggerDashboardSummary() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfDay(new Date())
@@ -46,6 +40,7 @@ export default function QuickMetricLoggerSummary() {
   const [metricValue, setMetricValue] = useState<string | number | boolean>("");
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Access PIN state
   const { isUnlocked } = usePin();
@@ -57,6 +52,11 @@ export default function QuickMetricLoggerSummary() {
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
+
+  useEffect(() => {
+    // Simulate loading
+    setTimeout(() => setIsLoading(false), 300);
+  }, []);
 
   // Handle click outside to close command
   useEffect(() => {
@@ -242,110 +242,88 @@ export default function QuickMetricLoggerSummary() {
     );
   };
 
-  return (
-    <div className="border rounded-lg p-4 bg-card flex flex-col h-full">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center">
-          <ClipboardCheck className="h-5 w-5 mr-2 text-primary" />
-          <h3 className="font-medium text-lg">Quick Metric Logger</h3>
-        </div>
-      </div>
-
-      <Separator className="my-2" />
-
-      {/* Button at bottom of card */}
+  // Custom main content that will span the full width
+  const fullWidthContent = (
+    <>
       {Object.keys(groupedMetrics).length === 0 ? (
         <div className="text-center py-6 text-muted-foreground">
-          <p>No metric data available</p>
+          <p>No metrics available to log for this date</p>
           <Link to="/metric">
             <Button variant="outline" className="mt-2">
-              Add your first metric
+              Manage metrics
             </Button>
           </Link>
         </div>
       ) : (
-        <>
-          <div className="space-y-4 mt-3 flex-grow">
-            {/* Date selector */}
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                type="date"
-                value={dateString}
-                onChange={(e) => handleDateStringChange(e.target.value)}
-                className="w-full"
-              />
-            </div>
+        <div className="space-y-4">
+          {/* Date selector */}
+          <div className="flex flex-col space-y-1.5">
+            <Label htmlFor="date">Date</Label>
+            <Input
+              type="date"
+              value={dateString}
+              onChange={(e) => handleDateStringChange(e.target.value)}
+              className="w-full"
+            />
+          </div>
 
-            {/* Metric selector */}
-            <div className="flex flex-col space-y-1.5">
-              <Label>Select Metric</Label>
-              <div className="relative" ref={commandRef}>
-                <Command className="rounded-lg border shadow-md">
-                  <CommandInput
-                    placeholder="Search metrics..."
-                    value={searchTerm}
-                    onValueChange={setSearchTerm}
-                    onFocus={() => setIsCommandOpen(true)}
-                  />
+          {/* Metric selector */}
+          <div className="flex flex-col space-y-1.5">
+            <Label>Select Metric</Label>
+            <div className="relative" ref={commandRef}>
+              <Command className="rounded-lg border shadow-md">
+                <CommandInput
+                  placeholder="Search metrics..."
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                  onFocus={() => setIsCommandOpen(true)}
+                />
 
-                  {isCommandOpen && (
-                    <CommandList className="max-h-52 overflow-auto">
-                      {Object.keys(groupedMetrics).length === 0 ? (
-                        <CommandEmpty>
-                          {searchTerm
-                            ? "No matching metrics found"
-                            : "All metrics have been logged for this date"}
-                        </CommandEmpty>
-                      ) : (
-                        Object.entries(groupedMetrics).map(
-                          ([category, categoryMetrics]) => (
-                            <CommandGroup key={category} heading={category}>
-                              {categoryMetrics.map((metric) => (
-                                <CommandItem
-                                  key={metric.id}
-                                  // Use id as the value for uniqueness
-                                  value={metric.id}
-                                  onSelect={() => handleSelectMetric(metric)}
-                                  className="flex items-center justify-between"
-                                >
-                                  {renderMetricNameAndDescription(metric)}
-                                  <div className="flex items-center">
-                                    {metric.private && (
-                                      <Lock className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
-                                    )}
-                                    <Badge variant="outline">
-                                      {metric.type}
-                                    </Badge>
-                                  </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )
+                {isCommandOpen && (
+                  <CommandList className="max-h-52 overflow-auto">
+                    {Object.keys(groupedMetrics).length === 0 ? (
+                      <CommandEmpty>
+                        {searchTerm
+                          ? "No matching metrics found"
+                          : "All metrics have been logged for this date"}
+                      </CommandEmpty>
+                    ) : (
+                      Object.entries(groupedMetrics).map(
+                        ([category, categoryMetrics]) => (
+                          <CommandGroup key={category} heading={category}>
+                            {categoryMetrics.map((metric) => (
+                              <CommandItem
+                                key={metric.id}
+                                // Use id as the value for uniqueness
+                                value={metric.id}
+                                onSelect={() => handleSelectMetric(metric)}
+                                className="flex items-center justify-between"
+                              >
+                                {renderMetricNameAndDescription(metric)}
+                                <div className="flex items-center">
+                                  {metric.private && (
+                                    <Lock className="h-3.5 w-3.5 mr-1.5 text-amber-500" />
+                                  )}
+                                  <Badge variant="outline">{metric.type}</Badge>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
                         )
-                      )}
-                    </CommandList>
-                  )}
-                </Command>
-              </div>
+                      )
+                    )}
+                  </CommandList>
+                )}
+              </Command>
             </div>
+          </div>
 
-            {/* Selected metric form */}
-            {selectedMetric && (
-              <div className="space-y-4 p-3 border rounded-md">
-                <div className="flex justify-between items-start">
-                  {selectedMetric.private ? (
-                    <ProtectedContent>
-                      <div>
-                        <h4 className="font-medium">{selectedMetric.name}</h4>
-                        {selectedMetric.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {selectedMetric.description}
-                          </p>
-                        )}
-                      </div>
-                    </ProtectedContent>
-                  ) : (
+          {/* Selected metric form */}
+          {selectedMetric && (
+            <div className="space-y-4 p-3 border rounded-md">
+              <div className="flex justify-between items-start">
+                {selectedMetric.private ? (
+                  <ProtectedContent>
                     <div>
                       <h4 className="font-medium">{selectedMetric.name}</h4>
                       {selectedMetric.description && (
@@ -354,81 +332,106 @@ export default function QuickMetricLoggerSummary() {
                         </p>
                       )}
                     </div>
-                  )}
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    {selectedMetric.private && (
-                      <Lock className="h-3 w-3 text-amber-500" />
+                  </ProtectedContent>
+                ) : (
+                  <div>
+                    <h4 className="font-medium">{selectedMetric.name}</h4>
+                    {selectedMetric.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {selectedMetric.description}
+                      </p>
                     )}
-                    {selectedMetric.type}
-                    {selectedMetric.unit ? ` (${selectedMetric.unit})` : ""}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="value">Value</Label>
-
-                  {selectedMetric.type === "boolean" ? (
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant={metricValue === true ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setMetricValue(true)}
-                        className="w-20"
-                      >
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        Yes
-                      </Button>
-                      <Button
-                        variant={metricValue === false ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setMetricValue(false)}
-                        className="w-20"
-                      >
-                        <Circle className="h-4 w-4 mr-1" />
-                        No
-                      </Button>
-                    </div>
-                  ) : selectedMetric.type === "number" ||
-                    selectedMetric.type === "percentage" ? (
-                    <Input
-                      id="value"
-                      type="number"
-                      value={metricValue as number}
-                      onChange={(e) =>
-                        setMetricValue(parseFloat(e.target.value) || 0)
-                      }
-                      placeholder={`Enter ${selectedMetric.type}`}
-                    />
-                  ) : (
-                    <Input
-                      id="value"
-                      value={metricValue as string}
-                      onChange={(e) => setMetricValue(e.target.value)}
-                      placeholder="Enter value"
-                    />
+                  </div>
+                )}
+                <Badge variant="outline" className="flex items-center gap-1">
+                  {selectedMetric.private && (
+                    <Lock className="h-3 w-3 text-amber-500" />
                   )}
-                </div>
-
-                <Button
-                  onClick={handleLogMetric}
-                  disabled={isSubmitting}
-                  className="w-full"
-                >
-                  {isSubmitting ? "Saving..." : "Log Metric"}
-                </Button>
+                  {selectedMetric.type}
+                  {selectedMetric.unit ? ` (${selectedMetric.unit})` : ""}
+                </Badge>
               </div>
-            )}
-          </div>
-          <div className="mt-4">
-            <Link to="/metric">
-              <Button variant="outline" className="w-full">
-                Go to Metric Logger
-                <ArrowRight className="ml-2 h-4 w-4" />
+
+              <div className="space-y-2">
+                <Label htmlFor="value">Value</Label>
+
+                {selectedMetric.type === "boolean" ? (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant={metricValue === true ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setMetricValue(true)}
+                      className="w-20"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                      Yes
+                    </Button>
+                    <Button
+                      variant={metricValue === false ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setMetricValue(false)}
+                      className="w-20"
+                    >
+                      <Circle className="h-4 w-4 mr-1" />
+                      No
+                    </Button>
+                  </div>
+                ) : selectedMetric.type === "number" ||
+                  selectedMetric.type === "percentage" ? (
+                  <Input
+                    id="value"
+                    type="number"
+                    value={metricValue as number}
+                    onChange={(e) =>
+                      setMetricValue(parseFloat(e.target.value) || 0)
+                    }
+                    placeholder={`Enter ${selectedMetric.type}`}
+                  />
+                ) : (
+                  <Input
+                    id="value"
+                    value={metricValue as string}
+                    onChange={(e) => setMetricValue(e.target.value)}
+                    placeholder="Enter value"
+                  />
+                )}
+              </div>
+
+              <Button
+                onClick={handleLogMetric}
+                disabled={isSubmitting}
+                className="w-full"
+              >
+                {isSubmitting ? "Saving..." : "Log Metric"}
               </Button>
-            </Link>
-          </div>
-        </>
+            </div>
+          )}
+        </div>
       )}
-    </div>
+    </>
+  );
+
+  return (
+    <ReusableSummary
+      title="Quick Metric Logger"
+      titleIcon={<ClipboardCheck className="h-5 w-5" />}
+      linkText="View all"
+      linkTo="/metric"
+      loading={isLoading}
+      emptyState={
+        metrics.length === 0
+          ? {
+              message: "No metric data available",
+              actionText: "Add your first metric",
+              actionTo: "/metric",
+            }
+          : undefined
+      }
+      // Instead of using mainSection, directly provide the content in the customContent property
+      customContent={fullWidthContent}
+      // Set className to ensure full width
+      className="h-full"
+      contentClassName="p-4"
+    />
   );
 }

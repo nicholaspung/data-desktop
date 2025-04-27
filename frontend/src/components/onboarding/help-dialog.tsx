@@ -1,4 +1,4 @@
-// src/components/help/help-dialog.tsx
+// src/components/onboarding/help-dialog.tsx
 import { useState } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,11 @@ import {
   Lock,
   PieChart,
   Pipette,
+  BookOpen,
+  HandHeart,
+  Lightbulb,
+  Presentation,
+  BookHeart,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -93,6 +98,87 @@ const HELP_TOPICS: HelpTopic[] = [
       "range",
     ],
     link: "/bloodwork",
+  },
+  {
+    title: "Journaling",
+    icon: <BookOpen className="h-5 w-5" />,
+    description:
+      "Record your thoughts, gratitude, creative ideas, and daily affirmations. Enhance your wellbeing through self-reflection.",
+    keywords: [
+      "journal",
+      "gratitude",
+      "reflection",
+      "writing",
+      "diary",
+      "thoughts",
+      "affirmation",
+      "creativity",
+      "questions",
+    ],
+    link: "/journaling",
+  },
+  {
+    title: "Gratitude Journal",
+    icon: <HandHeart className="h-5 w-5" />,
+    description:
+      "Express and track things you're grateful for each day to cultivate a positive mindset and increase your overall wellbeing.",
+    keywords: [
+      "gratitude",
+      "thankful",
+      "appreciation",
+      "journal",
+      "positive",
+      "mindfulness",
+    ],
+    link: "/journaling",
+  },
+  {
+    title: "Question Journal",
+    icon: <Presentation className="h-5 w-5" />,
+    description:
+      "Answer daily thought-provoking questions to gain insights, foster self-reflection, and track your growth over time.",
+    keywords: [
+      "questions",
+      "reflection",
+      "insight",
+      "journal",
+      "thought",
+      "prompts",
+      "self-discovery",
+    ],
+    link: "/journaling",
+  },
+  {
+    title: "Creativity Journal",
+    icon: <Lightbulb className="h-5 w-5" />,
+    description:
+      "Capture your creative ideas, inspirations, and random thoughts to nurture your creativity and build an idea repository.",
+    keywords: [
+      "creativity",
+      "ideas",
+      "inspiration",
+      "brainstorm",
+      "journal",
+      "innovation",
+      "thoughts",
+    ],
+    link: "/journaling",
+  },
+  {
+    title: "Daily Affirmations",
+    icon: <BookHeart className="h-5 w-5" />,
+    description:
+      "Create and practice daily affirmations to reinforce positive beliefs, boost confidence, and support your personal goals.",
+    keywords: [
+      "affirmation",
+      "positive",
+      "mantra",
+      "belief",
+      "mindset",
+      "motivation",
+      "self-talk",
+    ],
+    link: "/journaling",
   },
   {
     title: "Experiments",

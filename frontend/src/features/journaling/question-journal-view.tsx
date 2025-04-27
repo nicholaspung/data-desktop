@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Presentation, History, MessageSquare } from "lucide-react";
 import QuestionOfTheDay from "./question-of-the-day";
-import SameQuestionAnswers from "./same-question-answers";
+import PreviousAnswers from "./previous-answers";
 import QuestionJournalHistory from "./question-journal-history";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
@@ -35,10 +35,10 @@ export default function QuestionJournalView() {
             label: (
               <span className="flex gap-2 items-center">
                 <MessageSquare className="h-4 w-4" />
-                <span>Same Question Answers</span>
+                <span>Previous Answers</span>
               </span>
             ),
-            content: <SameQuestionAnswers />,
+            content: <PreviousAnswers />,
           },
           {
             id: "history",

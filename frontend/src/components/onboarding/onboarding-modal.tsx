@@ -13,6 +13,7 @@ import {
   Lock,
   ArrowRight,
   ArrowLeft,
+  BookOpen,
 } from "lucide-react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -34,6 +35,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       "Monitor bloodwork results",
       "Log daily metrics and habits",
       "Conduct self-experiments",
+      "Journal your thoughts and gratitude",
       "Manage your data securely (data is obscured when viewing, but not in the database)",
     ],
   },
@@ -71,6 +73,19 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       "Track trends over multiple tests",
       "Get visual feedback on out-of-range values",
       "Filter by test date, lab, or marker type",
+    ],
+  },
+  {
+    title: "Journaling",
+    description:
+      "Record thoughts, track gratitude, and foster self-reflection.",
+    icon: <BookOpen className="h-12 w-12 text-primary" />,
+    features: [
+      "Keep a daily gratitude journal",
+      "Answer thought-provoking questions",
+      "Capture creative ideas and inspiration",
+      "Create and practice daily affirmations",
+      "Track journaling progress and habits",
     ],
   },
   {

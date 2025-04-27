@@ -1,10 +1,8 @@
 // src/features/dashboard/daily-tracking-dashboard-summary.tsx
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CalendarCheck, Clock, Edit } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
@@ -22,7 +20,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ProtectedField } from "@/components/security/protected-content";
-import { Separator } from "@/components/ui/separator";
+import ReusableSummary from "@/components/reusable/reusable-summary";
 
 export default function DailyTrackingDashboardSummary() {
   const [todayLogs, setTodayLogs] = useState<Record<string, DailyLog>>({});
@@ -32,6 +30,7 @@ export default function DailyTrackingDashboardSummary() {
   const [currentMetric, setCurrentMetric] = useState<Metric | null>(null);
   const [metricValue, setMetricValue] = useState<string | number>("");
   const [metricNotes, setMetricNotes] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Get data from store
   const allMetrics = useStore(dataStore, (state) => state.metrics) || [];
@@ -63,6 +62,8 @@ export default function DailyTrackingDashboardSummary() {
 
   // Load metrics and today's logs
   useEffect(() => {
+    setIsLoading(true);
+
     // Get active metrics that are scheduled for today
     const activeMetrics = allMetrics.filter(
       (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
@@ -84,6 +85,7 @@ export default function DailyTrackingDashboardSummary() {
     });
 
     setTodayLogs(logsMap);
+    setIsLoading(false);
   }, [allMetrics, dailyLogs]);
 
   // Toggle boolean metric completion
@@ -276,28 +278,82 @@ export default function DailyTrackingDashboardSummary() {
     return metrics.filter((metric) => isMetricCompleted(metric)).length;
   };
 
+  // Metrics list component
+  const metricsList = (
+    <div className="space-y-2 pt-2">
+      {metrics.map((metric) => (
+        <div
+          key={metric.id}
+          className="flex items-center justify-between py-1 cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors"
+          onClick={() => toggleMetric(metric)}
+        >
+          <div className="flex items-center gap-2">
+            {metric.type === "boolean" ? (
+              <Checkbox
+                checked={isMetricCompleted(metric)}
+                disabled={loading[metric.id]}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMetric(metric);
+                }}
+              />
+            ) : (
+              <div className="w-4 h-4 flex items-center justify-center">
+                {metric.type === "time" ? (
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Edit className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            )}
+            <span className="text-sm">
+              {metric.private ? (
+                <ProtectedField>{metric.name}</ProtectedField>
+              ) : (
+                metric.name
+              )}
+            </span>
+          </div>
+          <div className="flex items-center">
+            {metric.type === "boolean" ? (
+              isMetricCompleted(metric) ? (
+                <Badge className="text-xs bg-green-500 hover:bg-green-600">
+                  Done
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs">
+                  To Do
+                </Badge>
+              )
+            ) : (
+              <span className="text-xs font-medium">
+                {getMetricDisplayValue(metric)}
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <>
-      <Card className="col-span-1 row-span-1">
-        <CardHeader>
-          <CardTitle className="text-xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CalendarCheck className="h-5 w-5" />
-              Today's Tracking
-            </div>
-            <Link
-              to="/calendar"
-              className="text-sm text-primary hover:underline"
-            >
-              View All
-            </Link>
-          </CardTitle>
-        </CardHeader>
-
-        <Separator />
-
-        <CardContent>
-          <div className="flex flex-col gap-4 pt-4">
+      <ReusableSummary
+        title="Today's Tracking"
+        titleIcon={<CalendarCheck className="h-5 w-5" />}
+        linkTo="/calendar"
+        loading={isLoading}
+        emptyState={
+          metrics.length === 0
+            ? {
+                message: "No tracking items for today",
+                actionText: "Go to Daily Tracker",
+                actionTo: "/calendar",
+              }
+            : undefined
+        }
+        customContent={
+          <div className="flex flex-col gap-4">
             {/* Summary count */}
             <div className="flex items-end justify-between">
               <div>
@@ -311,65 +367,10 @@ export default function DailyTrackingDashboardSummary() {
             </div>
 
             {/* Metrics list */}
-            {metrics.length === 0 ? (
-              <div className="text-center text-muted-foreground py-2">
-                <p className="text-sm">No tracking items for today</p>
-              </div>
-            ) : (
-              <div className="space-y-2 pt-2">
-                {metrics.map((metric) => (
-                  <div
-                    key={metric.id}
-                    className="flex items-center justify-between py-1 cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      {metric.type === "boolean" ? (
-                        <Checkbox
-                          checked={isMetricCompleted(metric)}
-                          disabled={loading[metric.id]}
-                          onClick={() => toggleMetric(metric)}
-                        />
-                      ) : (
-                        <div className="w-4 h-4 flex items-center justify-center">
-                          {metric.type === "time" ? (
-                            <Clock className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <Edit className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </div>
-                      )}
-                      <span className="text-sm">
-                        {metric.private ? (
-                          <ProtectedField>{metric.name}</ProtectedField>
-                        ) : (
-                          metric.name
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      {metric.type === "boolean" ? (
-                        isMetricCompleted(metric) ? (
-                          <Badge className="text-xs bg-green-500 hover:bg-green-600">
-                            Done
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            To Do
-                          </Badge>
-                        )
-                      ) : (
-                        <span className="text-xs font-medium">
-                          {getMetricDisplayValue(metric)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            {metrics.length > 0 ? metricsList : null}
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
 
       {/* Modal for non-boolean metrics */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>

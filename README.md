@@ -50,10 +50,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
-- in same question answers, only show the current day's question
-- in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it
-- add journaling information to onboarding modal and help modal
-- add journaling summary to dashboard
+- also, make it so that the dashboard page only loads the first time you go on the page, rather than everytime you go on the page
 - update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others
 - fix the display for the legend on daily tracker calendar view
 - for some reason, in daily tracking, the journaling metrics are not being categorized correctly
@@ -215,5 +212,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in quick-metrics-logger, add a way to add notes [DONE 2025-04-26]
 - adjust how the metric looks like for value number [DONE 2025-04-26]
 - in quick-metric-logger, improve the button layout for hide from calendar, edit/delete [DONE 2025-04-26]
+- in same question answers, only show the current day's question [DONE 2025-04-27]
+- in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it [DONE 2025-04-27]
+- add journaling information to onboarding modal and help modal [DONE 2025-04-27]
+- add journaling summary to dashboard [DONE 2025-04-27]
 
 ### GAVE UP
