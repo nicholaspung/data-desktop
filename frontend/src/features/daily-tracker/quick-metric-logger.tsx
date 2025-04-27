@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, startOfDay } from "date-fns";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +34,8 @@ const QuickMetricLogger = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
+  const [showOnlyWithGoals, setShowOnlyWithGoals] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
   const [showCalendarTracked, setShowCalendarTracked] = useState<
     "all" | "tracked" | "nottracked"
   >("all");
@@ -68,7 +70,9 @@ const QuickMetricLogger = () => {
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
-      if (!metric.active) return false;
+      // Check active state first
+      if (!showInactive && !metric.active) return false;
+      if (showInactive && metric.active) return false;
 
       const matchesSearch =
         !searchTerm ||
@@ -90,6 +94,11 @@ const QuickMetricLogger = () => {
         (showCalendarTracked === "nottracked" &&
           metric.schedule_days?.includes(-1));
 
+      // Check for goals if filter is enabled
+      const matchesGoals =
+        !showOnlyWithGoals ||
+        (metric.goal_value !== undefined && metric.goal_type !== undefined);
+
       if (showOnlyIncomplete) {
         const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
@@ -103,18 +112,29 @@ const QuickMetricLogger = () => {
 
         if (metric.type === "boolean") {
           if (!todayLog)
-            return matchesSearch && matchesCategory && matchesCalendarTracked;
+            return (
+              matchesSearch &&
+              matchesCategory &&
+              matchesCalendarTracked &&
+              matchesGoals
+            );
           try {
             const value = JSON.parse(todayLog.value);
             return (
               !value &&
               matchesSearch &&
               matchesCategory &&
-              matchesCalendarTracked
+              matchesCalendarTracked &&
+              matchesGoals
             );
           } catch (e) {
             console.error(e);
-            return matchesSearch && matchesCategory && matchesCalendarTracked;
+            return (
+              matchesSearch &&
+              matchesCategory &&
+              matchesCalendarTracked &&
+              matchesGoals
+            );
           }
         }
 
@@ -122,17 +142,25 @@ const QuickMetricLogger = () => {
           !todayLog &&
           matchesSearch &&
           matchesCategory &&
-          matchesCalendarTracked
+          matchesCalendarTracked &&
+          matchesGoals
         );
       }
 
-      return matchesSearch && matchesCategory && matchesCalendarTracked;
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesCalendarTracked &&
+        matchesGoals
+      );
     });
   }, [
     metrics,
     searchTerm,
     selectedCategories,
     showOnlyIncomplete,
+    showOnlyWithGoals,
+    showInactive,
     dailyLogs,
     selectedDate,
     showCalendarTracked,
@@ -195,7 +223,7 @@ const QuickMetricLogger = () => {
   };
 
   const toggleMetricCompletion = async (metric: Metric) => {
-    if (metric.type !== "boolean") return;
+    if (metric.type !== "boolean" || !metric.active) return;
 
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
@@ -365,34 +393,61 @@ const QuickMetricLogger = () => {
                 Filters
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="max-h-[500px]">
               <DropdownMenuLabel>Categories</DropdownMenuLabel>
-              {uniqueCategories.map((category) => (
-                <DropdownMenuCheckboxItem
-                  key={category}
-                  checked={selectedCategories.includes(category)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setSelectedCategories([...selectedCategories, category]);
-                    } else {
-                      setSelectedCategories(
-                        selectedCategories.filter((c) => c !== category)
-                      );
-                    }
-                  }}
-                >
-                  {category}
-                </DropdownMenuCheckboxItem>
-              ))}
+              <div
+                className={
+                  uniqueCategories.length > 5
+                    ? "max-h-40 overflow-y-auto pr-3"
+                    : ""
+                }
+              >
+                {uniqueCategories.map((category) => (
+                  <DropdownMenuCheckboxItem
+                    key={category}
+                    checked={selectedCategories.includes(category)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedCategories([
+                          ...selectedCategories,
+                          category,
+                        ]);
+                      } else {
+                        setSelectedCategories(
+                          selectedCategories.filter((c) => c !== category)
+                        );
+                      }
+                    }}
+                  >
+                    {category}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Options</DropdownMenuLabel>
-              <div className="p-2">
+              <div className="p-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="incomplete-only">Show incomplete only</Label>
                   <Switch
                     id="incomplete-only"
                     checked={showOnlyIncomplete}
                     onCheckedChange={setShowOnlyIncomplete}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="goals-only">Show metrics with goals</Label>
+                  <Switch
+                    id="goals-only"
+                    checked={showOnlyWithGoals}
+                    onCheckedChange={setShowOnlyWithGoals}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="inactive-only">Show inactive metrics</Label>
+                  <Switch
+                    id="inactive-only"
+                    checked={showInactive}
+                    onCheckedChange={setShowInactive}
                   />
                 </div>
               </div>
@@ -447,6 +502,14 @@ const QuickMetricLogger = () => {
         />
       ) : (
         <div className="space-y-4">
+          {showInactive && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 p-2 rounded-md flex items-center mb-4">
+              <EyeOff className="h-4 w-4 text-amber-500 mr-2" />
+              <span className="text-sm">
+                Showing inactive metrics. These metrics cannot be modified.
+              </span>
+            </div>
+          )}
           <QuickMetricLoggerListItem
             groupedMetrics={displayedMetrics}
             isMetricCompleted={isMetricCompleted}

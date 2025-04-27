@@ -52,12 +52,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
 - adjust how the metric looks like for value number
-- in daily tracker calendar view, it shows the dates in the wrong weekday slot [DONE 2025-04-26]
 - in quick-metrics-logger, add a way to add notes
-- in quick-metrics-logger, have a way to show the inactive metrics
 - in same question answers, only show the current day's question
 - in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it
-- for some reason,, in daily tracking, the journaling metrics are not being categorized correctly
+- for some reason, in daily tracking, the journaling metrics are not being categorized correctly
 - in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?)
 - add journaling information to onboarding modal and help modal
 - add time tracking information to onboarding modal and help modal
@@ -213,5 +211,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add time tracking, and also tie it with a metric if possible [DONE 2025-04-26]
 - tie time tracking and allow a user to select a metric to tie it to, to complete, metric can only be metric type time, so it should filter only for that metric, that's active [DONE 2025-04-26]
 - test delete time entry, update time entry, fix auto timer auto increment metric [DONE 2025-04-26]
+- in daily tracker calendar view, it shows the dates in the wrong weekday slot [DONE 2025-04-26]
+- in quick-metrics-logger, have a way to show the inactive metrics [DONE 2025-04-26]
 
 ### GAVE UP

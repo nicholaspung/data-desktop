@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Metric } from "@/store/experiment-definitions";
-import { Calendar, CalendarX, Check } from "lucide-react";
+import { Calendar, CalendarX, Check, EyeOff, Target } from "lucide-react";
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import MetricStreakDisplay from "./metric-streak-display";
@@ -40,6 +40,8 @@ export default function QuickMetricLoggerListItem({
             const isCalendarTracked = !(metric.schedule_days || []).includes(
               -1
             );
+            const hasGoal =
+              metric.goal_value !== undefined && metric.goal_type !== undefined;
 
             const renderContent = () => (
               <div className="flex justify-between items-center">
@@ -48,23 +50,45 @@ export default function QuickMetricLoggerListItem({
                     <Checkbox
                       checked={isCompleted}
                       onCheckedChange={() => toggleMetricCompletion(metric)}
+                      disabled={!metric.active}
                     />
                   ) : (
                     <div className="w-4" />
                   )}
 
                   <div>
-                    <div className="flex items-center">
-                      <span className="font-medium">{metric.name}</span>
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span
+                        className={`font-medium ${!metric.active ? "text-muted-foreground" : ""}`}
+                      >
+                        {metric.name}
+                      </span>
+                      {!metric.active && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs flex items-center gap-1"
+                        >
+                          <EyeOff className="h-3 w-3" />
+                          Inactive
+                        </Badge>
+                      )}
                       {isCompleted && (
                         <Badge className="ml-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
                           <Check className="h-3 w-3 mr-1" />
                           Completed
                         </Badge>
                       )}
+                      {hasGoal && (
+                        <Badge className="ml-2 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">
+                          <Target className="h-3 w-3 mr-1" />
+                          Has Goal
+                        </Badge>
+                      )}
                     </div>
                     {metric.description && (
-                      <div className="text-xs text-muted-foreground">
+                      <div
+                        className={`text-xs ${!metric.active ? "text-muted-foreground" : "text-muted-foreground"}`}
+                      >
                         {metric.description}
                       </div>
                     )}
@@ -79,27 +103,30 @@ export default function QuickMetricLoggerListItem({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Badge
-                    variant={isCalendarTracked ? "default" : "outline"}
-                    className="text-xs"
-                  >
-                    {isCalendarTracked ? (
-                      <Calendar className="h-3 w-3 mr-1" />
-                    ) : (
-                      <CalendarX className="h-3 w-3 mr-1" />
-                    )}
-                    {isCalendarTracked ? "Tracked" : "Not tracked"}
-                  </Badge>
+                  <div className="flex flex-col items-center gap-1">
+                    <Badge
+                      variant={isCalendarTracked ? "default" : "outline"}
+                      className="text-xs"
+                    >
+                      {isCalendarTracked ? (
+                        <Calendar className="h-3 w-3 mr-1" />
+                      ) : (
+                        <CalendarX className="h-3 w-3 mr-1" />
+                      )}
+                      {isCalendarTracked ? "Tracked" : "Not tracked"}
+                    </Badge>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleCalendarTracking(metric)}
-                  >
-                    {isCalendarTracked
-                      ? "Remove from calendar"
-                      : "Add to calendar"}
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleCalendarTracking(metric)}
+                      disabled={!metric.active}
+                    >
+                      {isCalendarTracked
+                        ? "Remove from calendar"
+                        : "Add to calendar"}
+                    </Button>
+                  </div>
 
                   <div className="space-x-1">
                     <AddMetricModal
@@ -126,7 +153,9 @@ export default function QuickMetricLoggerListItem({
               <ReusableCard
                 key={metric.id}
                 showHeader={false}
-                cardClassName={`mb-2 ${isCompleted ? "bg-green-50 dark:bg-green-950/30" : ""}`}
+                cardClassName={`mb-2 ${
+                  isCompleted ? "bg-green-50 dark:bg-green-950/30" : ""
+                } ${!metric.active ? "border-dashed opacity-70" : ""}`}
                 contentClassName="p-3"
                 content={
                   metric.private ? (
