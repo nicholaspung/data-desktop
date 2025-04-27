@@ -77,7 +77,7 @@ export interface MetricCategory {
   name: string;
 
   // Metadata fields
-  id?: string;
+  id: string;
   createdAt?: Date;
   lastModified?: Date;
 }

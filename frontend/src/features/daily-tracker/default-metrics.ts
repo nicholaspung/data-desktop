@@ -15,6 +15,8 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    goal_type: "boolean",
+    goal_value: "true",
   },
   {
     name: "Gratitude Journal Entries",
@@ -26,6 +28,8 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    goal_type: "minimum",
+    goal_value: "3",
   },
   {
     name: "Completed Creativity Journal",
@@ -36,6 +40,8 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    goal_type: "boolean",
+    goal_value: "true",
   },
   {
     name: "Completed Daily Affirmation",
@@ -46,6 +52,8 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    goal_type: "boolean",
+    goal_value: "true",
   },
 ];
 
@@ -79,7 +87,9 @@ export async function getOrCreateJournalingCategory(): Promise<string | null> {
 }
 
 // Function to create default metrics
-export async function createDefaultMetrics(): Promise<boolean> {
+export async function createDefaultMetrics(
+  metrics: Metric[]
+): Promise<boolean> {
   try {
     // Get or create the journaling category
     const journalingCategoryId = await getOrCreateJournalingCategory();
@@ -87,18 +97,41 @@ export async function createDefaultMetrics(): Promise<boolean> {
       throw new Error("Failed to create journaling category");
     }
 
-    // Create each default metric
+    let createdCount = 0;
+
+    // Check each default metric
     for (const defaultMetric of defaultJournalingMetrics) {
-      const response = await ApiService.addRecord("metrics", {
+      // Check if this metric already exists (by name)
+      const metricExists = metrics.some(
+        (m: Metric) =>
+          m.name?.toLowerCase() === defaultMetric.name?.toLowerCase()
+      );
+
+      // Skip if metric already exists
+      if (metricExists) {
+        console.log(`Metric "${defaultMetric.name}" already exists, skipping.`);
+        continue;
+      }
+
+      // Create the metric
+      const newMetric = {
         ...defaultMetric,
         category_id: journalingCategoryId,
-      });
-      if (response) {
-        addEntry(response, "metrics");
+      };
+
+      const result = await ApiService.addRecord("metrics", newMetric);
+
+      if (result) {
+        addEntry(result, "metrics");
+        createdCount++;
       }
     }
 
-    toast.success("Created default journaling metrics");
+    if (createdCount > 0) {
+      toast.success(`Created ${createdCount} journaling metrics`);
+    } else {
+      toast.info("All journaling metrics already exist");
+    }
     return true;
   } catch (error) {
     console.error("Error creating default journaling metrics:", error);

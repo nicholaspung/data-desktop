@@ -7,11 +7,15 @@ import {
   createDefaultMetrics,
 } from "./default-metrics";
 import { useJournalingMetricsSync } from "@/hooks/useJournalingMetricsSync";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
 
 export default function CreateDefaultMetricsButton() {
   const [showButton, setShowButton] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { syncJournalingMetrics } = useJournalingMetricsSync();
+
+  const metrics = useStore(dataStore, (state) => state.metrics);
 
   // Check if we need to show the button
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function CreateDefaultMetricsButton() {
   // Handle button click
   const handleCreateMetrics = async () => {
     setIsLoading(true);
-    const success = await createDefaultMetrics();
+    const success = await createDefaultMetrics(metrics);
     if (success) {
       setShowButton(false);
       // Sync metrics after creating them

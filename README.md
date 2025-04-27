@@ -49,13 +49,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
-- also, make it so that the dashboard page only loads the first time you go on the page, rather than everytime you go on the page
-- update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others
 - fix the display for the legend on daily tracker calendar view
+
 - for some reason, in daily tracking, the journaling metrics are not being categorized correctly
-- in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?)
+- add a way to return the added/updated record with the relational data
+
+- in daily tracker calendar card view, fix how the input for number/percentage/time gets saved
 - update metrics information about metric daily log goals
+
 - add time tracking information to onboarding modal and help modal
 - add time tracking info panel information
 - add time tracker summary to dashboard
@@ -216,5 +217,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it [DONE 2025-04-27]
 - add journaling information to onboarding modal and help modal [DONE 2025-04-27]
 - add journaling summary to dashboard [DONE 2025-04-27]
+- when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads [DONE 2025-04-27]
+- also, make it so that the dashboard page only loads the first time you go on the page, rather than everytime you go on the page [DONE 2025-04-27]
+- update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others [DONE 2025-04-27]
+- in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?) [DONE 2025-04-27]
 
 ### GAVE UP

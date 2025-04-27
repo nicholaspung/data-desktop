@@ -1,9 +1,9 @@
-// src/pages/index.tsx - Updated with null check
+// src/routes/index.tsx - Updated with TanStack Store for data loading state
 import { createFileRoute } from "@tanstack/react-router";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, HeartPulse, PieChart, RefreshCcw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useStore } from "@tanstack/react-store";
 import { ApiService } from "@/services/api";
 import { DatasetSummary, FieldDefinition } from "@/types/types";
 import { DataStoreName, loadState } from "@/store/data-store";
@@ -17,6 +17,7 @@ import { Link } from "@tanstack/react-router";
 import DailyTrackingDashboardSummary from "@/features/dashboard/daily-tracking-dashboard-summary";
 import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric-logger-dashboard-summary";
 import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
+import appStateStore from "@/store/app-state-store";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -25,6 +26,22 @@ export const Route = createFileRoute("/")({
 function Home() {
   const [summaries, setSummaries] = useState<DatasetSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Get data loading state from the store
+  const dashboardDataLoaded = useStore(
+    appStateStore,
+    (state) => state.dashboardDataLoaded
+  );
+  const setDashboardDataLoaded = appStateStore.state.setDashboardDataLoaded;
+
+  useEffect(() => {
+    // Load data on first application start or if data hasn't been loaded yet
+    if (!dashboardDataLoaded) {
+      loadSummaries();
+    } else {
+      setIsLoading(false);
+    }
+  }, [dashboardDataLoaded]);
 
   const loadSummaries = async () => {
     setIsLoading(true);
@@ -79,6 +96,9 @@ function Home() {
       // Wait for all promises to resolve
       const results = await Promise.all(countPromises);
       setSummaries(results);
+
+      // Mark as loaded in the store
+      setDashboardDataLoaded(true);
     } catch (error) {
       console.error("Error loading dataset summaries:", error);
       // In case of error, set empty summaries to prevent UI errors
@@ -87,10 +107,6 @@ function Home() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadSummaries();
-  }, []);
 
   // Helper function to get the icon for a dataset type
   const getDatasetIcon = (type: string) => {
@@ -104,6 +120,24 @@ function Home() {
     }
   };
 
+  const handleRefresh = () => {
+    // Reset the data loading state to force reload
+    setDashboardDataLoaded(false);
+    loadSummaries();
+  };
+
+  // Loading overlay
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
@@ -112,7 +146,7 @@ function Home() {
           variant="outline"
           size="sm"
           disabled={isLoading}
-          onClick={async () => await loadSummaries()}
+          onClick={handleRefresh}
         >
           <RefreshCcw className="h-4 w-4" />
         </Button>
@@ -130,55 +164,43 @@ function Home() {
       <div className="flex flex-col space-y-2">
         <h4 className="text-l font-bold">Dataset summary information</h4>
         <Separator />
-        {isLoading
-          ? // Loading state
-            Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-5 w-24 bg-muted rounded"></div>
-                  <div className="h-4 w-32 bg-muted rounded"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 w-16 bg-muted rounded"></div>
-                </CardContent>
-              </Card>
-            ))
-          : // Data summaries
-            summaries.map((summary) => (
-              <Link
-                to={summary.href}
-                search={{ datasetId: summary.id }}
-                key={summary.id}
-              >
-                <ReusableCard
-                  key={summary.id}
-                  showHeader={false}
-                  cardClassName="hover:bg-accent/20 transition-colors"
-                  contentClassName="pt-6"
-                  content={
-                    <div className="flex flex-row justify-between">
-                      <div className="flex flex-col">
-                        <div className="flex items-center">
-                          {summary.icon}
-                          <span className="ml-2 font-bold">{summary.name}</span>
-                        </div>
-                        <span>
-                          {summary.lastUpdated
-                            ? `Last updated: ${new Date(summary.lastUpdated).toLocaleDateString()}`
-                            : "No data yet"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold">{summary.count}</p>
-                        <p className="text-sm text-muted-foreground">
-                          total records
-                        </p>
-                      </div>
+        {summaries.map((summary) => (
+          <Link
+            to={summary.href}
+            search={{ datasetId: summary.id }}
+            key={summary.id}
+          >
+            <ReusableCard
+              key={summary.id}
+              showHeader={false}
+              cardClassName="hover:bg-accent/20 transition-colors"
+              contentClassName="pt-6"
+              content={
+                <div className="flex flex-row justify-between">
+                  <div className="flex flex-col">
+                    <div className="flex items-center">
+                      {summary.icon}
+                      <span className="ml-2 font-bold">{summary.name}</span>
                     </div>
-                  }
-                />
-              </Link>
-            ))}
+                    <span>
+                      {summary.lastUpdated
+                        ? `Last updated: ${new Date(
+                            summary.lastUpdated
+                          ).toLocaleDateString()}`
+                        : "No data yet"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{summary.count}</p>
+                    <p className="text-sm text-muted-foreground">
+                      total records
+                    </p>
+                  </div>
+                </div>
+              }
+            />
+          </Link>
+        ))}
       </div>
     </div>
   );
