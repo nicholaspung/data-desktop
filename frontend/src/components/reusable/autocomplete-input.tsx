@@ -3,9 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Check, Clock, Tag, FolderIcon } from "lucide-react";
+import { Check } from "lucide-react";
 import { SelectOption } from "@/types/types";
-import { Badge } from "@/components/ui/badge";
 
 export default function AutocompleteInput({
   label,
@@ -43,7 +42,8 @@ export default function AutocompleteInput({
   showRecentOptions?: boolean;
   maxRecentOptions?: number;
   renderItem?: (
-    option: SelectOption & { [key: string]: any }
+    option: SelectOption & { [key: string]: any },
+    isActive: boolean
   ) => React.ReactNode;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -149,65 +149,6 @@ export default function AutocompleteInput({
     }
   };
 
-  // Default render for option with additional information (category, tags)
-  const defaultRenderOption = (
-    option: SelectOption & { [key: string]: any },
-    isActive: boolean
-  ) => {
-    const entry = option.entry;
-
-    return (
-      <div
-        className={cn(
-          "w-full",
-          isActive ? "bg-accent text-accent-foreground" : ""
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <span className="font-medium">{option.label}</span>
-          {option.label.toLowerCase() === value.toLowerCase() && (
-            <Check className="h-4 w-4 text-primary" />
-          )}
-        </div>
-
-        {entry && (
-          <div className="flex flex-wrap gap-1 mt-1 text-xs text-muted-foreground">
-            {entry.category_id_data && (
-              <div className="flex items-center gap-1">
-                <FolderIcon className="h-3 w-3" />
-                <span>{entry.category_id_data.name}</span>
-              </div>
-            )}
-
-            {entry.tags && (
-              <div className="flex items-center gap-1">
-                <Tag className="h-3 w-3" />
-                <div className="flex flex-wrap gap-1">
-                  {entry.tags.split(",").map((tag: string, idx: number) => (
-                    <Badge
-                      key={idx}
-                      variant="outline"
-                      className="text-[0.65rem] py-0 px-1"
-                    >
-                      {tag.trim()}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {entry.lastModified && (
-              <div className="flex items-center gap-1 ml-auto">
-                <Clock className="h-3 w-3" />
-                <span>{new Date(entry.lastModified).toLocaleDateString()}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className={cn("space-y-2 relative", className)}>
       {label && (
@@ -265,9 +206,16 @@ export default function AutocompleteInput({
                   onClick={() => handleSelect(option)}
                   onMouseEnter={() => setActiveIndex(index)}
                 >
-                  {renderItem
-                    ? renderItem(option)
-                    : defaultRenderOption(option, activeIndex === index)}
+                  {renderItem ? (
+                    renderItem(option, activeIndex === index)
+                  ) : (
+                    <>
+                      <span>{option.label}</span>
+                      {option.label.toLowerCase() === value.toLowerCase() && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

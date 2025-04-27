@@ -3,7 +3,17 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Play, Save, Clock, TimerOff, PlusCircle, History } from "lucide-react";
+import {
+  Play,
+  Save,
+  Clock,
+  TimerOff,
+  PlusCircle,
+  History,
+  Tag,
+  FolderIcon,
+  Check,
+} from "lucide-react";
 import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes, formatDuration } from "@/lib/time-utils";
@@ -95,19 +105,32 @@ export default function TimeTrackerForm({
         label: metric.name,
         isMetric: true,
         metric: metric,
-        // Add icon or indication this is a metric
       }));
+
+    // Create a set of time metric names for easy lookup
+    const timeMetricNames = new Set(
+      metricsData
+        .filter((m: any) => m.type === "time" && m.active)
+        .map((m: any) => m.name.toLowerCase())
+    );
 
     // Convert to options array for the autocomplete with all related data
     const entryOptions = Array.from(uniqueDescriptions.values()).map(
-      (entry) => ({
-        id: entry.id,
-        label: entry.description,
-        entry: entry,
-        isMetric: false,
-        // Include category information if available (from relation data)
-        category_id_data: entry.category_id_data,
-      })
+      (entry) => {
+        // Check if this entry matches a time metric name
+        const isTimeMetric = timeMetricNames.has(
+          entry.description.toLowerCase()
+        );
+
+        return {
+          id: entry.id,
+          label: entry.description,
+          entry: entry,
+          isMetric: isTimeMetric, // Set to true if it matches a time metric
+          // Include category information if available (from relation data)
+          category_id_data: entry.category_id_data,
+        };
+      }
     );
 
     // Combine metrics first, then previous entries
@@ -226,7 +249,6 @@ export default function TimeTrackerForm({
     }
   };
 
-  // Save the active timer
   const handleSaveTimer = async () => {
     if (!timerStartTime) return;
 
@@ -234,7 +256,7 @@ export default function TimeTrackerForm({
       setIsSaving(true);
 
       const endTime = new Date();
-      const durationMinutes = Math.floor(elapsedSeconds / 60);
+      const durationMinutes = Math.ceil(elapsedSeconds / 60);
 
       const newEntry = {
         description,
@@ -251,7 +273,6 @@ export default function TimeTrackerForm({
       if (response) {
         addEntry(response, "time_entries");
 
-        // Sync with time metrics
         await syncTimeEntryWithMetrics(
           response as TimeEntry,
           metricsData,
@@ -344,6 +365,49 @@ export default function TimeTrackerForm({
       if (option.entry.tags) {
         setTags(option.entry.tags);
       }
+    }
+  };
+
+  const getAllUniqueTags = useMemo(() => {
+    if (!timeEntries || timeEntries.length === 0) return [];
+    const tagsSet = new Set<string>();
+
+    timeEntries.forEach((entry) => {
+      if (!entry.tags) return;
+
+      const entryTags = entry.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      entryTags.forEach((tag) => tagsSet.add(tag));
+    });
+
+    return Array.from(tagsSet)
+      .sort()
+      .map((tag) => ({
+        id: tag,
+        label: tag,
+      }));
+  }, [timeEntries]);
+
+  // Add this function for handling tag selection
+  const handleTagsChange = (tagInput: string) => {
+    setTags(tagInput);
+  };
+
+  const handleTagSelect = (option: SelectOption) => {
+    // If there are already tags, append the new one
+    if (tags) {
+      const currentTags = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t);
+      if (!currentTags.includes(option.label)) {
+        setTags([...currentTags, option.label].join(", "));
+      }
+    } else {
+      setTags(option.label);
     }
   };
 
@@ -445,19 +509,75 @@ export default function TimeTrackerForm({
                 emptyMessage="Type to start tracking a new task or select a previous one"
                 showRecentOptions={true}
                 maxRecentOptions={7}
-                renderItem={(option) => (
-                  <div className="flex items-center justify-between w-full">
-                    <span>{option.label}</span>
-                    {option.isMetric && (
-                      <Badge
-                        variant="outline"
-                        className="bg-blue-100 dark:bg-blue-900 text-xs"
-                      >
-                        Time Metric
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                renderItem={(option, isActive) => {
+                  const entry = option.entry;
+                  console.log(option);
+                  return (
+                    <div
+                      className={cn(
+                        "w-full",
+                        isActive ? "bg-accent text-accent-foreground" : ""
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{option.label}</span>
+                        {option.label.toLowerCase() ===
+                          description.toLowerCase() && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                        {option.isMetric && (
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-100 dark:bg-blue-900 text-xs"
+                          >
+                            Time Metric
+                          </Badge>
+                        )}
+                      </div>
+
+                      {entry && (
+                        <div className="flex flex-wrap gap-1 mt-1 text-xs text-muted-foreground">
+                          {entry.category_id_data && (
+                            <div className="flex items-center gap-1">
+                              <FolderIcon className="h-3 w-3" />
+                              <span>{entry.category_id_data.name}</span>
+                            </div>
+                          )}
+
+                          {entry.tags && (
+                            <div className="flex items-center gap-1">
+                              <Tag className="h-3 w-3" />
+                              <div className="flex flex-wrap gap-1">
+                                {entry.tags
+                                  .split(",")
+                                  .map((tag: string, idx: number) => (
+                                    <Badge
+                                      key={idx}
+                                      variant="outline"
+                                      className="text-[0.65rem] py-0 px-1"
+                                    >
+                                      {tag.trim()}
+                                    </Badge>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {entry.lastModified && (
+                            <div className="flex items-center gap-1 ml-auto">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                {new Date(
+                                  entry.lastModified
+                                ).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
               />
             </div>
 
@@ -483,12 +603,38 @@ export default function TimeTrackerForm({
               <Label htmlFor="tags" className="text-sm font-medium">
                 Tags (comma-separated)
               </Label>
-              <Input
+              <AutocompleteInput
                 id="tags"
                 value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                onChange={handleTagsChange}
+                onSelect={handleTagSelect}
+                options={getAllUniqueTags}
                 placeholder="project, meeting, etc."
-                className="h-10 focus:ring-2 focus:ring-primary/50"
+                inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
+                emptyMessage="Type to add tags or select from previous tags"
+                showRecentOptions={true}
+                maxRecentOptions={10}
+                renderItem={(option, isActive) => (
+                  <div
+                    className={cn(
+                      "w-full",
+                      isActive ? "bg-accent text-accent-foreground" : ""
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="px-2 py-1">
+                        <Tag className="h-3 w-3 mr-1" />
+                        <span>{option.label}</span>
+                      </Badge>
+                      {tags
+                        .split(",")
+                        .map((t) => t.trim())
+                        .includes(option.label) && (
+                        <Check className="h-4 w-4 text-primary" />
+                      )}
+                    </div>
+                  </div>
+                )}
               />
             </div>
 

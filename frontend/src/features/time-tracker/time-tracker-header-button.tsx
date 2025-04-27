@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 import useLoadData from "@/hooks/useLoadData";
 import { Link } from "@tanstack/react-router";
+import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
+import { TimeEntry } from "@/store/time-tracking-definitions";
 
 interface TimeTrackerHeaderButtonProps {
   onDataChange: () => void;
@@ -59,6 +61,8 @@ export default function TimeTrackerHeaderButton({
     dataStore,
     (state) => state.time_categories || []
   );
+  const metricsData = useStore(dataStore, (state) => state.metrics) || [];
+  const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
   // Update timer every second
   useEffect(() => {
@@ -87,7 +91,7 @@ export default function TimeTrackerHeaderButton({
       const endTime = new Date();
       const durationMinutes = Math.ceil(elapsedSeconds / 60);
 
-      const response = await ApiService.addRecord("time_entries", {
+      const newEntry = {
         description,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
@@ -95,14 +99,24 @@ export default function TimeTrackerHeaderButton({
         category_id: categoryId,
         tags,
         private: false,
-      });
+      };
+
+      const response = await ApiService.addRecord("time_entries", newEntry);
 
       if (response) {
         addEntry(response, "time_entries");
+
+        // Add this to sync with time metrics
+        await syncTimeEntryWithMetrics(
+          response as TimeEntry,
+          metricsData,
+          dailyLogsData
+        );
+
         onDataChange();
       }
 
-      // Reset timer - make sure we call stopTimer
+      // Reset global timer state
       stopTimer();
     } catch (error) {
       console.error("Error saving time entry:", error);
