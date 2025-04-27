@@ -46,20 +46,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to select the database you want to use
 - update icons for the datasets
 - make the markdown CSS better looking
+- in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
+- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
+- add a way to minimize/maximize/reset the view for the application
 
 ### IN PROGRESS
 
-- fix the display for the legend on daily tracker calendar view
-
-- for some reason, in daily tracking, the journaling metrics are not being categorized correctly
-- add a way to return the added/updated record with the relational data
-
-- in daily tracker calendar card view, fix how the input for number/percentage/time gets saved
-- update metrics information about metric daily log goals
-
-- add time tracking information to onboarding modal and help modal
-- add time tracking info panel information
-- add time tracker summary to dashboard
+- in time-tracker, add Pomodoro method
+- in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog"
 
 ### DONE
 
@@ -221,5 +215,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - also, make it so that the dashboard page only loads the first time you go on the page, rather than everytime you go on the page [DONE 2025-04-27]
 - update the daily metrics automatically created by journaling to include the goal metric 3 for gratitude journal and boolean for the others [DONE 2025-04-27]
 - in daily tracker dashboard summary, if the metric is a number, make it a better input (maybe a +/- and show the value?) [DONE 2025-04-27]
+- fix the display for the legend on daily tracker calendar view [DONE 2025-04-27]
+- for some reason, in daily tracking, the journaling metrics are not being categorized correctly [DONE 2025-04-27]
+- add a way to return the added/updated record with the relational data [DONE 2025-04-27]
+- in daily tracker calendar card view, fix how the input for number/percentage/time gets saved [DONE 2025-04-27]
+- update metrics information about metric daily log goals [DONE 2025-04-27]
+- add time tracking information to onboarding modal and help modal [DONE 2025-04-27]
+- add time tracking info panel information [DONE 2025-04-27]
+- add time tracker summary to dashboard [DONE 2025-04-27]
+- add time tracking tags summary information in the time tracker summary page [DONE 2025-04-27]
 
 ### GAVE UP

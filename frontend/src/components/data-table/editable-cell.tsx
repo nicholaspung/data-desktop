@@ -132,8 +132,10 @@ const EditableCell = ({
       };
 
       // Submit the update
-      await ApiService.updateRecord(recordId, updatedRecord);
-      updateEntry(recordId, updatedRecord, datasetId);
+      const response = await ApiService.updateRecord(recordId, updatedRecord);
+      if (response) {
+        updateEntry(recordId, response, datasetId);
+      }
 
       // Notify success
       toast.success("Cell updated successfully");

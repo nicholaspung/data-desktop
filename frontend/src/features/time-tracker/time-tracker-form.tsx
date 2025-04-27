@@ -480,7 +480,7 @@ export default function TimeTrackerForm({
             </div>
           </div>
           <Separator className="bg-muted" />
-          <div className="flex flex-row gap-4 items-end flex-wrap md:flex-nowrap">
+          <div className="flex flex-row gap-4 items-end flex-wrap">
             <div className="flex-1 space-y-2">
               <Label
                 htmlFor="description"

@@ -14,6 +14,7 @@ import {
   ArrowRight,
   ArrowLeft,
   BookOpen,
+  Clock,
 } from "lucide-react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -110,6 +111,19 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       "Manage metrics outside daily view",
       "Search and filter capabilities",
       "Switch between card and list views",
+    ],
+  },
+  {
+    title: "Time Tracker",
+    description: "Monitor, analyze, and optimize how you spend your time.",
+    icon: <Clock className="h-12 w-12 text-primary" />,
+    features: [
+      "Track time in real-time with the built-in timer",
+      "Add manual entries for past activities",
+      "Organize with categories and tags for better analysis",
+      "See summaries and visualizations of your time usage",
+      "Identify patterns and optimize your productivity",
+      "Track time metrics that connect with your daily goals",
     ],
   },
   {

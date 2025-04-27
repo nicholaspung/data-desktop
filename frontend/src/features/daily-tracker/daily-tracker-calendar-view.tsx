@@ -265,7 +265,7 @@ export default function DailyTrackerCalendarView() {
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
             />
-            <div className="flex flex-row justify-between">
+            <div className="flex flex-col items-center gap-4">
               <div className="flex gap-4 text-sm text-muted-foreground pt-2">
                 <div className="flex items-center">
                   <div className="w-3 h-3 bg-primary/10 border border-primary rounded-sm mr-1"></div>

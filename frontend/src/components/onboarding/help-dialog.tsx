@@ -19,6 +19,7 @@ import {
   Lightbulb,
   Presentation,
   BookHeart,
+  Clock,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
@@ -211,6 +212,26 @@ const HELP_TOPICS: HelpTopic[] = [
       "record",
     ],
     link: "/metric",
+  },
+  {
+    title: "Time Tracker",
+    icon: <Clock className="h-5 w-5" />,
+    description:
+      "Track how you spend your time with the timer or manual entries. Organize with categories and tags, then analyze with detailed reports.",
+    keywords: [
+      "time",
+      "track",
+      "timer",
+      "log",
+      "category",
+      "tag",
+      "productivity",
+      "hours",
+      "minutes",
+      "duration",
+      "activity",
+    ],
+    link: "/time-tracker",
   },
   {
     title: "Data Management",

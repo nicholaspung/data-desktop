@@ -2,7 +2,14 @@
 import { useMemo } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, BarChart, Clock, CalendarDays, Clock3 } from "lucide-react";
+import {
+  PieChart,
+  BarChart,
+  Clock,
+  CalendarDays,
+  Clock3,
+  Tag,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateString } from "@/lib/time-utils";
 import {
@@ -30,6 +37,13 @@ interface CategorySummary {
   color: string;
   totalMinutes: number;
   percentageOfTotal: number;
+}
+
+interface TagSummary {
+  name: string;
+  totalMinutes: number;
+  percentageOfTotal: number;
+  color: string;
 }
 
 // Format minutes as hours and minutes in a human-readable format
@@ -76,6 +90,26 @@ export default function TimeEntriesSummary({
 
     return calculateCategorySummaries(weekEntries, categories);
   }, [entries, categories]);
+
+  // Calculate tag summaries for this week
+  const tagSummary = useMemo(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = now.getDay();
+    startOfWeek.setDate(now.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    const weekEntries = entries.filter((entry) => {
+      const entryDate = new Date(entry.start_time);
+      return entryDate >= startOfWeek && entryDate <= endOfWeek;
+    });
+
+    return calculateTagSummaries(weekEntries);
+  }, [entries]);
 
   // Calculate untracked time for today
   const todayUntrackedTime = useMemo(() => {
@@ -558,6 +592,98 @@ export default function TimeEntriesSummary({
       {weekSummary.totalMinutes > 0 && (
         <CategoryDailyBreakdown entries={entries} categories={categories} />
       )}
+
+      {/* Tag summary for the week */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <Tag className="h-5 w-5" />
+            Weekly Tags Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-xl font-semibold">
+                    {tagSummary.tags.length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Tags used this week
+                  </div>
+                </div>
+                <div className="text-xl font-semibold">
+                  {formatHoursAndMinutes(weekSummary.totalMinutes)}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                {tagSummary.tags.length > 0 ? (
+                  tagSummary.tags.map((tag) => (
+                    <div
+                      key={tag.name}
+                      className="flex justify-between items-center p-2 rounded-md hover:bg-accent/50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="text-sm font-medium">{tag.name}</span>
+                      </div>
+                      <div className="text-sm">
+                        {formatHoursAndMinutes(tag.totalMinutes)} (
+                        {Math.round(tag.percentageOfTotal)}%)
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No tags used this week
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="h-60">
+              {tagSummary.tags.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsPreChart>
+                    <Pie
+                      data={tagSummary.tags}
+                      dataKey="totalMinutes"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="70%"
+                      innerRadius="40%"
+                      paddingAngle={1}
+                      label={({ name, percent }) =>
+                        `${name} (${(percent * 100).toFixed(0)}%)`
+                      }
+                      labelLine={false}
+                    >
+                      {tagSummary.tags.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) =>
+                        formatHoursAndMinutes(value as number)
+                      }
+                    />
+                  </RechartsPreChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <Tag className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -621,6 +747,87 @@ function calculateCategorySummaries(
   return {
     totalMinutes,
     categories: categoriesArray,
+  };
+}
+
+// Helper function to calculate tag summaries
+function calculateTagSummaries(entries: TimeEntry[]) {
+  // Get total minutes tracked
+  let totalMinutes = 0;
+  entries.forEach((entry) => {
+    totalMinutes += entry.duration_minutes;
+  });
+
+  // Map to store tag totals
+  const tagsMap = new Map<string, TagSummary>();
+
+  // Color palette for tags
+  const tagColors = [
+    "#3b82f6", // blue
+    "#10b981", // green
+    "#f59e0b", // amber
+    "#ef4444", // red
+    "#8b5cf6", // purple
+    "#ec4899", // pink
+    "#0ea5e9", // sky
+    "#14b8a6", // teal
+    "#f97316", // orange
+    "#6366f1", // indigo
+    "#84cc16", // lime
+    "#9333ea", // violet
+    "#06b6d4", // cyan
+    "#d946ef", // fuchsia
+    "#f43f5e", // rose
+  ];
+
+  // Process all entries
+  entries.forEach((entry) => {
+    if (!entry.tags) return;
+
+    const entryTags = entry.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
+    // If no valid tags, skip
+    if (entryTags.length === 0) return;
+
+    // If multiple tags, we'll split the time equally among them
+    const minutesPerTag = entry.duration_minutes / entryTags.length;
+
+    entryTags.forEach((tagName) => {
+      if (tagsMap.has(tagName)) {
+        // Update existing tag
+        const tagData = tagsMap.get(tagName)!;
+        const newTotal = tagData.totalMinutes + minutesPerTag;
+        tagsMap.set(tagName, {
+          ...tagData,
+          totalMinutes: newTotal,
+          percentageOfTotal: totalMinutes ? (newTotal / totalMinutes) * 100 : 0,
+        });
+      } else {
+        // Create new tag
+        const colorIndex = tagsMap.size % tagColors.length;
+        tagsMap.set(tagName, {
+          name: tagName,
+          totalMinutes: minutesPerTag,
+          percentageOfTotal: totalMinutes
+            ? (minutesPerTag / totalMinutes) * 100
+            : 0,
+          color: tagColors[colorIndex],
+        });
+      }
+    });
+  });
+
+  // Convert to array and sort by total time (descending)
+  const tagsArray = Array.from(tagsMap.values()).sort(
+    (a, b) => b.totalMinutes - a.totalMinutes
+  );
+
+  return {
+    totalMinutes,
+    tags: tagsArray,
   };
 }
 

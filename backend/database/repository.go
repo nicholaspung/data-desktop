@@ -167,10 +167,14 @@ func AddDataRecord(record DataRecord) error {
          VALUES (?, ?, ?, ?, ?)`,
 		record.ID, record.DatasetID, record.Data, record.CreatedAt, record.LastModified,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// GetDataRecord retrieves a single data record by its ID
+// Function to update the GetDataRecord to include relation data
 func GetDataRecord(id string) (DataRecord, error) {
 	var record DataRecord
 
@@ -182,10 +186,16 @@ func GetDataRecord(id string) (DataRecord, error) {
 		return DataRecord{}, err
 	}
 
+	// Get related data
+	record, err = loadRelatedData(record)
+	if err != nil {
+		return DataRecord{}, err
+	}
+
 	return record, nil
 }
 
-// UpdateDataRecord updates an existing data record
+// Function to update a record with related data
 func UpdateDataRecord(record DataRecord) error {
 	// Update last modified timestamp
 	record.LastModified = time.Now()
@@ -208,6 +218,68 @@ func UpdateDataRecord(record DataRecord) error {
 	}
 
 	return nil
+}
+
+// Helper function to load related data for a record
+func loadRelatedData(record DataRecord) (DataRecord, error) {
+	// Get the dataset to find relations
+	dataset, err := GetDataset(record.DatasetID)
+	if err != nil {
+		return record, err
+	}
+
+	// Parse record data into map
+	var data map[string]interface{}
+	err = json.Unmarshal(record.Data, &data)
+	if err != nil {
+		return record, err
+	}
+
+	// Check for relations
+	for _, field := range dataset.Fields {
+		if field.IsRelation && field.RelatedDataset != "" && field.RelatedField != "" {
+			// Get the relation ID value
+			relIDValue, exists := data[field.Key]
+			if !exists || relIDValue == nil || relIDValue == "" {
+				continue
+			}
+
+			relID, ok := relIDValue.(string)
+			if !ok {
+				// Try to convert to string if needed
+				relID = fmt.Sprintf("%v", relIDValue)
+			}
+
+			// If there's a valid ID, get the related record
+			if relID != "" {
+				relatedRecord, err := GetDataRecord(relID)
+				if err == nil {
+					var relatedData map[string]interface{}
+					err = json.Unmarshal(relatedRecord.Data, &relatedData)
+					if err == nil {
+						// Add metadata
+						relatedData["id"] = relatedRecord.ID
+						relatedData["datasetId"] = relatedRecord.DatasetID
+						relatedData["createdAt"] = relatedRecord.CreatedAt
+						relatedData["lastModified"] = relatedRecord.LastModified
+
+						// Add the related data to the main record with a descriptive key
+						relatedKey := field.Key + "_data"
+						data[relatedKey] = relatedData
+					}
+				}
+			}
+		}
+	}
+
+	// Update the record data with related data
+	updatedData, err := json.Marshal(data)
+	if err != nil {
+		return record, err
+	}
+	record.Data = updatedData
+
+	return record, nil
 }
 
 // DeleteDataRecord removes a data record

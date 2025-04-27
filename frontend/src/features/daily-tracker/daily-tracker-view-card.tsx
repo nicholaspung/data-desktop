@@ -12,6 +12,7 @@ import { MetricWithLog } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
 import MetricStreakDisplay from "./metric-streak-display";
 import { Progress } from "@/components/ui/progress";
+import NumberValueInput from "./number-input-control";
 
 export default function DailyTrackerViewCard({
   metric,
@@ -204,13 +205,13 @@ export default function DailyTrackerViewCard({
             <Label htmlFor={`metric-${metric.id}`}>
               Value {metric.unit ? `(${metric.unit})` : ""}
             </Label>
-            <Input
-              id={`metric-${metric.id}`}
-              type="number"
+            <NumberValueInput
               value={metric.value}
-              onChange={(e) =>
-                saveChanges(metric.id, "value", parseFloat(e.target.value) || 0)
-              }
+              onChange={(value) => saveChanges(metric.id, "value", value)}
+              unit={metric.unit}
+              step={metric.type === "percentage" ? 1 : 1}
+              min={0}
+              max={metric.type === "percentage" ? 100 : 9999}
             />
           </div>
         ) : (

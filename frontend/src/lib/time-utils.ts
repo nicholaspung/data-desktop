@@ -64,3 +64,10 @@ export function groupEntriesByDate<T extends { start_time: Date }>(
 
   return groupedEntries;
 }
+
+// Format minutes as hours and minutes in a human-readable format
+export const formatHoursAndMinutes = (minutes: number) => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}h ${mins}m`;
+};

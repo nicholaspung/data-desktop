@@ -27,6 +27,7 @@ The calendar view shows your tracked metrics along with:
 - Experiment associations and progress
 - Completion status with visual indicators
 - Streak tracking for consistency
+- Goal tracking and achievement indicators
 
 Whether you're building habits or conducting experiments, this view gives you the complete picture of your progress.
     `,
@@ -44,8 +45,35 @@ To get the most out of the Daily Tracker:
    - Set your target values
    - Configure repetition schedule (daily, weekly, custom)
    - Assign to the appropriate category
+3. **Set goals for metrics** - Add optional goals to track achievement:
+   - Define minimum, maximum, or exact target values
+   - Get visual feedback when goals are met
+   - Filter to focus on goal-oriented metrics
 
 Once you've created your metrics, you're ready to start tracking directly from the calendar view!
+    `,
+  },
+  {
+    title: "Setting Goals",
+    content: `
+## Adding Goals to Your Metrics
+
+Goals help you track achievement and provide visual feedback on your progress:
+
+### Goal Types
+- **Minimum**: Value must be at least the goal amount (e.g., walk 10,000 steps)
+- **Maximum**: Value must be at most the goal amount (e.g., stay under 2 hours of screen time)
+- **Exact**: Value should match the goal amount (e.g., drink exactly 8 glasses of water)
+- **Boolean**: Simple yes/no completion (e.g., meditated today)
+
+### Goal Features
+- Goals appear with progress indicators
+- Completed goals are highlighted with green borders
+- The Goals tab provides a focused view of goal metrics
+- Calendar days show goal completion status with icons
+- Streaks track consistent goal achievement
+
+Goals should be achievable within a single day for best results.
     `,
   },
   {
@@ -78,12 +106,13 @@ Recording your progress is simple:
 1. Click on any day in the calendar
 2. Enter values for each metric scheduled for that day
 3. Add optional notes for context
-4. See immediate visual feedback on completion status
+4. See immediate visual feedback on completion status and goal achievement
 
 You can also:
 - View and update previous days
 - See your current streaks
 - Filter metrics by category or experiment
+- Filter to show only metrics with goals
 - Use quick actions for faster logging
     `,
   },
@@ -125,7 +154,8 @@ function RouteComponent() {
               <li>1. Create categories for your metrics</li>
               <li>2. Add metrics and customize their options</li>
               <li>3. Configure schedule settings (daily, weekly, etc.)</li>
-              <li>4. Use the calendar to log your daily progress</li>
+              <li>4. Set goals for metrics you want to achieve</li>
+              <li>5. Use the calendar to log your daily progress</li>
             </ol>
           </CompactInfoPanel>
 
@@ -133,9 +163,20 @@ function RouteComponent() {
             <ul>
               <li>- Group related metrics with categories</li>
               <li>- Start with just a few metrics to build consistency</li>
+              <li>- Set achievable daily goals for motivation</li>
               <li>- Log data at consistent times each day</li>
               <li>- Use the notes field to capture context</li>
               <li>- Review weekly to identify patterns</li>
+            </ul>
+          </CompactInfoPanel>
+
+          <CompactInfoPanel title="Setting Goals" variant="info">
+            <ul>
+              <li>- Goals can be minimum, maximum, exact, or boolean</li>
+              <li>- Goals should be achievable within a single day</li>
+              <li>- Use the Goals tab to focus on goal-oriented metrics</li>
+              <li>- Green highlighting indicates completed goals</li>
+              <li>- Filter calendar view to show only metrics with goals</li>
             </ul>
           </CompactInfoPanel>
 

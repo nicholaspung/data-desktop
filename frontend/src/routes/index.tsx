@@ -18,6 +18,7 @@ import DailyTrackingDashboardSummary from "@/features/dashboard/daily-tracking-d
 import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric-logger-dashboard-summary";
 import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
 import appStateStore from "@/store/app-state-store";
+import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -154,6 +155,7 @@ function Home() {
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <DailyTrackingDashboardSummary />
+        <TimeTrackerDashboardSummary />
         <ExperimentDashboardSummary />
         <QuickMetricLoggerDashboardSummary />
         <JournalingDashboardSummary />

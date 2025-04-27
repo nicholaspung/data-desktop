@@ -52,6 +52,7 @@ interface ReusableSummaryProps {
     title: string;
     value: ReactNode;
     subText?: string;
+    subComponent?: ReactNode;
     badge?: StatusBadgeProps;
   };
   sections?: SectionProps[];
@@ -191,6 +192,7 @@ export default function ReusableSummary({
                   {mainSection.subText}
                 </p>
               )}
+              {mainSection.subComponent && mainSection.subComponent}
             </div>
           )}
 
