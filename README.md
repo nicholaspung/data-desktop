@@ -46,15 +46,15 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
 - update icons for the datasets
+- make the markdown CSS better looking
 
 ### IN PROGRESS
 
 - when the datasets are loading on the dashboard page, show a visual indicator somewhere that it's loading and the user can't do anything while it loads
 - adjust how the metric looks like for value number
-- in daily tracker calendar view, it shows the dates in the wrong weekday slot
+- in daily tracker calendar view, it shows the dates in the wrong weekday slot [DONE 2025-04-26]
 - in quick-metrics-logger, add a way to add notes
 - in quick-metrics-logger, have a way to show the inactive metrics
-- make the markdown CSS better looking
 - in same question answers, only show the current day's question
 - in question journaling, in the history list, for the filters, just provide the questions as a filter and allow the user to select it
 - for some reason,, in daily tracking, the journaling metrics are not being categorized correctly

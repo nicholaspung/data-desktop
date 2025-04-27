@@ -8,6 +8,8 @@ import {
   isSameMonth,
   isToday,
   startOfMonth,
+  startOfWeek,
+  endOfWeek,
 } from "date-fns";
 import { Beaker, Calendar, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -194,11 +196,13 @@ export default function DailyTrackerCalendarGrid({
     return className;
   };
 
-  // Generate days for the current month
-  const daysInMonth = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth),
-  });
+  // Generate days for the current month with proper week alignment
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
 
   return (
     <div className="grid grid-cols-7 gap-1 text-center">
@@ -210,7 +214,7 @@ export default function DailyTrackerCalendarGrid({
       ))}
 
       {/* Days of the month */}
-      {daysInMonth.map((day) => {
+      {days.map((day) => {
         const stats = getDayMetricsStats(day);
 
         return (

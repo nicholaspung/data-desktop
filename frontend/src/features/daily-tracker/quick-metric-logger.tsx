@@ -27,7 +27,6 @@ import { ApiService } from "@/services/api";
 import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
-import QuickMetricLoggerCardItem from "./quick-metric-logger-card-item";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const QuickMetricLogger = () => {
@@ -43,7 +42,7 @@ const QuickMetricLogger = () => {
     today.setHours(0, 0, 0, 0);
     return today;
   });
-  const [viewMode, setViewMode] = useState<"list" | "cards">("cards");
+  const [selectedTab, setSelectedTab] = useState("all");
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
@@ -291,7 +290,35 @@ const QuickMetricLogger = () => {
     }
   };
 
-  const hasNoMetrics = metrics.length ? false : true;
+  const hasNoMetrics = metrics.length === 0;
+
+  const filterMetricsByTab = (metrics: Record<string, Metric[]>) => {
+    if (selectedTab === "all") {
+      return metrics;
+    }
+
+    const filtered: Record<string, Metric[]> = {};
+    if (metrics[selectedTab]) {
+      filtered[selectedTab] = metrics[selectedTab];
+    }
+    return filtered;
+  };
+
+  const displayedMetrics = filterMetricsByTab(groupedMetrics);
+
+  // Create tabs for categories
+  const tabItems = [
+    {
+      id: "all",
+      label: "All",
+      content: null,
+    },
+    ...Object.keys(groupedMetrics).map((category) => ({
+      id: category,
+      label: `${category} (${groupedMetrics[category].length})`,
+      content: null,
+    })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -387,23 +414,16 @@ const QuickMetricLogger = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant={viewMode === "cards" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("cards")}
-          >
-            Cards
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-          >
-            List
-          </Button>
-        </div>
       </div>
+
+      {/* Category Tabs */}
+      <ReusableTabs
+        tabs={tabItems}
+        defaultTabId={selectedTab}
+        onChange={setSelectedTab}
+        tabsListClassName="w-full grid grid-cols-3 md:grid-cols-5 gap-2"
+      />
+
       {hasNoMetrics && (
         <div className="space-y-2 text-center flex flex-col items-center">
           <p className="text-muted-foreground py-8 text-center">
@@ -415,7 +435,8 @@ const QuickMetricLogger = () => {
           </div>
         </div>
       )}
-      {!hasNoMetrics && Object.keys(groupedMetrics).length === 0 ? (
+
+      {!hasNoMetrics && Object.keys(displayedMetrics).length === 0 ? (
         <ReusableCard
           title="No metrics found"
           content={
@@ -426,27 +447,13 @@ const QuickMetricLogger = () => {
         />
       ) : (
         <div className="space-y-4">
-          {viewMode === "list" ? (
-            <div className="space-y-6">
-              <QuickMetricLoggerListItem
-                groupedMetrics={groupedMetrics}
-                isMetricCompleted={isMetricCompleted}
-                toggleMetricCompletion={toggleMetricCompletion}
-                toggleCalendarTracking={toggleCalendarTracking}
-                handleDeleteMetric={handleDeleteMetric}
-              />
-            </div>
-          ) : (
-            <QuickMetricLoggerCardItem
-              groupedMetrics={groupedMetrics}
-              isMetricCompleted={isMetricCompleted}
-              toggleMetricCompletion={toggleMetricCompletion}
-              toggleCalendarTracking={toggleCalendarTracking}
-              dailyLogs={dailyLogs}
-              selectedDate={selectedDate}
-              handleDeleteMetric={handleDeleteMetric}
-            />
-          )}
+          <QuickMetricLoggerListItem
+            groupedMetrics={displayedMetrics}
+            isMetricCompleted={isMetricCompleted}
+            toggleMetricCompletion={toggleMetricCompletion}
+            toggleCalendarTracking={toggleCalendarTracking}
+            handleDeleteMetric={handleDeleteMetric}
+          />
         </div>
       )}
     </div>

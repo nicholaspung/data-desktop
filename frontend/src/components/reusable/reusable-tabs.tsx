@@ -1,6 +1,7 @@
 // src/components/reusable/reusable-tabs.tsx
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export interface TabItem {
   id: string;
@@ -48,9 +49,12 @@ export default function ReusableTabs({
       value={activeTab}
     >
       <TabsList
-        className={`${fullWidth ? "w-full" : ""} ${orientation === "vertical" ? "flex-col h-auto" : "grid"} ${
-          orientation === "horizontal" ? `grid-cols-${tabs.length}` : ""
-        } ${tabsListClassName}`}
+        className={cn(
+          "",
+          `${fullWidth ? "w-full" : ""} ${orientation === "vertical" ? "flex-col h-auto" : "grid"} ${
+            orientation === "horizontal" ? `grid-cols-${tabs.length}` : ""
+          } ${tabsListClassName}`
+        )}
       >
         {tabs.map((tab) => (
           <TabsTrigger
