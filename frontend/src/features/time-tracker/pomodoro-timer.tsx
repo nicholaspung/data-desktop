@@ -9,18 +9,18 @@ import {
   stopPomodoro,
   updateRemainingTime,
 } from "./pomodoro-store";
+import { timeTrackerStore } from "./time-tracker-store";
 import { ApiService } from "@/services/api";
 import dataStore, { addEntry } from "@/store/data-store";
 import { Clock, StopCircle, Coffee } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
+import { TimeEntry } from "@/store/time-tracking-definitions";
 import { formatDuration } from "@/lib/time-utils";
 import PomodoroSettings from "./pomodoro-settings";
 import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { Label } from "@/components/ui/label";
 
 interface PomodoroTimerProps {
-  categories: TimeCategory[];
   onDataChange: () => void;
   description: string;
   categoryId?: string;
@@ -29,10 +29,11 @@ interface PomodoroTimerProps {
 
 export default function PomodoroTimer({
   onDataChange,
-  description,
-  categoryId,
-  tags,
+  description: initialDescription,
+  categoryId: initialCategoryId,
+  tags: initialTags,
 }: PomodoroTimerProps) {
+  // Pomodoro timer state
   const isActive = useStore(pomodoroStore, (state) => state.isActive);
   const isBreak = useStore(pomodoroStore, (state) => state.isBreak);
   const startTime = useStore(pomodoroStore, (state) => state.startTime);
@@ -46,11 +47,19 @@ export default function PomodoroTimer({
   );
   const totalSeconds = useStore(pomodoroStore, (state) => state.totalSeconds);
   const breakSeconds = useStore(pomodoroStore, (state) => state.breakSeconds);
-  const pomodoroDescription = useStore(
-    pomodoroStore,
+
+  // Time tracker state - for description, category, and tags
+  const timeTrackerDescription = useStore(
+    timeTrackerStore,
     (state) => state.description
   );
-  const pomodoroTags = useStore(pomodoroStore, (state) => state.tags);
+  const timeTrackerCategoryId = useStore(
+    timeTrackerStore,
+    (state) => state.categoryId
+  );
+  const timeTrackerTags = useStore(timeTrackerStore, (state) => state.tags);
+
+  // Other store data
   const metricsData = useStore(dataStore, (state) => state.metrics || []);
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs || []);
 
@@ -58,6 +67,20 @@ export default function PomodoroTimer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission | null>(null);
+
+  // Get the active description, category, and tags
+  // If Pomodoro is active, these might change as the user edits the form
+  const getActiveDescription = () => {
+    return timeTrackerDescription || initialDescription;
+  };
+
+  const getActiveCategoryId = () => {
+    return timeTrackerCategoryId || initialCategoryId;
+  };
+
+  const getActiveTags = () => {
+    return timeTrackerTags || initialTags;
+  };
 
   // Initialize audio
   useEffect(() => {
@@ -90,10 +113,7 @@ export default function PomodoroTimer({
           .play()
           .catch((err) => console.error("Error playing audio:", err));
       }
-
-      // You can show a notification here if needed
-      // We don't automatically switch to break mode here
-      // as we want the user to explicitly end the pomodoro
+      // Don't automatically switch to break mode
     }
 
     if (isActive && isBreak && remainingBreakSeconds === 0) {
@@ -103,10 +123,7 @@ export default function PomodoroTimer({
           .play()
           .catch((err) => console.error("Error playing audio:", err));
       }
-
-      // You can show a notification here if needed
-      // We don't automatically end the break here
-      // as we want the user to explicitly end the break
+      // Don't automatically end the break
     }
   }, [isActive, isBreak, remainingSeconds, remainingBreakSeconds]);
 
@@ -119,8 +136,7 @@ export default function PomodoroTimer({
         setNotificationPermission(Notification.permission);
       };
 
-      // Modern browsers don't support the permission change event anymore,
-      // but we'll keep this for older browsers that might
+      // For older browsers that might support this
       if ("onpermissionchange" in Notification.prototype) {
         Notification.prototype.onpermissionchange = handlePermissionChange;
       }
@@ -135,7 +151,7 @@ export default function PomodoroTimer({
   };
 
   const handleStartPomodoro = () => {
-    startPomodoro(description, categoryId, tags);
+    startPomodoro();
     onDataChange();
   };
 
@@ -148,12 +164,22 @@ export default function PomodoroTimer({
       const endTime = new Date();
       const durationMinutes = Math.ceil((totalSeconds - remainingSeconds) / 60);
 
+      // Use current description, category and tags from the timeTrackerStore
+      const currentDescription = getActiveDescription();
+      const currentCategoryId = getActiveCategoryId();
+      const currentTags = getActiveTags();
+
+      // Add pomodoro tag
+      const pomodoroTags = currentTags
+        ? `${currentTags}, pomodoro`
+        : "pomodoro";
+
       const newEntry = {
-        description: pomodoroDescription,
+        description: currentDescription,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         duration_minutes: durationMinutes,
-        category_id: categoryId,
+        category_id: currentCategoryId,
         tags: pomodoroTags,
         private: false,
       };
@@ -190,13 +216,23 @@ export default function PomodoroTimer({
         (breakSeconds - remainingBreakSeconds) / 60
       );
 
+      // Use current description, category and tags from the timeTrackerStore
+      const currentDescription = getActiveDescription();
+      const currentCategoryId = getActiveCategoryId();
+      const currentTags = getActiveTags();
+
+      // Add break tag
+      const breakTags = currentTags
+        ? `${currentTags}, pomodoro break`
+        : "pomodoro break";
+
       const newEntry = {
-        description: `${pomodoroDescription} - Break`,
+        description: `${currentDescription} - Break`,
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         duration_minutes: durationMinutes,
-        category_id: categoryId,
-        tags: pomodoroTags, // Already includes "pomodoro break" from startBreak()
+        category_id: currentCategoryId,
+        tags: breakTags,
         private: false,
       };
 
@@ -225,6 +261,9 @@ export default function PomodoroTimer({
     ? ((breakSeconds - remainingBreakSeconds) / breakSeconds) * 100
     : ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
 
+  // Get the current description from the form or props
+  const currentDescription = getActiveDescription();
+
   if (!isActive) {
     return (
       <div className="flex flex-row items-end gap-4">
@@ -244,7 +283,7 @@ export default function PomodoroTimer({
         <Button
           onClick={handleStartPomodoro}
           className="gap-2 h-10 bg-blue-600 hover:bg-blue-700 font-medium"
-          disabled={!description}
+          disabled={!currentDescription}
         >
           <Clock className="h-4 w-4" />
           <span>Start Pomodoro</span>

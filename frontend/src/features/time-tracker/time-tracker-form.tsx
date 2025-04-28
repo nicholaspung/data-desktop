@@ -669,7 +669,6 @@ export default function TimeTrackerForm({
             {usePomodoroActive && (
               <div className="space-x-2">
                 <PomodoroTimer
-                  categories={categories}
                   onDataChange={onDataChange}
                   description={description}
                   categoryId={categoryId}

@@ -9,9 +9,6 @@ export type PomodoroTimerState = {
   remainingSeconds: number;
   breakSeconds: number;
   remainingBreakSeconds: number;
-  description: string;
-  categoryId?: string;
-  tags: string;
 };
 
 const getInitialPomodoroMinutes = (): number => {
@@ -43,9 +40,6 @@ const initialState: PomodoroTimerState = {
   remainingSeconds: getInitialPomodoroMinutes() * 60,
   breakSeconds: getInitialBreakMinutes() * 60,
   remainingBreakSeconds: getInitialBreakMinutes() * 60,
-  description: "",
-  categoryId: undefined,
-  tags: "",
 };
 
 // Create the store
@@ -53,9 +47,6 @@ export const pomodoroStore = new Store<PomodoroTimerState>(initialState);
 
 // Helper functions
 export const startPomodoro = (
-  description: string,
-  categoryId?: string,
-  tags: string = "",
   customTotalSeconds?: number,
   customBreakSeconds?: number
 ) => {
@@ -71,9 +62,6 @@ export const startPomodoro = (
     remainingSeconds: totalSeconds,
     breakSeconds,
     remainingBreakSeconds: breakSeconds,
-    description,
-    categoryId,
-    tags: tags ? `${tags}, pomodoro` : "pomodoro",
   }));
 };
 
@@ -84,11 +72,6 @@ export const startBreak = () => {
     isBreak: true,
     startTime: new Date(),
     remainingBreakSeconds: prevState.breakSeconds,
-    tags: prevState.tags.includes("pomodoro break")
-      ? prevState.tags
-      : prevState.tags
-        ? `${prevState.tags}, pomodoro break`
-        : "pomodoro break",
   }));
 };
 
@@ -151,8 +134,5 @@ export const getTimerData = () => {
     remainingSeconds: pomodoroStore.state.remainingSeconds,
     breakSeconds: pomodoroStore.state.breakSeconds,
     remainingBreakSeconds: pomodoroStore.state.remainingBreakSeconds,
-    description: pomodoroStore.state.description,
-    categoryId: pomodoroStore.state.categoryId,
-    tags: pomodoroStore.state.tags,
   };
 };

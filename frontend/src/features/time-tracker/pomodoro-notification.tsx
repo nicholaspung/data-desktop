@@ -29,7 +29,6 @@ export default function PomodoroNotification() {
     pomodoroStore,
     (state) => state.remainingBreakSeconds
   );
-  const description = useStore(pomodoroStore, (state) => state.description);
 
   // Request notification permission on mount
   useEffect(() => {
@@ -83,7 +82,7 @@ export default function PomodoroNotification() {
       // Show OS notification
       showOSNotification(
         "Pomodoro Complete!",
-        `${description || "Your session"} is complete. Time for a break!`
+        "Your Pomodoro session is complete. Time for a break!"
       );
     }
 
@@ -101,7 +100,6 @@ export default function PomodoroNotification() {
     isBreak,
     remainingSeconds,
     remainingBreakSeconds,
-    description,
     showOSNotification,
   ]);
 
@@ -130,7 +128,7 @@ export default function PomodoroNotification() {
           <AlertDialogDescription>
             {isBreak
               ? "Your break time is over. Ready to start a new Pomodoro?"
-              : `Great job completing "${description || "your session"}"! Time to take a break.`}
+              : "Great job completing your Pomodoro session! Time to take a break."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex justify-end">
