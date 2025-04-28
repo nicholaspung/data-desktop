@@ -30,30 +30,64 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### TODOS
 
 - PDF reports from data
+- create end to end test to make sure the inputs are all working correctly
+- when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
+
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 - it would be nice if the options I chose for table view stayed when I updated a value
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
+- add a bulk edit section, that can also use the `batch-entry-table`
+
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
+
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
-- in bloodwork add inputs, add virtualization
-- create end to end test to make sure the inputs are all working correctly
-- see why the line chart doesn't show the x data for the one right next to the last x data description
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
-- when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
+
+- in bloodwork add inputs, add virtualization
+- in bloodwork, add a "download template"/upload data that create a CSV of all the current blood markers, for a user to input into a CSV, and then upload the updated CSV
+
+- in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
+
+- see why the line chart doesn't show the x data for the one right next to the last x data description
 - make the dashnoard able to be in like "specific card heights and card widths" or just hardcode it in
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
 - update icons for the datasets
 - make the markdown CSS better looking
-- in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
-- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
 - add a way to minimize/maximize/reset the view for the application
+- fixed the <div> cannot be a child of <p> error from React
+
+- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
+- add a "taking current supplements" section
+- add a body measurement section following the FitNotes application import
+
+- add a "version history note" to the application
+- create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
+
 
 ### IN PROGRESS
 
+- daily tracker dashboard summary onclick is not the onclick I want
+- in experiment dashboard summary, also hide the description
+- in quick metric logger dashboard summary, its not showing the non-boolean metrics
+
 - in time-tracker, add Pomodoro method
+- after a pomodoro session ends, it should not end the timer, the user needs to end it themselves, and when they end it, it should start a "break" session
+- figure out if there is a way to hook the pomodoro items in the time tracking settings instead? And have other functions that monitor the time tracking statuses to deal with the pomodoro methods, instead of using it's own thing. The idea is that the user can still use the header button as a display 
+
 - in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog"
+- see if you can just make this a part of autocomplete-input and make it a prop to enable this or similar
+
+- for tab content that overflows, see if there's a way to expand the vertical container
+
+- in creativity journal, when I add an entry for the day, it should show only that entry for the day, and allow the user to edit that entry, but the user cannot create another entry or delete it. 
+- logging affirmation doesn't seem to be working
+- fix logging affirmation, it should search for the premade metric and complete it, right now it doesn't
+- show the "log" affirmation button if there is a metric for affirmation logging
+- in question journaling, remove "view all entries" from "today's question" which is shown when a user finishes todays question
+
+- in experiments, add a way to also edit the end state if the experiment is completed
 
 ### DONE
 
@@ -224,5 +258,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add time tracking info panel information [DONE 2025-04-27]
 - add time tracker summary to dashboard [DONE 2025-04-27]
 - add time tracking tags summary information in the time tracker summary page [DONE 2025-04-27]
+- in time-tracker header button, add a "triangle" pointing towards the "track time button" to show the user the form is connected with the button [DONE 2025-04-27]
 
 ### GAVE UP
