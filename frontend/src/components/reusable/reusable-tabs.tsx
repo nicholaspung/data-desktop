@@ -50,17 +50,23 @@ export default function ReusableTabs({
     >
       <TabsList
         className={cn(
-          "",
-          `${fullWidth ? "w-full" : ""} ${orientation === "vertical" ? "flex-col h-auto" : "grid"} ${
-            orientation === "horizontal" ? `grid-cols-${tabs.length}` : ""
-          } ${tabsListClassName}`
+          `${fullWidth ? "w-full" : ""} ${orientation === "vertical" ? "flex-col h-auto" : ""}`,
+          orientation === "horizontal" && tabs.length > 0
+            ? "flex flex-wrap justify-center gap-1"
+            : "",
+          tabsListClassName
         )}
       >
         {tabs.map((tab) => (
           <TabsTrigger
             key={tab.id}
             value={tab.id}
-            className={tab.icon ? "flex gap-2 items-center" : ""}
+            className={cn(
+              tab.icon ? "flex gap-2 items-center" : "",
+              orientation === "horizontal" && tabs.length > 5
+                ? "flex-grow-0"
+                : "flex-1"
+            )}
           >
             {tab.icon && tab.icon}
             {tab.label}

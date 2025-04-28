@@ -15,19 +15,20 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
     goal_type: "boolean",
     goal_value: "true",
   },
   {
     name: "Gratitude Journal Entries",
     description: "Number of gratitude entries recorded today",
-    type: "number", // Numeric metric
+    type: "number",
     unit: "entries",
     default_value: "0",
-    category_id: "journaling", // You'll need to ensure this category exists
     active: true,
     private: false,
     schedule_frequency: "daily",
+    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
     goal_type: "minimum",
     goal_value: "3",
   },
@@ -40,6 +41,7 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
     goal_type: "boolean",
     goal_value: "true",
   },
@@ -52,6 +54,7 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
+    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
     goal_type: "boolean",
     goal_value: "true",
   },
@@ -117,6 +120,7 @@ export async function createDefaultMetrics(
       const newMetric = {
         ...defaultMetric,
         category_id: journalingCategoryId,
+        schedule_start_date: new Date(),
       };
 
       const result = await ApiService.addRecord("metrics", newMetric);

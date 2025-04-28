@@ -70,26 +70,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- daily tracker dashboard summary onclick is not the onclick I want
-- in experiment dashboard summary, also hide the description
-- in quick metric logger dashboard summary, its not showing the non-boolean metrics
-
-- for tab content that overflows, see if there's a way to expand the vertical container
-
-- in creativity journal, when I add an entry for the day, it should show only that entry for the day, and allow the user to edit that entry, but the user cannot create another entry or delete it. 
-- logging affirmation doesn't seem to be working
-- fix logging affirmation, it should search for the premade metric and complete it, right now it doesn't
-- show the "log" affirmation button if there is a metric for affirmation logging
-- in question journaling, remove "view all entries" from "today's question" which is shown when a user finishes todays question
-- in creating metrics for journaling, make start date/frequency starting the day the user pressed the button
-
-- in experiments, add a way to also edit the end state if the experiment is completed
-
-- in metrics, when a user selects a date, it saves the incorrect date (the date before), make it saved the date selected, current time of user
-
-- if dataset summary section is empty, also add the reload button after letting the user know, something like "It looks like the application has disconnected, please reload by pressing this button."
-
 - need to fix the time entry overlap issue when doing pomodoro/break
+- see if there's an easy way to fix overlapping time issues
 
 ### DONE
 
@@ -266,5 +248,17 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - figure out if there is a way to hook the pomodoro items in the time tracking settings instead? And have other functions that monitor the time tracking statuses to deal with the pomodoro methods, instead of using it's own thing. The idea is that the user can still use the header button as a display  [DONE 2025-04-27]
 - in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog". And then when the user is after the ",", it shows all the other tags not used again [DONE 2025-04-27]
 - see if you can just make this a part of autocomplete-input and make it a prop to enable this or similar [DONE 2025-04-27]
+- daily tracker dashboard summary onclick is not the onclick I want [DONE 2025-04-28]
+- in experiment dashboard summary, also hide the description [DONE 2025-04-28]
+- in quick metric logger dashboard summary, its not showing the non-boolean metrics [DONE 2025-04-28]
+- for tab content that overflows, see if there's a way to expand the vertical container [DONE 2025-04-28]
+- in creativity journal, when I add an entry for the day, it should show only that entry for the day, and allow the user to edit that entry, but the user cannot create another entry or delete it. [DONE 2025-04-28]
+- logging affirmation doesn't seem to be working (I think it's in the sync, since it's not looking at the metrics, but at the affirmation records) [DONE 2025-04-28]
+- fix logging affirmation, it should search for the premade metric and complete it, right now it doesn't [DONE 2025-04-28]
+- show the "log" affirmation button if there is a metric for affirmation logging [DONE 2025-04-28]
+- in question journaling, remove "view all entries" from "today's question" which is shown when a user finishes todays question [DONE 2025-04-28]
+- in creating metrics for journaling, make start date/frequency starting the day the user pressed the button [DONE 2025-04-28]
+- in metrics, when a user selects a date, it saves the incorrect date (the date before), make it saved the date selected, current time of user [DONE 2025-04-28]
+- if dataset summary section is empty, also add the reload button after letting the user know, something like "It looks like the application has disconnected, please reload by pressing this button." [DONE 2025-04-28]
 
 ### GAVE UP

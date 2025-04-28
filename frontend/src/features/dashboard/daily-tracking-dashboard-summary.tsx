@@ -284,8 +284,7 @@ export default function DailyTrackingDashboardSummary() {
       {metrics.map((metric) => (
         <div
           key={metric.id}
-          className="flex items-center justify-between py-1 cursor-pointer hover:bg-muted/50 px-2 rounded-md transition-colors"
-          onClick={() => toggleMetric(metric)}
+          className="flex items-center justify-between py-1 hover:bg-muted/50 px-2 rounded-md transition-colors"
         >
           <div className="flex items-center gap-2">
             {metric.type === "boolean" ? (
@@ -298,7 +297,10 @@ export default function DailyTrackingDashboardSummary() {
                 }}
               />
             ) : (
-              <div className="w-4 h-4 flex items-center justify-center">
+              <div
+                className="w-4 h-4 flex items-center justify-center cursor-pointer hover:bg-muted/50 rounded-md transition-colors"
+                onClick={() => toggleMetric(metric)}
+              >
                 {metric.type === "time" ? (
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 ) : (

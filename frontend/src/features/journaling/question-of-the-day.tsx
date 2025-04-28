@@ -107,14 +107,6 @@ export default function QuestionOfTheDay({
             }}
           />
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={() => setActiveTab && setActiveTab("history")}
-          >
-            View All Entries
-          </Button>
-        </CardFooter>
       </Card>
     );
   }

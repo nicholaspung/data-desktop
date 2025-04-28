@@ -1,10 +1,13 @@
-// src/components/journaling/gratitude-journal-form.tsx
+// src/features/journaling/creativity-journal-form.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/reusable/markdown-editor";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { addEntry } from "@/store/data-store";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Save } from "lucide-react";
+import { formatDate } from "@/lib/date-utils";
 
 export default function CreativityJournalForm() {
   const [entry, setEntry] = useState("");
@@ -43,26 +46,42 @@ export default function CreativityJournalForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <h3 className="text-lg font-medium">
-          Write down 10 random associations or ideas that come to mind.
-        </h3>
-        <MarkdownEditor
-          value={entry}
-          onChange={setEntry}
-          placeholder="Random gibberish..."
-          minHeight="200px"
-        />
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-md">
+          New Entry - {formatDate(new Date())}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <h3 className="text-base font-medium">
+              Write down 10 random associations or ideas that come to mind.
+            </h3>
+            <MarkdownEditor
+              value={entry}
+              onChange={setEntry}
+              placeholder="Random gibberish..."
+              minHeight="200px"
+            />
+          </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isSubmitting || !entry.trim()}
-      >
-        {isSubmitting ? "Saving..." : "Save Creativity Journal Entry"}
-      </Button>
-    </form>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting || !entry.trim()}
+          >
+            {isSubmitting ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Creativity Journal Entry
+              </>
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

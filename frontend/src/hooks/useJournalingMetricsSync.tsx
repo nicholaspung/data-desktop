@@ -8,7 +8,6 @@ import {
   GratitudeJournalEntry,
   QuestionJournalEntry,
   CreativityJournalEntry,
-  Affirmation,
 } from "@/store/journaling-definitions";
 import { defaultJournalingMetrics } from "@/features/daily-tracker/default-metrics";
 
@@ -29,10 +28,6 @@ export function useJournalingMetricsSync() {
     dataStore,
     (state) => state.creativity_journal as CreativityJournalEntry[]
   );
-  const affirmations = useStore(
-    dataStore,
-    (state) => state.affirmation as Affirmation[]
-  );
   const dailyLogs = useStore(
     dataStore,
     (state) => state.daily_logs as DailyLog[]
@@ -47,9 +42,11 @@ export function useJournalingMetricsSync() {
           await ApiService.getRecordsWithRelations<Metric>("metrics");
 
         // Filter for journaling metrics (those with names matching our default metrics)
-        const journalingMetricNames = defaultJournalingMetrics.map((m) =>
-          m.name?.toLowerCase()
-        );
+        // Exclude the affirmation metric since it's handled separately now
+        const journalingMetricNames = defaultJournalingMetrics
+          .filter((m) => !m.name?.toLowerCase().includes("affirmation"))
+          .map((m) => m.name?.toLowerCase());
+
         const journalingMetrics = allMetrics.filter((m) =>
           journalingMetricNames.includes(m.name?.toLowerCase())
         );
@@ -87,12 +84,6 @@ export function useJournalingMetricsSync() {
       });
 
       const todayCreativityEntry = creativityEntries.find((entry) => {
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0, 0, 0, 0);
-        return entryDate.getTime() === today.getTime();
-      });
-
-      const todayAffirmation = affirmations.find((entry) => {
         const entryDate = new Date(entry.date);
         entryDate.setHours(0, 0, 0, 0);
         return entryDate.getTime() === today.getTime();
@@ -164,9 +155,6 @@ export function useJournalingMetricsSync() {
           case "completed creativity journal":
             completed = !!todayCreativityEntry;
             break;
-          case "completed daily affirmation":
-            completed = !!todayAffirmation;
-            break;
           case "completed 3 gratitude entries":
             // For backward compatibility, keep the boolean version too
             completed = todayGratitudeEntries.length >= 3;
@@ -208,7 +196,6 @@ export function useJournalingMetricsSync() {
     gratitudeEntries,
     questionEntries,
     creativityEntries,
-    affirmations,
     dailyLogs,
   ]);
 

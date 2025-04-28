@@ -199,11 +199,20 @@ export default function ExperimentDashboardSummary() {
                           />
                         </div>
 
-                        {currentExperiment.description && (
-                          <p className="text-sm text-muted-foreground">
-                            {currentExperiment.description}
-                          </p>
-                        )}
+                        {!currentExperiment.private &&
+                          currentExperiment.description && (
+                            <p className="text-sm text-muted-foreground">
+                              {currentExperiment.description}
+                            </p>
+                          )}
+                        {currentExperiment.private &&
+                          currentExperiment.description && (
+                            <ProtectedField>
+                              <p className="text-sm text-muted-foreground">
+                                {currentExperiment.description}
+                              </p>
+                            </ProtectedField>
+                          )}
 
                         <div className="pt-2">
                           <Link

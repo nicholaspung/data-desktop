@@ -260,6 +260,12 @@ export default function AddMetricForm({
         })
         .filter((day) => day >= 0);
 
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const startDate = scheduleStartDate.split("-").map(Number);
+      const endDate = scheduleEndDate.split("-").map(Number);
+
       // Prepare the metric data
       const metricData = {
         name,
@@ -273,11 +279,17 @@ export default function AddMetricForm({
         schedule_frequency: showSchedulingOptions ? scheduleFrequency : null,
         schedule_start_date:
           showSchedulingOptions && scheduleStartDate
-            ? new Date(scheduleStartDate)
+            ? new Date(
+                startDate[0],
+                startDate[1] - 1,
+                startDate[2],
+                hour,
+                minute
+              )
             : null,
         schedule_end_date:
           showSchedulingOptions && scheduleEndDate
-            ? new Date(scheduleEndDate)
+            ? new Date(endDate[0], endDate[1] - 1, endDate[2], hour, minute)
             : null,
         schedule_days: showSchedulingOptions ? numericScheduleDays : null,
         // Add goal fields if hasDefaultGoal is true

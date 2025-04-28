@@ -1,7 +1,13 @@
-// src/routes/index.tsx - Updated with TanStack Store for data loading state
+// src/routes/index.tsx - Updated with reconnection message when data is empty
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { BarChart, HeartPulse, PieChart, RefreshCcw } from "lucide-react";
+import {
+  BarChart,
+  HeartPulse,
+  PieChart,
+  RefreshCcw,
+  Power,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { ApiService } from "@/services/api";
@@ -166,43 +172,68 @@ function Home() {
       <div className="flex flex-col space-y-2">
         <h4 className="text-l font-bold">Dataset summary information</h4>
         <Separator />
-        {summaries.map((summary) => (
-          <Link
-            to={summary.href}
-            search={{ datasetId: summary.id }}
-            key={summary.id}
-          >
-            <ReusableCard
+        {summaries.length > 0 ? (
+          summaries.map((summary) => (
+            <Link
+              to={summary.href}
+              search={{ datasetId: summary.id }}
               key={summary.id}
-              showHeader={false}
-              cardClassName="hover:bg-accent/20 transition-colors"
-              contentClassName="pt-6"
-              content={
-                <div className="flex flex-row justify-between">
-                  <div className="flex flex-col">
-                    <div className="flex items-center">
-                      {summary.icon}
-                      <span className="ml-2 font-bold">{summary.name}</span>
+            >
+              <ReusableCard
+                key={summary.id}
+                showHeader={false}
+                cardClassName="hover:bg-accent/20 transition-colors"
+                contentClassName="pt-6"
+                content={
+                  <div className="flex flex-row justify-between">
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        {summary.icon}
+                        <span className="ml-2 font-bold">{summary.name}</span>
+                      </div>
+                      <span>
+                        {summary.lastUpdated
+                          ? `Last updated: ${new Date(
+                              summary.lastUpdated
+                            ).toLocaleDateString()}`
+                          : "No data yet"}
+                      </span>
                     </div>
-                    <span>
-                      {summary.lastUpdated
-                        ? `Last updated: ${new Date(
-                            summary.lastUpdated
-                          ).toLocaleDateString()}`
-                        : "No data yet"}
-                    </span>
+                    <div>
+                      <p className="text-2xl font-bold">{summary.count}</p>
+                      <p className="text-sm text-muted-foreground">
+                        total records
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{summary.count}</p>
-                    <p className="text-sm text-muted-foreground">
-                      total records
-                    </p>
-                  </div>
+                }
+              />
+            </Link>
+          ))
+        ) : (
+          <ReusableCard
+            showHeader={false}
+            cardClassName="border-dashed"
+            contentClassName="py-8"
+            content={
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="text-muted-foreground mb-4">
+                  It looks like the application disconnected. Please reload to
+                  reconnect to your data.
                 </div>
-              }
-            />
-          </Link>
-        ))}
+                <Button
+                  variant="default"
+                  size="default"
+                  onClick={() => window.location.reload()}
+                  className="flex items-center gap-2"
+                >
+                  <Power className="h-4 w-4" />
+                  Reload Application
+                </Button>
+              </div>
+            }
+          />
+        )}
       </div>
     </div>
   );

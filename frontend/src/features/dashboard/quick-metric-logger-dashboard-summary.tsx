@@ -122,7 +122,7 @@ export default function QuickMetricLoggerDashboardSummary() {
     if (!metric.active) return false;
 
     // Skip metrics that have already been logged for this date
-    if (isMetricLogged(metric.id)) return false;
+    if (metric.type === "boolean" && isMetricLogged(metric.id)) return false;
 
     // Filter by search term - for private metrics, only match on id if it's locked
     const matchesSearch =

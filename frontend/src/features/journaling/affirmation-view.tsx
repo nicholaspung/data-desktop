@@ -1,26 +1,38 @@
 // src/features/journaling/affirmation-view.tsx
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PenSquare, CheckCircle } from "lucide-react";
-import { useState, useEffect } from "react";
-import dataStore from "@/store/data-store";
+import { CheckCircle2, Lock, PenSquare } from "lucide-react";
+import dataStore, { addEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { Affirmation } from "@/store/journaling-definitions";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import AffirmationForm from "./affirmation-form";
 import { InfoPanel } from "@/components/reusable/info-panel";
+import { ApiService } from "@/services/api";
+import { DailyLog, Metric } from "@/store/experiment-definitions";
+import { formatDate } from "@/lib/date-utils";
 
 export default function AffirmationView() {
   const [isEditing, setIsEditing] = useState(false);
-  const [hasTodaysAffirmation, setHasTodaysAffirmation] = useState(false);
+  const [affirmationMetric, setAffirmationMetric] = useState<Metric | null>(
+    null
+  );
+  const [hasLoggedToday, setHasLoggedToday] = useState(false);
 
+  // Access the data from the store
   const entries = useStore(
     dataStore,
     (state) => state.affirmation as Affirmation[]
   );
+  const metrics = useStore(dataStore, (state) => state.metrics as Metric[]);
+  const dailyLogs = useStore(
+    dataStore,
+    (state) => state.daily_logs as DailyLog[]
+  );
 
-  // Get the latest affirmation
+  // Get the latest affirmation, sorted by date
   const latestAffirmation =
     entries.length > 0
       ? [...entries].sort(
@@ -28,33 +40,54 @@ export default function AffirmationView() {
         )[0]
       : null;
 
-  // Check if we already have an affirmation for today
+  // Find the affirmation metric and check if it's been logged today
   useEffect(() => {
-    if (entries.length === 0) {
-      setHasTodaysAffirmation(false);
-      return;
+    // Look for the "completed daily affirmation" metric
+    const metric = metrics.find(
+      (m) => m.name?.toLowerCase() === "completed daily affirmation" && m.active
+    );
+    setAffirmationMetric(metric || null);
+
+    // Check if the metric has been logged today
+    if (metric) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const todayLog = dailyLogs.find((log) => {
+        const logDate = new Date(log.date);
+        logDate.setHours(0, 0, 0, 0);
+        return (
+          log.metric_id === metric.id && logDate.getTime() === today.getTime()
+        );
+      });
+
+      setHasLoggedToday(!!todayLog);
     }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const todayEntry = entries.find((entry) => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
-      return entryDate.getTime() === today.getTime();
-    });
-
-    setHasTodaysAffirmation(!!todayEntry);
-  }, [entries]);
+  }, [entries, metrics, dailyLogs]);
 
   // Handle logging the affirmation practice
   const handleLogPractice = async () => {
-    if (!latestAffirmation) return;
+    if (!latestAffirmation || !affirmationMetric) return;
 
     try {
-      // Here you would add the code to log the practice
-      // For example, adding a record to a daily_logs dataset
-      toast.success("Practice logged successfully!");
+      const today = new Date();
+
+      // Create new log entry for affirmation metric
+      const newLog = {
+        date: today,
+        metric_id: affirmationMetric.id,
+        value: JSON.stringify(true),
+        notes: "Completed daily affirmation practice",
+      };
+
+      const response = await ApiService.addRecord("daily_logs", newLog);
+      console.log("Logged practice response:", response);
+
+      if (response) {
+        addEntry(response, "daily_logs");
+        setHasLoggedToday(true);
+        toast.success("Practice logged successfully!");
+      }
     } catch (error) {
       console.error("Error logging practice:", error);
       toast.error("Failed to log practice. Please try again.");
@@ -65,7 +98,7 @@ export default function AffirmationView() {
   const InfoCard = () => (
     <InfoPanel title="About Daily Affirmations" defaultExpanded={true}>
       Create an affirmation to reflect on daily, then track each time you
-      practice it. You can create or update one affirmation per day.
+      practice it. You can update your affirmation at any time.
     </InfoPanel>
   );
 
@@ -73,7 +106,14 @@ export default function AffirmationView() {
   const CurrentAffirmation = () => (
     <Card>
       <CardHeader className="pb-3 border-b flex flex-row justify-between items-center">
-        <CardTitle className="text-md">Current Affirmation</CardTitle>
+        <CardTitle className="text-md">
+          Current Affirmation
+          {latestAffirmation && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              Created {formatDate(latestAffirmation.date)}
+            </span>
+          )}
+        </CardTitle>
         <Button
           variant="ghost"
           size="sm"
@@ -101,23 +141,32 @@ export default function AffirmationView() {
           <ReactMarkdown>{latestAffirmation?.affirmation || ""}</ReactMarkdown>
         </div>
 
-        {!hasTodaysAffirmation ? (
+        {affirmationMetric && !hasLoggedToday ? (
           <div className="mt-6 border-t pt-4">
             <Button
               className="w-full"
               variant="default"
               onClick={handleLogPractice}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
+              <CheckCircle2 className="h-4 w-4 mr-2" />
               Log Today's Practice
             </Button>
           </div>
-        ) : (
-          <div className="border-t pt-2 mt-2 text-center text-sm text-muted-foreground">
-            You've already completed today's affirmation. You can update again
-            tomorrow.
+        ) : hasLoggedToday && affirmationMetric ? (
+          <div className="border-t pt-2 mt-4 text-center text-sm text-green-600 dark:text-green-400">
+            <div className="flex items-center justify-center gap-2">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Practice logged for today</span>
+            </div>
           </div>
-        )}
+        ) : !affirmationMetric ? (
+          <div className="border-t pt-2 mt-4 text-center text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-2">
+              <Lock className="h-4 w-4" />
+              <span>Tracking metric not available</span>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
@@ -133,7 +182,7 @@ export default function AffirmationView() {
         <AffirmationForm
           latestAffirmation={latestAffirmation}
           setIsEditing={setIsEditing}
-          hasTodaysAffirmation={hasTodaysAffirmation}
+          hasTodaysAffirmation={false} // Not needed anymore as we're just showing the latest
         />
       ) : (
         <CurrentAffirmation />

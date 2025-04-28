@@ -57,11 +57,6 @@ export default function TimeTrackerHeaderButton({
     pomodoroStore,
     (state) => state.remainingBreakSeconds
   );
-  console.log("Pomodoro Remaining Seconds:", pomodoroRemainingSeconds);
-  console.log(
-    "Pomodoro Break Remaining Seconds:",
-    pomodoroBreakRemainingSeconds
-  );
 
   const [isSaving, setIsSaving] = useState(false);
 
