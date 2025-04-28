@@ -188,6 +188,39 @@ export default function TimeTrackerForm({
     return () => unsubscribe();
   }, [isTimerActive, isPomodoroActive]);
 
+  const getAvailableTags = useMemo(() => {
+    if (!timeEntries || timeEntries.length === 0) return [];
+    const tagsSet = new Set<string>();
+
+    timeEntries.forEach((entry) => {
+      if (!entry.tags) return;
+
+      const entryTags = entry.tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
+
+      entryTags.forEach((tag) => tagsSet.add(tag));
+    });
+
+    // Get currently selected tags
+    const selectedTags = tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    // Filter out already selected tags
+    const availableTags = Array.from(tagsSet)
+      .filter((tag) => !selectedTags.includes(tag))
+      .sort()
+      .map((tag) => ({
+        id: tag,
+        label: tag,
+      }));
+
+    return availableTags;
+  }, [timeEntries, tags]);
+
   // Local timer tick for immediate feedback
   useEffect(() => {
     // Timer interval for active timer
@@ -276,6 +309,7 @@ export default function TimeTrackerForm({
 
       const endTime = new Date();
       const durationMinutes = Math.ceil(elapsedSeconds / 60);
+      const sortedTags = getSortedTags();
 
       const newEntry = {
         description,
@@ -283,7 +317,7 @@ export default function TimeTrackerForm({
         end_time: endTime.toISOString(),
         duration_minutes: durationMinutes,
         category_id: categoryId,
-        tags,
+        tags: sortedTags,
         private: false,
       };
 
@@ -312,7 +346,6 @@ export default function TimeTrackerForm({
     }
   };
 
-  // Handle manual entry save
   const handleManualSave = async () => {
     if (!startTime || !endTime) return;
 
@@ -329,6 +362,7 @@ export default function TimeTrackerForm({
       }
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
+      const sortedTags = getSortedTags();
 
       const newEntry = {
         description,
@@ -336,7 +370,7 @@ export default function TimeTrackerForm({
         end_time: endDate.toISOString(),
         duration_minutes: durationMinutes,
         category_id: categoryId,
-        tags,
+        tags: sortedTags,
         private: false,
       };
 
@@ -387,47 +421,48 @@ export default function TimeTrackerForm({
     }
   };
 
-  const getAllUniqueTags = useMemo(() => {
-    if (!timeEntries || timeEntries.length === 0) return [];
-    const tagsSet = new Set<string>();
-
-    timeEntries.forEach((entry) => {
-      if (!entry.tags) return;
-
-      const entryTags = entry.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0);
-
-      entryTags.forEach((tag) => tagsSet.add(tag));
-    });
-
-    return Array.from(tagsSet)
-      .sort()
-      .map((tag) => ({
-        id: tag,
-        label: tag,
-      }));
-  }, [timeEntries]);
-
-  // Add this function for handling tag selection
   const handleTagsChange = (tagInput: string) => {
     setTags(tagInput);
   };
 
   const handleTagSelect = (option: SelectOption) => {
-    // If there are already tags, append the new one
-    if (tags) {
-      const currentTags = tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t);
-      if (!currentTags.includes(option.label)) {
-        setTags([...currentTags, option.label].join(", "));
-      }
+    // Extract current tags as an array
+    const currentTags = tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+
+    // Check if we're in the middle of typing a new tag
+    // This happens when the last character is not a comma
+    const isTypingNewTag = !tags.trim().endsWith(",") && tags.trim() !== "";
+
+    if (isTypingNewTag) {
+      // Replace the currently typed tag with the selected one
+      // First remove the partial tag being typed
+      const withoutCurrentTag = currentTags.slice(0, -1);
+      // Then add the selected tag
+      const newTags = [...withoutCurrentTag, option.label];
+      setTags(newTags.join(", "));
     } else {
-      setTags(option.label);
+      // We're starting a new tag after a comma or at the beginning
+      // Check if the tag is already in the list
+      if (!currentTags.includes(option.label)) {
+        const newTags = [...currentTags, option.label];
+        setTags(newTags.join(", "));
+      }
     }
+  };
+
+  // Add this new function to sort tags alphabetically when saving
+  const getSortedTags = () => {
+    if (!tags) return "";
+
+    return tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag)
+      .sort()
+      .join(", ");
   };
 
   const isTimeMetric = (description: string) => {
@@ -666,12 +701,13 @@ export default function TimeTrackerForm({
                 value={tags}
                 onChange={handleTagsChange}
                 onSelect={handleTagSelect}
-                options={getAllUniqueTags}
+                options={getAvailableTags}
                 placeholder="project, meeting, etc."
                 inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
                 emptyMessage="Type to add tags or select from previous tags"
                 showRecentOptions={true}
                 maxRecentOptions={10}
+                continueProvidingSuggestions={true}
                 renderItem={(option, isActive) => (
                   <div
                     className={cn(
@@ -684,12 +720,6 @@ export default function TimeTrackerForm({
                         <Tag className="h-3 w-3 mr-1" />
                         <span>{option.label}</span>
                       </Badge>
-                      {tags
-                        .split(",")
-                        .map((t) => t.trim())
-                        .includes(option.label) && (
-                        <Check className="h-4 w-4 text-primary" />
-                      )}
                     </div>
                   </div>
                 )}

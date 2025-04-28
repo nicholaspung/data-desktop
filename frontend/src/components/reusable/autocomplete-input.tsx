@@ -24,6 +24,7 @@ export default function AutocompleteInput({
   showRecentOptions = true,
   maxRecentOptions = 7,
   renderItem,
+  continueProvidingSuggestions = false,
 }: {
   label?: string;
   value: string;
@@ -45,34 +46,45 @@ export default function AutocompleteInput({
     option: SelectOption & { [key: string]: any },
     isActive: boolean
   ) => React.ReactNode;
+  continueProvidingSuggestions?: boolean;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  // Get recent options (limited by maxRecentOptions)
-  const recentOptions = showRecentOptions
-    ? [...options]
-        .sort((a, b) => {
-          if (a.entry?.lastModified && b.entry?.lastModified) {
-            return (
-              new Date(b.entry.lastModified).getTime() -
-              new Date(a.entry.lastModified).getTime()
-            );
-          }
-          return 0;
-        })
-        .slice(0, maxRecentOptions)
-    : [];
+  const [finalOptions, setFinalOptions] = useState<
+    (SelectOption & { [key: string]: any })[]
+  >([]);
 
-  // Filter options based on input value if user has typed something
-  const filteredOptions =
-    value.length > 0
-      ? options.filter((option) =>
-          option.label.toLowerCase().includes(value.toLowerCase())
-        )
-      : recentOptions;
+  useEffect(() => {
+    // Get recent options (limited by maxRecentOptions)
+    const recentOptions = showRecentOptions
+      ? [...options]
+          .sort((a, b) => {
+            if (a.entry?.lastModified && b.entry?.lastModified) {
+              return (
+                new Date(b.entry.lastModified).getTime() -
+                new Date(a.entry.lastModified).getTime()
+              );
+            }
+            return 0;
+          })
+          .slice(0, maxRecentOptions)
+      : [];
+
+    // Filter options based on input value if user has typed something
+    let filteredOptions = recentOptions;
+    if (value.length > 0 && continueProvidingSuggestions) {
+      filteredOptions = options;
+    } else if (value.length > 0) {
+      filteredOptions = options.filter((option) =>
+        option.label.toLowerCase().includes(value.toLowerCase())
+      );
+    }
+
+    setFinalOptions(filteredOptions);
+  }, [options]);
 
   // Focus input on mount if autofocus is true
   useEffect(() => {
@@ -118,25 +130,25 @@ export default function AutocompleteInput({
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Skip if no suggestions are shown
-    if (!showSuggestions || filteredOptions.length === 0) return;
+    if (!showSuggestions || finalOptions.length === 0) return;
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
         setActiveIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : 0
+          prev < finalOptions.length - 1 ? prev + 1 : 0
         );
         break;
       case "ArrowUp":
         e.preventDefault();
         setActiveIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredOptions.length - 1
+          prev > 0 ? prev - 1 : finalOptions.length - 1
         );
         break;
       case "Enter":
         e.preventDefault();
         if (activeIndex >= 0) {
-          handleSelect(filteredOptions[activeIndex]);
+          handleSelect(finalOptions[activeIndex]);
         }
         break;
       case "Escape":
@@ -187,7 +199,7 @@ export default function AutocompleteInput({
         />
 
         {/* Suggestions dropdown */}
-        {showSuggestions && filteredOptions.length > 0 && (
+        {showSuggestions && finalOptions.length > 0 && (
           <div
             ref={suggestionsRef}
             className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto"
@@ -196,7 +208,7 @@ export default function AutocompleteInput({
               {value.length > 0 ? "Search results" : "Recent entries"}
             </div>
             <ul className="py-1">
-              {filteredOptions.map((option, index) => (
+              {finalOptions.map((option, index) => (
                 <li
                   key={option.id}
                   className={cn(
@@ -222,13 +234,11 @@ export default function AutocompleteInput({
           </div>
         )}
 
-        {showSuggestions &&
-          filteredOptions.length === 0 &&
-          value.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground">
-              {emptyMessage}
-            </div>
-          )}
+        {showSuggestions && finalOptions.length === 0 && value.length > 0 && (
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </div>
+        )}
       </div>
     </div>
   );
