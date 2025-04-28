@@ -36,7 +36,7 @@ import { Metric } from "@/store/experiment-definitions";
 import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { Badge } from "@/components/ui/badge";
 import PomodoroTimer from "./pomodoro-timer";
-import { pomodoroStore } from "./pomodoro-store";
+import { pomodoroStore, setUsePomodoroActive } from "./pomodoro-store";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -57,6 +57,10 @@ export default function TimeTrackerForm({
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
+  const usePomodoroActive = useStore(
+    pomodoroStore,
+    (state) => state.usePomodoroActive
+  );
 
   // Get global timer state
   const globalTimerData = getTimerData();
@@ -88,7 +92,6 @@ export default function TimeTrackerForm({
 
   // Add state
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
-  const [usePomodoroActive, setUsePomodoroActive] = useState<boolean>(false);
 
   // Generate options for autocomplete from previous entries
   const descriptionOptions = useMemo(() => {
@@ -164,15 +167,15 @@ export default function TimeTrackerForm({
           setStartTime(formattedTime);
         }
       } else {
-        // Only reset if we were previously tracking time
-        if (isTimerActive) {
+        // Only reset if we were previously tracking time and not in pomodoro mode
+        if (isTimerActive && !isPomodoroActive) {
           resetForm();
         }
       }
     });
 
     return () => unsubscribe();
-  }, [isTimerActive]);
+  }, [isTimerActive, isPomodoroActive]);
 
   // Local timer tick for immediate feedback
   useEffect(() => {

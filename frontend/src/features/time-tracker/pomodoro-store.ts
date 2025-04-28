@@ -1,5 +1,6 @@
 // src/features/time-tracker/pomodoro-store.ts
 import { Store } from "@tanstack/react-store";
+import { timeTrackerStore, stopTimer } from "./time-tracker-store";
 
 export type PomodoroTimerState = {
   isActive: boolean;
@@ -9,6 +10,7 @@ export type PomodoroTimerState = {
   remainingSeconds: number;
   breakSeconds: number;
   remainingBreakSeconds: number;
+  usePomodoroActive: boolean; // Add this setting to the store
 };
 
 const getInitialPomodoroMinutes = (): number => {
@@ -40,10 +42,33 @@ const initialState: PomodoroTimerState = {
   remainingSeconds: getInitialPomodoroMinutes() * 60,
   breakSeconds: getInitialBreakMinutes() * 60,
   remainingBreakSeconds: getInitialBreakMinutes() * 60,
+  usePomodoroActive: false,
 };
 
 // Create the store
 export const pomodoroStore = new Store<PomodoroTimerState>(initialState);
+
+// Setup a global interval for the timer
+let timerInterval: number | null = null;
+
+// Start the global timer
+const startGlobalTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+  }
+
+  timerInterval = window.setInterval(() => {
+    updateRemainingTime();
+  }, 1000);
+};
+
+// Stop the global timer
+const stopGlobalTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+};
 
 // Helper functions
 export const startPomodoro = (
@@ -52,27 +77,36 @@ export const startPomodoro = (
 ) => {
   const totalSeconds = customTotalSeconds || pomodoroStore.state.totalSeconds;
   const breakSeconds = customBreakSeconds || pomodoroStore.state.breakSeconds;
+  const now = new Date();
 
   pomodoroStore.setState((prevState) => ({
     ...prevState,
     isActive: true,
     isBreak: false,
-    startTime: new Date(),
+    startTime: now,
     totalSeconds,
     remainingSeconds: totalSeconds,
     breakSeconds,
     remainingBreakSeconds: breakSeconds,
   }));
+
+  // Start the global timer
+  startGlobalTimer();
 };
 
 export const startBreak = () => {
+  const now = new Date();
+
   pomodoroStore.setState((prevState) => ({
     ...prevState,
     isActive: true,
     isBreak: true,
-    startTime: new Date(),
+    startTime: now,
     remainingBreakSeconds: prevState.breakSeconds,
   }));
+
+  // Make sure the global timer is running
+  startGlobalTimer();
 };
 
 export const stopPomodoro = () => {
@@ -82,6 +116,14 @@ export const stopPomodoro = () => {
     isBreak: false,
     startTime: null,
   }));
+
+  // Stop the global timer
+  stopGlobalTimer();
+
+  // Also stop the global time tracker if it's running
+  if (timeTrackerStore.state.isTimerActive) {
+    stopTimer();
+  }
 };
 
 export const updateRemainingTime = () => {
@@ -125,6 +167,13 @@ export const setPomodoroSettings = (
   }));
 };
 
+export const setUsePomodoroActive = (active: boolean) => {
+  pomodoroStore.setState((prevState) => ({
+    ...prevState,
+    usePomodoroActive: active,
+  }));
+};
+
 export const getTimerData = () => {
   return {
     isActive: pomodoroStore.state.isActive,
@@ -134,5 +183,18 @@ export const getTimerData = () => {
     remainingSeconds: pomodoroStore.state.remainingSeconds,
     breakSeconds: pomodoroStore.state.breakSeconds,
     remainingBreakSeconds: pomodoroStore.state.remainingBreakSeconds,
+    usePomodoroActive: pomodoroStore.state.usePomodoroActive,
   };
 };
+
+// Setup cleanup when the module is hot-reloaded or the app shuts down
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeunload", () => {
+    stopGlobalTimer();
+  });
+}
+
+// Initialize timer if necessary (e.g., on page reload with active timer)
+if (pomodoroStore.state.isActive) {
+  startGlobalTimer();
+}

@@ -45,6 +45,8 @@ export default function TimeTrackerHeaderButton({
     timeTrackerStore,
     (state) => state.elapsedSeconds
   );
+
+  // Pomodoro state
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
   const isPomodoroBreak = useStore(pomodoroStore, (state) => state.isBreak);
   const pomodoroRemainingSeconds = useStore(
@@ -55,6 +57,12 @@ export default function TimeTrackerHeaderButton({
     pomodoroStore,
     (state) => state.remainingBreakSeconds
   );
+  console.log("Pomodoro Remaining Seconds:", pomodoroRemainingSeconds);
+  console.log(
+    "Pomodoro Break Remaining Seconds:",
+    pomodoroBreakRemainingSeconds
+  );
+
   const [isSaving, setIsSaving] = useState(false);
 
   // Load categories for the form
@@ -77,21 +85,24 @@ export default function TimeTrackerHeaderButton({
 
   // Update timer every second
   useEffect(() => {
-    if (isTimerActive) {
+    if (isTimerActive || isPomodoroActive) {
       const interval = setInterval(() => {
-        updateElapsedTime();
+        if (isTimerActive) {
+          updateElapsedTime();
+        }
+        // The pomodoro timer has its own update mechanism
       }, 1000);
 
       return () => clearInterval(interval);
     }
-  }, [isTimerActive]);
+  }, [isTimerActive, isPomodoroActive]);
 
   // Close popover when timer starts
   useEffect(() => {
-    if (isTimerActive) {
+    if (isTimerActive || isPomodoroActive) {
       setOpen(false);
     }
-  }, [isTimerActive]);
+  }, [isTimerActive, isPomodoroActive]);
 
   const handleStopTimer = async () => {
     if (!startTime) return;
@@ -159,9 +170,11 @@ export default function TimeTrackerHeaderButton({
                   : "text-red-600 dark:text-red-400"
               )}
             >
-              {isPomodoroBreak
-                ? formatDuration(pomodoroBreakRemainingSeconds)
-                : formatDuration(pomodoroRemainingSeconds)}
+              {formatDuration(
+                isPomodoroBreak
+                  ? pomodoroBreakRemainingSeconds
+                  : pomodoroRemainingSeconds
+              )}
             </div>
           </Link>
           {isPomodoroBreak ? (

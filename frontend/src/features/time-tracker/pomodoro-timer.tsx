@@ -7,9 +7,11 @@ import {
   startPomodoro,
   startBreak,
   stopPomodoro,
-  updateRemainingTime,
 } from "./pomodoro-store";
-import { timeTrackerStore } from "./time-tracker-store";
+import {
+  timeTrackerStore,
+  startTimer as startGlobalTimer,
+} from "./time-tracker-store";
 import { ApiService } from "@/services/api";
 import dataStore, { addEntry } from "@/store/data-store";
 import { Clock, StopCircle, Coffee } from "lucide-react";
@@ -58,6 +60,10 @@ export default function PomodoroTimer({
     (state) => state.categoryId
   );
   const timeTrackerTags = useStore(timeTrackerStore, (state) => state.tags);
+  const timeTrackerIsActive = useStore(
+    timeTrackerStore,
+    (state) => state.isTimerActive
+  );
 
   // Other store data
   const metricsData = useStore(dataStore, (state) => state.metrics || []);
@@ -92,17 +98,6 @@ export default function PomodoroTimer({
       }
     };
   }, []);
-
-  // Timer update effect
-  useEffect(() => {
-    if (isActive) {
-      const interval = setInterval(() => {
-        updateRemainingTime();
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [isActive]);
 
   // Check for timer completion
   useEffect(() => {
@@ -151,7 +146,18 @@ export default function PomodoroTimer({
   };
 
   const handleStartPomodoro = () => {
+    // Start the pomodoro timer
     startPomodoro();
+
+    // Also start a global timer to track time entry
+    if (!timeTrackerIsActive) {
+      startGlobalTimer(
+        getActiveDescription(),
+        getActiveCategoryId(),
+        getActiveTags()
+      );
+    }
+
     onDataChange();
   };
 
