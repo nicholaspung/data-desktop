@@ -11,6 +11,7 @@ import {
 import {
   timeTrackerStore,
   startTimer as startGlobalTimer,
+  stopTimer,
 } from "./time-tracker-store";
 import { ApiService } from "@/services/api";
 import dataStore, { addEntry } from "@/store/data-store";
@@ -256,6 +257,10 @@ export default function PomodoroTimer({
 
       // Stop the pomodoro completely
       stopPomodoro();
+      // Reset global state
+      if (timeTrackerIsActive) {
+        stopTimer();
+      }
     } catch (error) {
       console.error("Error saving break entry:", error);
     } finally {
@@ -338,7 +343,7 @@ export default function PomodoroTimer({
         ></div>
       </div>
 
-      <div className="flex justify-between items-center gap-2">
+      <div className="flex justify-between items-center gap-4">
         <div className="text-3xl font-mono font-bold">
           {isBreak
             ? formatDuration(remainingBreakSeconds)
@@ -349,7 +354,10 @@ export default function PomodoroTimer({
           <Button
             onClick={handleEndBreak}
             variant="outline"
-            className="gap-2 h-10"
+            className={cn(
+              "gap-2 h-10",
+              "border-blue-500 hover:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            )}
             disabled={isSaving}
           >
             <StopCircle className="h-4 w-4" />
@@ -359,7 +367,10 @@ export default function PomodoroTimer({
           <Button
             onClick={handleEndPomodoro}
             variant="outline"
-            className="gap-2 h-10"
+            className={cn(
+              "gap-2 h-10",
+              "border-red-500 hover:border-red-600 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+            )}
             disabled={isSaving}
           >
             <Coffee className="h-4 w-4" />

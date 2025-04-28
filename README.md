@@ -74,10 +74,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in experiment dashboard summary, also hide the description
 - in quick metric logger dashboard summary, its not showing the non-boolean metrics
 
-- in time-tracker, add Pomodoro method
-- after a pomodoro session ends, it should not end the timer, the user needs to end it themselves, and when they end it, it should start a "break" session
-- figure out if there is a way to hook the pomodoro items in the time tracking settings instead? And have other functions that monitor the time tracking statuses to deal with the pomodoro methods, instead of using it's own thing. The idea is that the user can still use the header button as a display 
-
 - in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog". And then when the user is after the ",", it shows all the other tags not used again
 - see if you can just make this a part of autocomplete-input and make it a prop to enable this or similar
 
@@ -266,5 +262,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add time tracker summary to dashboard [DONE 2025-04-27]
 - add time tracking tags summary information in the time tracker summary page [DONE 2025-04-27]
 - in time-tracker header button, add a "triangle" pointing towards the "track time button" to show the user the form is connected with the button [DONE 2025-04-27]
+- in time-tracker, add Pomodoro method [DONE 2025-04-27]
+- after a pomodoro session ends, it should not end the timer, the user needs to end it themselves, and when they end it, it should start a "break" session [DONE 2025-04-27]
+- figure out if there is a way to hook the pomodoro items in the time tracking settings instead? And have other functions that monitor the time tracking statuses to deal with the pomodoro methods, instead of using it's own thing. The idea is that the user can still use the header button as a display  [DONE 2025-04-27]
 
 ### GAVE UP

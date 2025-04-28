@@ -13,6 +13,7 @@ import {
   Tag,
   FolderIcon,
   Check,
+  Coffee,
 } from "lucide-react";
 import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
@@ -57,6 +58,11 @@ export default function TimeTrackerForm({
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
+  const isPomodoroBreak = useStore(pomodoroStore, (state) => state.isBreak);
+  const isTimerActive = useStore(
+    timeTrackerStore,
+    (state) => state.isTimerActive
+  );
   const usePomodoroActive = useStore(
     pomodoroStore,
     (state) => state.usePomodoroActive
@@ -79,7 +85,6 @@ export default function TimeTrackerForm({
   const [endTime, setEndTime] = useState("");
 
   // Timer state - sync with global state if timer is active
-  const [isTimerActive, setIsTimerActive] = useState(globalTimerData.isActive);
   const [timerStartTime, setTimerStartTime] = useState<Date | null>(
     globalTimerData.isActive ? globalTimerData.startTime : null
   );
@@ -151,11 +156,17 @@ export default function TimeTrackerForm({
     }
   }, [addState]);
 
+  useEffect(() => {
+    // If both pomodoro and regular timer are inactive, reset the form
+    if (!isPomodoroActive && !isTimerActive) {
+      resetForm();
+    }
+  }, [isPomodoroActive, isTimerActive]);
+
   // Update local timer state when global state changes
   useEffect(() => {
     const unsubscribe = timeTrackerStore.subscribe((state) => {
       if (state.currentVal.isTimerActive) {
-        setIsTimerActive(true);
         setTimerStartTime(state.currentVal.startTime);
         setElapsedSeconds(state.currentVal.elapsedSeconds);
         setDescription(state.currentVal.description);
@@ -200,24 +211,25 @@ export default function TimeTrackerForm({
     setTags("");
     setStartTime("");
     setEndTime("");
-    setIsTimerActive(false);
     setTimerStartTime(null);
     setElapsedSeconds(0);
+
+    // Make sure we're also in sync with the global state
+    if (globalTimerData.isActive) {
+      stopGlobalTimer();
+    }
   };
 
   // Start the timer
   const handleStartTimer = () => {
     const now = new Date();
-
-    // Set local state
-    setIsTimerActive(true);
-    setTimerStartTime(now);
-
     const formattedNow = formatDateForInput(now);
     setStartTime(formattedNow);
 
-    // Set global state
+    // Only call the global store function
     startGlobalTimer(description, categoryId, tags);
+
+    // No need to set local state, it will come from the store
   };
 
   // Helper to format date for datetime-local input
@@ -434,15 +446,30 @@ export default function TimeTrackerForm({
         inPopover
           ? "border-0 shadow-none"
           : "border-2 shadow-lg transition-all duration-300",
-        isTimerActive
-          ? "border-green-500 dark:border-green-600 shadow-green-100 dark:shadow-green-900/20"
-          : "border-blue-400 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/10 hover:border-blue-500"
+        // Apply different styling based on timer state
+        isPomodoroActive && isPomodoroBreak
+          ? "border-blue-500 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/20"
+          : isPomodoroActive && !isPomodoroBreak
+            ? "border-red-500 dark:border-red-600 shadow-red-100 dark:shadow-red-900/20"
+            : isTimerActive
+              ? "border-green-500 dark:border-green-600 shadow-green-100 dark:shadow-green-900/20"
+              : "border-blue-400 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/10 hover:border-blue-500"
       )}
       content={
         <div className="flex flex-col gap-4 p-4">
           <div className="flex flex-row justify-between pt-2">
             <h3 className="text-xl font-bold flex items-center">
-              {isTimerActive ? (
+              {isPomodoroActive && isPomodoroBreak ? (
+                <span className="text-blue-600 dark:text-blue-500 flex items-center">
+                  <Coffee className="mr-2 h-5 w-5" />
+                  Break Time
+                </span>
+              ) : isPomodoroActive && !isPomodoroBreak ? (
+                <span className="text-red-600 dark:text-red-500 flex items-center">
+                  <Clock className="mr-2 h-5 w-5 animate-pulse" />
+                  Pomodoro
+                </span>
+              ) : isTimerActive ? (
                 <span className="text-green-600 dark:text-green-500 flex items-center">
                   <Clock className="mr-2 h-5 w-5 animate-pulse" />
                   Recording Time
