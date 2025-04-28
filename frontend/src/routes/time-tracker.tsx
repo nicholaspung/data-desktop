@@ -7,6 +7,7 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
+import PomodoroNotification from "@/features/time-tracker/pomodoro-notification";
 
 export const Route = createFileRoute("/time-tracker")({
   component: TimeTrackerPage,
@@ -136,6 +137,7 @@ function TimeTrackerPage() {
       sidebarPosition="right"
     >
       <TimeTracker />
+      <PomodoroNotification />
     </FeatureLayout>
   );
 }

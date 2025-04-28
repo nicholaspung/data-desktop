@@ -37,9 +37,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - it would be nice if the options I chose for table view stayed when I updated a value
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add a bulk edit section, that can also use the `batch-entry-table`
+- when in `batch-entry-table`, for relational data, also show the secondary field
 
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
+- add a way to save files (maybe for sure make it into a different table in SQLite?)
 
 - for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
@@ -76,7 +78,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - after a pomodoro session ends, it should not end the timer, the user needs to end it themselves, and when they end it, it should start a "break" session
 - figure out if there is a way to hook the pomodoro items in the time tracking settings instead? And have other functions that monitor the time tracking statuses to deal with the pomodoro methods, instead of using it's own thing. The idea is that the user can still use the header button as a display 
 
-- in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog"
+- in time-tracker add tags, it would interesting to see how to showcase a tag for the user to add while continuing typing, i.e. user types "cat" and it shows tags that include "cat", then when the user presses "," then it waits for the next input for the user to type, and if user types "dog", then it shows tags that include "dog" inside it, while the user has the input as "cat, dog". And then when the user is after the ",", it shows all the other tags not used again
 - see if you can just make this a part of autocomplete-input and make it a prop to enable this or similar
 
 - for tab content that overflows, see if there's a way to expand the vertical container
@@ -86,8 +88,13 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - fix logging affirmation, it should search for the premade metric and complete it, right now it doesn't
 - show the "log" affirmation button if there is a metric for affirmation logging
 - in question journaling, remove "view all entries" from "today's question" which is shown when a user finishes todays question
+- in creating metrics for journaling, make start date/frequency starting the day the user pressed the button
 
 - in experiments, add a way to also edit the end state if the experiment is completed
+
+- in metrics, when a user selects a date, it saves the incorrect date (the date before), make it saved the date selected, current time of user
+
+- if dataset summary section is empty, also add the reload button after letting the user know, something like "It looks like the application has disconnected, please reload by pressing this button."
 
 ### DONE
 

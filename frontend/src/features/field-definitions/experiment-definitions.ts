@@ -224,6 +224,8 @@ export const DAILY_LOG_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       relatedDataset: "metrics",
       relatedField: "id",
       displayField: "name",
+      secondaryDisplayFieldType: "text",
+      secondaryDisplayField: "description",
     },
     {
       key: "experiment_id",

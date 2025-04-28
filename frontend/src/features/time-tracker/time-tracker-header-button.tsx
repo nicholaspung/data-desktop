@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Clock, StopCircle } from "lucide-react";
+import { Clock, Coffee, StopCircle } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import { formatDuration } from "@/lib/time-utils";
 import {
@@ -23,6 +23,7 @@ import useLoadData from "@/hooks/useLoadData";
 import { Link } from "@tanstack/react-router";
 import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { TimeEntry } from "@/store/time-tracking-definitions";
+import { pomodoroStore } from "./pomodoro-store";
 
 interface TimeTrackerHeaderButtonProps {
   onDataChange: () => void;
@@ -43,6 +44,16 @@ export default function TimeTrackerHeaderButton({
   const elapsedSeconds = useStore(
     timeTrackerStore,
     (state) => state.elapsedSeconds
+  );
+  const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
+  const isPomodoroBreak = useStore(pomodoroStore, (state) => state.isBreak);
+  const pomodoroRemainingSeconds = useStore(
+    pomodoroStore,
+    (state) => state.remainingSeconds
+  );
+  const pomodoroBreakRemainingSeconds = useStore(
+    pomodoroStore,
+    (state) => state.remainingBreakSeconds
   );
   const [isSaving, setIsSaving] = useState(false);
 
@@ -127,7 +138,39 @@ export default function TimeTrackerHeaderButton({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      {isTimerActive ? (
+      {isPomodoroActive ? (
+        <div
+          className={cn(
+            "flex items-center gap-2 px-3 py-2 rounded-md",
+            isPomodoroBreak
+              ? "border border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+              : "border border-red-500 bg-red-50 dark:bg-red-900/20"
+          )}
+        >
+          <Link to="/time-tracker">
+            <div className="text-sm font-medium truncate max-w-[120px]">
+              {isPomodoroBreak ? "Break" : "Pomodoro"}
+            </div>
+            <div
+              className={cn(
+                "text-sm font-mono font-bold",
+                isPomodoroBreak
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-red-600 dark:text-red-400"
+              )}
+            >
+              {isPomodoroBreak
+                ? formatDuration(pomodoroBreakRemainingSeconds)
+                : formatDuration(pomodoroRemainingSeconds)}
+            </div>
+          </Link>
+          {isPomodoroBreak ? (
+            <Coffee className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          ) : (
+            <Clock className="h-4 w-4 text-red-600 dark:text-red-400" />
+          )}
+        </div>
+      ) : isTimerActive ? (
         <div className="flex items-center gap-2 border border-green-500 px-3 py-2 rounded-md bg-green-50 dark:bg-green-900/20">
           <Link to="/time-tracker">
             <div className="text-sm font-medium truncate max-w-[120px]">

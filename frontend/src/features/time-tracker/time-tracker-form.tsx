@@ -35,6 +35,8 @@ import { SelectOption } from "@/types/types";
 import { Metric } from "@/store/experiment-definitions";
 import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { Badge } from "@/components/ui/badge";
+import PomodoroTimer from "./pomodoro-timer";
+import { pomodoroStore } from "./pomodoro-store";
 
 interface TimeTrackerFormProps {
   categories: TimeCategory[];
@@ -54,6 +56,7 @@ export default function TimeTrackerForm({
   );
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
+  const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
 
   // Get global timer state
   const globalTimerData = getTimerData();
@@ -85,6 +88,7 @@ export default function TimeTrackerForm({
 
   // Add state
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
+  const [usePomodoroActive, setUsePomodoroActive] = useState<boolean>(false);
 
   // Generate options for autocomplete from previous entries
   const descriptionOptions = useMemo(() => {
@@ -447,41 +451,65 @@ export default function TimeTrackerForm({
                 </span>
               )}
             </h3>
-            <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1 shadow-sm">
-              <Label
-                htmlFor="add-state"
-                className={cn(
-                  "cursor-pointer text-sm font-medium",
-                  addState !== "timer" && "text-primary"
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1 shadow-sm">
+                {!isPomodoroActive && (
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="add-state"
+                      className={cn(
+                        "cursor-pointer text-sm font-medium",
+                        addState !== "timer" && "text-primary"
+                      )}
+                    >
+                      Manual
+                    </Label>
+                    <Switch
+                      id="add-state"
+                      checked={addState === "timer"}
+                      onCheckedChange={(value) => {
+                        if (value) {
+                          setAddState("timer");
+                        } else {
+                          setAddState("manual");
+                          setUsePomodoroActive(false);
+                        }
+                      }}
+                    />
+                    <Label
+                      htmlFor="add-state"
+                      className={cn(
+                        "cursor-pointer text-sm font-medium",
+                        addState === "timer" && "text-primary"
+                      )}
+                    >
+                      Timer
+                    </Label>
+                  </div>
                 )}
-              >
-                Manual
-              </Label>
-              <Switch
-                id="add-state"
-                checked={addState === "timer"}
-                onCheckedChange={(value) => {
-                  if (value) {
-                    setAddState("timer");
-                  } else {
-                    setAddState("manual");
-                  }
-                }}
-              />
-              <Label
-                htmlFor="add-state"
-                className={cn(
-                  "cursor-pointer text-sm font-medium",
-                  addState === "timer" && "text-primary"
-                )}
-              >
-                Timer
-              </Label>
+              </div>
+              {!isPomodoroActive && addState === "timer" && (
+                <div className="flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="pomodoro-state"
+                      checked={usePomodoroActive}
+                      onCheckedChange={(value) => setUsePomodoroActive(value)}
+                    />
+                    <Label
+                      htmlFor="pomodoro-state"
+                      className={cn("cursor-pointer text-sm font-medium")}
+                    >
+                      Use Pomodoro
+                    </Label>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <Separator className="bg-muted" />
           <div className="flex flex-row gap-4 items-end flex-wrap">
-            <div className="flex-1 space-y-2">
+            <div className="flex-2 space-y-2">
               <Label
                 htmlFor="description"
                 className="text-sm font-medium flex items-center"
@@ -511,7 +539,7 @@ export default function TimeTrackerForm({
                 maxRecentOptions={7}
                 renderItem={(option, isActive) => {
                   const entry = option.entry;
-                  console.log(option);
+
                   return (
                     <div
                       className={cn(
@@ -599,7 +627,7 @@ export default function TimeTrackerForm({
               />
             </div>
 
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2 flex-2">
               <Label htmlFor="tags" className="text-sm font-medium">
                 Tags (comma-separated)
               </Label>
@@ -638,7 +666,19 @@ export default function TimeTrackerForm({
               />
             </div>
 
-            {addState === "timer" && (
+            {usePomodoroActive && (
+              <div className="space-x-2">
+                <PomodoroTimer
+                  categories={categories}
+                  onDataChange={onDataChange}
+                  description={description}
+                  categoryId={categoryId}
+                  tags={tags}
+                />
+              </div>
+            )}
+
+            {addState === "timer" && !usePomodoroActive && (
               <div
                 className={cn(
                   "text-3xl font-mono font-bold tracking-tight text-center px-3 py-1 rounded-lg",
@@ -651,42 +691,44 @@ export default function TimeTrackerForm({
               </div>
             )}
 
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="start-time" className="text-sm font-medium">
-                  Start Time
-                </Label>
-                <div className="flex space-x-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs"
-                    onClick={setCurrentTimeAsStartTime}
-                    title="Set to current time"
-                  >
-                    Now
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-xs flex items-center"
-                    onClick={setLastEntryEndTimeAsStartTime}
-                    title="Continue from last entry"
-                    disabled={timeEntries.length === 0}
-                  >
-                    <History className="h-3 w-3 mr-1" />
-                    Last
-                  </Button>
+            {!usePomodoroActive && (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="start-time" className="text-sm font-medium">
+                    Start Time
+                  </Label>
+                  <div className="flex space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={setCurrentTimeAsStartTime}
+                      title="Set to current time"
+                    >
+                      Now
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs flex items-center"
+                      onClick={setLastEntryEndTimeAsStartTime}
+                      title="Continue from last entry"
+                      disabled={timeEntries.length === 0}
+                    >
+                      <History className="h-3 w-3 mr-1" />
+                      Last
+                    </Button>
+                  </div>
                 </div>
+                <Input
+                  id="start-time"
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="h-10 focus:ring-2 focus:ring-primary/50"
+                />
               </div>
-              <Input
-                id="start-time"
-                type="datetime-local"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="h-10 focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
+            )}
 
             {addState === "manual" && (
               <div className="space-y-2">
@@ -718,52 +760,54 @@ export default function TimeTrackerForm({
               </div>
             )}
 
-            <div>
-              {!isTimerActive && addState === "timer" ? (
-                <Button
-                  onClick={handleStartTimer}
-                  size="sm"
-                  className="px-6 py-5 bg-blue-600 hover:bg-blue-700 font-medium"
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  Start Timer
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    if (isTimerActive && addState === "timer") {
-                      await handleSaveTimer();
-                    } else {
-                      await handleManualSave();
+            {!usePomodoroActive && (
+              <div>
+                {!isTimerActive && addState === "timer" ? (
+                  <Button
+                    onClick={handleStartTimer}
+                    size="sm"
+                    className="px-6 py-5 bg-blue-600 hover:bg-blue-700 font-medium"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Start Timer
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (isTimerActive && addState === "timer") {
+                        await handleSaveTimer();
+                      } else {
+                        await handleManualSave();
+                      }
+                    }}
+                    disabled={
+                      addState === "timer"
+                        ? isSaving
+                        : !startTime || !endTime || isSaving
                     }
-                  }}
-                  disabled={
-                    addState === "timer"
-                      ? isSaving
-                      : !startTime || !endTime || isSaving
-                  }
-                  className={cn(
-                    "px-6 py-5 font-medium",
-                    isTimerActive
-                      ? "bg-green-600 hover:bg-green-700"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  )}
-                >
-                  {isTimerActive ? (
-                    <>
-                      <TimerOff className="h-4 w-4 mr-2" />
-                      {isSaving ? "Saving..." : "Stop & Save"}
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {isSaving ? "Saving..." : "Save"}
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+                    className={cn(
+                      "px-6 py-5 font-medium",
+                      isTimerActive
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-blue-600 hover:bg-blue-700"
+                    )}
+                  >
+                    {isTimerActive ? (
+                      <>
+                        <TimerOff className="h-4 w-4 mr-2" />
+                        {isSaving ? "Saving..." : "Stop & Save"}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        {isSaving ? "Saving..." : "Save"}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       }
