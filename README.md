@@ -89,6 +89,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - if dataset summary section is empty, also add the reload button after letting the user know, something like "It looks like the application has disconnected, please reload by pressing this button."
 
+- need to fix the time entry overlap issue when doing pomodoro/break
+
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
