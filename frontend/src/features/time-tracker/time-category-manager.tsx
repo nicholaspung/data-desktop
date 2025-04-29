@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Edit, Plus, Tags } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { Skeleton } from "@/components/ui/skeleton";
-import { addEntry, deleteEntry, updateEntry } from "@/store/data-store";
+import dataStore, {
+  addEntry,
+  deleteEntry,
+  updateEntry,
+} from "@/store/data-store";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import { useStore } from "@tanstack/react-store";
 
 interface TimeCategoryManagerProps {
-  categories: TimeCategory[];
   isLoading: boolean;
   onDataChange: () => void;
 }
@@ -41,10 +45,11 @@ const getRandomColor = (): string => {
 };
 
 export default function TimeCategoryManager({
-  categories,
   isLoading,
   onDataChange,
 }: TimeCategoryManagerProps) {
+  const categories = useStore(dataStore, (state) => state.time_categories);
+
   const [newCategory, setNewCategory] = useState("");
   const [newColor, setNewColor] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);

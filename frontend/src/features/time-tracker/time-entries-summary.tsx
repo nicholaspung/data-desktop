@@ -24,10 +24,10 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
 
 interface TimeEntriesSummaryProps {
-  entries: TimeEntry[];
-  categories: TimeCategory[];
   isLoading: boolean;
 }
 
@@ -54,10 +54,11 @@ const formatHoursAndMinutes = (minutes: number) => {
 };
 
 export default function TimeEntriesSummary({
-  entries,
-  categories,
   isLoading,
 }: TimeEntriesSummaryProps) {
+  const entries = useStore(dataStore, (state) => state.time_entries);
+  const categories = useStore(dataStore, (state) => state.time_categories);
+
   // Calculate time totals for today
   const todaySummary = useMemo(() => {
     const today = formatDateString(new Date());

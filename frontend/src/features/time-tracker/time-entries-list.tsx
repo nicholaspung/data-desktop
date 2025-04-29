@@ -1,6 +1,6 @@
 // src/features/time-tracker/time-entries-list.tsx
 import { useMemo, useState } from "react";
-import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
+import { TimeEntry } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Calendar,
@@ -31,8 +31,6 @@ import {
 } from "@/lib/time-entry-utils";
 
 interface TimeEntriesListProps {
-  entries: TimeEntry[];
-  categories: TimeCategory[];
   isLoading: boolean;
   onDataChange: () => void;
 }
@@ -45,11 +43,12 @@ interface GroupedEntry {
 }
 
 export default function TimeEntriesList({
-  entries,
-  categories,
   isLoading,
   onDataChange,
 }: TimeEntriesListProps) {
+  const entries = useStore(dataStore, (state) => state.time_entries);
+  const categories = useStore(dataStore, (state) => state.time_categories);
+
   const [editingEntry, setEditingEntry] = useState<TimeEntry | null>(null);
   const [tagFilter, setTagFilter] = useState("");
   const [isGrouped, setIsGrouped] = useState(false);

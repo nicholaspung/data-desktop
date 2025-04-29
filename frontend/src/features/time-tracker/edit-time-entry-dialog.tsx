@@ -1,6 +1,6 @@
 // src/features/time-tracker/edit-time-entry-dialog.tsx
 import { useState, useEffect } from "react";
-import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
+import { TimeEntry } from "@/store/time-tracking-definitions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,14 +16,12 @@ import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 
 interface EditTimeEntryDialogProps {
   entry: TimeEntry;
-  categories: TimeCategory[];
   onSave: () => void;
   onCancel: () => void;
 }
 
 export default function EditTimeEntryDialog({
   entry,
-  categories,
   onSave,
   onCancel,
 }: EditTimeEntryDialogProps) {
@@ -43,6 +41,7 @@ export default function EditTimeEntryDialog({
   );
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
+  const categories = useStore(dataStore, (state) => state.time_categories);
 
   useEffect(() => {
     // Format dates for datetime-local inputs

@@ -7,10 +7,10 @@ import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateString } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
 
 interface TimeEntriesCalendarProps {
-  entries: TimeEntry[];
-  categories: TimeCategory[];
   isLoading: boolean;
   onEditEntry: (entry: TimeEntry) => void;
 }
@@ -23,11 +23,12 @@ interface ProcessedTimeEntry extends TimeEntry {
 }
 
 export default function TimeEntriesCalendar({
-  entries,
-  categories,
   isLoading,
   onEditEntry,
 }: TimeEntriesCalendarProps) {
+  const entries = useStore(dataStore, (state) => state.time_entries);
+  const categories = useStore(dataStore, (state) => state.time_categories);
+
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 

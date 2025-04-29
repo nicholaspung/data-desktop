@@ -15,7 +15,7 @@ import {
   Check,
   Coffee,
 } from "lucide-react";
-import { TimeCategory, TimeEntry } from "@/store/time-tracking-definitions";
+import { TimeEntry } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes, formatDuration } from "@/lib/time-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -40,21 +40,17 @@ import PomodoroTimer from "./pomodoro-timer";
 import { pomodoroStore, setUsePomodoroActive } from "./pomodoro-store";
 
 interface TimeTrackerFormProps {
-  categories: TimeCategory[];
   onDataChange: () => void;
   inPopover?: boolean;
 }
 
 export default function TimeTrackerForm({
-  categories,
   onDataChange,
   inPopover = false,
 }: TimeTrackerFormProps) {
   // Get time entries from store for previous entry reference
-  const timeEntries = useStore(
-    dataStore,
-    (state) => state.time_entries as TimeEntry[]
-  );
+  const timeEntries = useStore(dataStore, (state) => state.time_entries);
+  const categories = useStore(dataStore, (state) => state.time_categories);
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
