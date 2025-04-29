@@ -21,7 +21,7 @@ export default function FilterControls({
 }: {
   filterableColumns: string[];
   filterColumn: string;
-  setFilterColumn: React.Dispatch<React.SetStateAction<string>>;
+  setFilterColumn: (newFilterColumn: string) => void;
   table: Table<any>;
   searchPlaceholder: string;
   onExport?: () => void; // Optional callback for when export happens
@@ -105,11 +105,11 @@ export default function FilterControls({
                 (table.getColumn(filterColumn)?.getFilterValue() as string) ||
                 ""
               }
-              onChange={(event) =>
+              onChange={(event) => {
                 table
                   .getColumn(filterColumn)
-                  ?.setFilterValue(event.target.value)
-              }
+                  ?.setFilterValue(event.target.value);
+              }}
               className="max-w-sm"
             />
           </>

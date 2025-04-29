@@ -326,7 +326,6 @@ export default function TimeEntriesList({
       {editingEntry && (
         <EditTimeEntryDialog
           entry={editingEntry}
-          categories={categories}
           onSave={() => {
             setEditingEntry(null);
             onDataChange();

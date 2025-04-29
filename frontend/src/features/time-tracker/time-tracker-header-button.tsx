@@ -71,10 +71,6 @@ export default function TimeTrackerHeaderButton({
     fetchDataNow: true,
   });
 
-  const categories = useStore(
-    dataStore,
-    (state) => state.time_categories || []
-  );
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
@@ -220,7 +216,6 @@ export default function TimeTrackerHeaderButton({
 
         <div className="p-2 relative z-20">
           <TimeTrackerForm
-            categories={categories}
             onDataChange={() => {
               onDataChange();
               setOpen(false);

@@ -73,9 +73,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- see if there's an easier way to fix the autolap time entries
-- in quick-metric-logger, make it so that when a user types in the "search metrics", it filters for that selection, rather than making it completely disappear
-
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
@@ -266,5 +263,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - need to fix the time entry overlap issue when doing pomodoro/break [DONE 2025-04-28]
 - in metrics, the tabs still are not filling vertically [DONE 2025-04-28]
 - for the feature layout/info panel items, can we make it locally saved whether or not those things are opened or closed? [DONE 2025-04-28]
+- see if there's an easier way to fix the autolap time entries [DONE 2025-04-29]
+- in quick-metric-logger, make it so that when a user types in the "search metrics", it filters for that selection, rather than making it completely disappear [DONE 2025-04-29]
 
 ### GAVE UP

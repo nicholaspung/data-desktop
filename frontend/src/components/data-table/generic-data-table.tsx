@@ -1,3 +1,4 @@
+// src/components/data-table/generic-data-table.tsx
 import { useState, useEffect, useRef } from "react";
 import { EditableDataTable } from "@/components/data-table/editable-data-table";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import dataStore, { DataStoreName, deleteEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import RefreshDatasetButton from "../reusable/refresh-dataset-button";
 import ReusableSelect from "../reusable/reusable-select";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 export default function GenericDataTable({
   datasetId,
@@ -47,19 +49,92 @@ export default function GenericDataTable({
   const isLoading =
     useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
     false; // Get data from the store
+
+  const navigate = useNavigate();
+  // Fix for useSearch - provide empty options object
+  const search = useSearch({ from: "/dataset" });
+
+  // Parse URL parameters for table state
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
-    "view"
+    search.mode ? (search.mode as "view" | "edit" | "delete") : "view"
   );
   const [updatedRowIds, setUpdatedRowIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(
+    search.page ? parseInt(search.page as string, 10) : initialPage
+  );
+  const [currentPageSize, setCurrentPageSize] = useState(
+    search.pageSize ? parseInt(search.pageSize as string, 10) : pageSize
+  );
+  const [currentSorting, setCurrentSorting] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  } | null>(
+    search.sortColumn && search.sortDirection
+      ? {
+          column: search.sortColumn as string,
+          direction: search.sortDirection as "asc" | "desc",
+        }
+      : null
+  );
+  const [currentFilter, setCurrentFilter] = useState<{
+    column: string;
+    value: string;
+  } | null>(
+    search.filterColumn && search.filterValue
+      ? {
+          column: search.filterColumn as string,
+          value: search.filterValue as string,
+        }
+      : null
+  );
+
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(initialPage);
-  const [currentPageSize, setCurrentPageSize] = useState(pageSize);
+  // Update URL when table state changes
+  useEffect(() => {
+    if (!persistState) return;
 
-  // Generate local storage key for this specific dataset's pagination
-  const paginationStorageKey = `${datasetId}_pagination_state`;
+    const params: Record<string, string> = {};
+
+    // Add table mode
+    params.mode = tableMode;
+
+    // Add pagination
+    params.page = currentPage.toString();
+    params.pageSize = currentPageSize.toString();
+
+    // Add sorting if present
+    if (currentSorting) {
+      params.sortColumn = currentSorting.column;
+      params.sortDirection = currentSorting.direction;
+    }
+
+    // Add filtering if present
+    if (currentFilter) {
+      params.filterColumn = currentFilter.column;
+      params.filterValue = currentFilter.value;
+    }
+
+    // Keep the datasetId param if it exists (for dataset route)
+    if (search.datasetId) {
+      params.datasetId = search.datasetId as string;
+    }
+
+    // Update URL
+    navigate({
+      search: params as any,
+    });
+  }, [
+    tableMode,
+    currentPage,
+    currentPageSize,
+    currentSorting,
+    currentFilter,
+    persistState,
+    navigate,
+    search.datasetId,
+  ]);
 
   // Function to create columns for the data table with explicit type
   const createTableColumns = (): ColumnDef<Record<string, any>, any>[] => {
@@ -80,40 +155,6 @@ export default function GenericDataTable({
 
     return columns;
   };
-
-  // Load data when the component mounts
-  useEffect(() => {
-    // Load pagination state from localStorage if enabled
-    if (persistState) {
-      try {
-        const savedPaginationState = localStorage.getItem(paginationStorageKey);
-        if (savedPaginationState) {
-          const { pageIndex, pageSize } = JSON.parse(savedPaginationState);
-          setCurrentPage(pageIndex);
-          setCurrentPageSize(pageSize);
-        }
-      } catch (error) {
-        console.error("Error loading pagination state:", error);
-      }
-    }
-  }, [datasetId]);
-
-  // Save pagination state when it changes
-  useEffect(() => {
-    if (persistState) {
-      try {
-        localStorage.setItem(
-          paginationStorageKey,
-          JSON.stringify({
-            pageIndex: currentPage,
-            pageSize: currentPageSize,
-          })
-        );
-      } catch (error) {
-        console.error("Error saving pagination state:", error);
-      }
-    }
-  }, [currentPage, currentPageSize, persistState]);
 
   // Scroll to highlighted row when data is loaded or highlightedRecordId changes
   useEffect(() => {
@@ -236,6 +277,34 @@ export default function GenericDataTable({
       .map((field) => field.key);
   };
 
+  // Handle sorting state changes
+  const handleSortingChange = (
+    columnId: string,
+    direction: "asc" | "desc" | false
+  ) => {
+    if (direction === false) {
+      // Sorting cleared
+      setCurrentSorting(null);
+    } else {
+      setCurrentSorting({
+        column: columnId,
+        direction: direction as "asc" | "desc",
+      });
+    }
+  };
+
+  // Handle filter state changes
+  const handleFilterChange = (columnId: string, value: string) => {
+    if (!value) {
+      setCurrentFilter(null);
+    } else {
+      setCurrentFilter({
+        column: columnId,
+        value,
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       {/* Table Mode Selector */}
@@ -312,6 +381,26 @@ export default function GenericDataTable({
               onPageSizeChange={setCurrentPageSize}
               onDataChange={(updatedRowId) => handleDataUpdated(updatedRowId)}
               useInlineEditing={tableMode === "edit" && !disableEdit}
+              initialSorting={
+                currentSorting
+                  ? [
+                      {
+                        id: currentSorting.column,
+                        desc: currentSorting.direction === "desc",
+                      },
+                    ]
+                  : []
+              }
+              onSortingChange={handleSortingChange}
+              initialFilter={
+                currentFilter
+                  ? { id: currentFilter.column, value: currentFilter.value }
+                  : undefined
+              }
+              onFilterChange={handleFilterChange}
+              initialFilterColumn={
+                currentFilter?.column || getSearchableColumns()[0]
+              }
             />
           )}
         </CardContent>

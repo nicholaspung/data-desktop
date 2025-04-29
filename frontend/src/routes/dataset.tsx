@@ -14,14 +14,28 @@ import {
 
 interface DatasetSearchParams {
   datasetId?: string;
+  mode?: string;
+  page?: string;
+  pageSize?: string;
+  sortColumn?: string;
+  sortDirection?: string;
+  filterColumn?: string;
+  filterValue?: string;
 }
 
 export const Route = createFileRoute("/dataset")({
-  validateSearch: (search: Record<string, unknown>): DatasetSearchParams => {
-    return {
-      datasetId: search.datasetId as string | undefined,
-    };
-  },
+  validateSearch: (search: Record<string, unknown>): DatasetSearchParams => ({
+    datasetId: search.datasetId as string | undefined,
+
+    // Add validation for table state parameters
+    mode: search.mode as "view" | "edit" | "delete" | undefined,
+    page: search.page ? (search.page as string) : undefined,
+    pageSize: search.pageSize ? (search.pageSize as string) : undefined,
+    sortColumn: search.sortColumn as string | undefined,
+    sortDirection: search.sortDirection as "asc" | "desc" | undefined,
+    filterColumn: search.filterColumn as string | undefined,
+    filterValue: search.filterValue as string | undefined,
+  }),
   component: RouteComponent,
 });
 

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import { CheckCircle2, Circle, Lock, ClipboardCheck } from "lucide-react";
+import { CheckCircle2, Circle, Lock, ClipboardCheck, Tag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -11,14 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   ProtectedContent,
   ProtectedField,
@@ -40,6 +32,7 @@ export default function QuickMetricLoggerDashboardSummary() {
   const [metricValue, setMetricValue] = useState<string | number | boolean>("");
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Access PIN state
@@ -58,25 +51,20 @@ export default function QuickMetricLoggerDashboardSummary() {
     setTimeout(() => setIsLoading(false), 300);
   }, []);
 
-  // Handle click outside to close command
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        commandRef.current &&
-        !commandRef.current.contains(event.target as Node)
-      ) {
-        setIsCommandOpen(false);
-      }
-    };
+  // Compare dates by converting to ISO date strings (YYYY-MM-DD)
+  const isSameLocalDate = (date1: Date, date2: Date): boolean => {
+    return format(date1, "yyyy-MM-dd") === format(date2, "yyyy-MM-dd");
+  };
 
-    if (isCommandOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isCommandOpen]);
+  // Check if a metric has been logged for the current date
+  const isMetricLogged = (metricId: string): boolean => {
+    return dailyLogs.some((log: DailyLog) => {
+      const logDate = new Date(log.date);
+      return (
+        log.metric_id === metricId && isSameLocalDate(logDate, selectedDate)
+      );
+    });
+  };
 
   // Handle date string changes from the input
   const handleDateStringChange = (value: string) => {
@@ -101,19 +89,10 @@ export default function QuickMetricLoggerDashboardSummary() {
     }, 0);
   };
 
-  // Compare dates by converting to ISO date strings (YYYY-MM-DD)
-  const isSameLocalDate = (date1: Date, date2: Date): boolean => {
-    return format(date1, "yyyy-MM-dd") === format(date2, "yyyy-MM-dd");
-  };
-
-  // Check if a metric has been logged for the current date
-  const isMetricLogged = (metricId: string): boolean => {
-    return dailyLogs.some((log: DailyLog) => {
-      const logDate = new Date(log.date);
-      return (
-        log.metric_id === metricId && isSameLocalDate(logDate, selectedDate)
-      );
-    });
+  // Handle search input change without losing focus
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setIsCommandOpen(true);
   };
 
   // Filter metrics based on search term and exclude already logged metrics
@@ -242,12 +221,29 @@ export default function QuickMetricLoggerDashboardSummary() {
     );
   };
 
+  // Outside click handler for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        commandRef.current &&
+        !commandRef.current.contains(event.target as Node)
+      ) {
+        setIsCommandOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Custom main content that will span the full width
   const fullWidthContent = (
     <>
-      {Object.keys(groupedMetrics).length === 0 ? (
+      {metrics.length === 0 ? (
         <div className="text-center py-6 text-muted-foreground">
-          <p>No metrics available to log for this date</p>
+          <p>No metrics available</p>
           <Link to="/metric">
             <Button variant="outline" className="mt-2">
               Manage metrics
@@ -260,6 +256,7 @@ export default function QuickMetricLoggerDashboardSummary() {
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="date">Date</Label>
             <Input
+              id="date"
               type="date"
               value={dateString}
               onChange={(e) => handleDateStringChange(e.target.value)}
@@ -271,33 +268,45 @@ export default function QuickMetricLoggerDashboardSummary() {
           <div className="flex flex-col space-y-1.5">
             <Label>Select Metric</Label>
             <div className="relative" ref={commandRef}>
-              <Command className="rounded-lg border shadow-md">
-                <CommandInput
-                  placeholder="Search metrics..."
-                  value={searchTerm}
-                  onValueChange={setSearchTerm}
-                  onFocus={() => setIsCommandOpen(true)}
-                />
+              {/* Custom dropdown with maintained focus */}
+              <div className="border rounded-lg shadow-md overflow-hidden">
+                <div className="relative">
+                  <Input
+                    ref={searchInputRef}
+                    placeholder="Search metrics..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onFocus={() => setIsCommandOpen(true)}
+                    className="border-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
 
                 {isCommandOpen && (
-                  <CommandList className="max-h-52 overflow-auto">
+                  <div className="max-h-52 overflow-auto">
                     {Object.keys(groupedMetrics).length === 0 ? (
-                      <CommandEmpty>
+                      <div className="py-6 text-center text-sm text-muted-foreground">
                         {searchTerm
                           ? "No matching metrics found"
                           : "All metrics have been logged for this date"}
-                      </CommandEmpty>
+                      </div>
                     ) : (
                       Object.entries(groupedMetrics).map(
                         ([category, categoryMetrics]) => (
-                          <CommandGroup key={category} heading={category}>
+                          <div key={category} className="py-1">
+                            {/* Enhanced category header */}
+                            <div
+                              className={`px-3 py-1.5 mb-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100`}
+                            >
+                              <Tag className="h-3.5 w-3.5" />
+                              <span className="text-xs font-medium">
+                                {category}
+                              </span>
+                            </div>
                             {categoryMetrics.map((metric) => (
-                              <CommandItem
+                              <div
                                 key={metric.id}
-                                // Use id as the value for uniqueness
-                                value={metric.id}
-                                onSelect={() => handleSelectMetric(metric)}
-                                className="flex items-center justify-between"
+                                className="px-3 py-2 hover:bg-accent cursor-pointer flex items-center justify-between"
+                                onClick={() => handleSelectMetric(metric)}
                               >
                                 {renderMetricNameAndDescription(metric)}
                                 <div className="flex items-center">
@@ -306,15 +315,15 @@ export default function QuickMetricLoggerDashboardSummary() {
                                   )}
                                   <Badge variant="outline">{metric.type}</Badge>
                                 </div>
-                              </CommandItem>
+                              </div>
                             ))}
-                          </CommandGroup>
+                          </div>
                         )
                       )
                     )}
-                  </CommandList>
+                  </div>
                 )}
-              </Command>
+              </div>
             </div>
           </div>
 
@@ -427,9 +436,7 @@ export default function QuickMetricLoggerDashboardSummary() {
             }
           : undefined
       }
-      // Instead of using mainSection, directly provide the content in the customContent property
       customContent={fullWidthContent}
-      // Set className to ensure full width
       className="h-full"
       contentClassName="p-4"
     />

@@ -44,6 +44,11 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onPageSizeChange,
   onDataChange,
   useInlineEditing = false,
+  initialSorting = [],
+  onSortingChange,
+  initialFilter,
+  onFilterChange,
+  initialFilterColumn,
 }: {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -64,12 +69,23 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onPageSizeChange?: (pageSize: number) => void;
   onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
   useInlineEditing?: boolean; // Flag to enable inline editing
+  initialSorting?: { id: string; desc: boolean }[];
+  onSortingChange?: (
+    columnId: string,
+    direction: "asc" | "desc" | false
+  ) => void;
+  initialFilter?: { id: string; value: string };
+  onFilterChange?: (columnId: string, value: string) => void;
+  initialFilterColumn?: string;
 }) {
   const { isUnlocked } = usePin();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    initialFilter ? [initialFilter] : []
+  );
   const [filterColumn, setFilterColumn] = useState<string>(
-    filterableColumns.length > 0 ? filterableColumns[0] : ""
+    initialFilterColumn ||
+      (filterableColumns.length > 0 ? filterableColumns[0] : "")
   );
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [pagination, setPagination] = useState({
@@ -267,9 +283,36 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     data,
     columns: editableColumns,
     getCoreRowModel: getCoreRowModel(),
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      const newSorting =
+        typeof updater === "function" ? updater(sorting) : updater;
+      setSorting(newSorting);
+
+      // Call the callback if provided
+      if (onSortingChange && newSorting.length > 0) {
+        const sort = newSorting[0];
+        onSortingChange(sort.id, sort.desc ? "desc" : "asc");
+      } else if (onSortingChange && newSorting.length === 0) {
+        onSortingChange("", false);
+      }
+    },
+    onColumnFiltersChange: (updater) => {
+      const newFilters =
+        typeof updater === "function" ? updater(columnFilters) : updater;
+      setColumnFilters(newFilters);
+
+      // Call the callback if provided
+      if (onFilterChange) {
+        const filter = newFilters.find((f) => f.id === filterColumn);
+        if (filter) {
+          onFilterChange(filter.id, filter.value as string);
+        } else if (columnFilters.some((f) => f.id === filterColumn)) {
+          // Filter was cleared
+          onFilterChange(filterColumn, "");
+        }
+      }
+    },
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     enableRowSelection: enableSelection,
@@ -375,7 +418,18 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       <FilterControls
         filterableColumns={filterableColumns}
         filterColumn={filterColumn}
-        setFilterColumn={setFilterColumn}
+        setFilterColumn={(newColumn) => {
+          setFilterColumn(newColumn);
+          table.resetColumnFilters();
+
+          // Call the callback if a filter was active
+          if (
+            onFilterChange &&
+            columnFilters.some((f) => f.id === filterColumn)
+          ) {
+            onFilterChange(filterColumn, "");
+          }
+        }}
         table={table}
         searchPlaceholder={searchPlaceholder}
         data={data}
