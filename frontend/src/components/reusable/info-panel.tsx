@@ -1,4 +1,3 @@
-// src/components/reusable/info-panel.tsx
 import React, { useState } from "react";
 import { ChevronDown, Info, AlertTriangle, LightbulbIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +15,7 @@ interface InfoPanelProps {
   className?: string;
   contentClassName?: string;
   iconClassName?: string;
+  storageKey?: string;
 }
 
 export function InfoPanel({
@@ -27,8 +27,36 @@ export function InfoPanel({
   className,
   contentClassName,
   iconClassName,
+  storageKey,
 }: InfoPanelProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [expanded, setExpanded] = useState(() => {
+    if (storageKey) {
+      try {
+        const storedState = localStorage.getItem(`infopanel-${storageKey}`);
+        return storedState !== null ? JSON.parse(storedState) : defaultExpanded;
+      } catch (e) {
+        console.error(e);
+        return defaultExpanded;
+      }
+    }
+    return defaultExpanded;
+  });
+
+  const toggleExpanded = () => {
+    const newState = !expanded;
+    setExpanded(newState);
+
+    if (storageKey) {
+      try {
+        localStorage.setItem(
+          `infopanel-${storageKey}`,
+          JSON.stringify(newState)
+        );
+      } catch (e) {
+        console.error("Failed to save panel state to localStorage", e);
+      }
+    }
+  };
 
   const variantStyles: Record<InfoPanelVariant, string> = {
     info: "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800",
@@ -56,7 +84,7 @@ export function InfoPanel({
             "flex flex-row items-center justify-between mb-2",
             collapsible && "cursor-pointer"
           )}
-          onClick={collapsible ? () => setExpanded(!expanded) : undefined}
+          onClick={collapsible ? toggleExpanded : undefined}
         >
           <div className="flex items-center space-x-2">
             {variantIcons[variant]}
@@ -100,8 +128,38 @@ export function CompactInfoPanel({
   title,
   className,
   contentClassName,
+  storageKey,
 }: InfoPanelProps) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [expanded, setExpanded] = useState(() => {
+    if (storageKey) {
+      try {
+        const storedState = localStorage.getItem(
+          `infopanel-compact-${storageKey}`
+        );
+        return storedState !== null ? JSON.parse(storedState) : defaultExpanded;
+      } catch (e) {
+        console.error(e);
+        return defaultExpanded;
+      }
+    }
+    return defaultExpanded;
+  });
+
+  const toggleExpanded = () => {
+    const newState = !expanded;
+    setExpanded(newState);
+
+    if (storageKey) {
+      try {
+        localStorage.setItem(
+          `infopanel-compact-${storageKey}`,
+          JSON.stringify(newState)
+        );
+      } catch (e) {
+        console.error("Failed to save panel state to localStorage", e);
+      }
+    }
+  };
 
   const variantStyles: Record<
     InfoPanelVariant,
@@ -135,7 +193,7 @@ export function CompactInfoPanel({
             "flex items-center justify-between",
             collapsible && "cursor-pointer"
           )}
-          onClick={collapsible ? () => setExpanded(!expanded) : undefined}
+          onClick={collapsible ? toggleExpanded : undefined}
         >
           <div className="flex items-center flex-1 gap-2">
             {variantStyles[variant].icon}

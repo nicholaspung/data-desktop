@@ -149,7 +149,11 @@ function RouteComponent() {
       }
       sidebar={
         <HelpSidebar title="Quick Tips">
-          <CompactInfoPanel title="Getting Started" variant="tip">
+          <CompactInfoPanel
+            title="Getting Started"
+            variant="tip"
+            storageKey="calendar-getting-started"
+          >
             <ol>
               <li>1. Create categories for your metrics</li>
               <li>2. Add metrics and customize their options</li>
@@ -159,7 +163,11 @@ function RouteComponent() {
             </ol>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Best Practices" variant="info">
+          <CompactInfoPanel
+            title="Best Practices"
+            variant="info"
+            storageKey="calendar-best-practices"
+          >
             <ul>
               <li>- Group related metrics with categories</li>
               <li>- Start with just a few metrics to build consistency</li>
@@ -170,7 +178,11 @@ function RouteComponent() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Setting Goals" variant="info">
+          <CompactInfoPanel
+            title="Setting Goals"
+            variant="info"
+            storageKey="calendar-setting-goals"
+          >
             <ul>
               <li>- Goals can be minimum, maximum, exact, or boolean</li>
               <li>- Goals should be achievable within a single day</li>
@@ -180,7 +192,11 @@ function RouteComponent() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Privacy Note" variant="info">
+          <CompactInfoPanel
+            title="Privacy Note"
+            variant="info"
+            storageKey="calendar-privacy-note"
+          >
             All tracking data is stored locally on your device and never
             transmitted to any server.
           </CompactInfoPanel>

@@ -476,7 +476,7 @@ const QuickMetricLogger = () => {
         tabs={tabItems}
         defaultTabId={selectedTab}
         onChange={setSelectedTab}
-        tabsListClassName="w-full grid grid-cols-3 md:grid-cols-5 gap-2"
+        tabsListClassName="h-auto"
       />
 
       {hasNoMetrics && (

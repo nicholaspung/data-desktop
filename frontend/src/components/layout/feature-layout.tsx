@@ -54,7 +54,11 @@ export function FeatureHeader({
       </div>
 
       {helpText && (
-        <InfoPanel variant={helpVariant} defaultExpanded={false}>
+        <InfoPanel
+          variant={helpVariant}
+          defaultExpanded={false}
+          storageKey={`${storageKey}-help-panel`}
+        >
           {helpText}
         </InfoPanel>
       )}

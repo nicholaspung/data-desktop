@@ -81,11 +81,24 @@ export default function TimeEntriesList({
         const otherStartTime = new Date(otherEntry.start_time).getTime();
         const otherEndTime = new Date(otherEntry.end_time).getTime();
 
-        // Check if there's an overlap
-        if (
-          (startTime < otherEndTime && endTime > otherStartTime) ||
-          (otherStartTime < endTime && otherEndTime > startTime)
-        ) {
+        // Allow a small buffer (e.g., 1 second) for back-to-back entries
+        // This helps avoid flagging Pomodoro -> Break transitions
+        const bufferMs = 1000; // 1 second buffer
+
+        // Check if there's a significant overlap (more than our buffer)
+        const hasOverlap =
+          // Entry starts before other ends AND entry ends after other starts
+          (startTime < otherEndTime - bufferMs &&
+            endTime > otherStartTime + bufferMs) ||
+          // OR other starts before entry ends AND other ends after entry starts
+          (otherStartTime < endTime - bufferMs &&
+            otherEndTime > startTime + bufferMs);
+
+        // Specific check for exact same timestamps (which can happen with programmatic creation)
+        const hasExactSameTimestamps =
+          startTime === otherStartTime && endTime === otherEndTime;
+
+        if (hasOverlap && !hasExactSameTimestamps) {
           if (!result.includes(entry)) {
             result.push(entry);
           }

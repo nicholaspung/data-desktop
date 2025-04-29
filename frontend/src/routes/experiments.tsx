@@ -101,6 +101,7 @@ export default function ExperimentsPage() {
             title="Getting Started"
             variant="tip"
             defaultExpanded={true}
+            storageKey="experiments-getting-started"
           >
             <p>
               Experiments are only useful if you add metrics. If you haven't
@@ -114,7 +115,11 @@ export default function ExperimentsPage() {
             </p>
           </InfoPanel>
 
-          <CompactInfoPanel title="How to Use Experiments" variant="info">
+          <CompactInfoPanel
+            title="How to Use Experiments"
+            variant="info"
+            storageKey="experiments-how-to-use"
+          >
             <ol>
               <li>
                 1. Create an experiment with a clear goal and a starting state
@@ -129,7 +134,11 @@ export default function ExperimentsPage() {
             </ol>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Experiment Status" variant="info">
+          <CompactInfoPanel
+            title="Experiment Status"
+            variant="info"
+            storageKey="experiments-status"
+          >
             <ul>
               <li>
                 <strong>Active</strong>: Currently running experiment
@@ -146,7 +155,11 @@ export default function ExperimentsPage() {
             </p>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Tips for Success" variant="tip">
+          <CompactInfoPanel
+            title="Tips for Success"
+            variant="tip"
+            storageKey="experiments-tips"
+          >
             <ul>
               <li>- Be specific with your experiment goal</li>
               <li>- Choose metrics that directly relate to your goal</li>
@@ -156,7 +169,11 @@ export default function ExperimentsPage() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Example Experiments" variant="info">
+          <CompactInfoPanel
+            title="Example Experiments"
+            variant="info"
+            storageKey="experiments-examples"
+          >
             <ul>
               <li>- Effect of meditation on stress levels</li>
               <li>- Impact of dietary changes on energy</li>

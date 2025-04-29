@@ -95,7 +95,11 @@ function TimeTrackerPage() {
       }
       sidebar={
         <HelpSidebar title="About Time Tracking">
-          <CompactInfoPanel title="How to Use Time Tracker" variant="info">
+          <CompactInfoPanel
+            title="How to Use Time Tracker"
+            variant="info"
+            storageKey="time-tracker-how-to-use"
+          >
             <ol>
               <li>1. Create categories to organize your time entries</li>
               <li>
@@ -109,7 +113,11 @@ function TimeTrackerPage() {
             </ol>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Best Practices" variant="tip">
+          <CompactInfoPanel
+            title="Best Practices"
+            variant="tip"
+            storageKey="time-tracker-best-practices"
+          >
             <ul>
               <li>- Create meaningful categories with distinct colors</li>
               <li>- Use consistent tags for better filtering</li>
@@ -119,7 +127,11 @@ function TimeTrackerPage() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Quick Tips" variant="tip">
+          <CompactInfoPanel
+            title="Quick Tips"
+            variant="tip"
+            storageKey="time-tracker-quick-tips"
+          >
             <ul>
               <li>- Use the "Now" button to quickly set current time</li>
               <li>- The "Last" button continues from your previous entry</li>

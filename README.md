@@ -50,6 +50,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in bloodwork, add a "download template"/upload data that create a CSV of all the current blood markers, for a user to input into a CSV, and then upload the updated CSV
 
 - in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
+- in daily tracker view, when you hover over a day, it still shows the incorrect data
+
+- in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 
 - see why the line chart doesn't show the x data for the one right next to the last x data description
 - make the dashnoard able to be in like "specific card heights and card widths" or just hardcode it in
@@ -70,8 +73,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- need to fix the time entry overlap issue when doing pomodoro/break
-- see if there's an easy way to fix overlapping time issues
+- see if there's an easier way to fix the autolap time entries
 
 ### DONE
 
@@ -260,5 +262,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in creating metrics for journaling, make start date/frequency starting the day the user pressed the button [DONE 2025-04-28]
 - in metrics, when a user selects a date, it saves the incorrect date (the date before), make it saved the date selected, current time of user [DONE 2025-04-28]
 - if dataset summary section is empty, also add the reload button after letting the user know, something like "It looks like the application has disconnected, please reload by pressing this button." [DONE 2025-04-28]
+- need to fix the time entry overlap issue when doing pomodoro/break [DONE 2025-04-28]
+- in metrics, the tabs still are not filling vertically [DONE 2025-04-28]
+- for the feature layout/info panel items, can we make it locally saved whether or not those things are opened or closed? [DONE 2025-04-28]
 
 ### GAVE UP

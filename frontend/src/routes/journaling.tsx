@@ -32,22 +32,38 @@ function JournalingPage() {
       }
       sidebar={
         <HelpSidebar title="About Journaling">
-          <CompactInfoPanel title="Gratitude Journal" variant="info">
+          <CompactInfoPanel
+            title="Gratitude Journal"
+            variant="info"
+            storageKey="gratitude-journal-info-panel"
+          >
             Record things you are grateful for each day to cultivate a positive
             mindset and increase overall happiness.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Creativity Journal" variant="tip">
+          <CompactInfoPanel
+            title="Creativity Journal"
+            variant="tip"
+            storageKey="creativity-journal-info-panel"
+          >
             Capture your creative ideas, inspirations, and thoughts to nurture
             your creativity and track your insights.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Question Journal" variant="info">
+          <CompactInfoPanel
+            title="Question Journal"
+            variant="info"
+            storageKey="question-journal-info-panel"
+          >
             Explore important questions and record your reflections to deepen
             your understanding and personal growth.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Daily Affirmations" variant="tip">
+          <CompactInfoPanel
+            title="Daily Affirmations"
+            variant="tip"
+            storageKey="affirmations-journal-info-panel"
+          >
             Create positive statements to reinforce your goals, beliefs, and
             self-image.
           </CompactInfoPanel>

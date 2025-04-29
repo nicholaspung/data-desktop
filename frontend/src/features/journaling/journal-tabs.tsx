@@ -33,7 +33,11 @@ export default function JournalTabs({
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">{title}</h2>
-      <InfoPanel title={infoTitle} defaultExpanded={true}>
+      <InfoPanel
+        title={infoTitle}
+        defaultExpanded={true}
+        storageKey="journal-info-panel"
+      >
         {infoText}
       </InfoPanel>
       <ReusableTabs

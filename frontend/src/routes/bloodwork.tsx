@@ -58,12 +58,20 @@ export default function BloodworkPage() {
       }
       sidebar={
         <HelpSidebar title="Getting Started">
-          <CompactInfoPanel title="Step 1: Get a Blood Test" defaultExpanded>
+          <CompactInfoPanel
+            title="Step 1: Get a Blood Test"
+            defaultExpanded
+            storageKey="bloodwork-step-1"
+          >
             Obtain a blood test from your medical provider or service. This will
             provide the marker names, values and reference ranges needed.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Step 2: Add Blood Markers" defaultExpanded>
+          <CompactInfoPanel
+            title="Step 2: Add Blood Markers"
+            defaultExpanded
+            storageKey="bloodwork-step-2"
+          >
             Click the gear icon and select "Manage Blood Markers". Add each
             marker that was tested in your blood work:
             <ul className="mt-2 space-y-1 list-disc list-inside">
@@ -80,7 +88,11 @@ export default function BloodworkPage() {
             </strong>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Step 3: Add Test Results" defaultExpanded>
+          <CompactInfoPanel
+            title="Step 3: Add Test Results"
+            defaultExpanded
+            storageKey="bloodwork-step-3"
+          >
             Click "Add Bloodwork" and:
             <ul className="mt-2 space-y-1 list-disc list-inside">
               <li>Select the date of your blood test</li>
@@ -92,7 +104,12 @@ export default function BloodworkPage() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Viewing & Managing Data" variant="tip">
+          <CompactInfoPanel
+            title="Viewing & Managing Data"
+            variant="tip"
+            defaultExpanded
+            storageKey="bloodwork-step-4"
+          >
             <strong>View Results:</strong> After adding data, your test results
             will appear in the visualization section below.
             <div className="mt-2 space-y-1">
@@ -114,7 +131,12 @@ export default function BloodworkPage() {
             </div>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Data Privacy" variant="info">
+          <CompactInfoPanel
+            title="Data Privacy"
+            variant="info"
+            defaultExpanded
+            storageKey="bloodwork-step-5"
+          >
             All bloodwork data is stored locally on your computer and is never
             sent to any server.
           </CompactInfoPanel>
@@ -123,6 +145,7 @@ export default function BloodworkPage() {
             title="Medical Disclaimer"
             variant="warning"
             defaultExpanded
+            storageKey="bloodwork-step-6"
           >
             This application is for tracking purposes only and is not a
             substitute for medical advice. Always consult with healthcare

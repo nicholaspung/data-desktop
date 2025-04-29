@@ -12,7 +12,11 @@ export default function QuestionJournalView() {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Question Journaling</h2>
-      <InfoPanel title="About Question Journaling" defaultExpanded={true}>
+      <InfoPanel
+        title="About Question Journaling"
+        defaultExpanded={true}
+        storageKey="question-journal-info-panel"
+      >
         Question journaling is a powerful tool for self-reflection and personal
         growth. By answering thought-provoking questions, you can gain insights
         into your thoughts, feelings, and experiences. This practice can help

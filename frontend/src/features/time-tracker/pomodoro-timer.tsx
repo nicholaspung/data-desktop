@@ -203,10 +203,26 @@ export default function PomodoroTimer({
         onDataChange();
       }
 
-      // Switch to break mode
-      startBreak();
+      // First stop the current pomodoro timer
+      stopPomodoro();
+
+      // Delay starting the break just slightly to ensure timestamps don't overlap
+      setTimeout(() => {
+        // Start break with a new timer session
+        startBreak();
+      }, 1000);
+
+      // Stop the global timer if it's running
+      if (timeTrackerIsActive) {
+        stopTimer();
+      }
     } catch (error) {
       console.error("Error saving pomodoro entry:", error);
+      // Make sure we don't leave the timers in an inconsistent state
+      stopPomodoro();
+      if (timeTrackerIsActive) {
+        stopTimer();
+      }
     } finally {
       setIsSaving(false);
     }

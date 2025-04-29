@@ -76,13 +76,21 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
       }
       sidebar={
         <HelpSidebar title="Using Quick Metric Logger">
-          <CompactInfoPanel title="What is this feature?" variant="info">
+          <CompactInfoPanel
+            title="What is this feature?"
+            variant="info"
+            storageKey="quick-metric-logger-what-is-this-feature"
+          >
             The Quick Metric Logger provides an alternative way to log and
             manage your metrics outside the daily tracking calendar. It's
             perfect for occasional events and metric administration.
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Getting Started" variant="tip">
+          <CompactInfoPanel
+            title="Getting Started"
+            variant="tip"
+            storageKey="quick-metric-logger-getting-started"
+          >
             <ol>
               <li>
                 1. First, create categories using{" "}
@@ -104,7 +112,11 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
             </ol>
           </CompactInfoPanel>
 
-          <CompactInfoPanel title="Pro Tip" variant="warning">
+          <CompactInfoPanel
+            title="Pro Tip"
+            variant="warning"
+            storageKey="quick-metric-logger-pro-tip"
+          >
             For infrequent events (like haircuts or annual check-ups), create
             the metric, then disable it from daily tracking. This keeps your
             daily view clean while still allowing you to log these events when
@@ -119,6 +131,7 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           title="About Quick Metric Logger"
           variant="info"
           defaultExpanded={true}
+          storageKey="quick-metric-logger-about"
         >
           <p className="mb-2">
             The Quick Metric Logger connects to the metrics you create for daily

@@ -259,7 +259,11 @@ const BloodworkVisualizations: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <InfoPanel title="About Reference Ranges" defaultExpanded={false}>
+      <InfoPanel
+        title="About Reference Ranges"
+        defaultExpanded={false}
+        storageKey="bloodwork_reference_ranges_info"
+      >
         There are two types of ranges for blood markers:
         <ol>
           <li>

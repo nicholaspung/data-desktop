@@ -139,12 +139,20 @@ export default function DexaPage() {
       }
       sidebar={
         <HelpSidebar title="DEXA Scan Guide">
-          <CompactInfoPanel title="Getting Started" variant="info">
+          <CompactInfoPanel
+            title="Getting Started"
+            variant="info"
+            storageKey="dexa-getting-started"
+          >
             To use this feature, get a DEXA scan from a clinic or facility, then
             input your data by clicking "Add DEXA Scan". Once added, the graphs
             will automatically update to visualize your body composition trends.
           </CompactInfoPanel>
-          <CompactInfoPanel title="Essential Metrics" variant="tip">
+          <CompactInfoPanel
+            title="Essential Metrics"
+            variant="tip"
+            storageKey="dexa-essential-metrics"
+          >
             The most important metrics to track are:
             <ul className="mt-2 ml-4 list-disc">
               <li>Total body fat percentage</li>
@@ -153,12 +161,20 @@ export default function DexaPage() {
               <li>Bone mineral density</li>
             </ul>
           </CompactInfoPanel>
-          <CompactInfoPanel title="Managing Data" variant="info">
+          <CompactInfoPanel
+            title="Managing Data"
+            variant="info"
+            storageKey="dexa-managing-data"
+          >
             To edit a previous scan, click "Edit DEXA Scan", select the date you
             want to modify, and update the values. To delete an incorrect
             record, use the delete button in the edit dialog.
           </CompactInfoPanel>
-          <CompactInfoPanel title="Visualization Tips" variant="tip">
+          <CompactInfoPanel
+            title="Visualization Tips"
+            variant="tip"
+            storageKey="dexa-visualization-tips"
+          >
             <ul className="mt-2 ml-4 list-disc">
               <li>Use the tabs to view different aspects of your data</li>
               <li>Hover over chart elements to see exact values</li>
@@ -166,7 +182,11 @@ export default function DexaPage() {
               <li>Track progress toward your body composition goals</li>
             </ul>
           </CompactInfoPanel>
-          <CompactInfoPanel title="Best Practices" variant="warning">
+          <CompactInfoPanel
+            title="Best Practices"
+            variant="warning"
+            storageKey="dexa-best-practices"
+          >
             For most accurate tracking, take your DEXA scans:
             <ul className="mt-2 ml-4 list-disc">
               <li>At the same time of day</li>
@@ -175,7 +195,11 @@ export default function DexaPage() {
               <li>Every 3-6 months for optimal tracking</li>
             </ul>
           </CompactInfoPanel>
-          <CompactInfoPanel title="Data Privacy" variant="info">
+          <CompactInfoPanel
+            title="Data Privacy"
+            variant="info"
+            storageKey="dexa-data-privacy"
+          >
             All DEXA scan data is stored locally on your computer and is never
             sent to any server.
           </CompactInfoPanel>

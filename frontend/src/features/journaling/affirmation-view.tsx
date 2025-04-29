@@ -96,7 +96,11 @@ export default function AffirmationView() {
 
   // Display explanation info card
   const InfoCard = () => (
-    <InfoPanel title="About Daily Affirmations" defaultExpanded={true}>
+    <InfoPanel
+      title="About Daily Affirmations"
+      defaultExpanded={true}
+      storageKey="affirmation-info-panel"
+    >
       Create an affirmation to reflect on daily, then track each time you
       practice it. You can update your affirmation at any time.
     </InfoPanel>
