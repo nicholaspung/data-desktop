@@ -74,6 +74,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - see if there's an easier way to fix the autolap time entries
+- in quick-metric-logger, make it so that when a user types in the "search metrics", it filters for that selection, rather than making it completely disappear
 
 ### DONE
 

@@ -1,4 +1,4 @@
-// src/components/reusable/enhanced-dialog.tsx
+import { ReactNode } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,20 +12,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Save, X } from "lucide-react";
-import { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
-/**
- * An enhanced dialog component that supports custom content and footer
- *
- * @example
- * <ReusableDialog
- *   title="Custom Dialog"
- *   description="This dialog has custom content and footer."
- *   customContent={<div>My custom content here</div>}
- *   customFooter={<Button>Custom Action</Button>}
- *   triggerText="Open Dialog"
- * />
- */
 export default function ReusableDialog({
   title = "Dialog",
   description,
@@ -50,9 +38,10 @@ export default function ReusableDialog({
   footerActionLoadingText,
   contentClassName,
   showXIcon = true,
+  titleIcon,
 }: {
-  title?: string;
-  description?: string;
+  title?: string | ReactNode;
+  description?: string | ReactNode;
   customContent?: ReactNode;
   onConfirm?:
     | (() => void)
@@ -76,6 +65,7 @@ export default function ReusableDialog({
   footerActionLoadingText?: string;
   contentClassName?: string;
   showXIcon?: boolean;
+  titleIcon?: ReactNode;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -92,11 +82,17 @@ export default function ReusableDialog({
         </AlertDialogTrigger>
       )}
       <AlertDialogContent
-        className={contentClassName ? contentClassName : "sm:max-w-[600px]"}
+        className={cn(
+          "max-h-[90vh] flex flex-col", // Added max-height and flex column
+          contentClassName ? contentClassName : "sm:max-w-[600px]"
+        )}
       >
         <AlertDialogHeader>
           <div className="flex flex-row justify-between items-start">
-            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {titleIcon}
+              {title}
+            </AlertDialogTitle>
             {showXIcon && (
               <Button
                 variant="ghost"
@@ -115,14 +111,13 @@ export default function ReusableDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {/* Custom content area */}
         {customContent}
 
         {/* Standard or custom footer */}
         {customFooter ? (
-          <div className="flex justify-end">{customFooter}</div>
+          <div className="flex justify-end mt-4">{customFooter}</div>
         ) : (
-          <AlertDialogFooter>
+          <AlertDialogFooter className="mt-4">
             <AlertDialogCancel onClick={onCancel}>
               {cancelText}
             </AlertDialogCancel>

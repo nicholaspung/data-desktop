@@ -8,6 +8,13 @@ import {
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import PomodoroNotification from "@/features/time-tracker/pomodoro-notification";
+import TimeEntryConflictResolver from "@/features/time-tracker/time-entry-conflict-resolver";
+import { useMemo, useState } from "react";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
+import { findOverlappingEntries } from "@/lib/time-entry-utils";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/time-tracker")({
   component: TimeTrackerPage,
@@ -83,6 +90,14 @@ These reports help identify patterns, track productivity, and make informed deci
 ];
 
 function TimeTrackerPage() {
+  const [showConflictChecker, setShowConflictChecker] = useState(false);
+  const timeEntries = useStore(dataStore, (state) => state.time_entries);
+
+  // Find overlapping entries
+  const overlappingEntries = useMemo(() => {
+    return findOverlappingEntries(timeEntries);
+  }, [timeEntries]);
+
   return (
     <FeatureLayout
       header={
@@ -91,7 +106,18 @@ function TimeTrackerPage() {
           description="Track and analyze how you spend your time"
           guideContent={timeTrackerGuideContent}
           storageKey="time-tracker-page"
-        />
+        >
+          {overlappingEntries.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowConflictChecker(true)}
+              className="gap-2 border-amber-400 text-amber-600 hover:bg-amber-50"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Resolve {overlappingEntries.length} Time Conflicts
+            </Button>
+          )}
+        </FeatureHeader>
       }
       sidebar={
         <HelpSidebar title="About Time Tracking">
@@ -150,6 +176,13 @@ function TimeTrackerPage() {
     >
       <TimeTracker />
       <PomodoroNotification />
+      <TimeEntryConflictResolver
+        onDataChange={() => {
+          // Refresh data if needed
+        }}
+        open={showConflictChecker}
+        onOpenChange={setShowConflictChecker}
+      />
     </FeatureLayout>
   );
 }

@@ -10,6 +10,7 @@ import {
   LayoutList,
   LayoutGrid,
   AlertTriangle,
+  Scissors,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,11 @@ import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { Metric } from "@/store/experiment-definitions";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
+import TimeEntryConflictResolver from "./time-entry-conflict-resolver";
+import {
+  convertToLocalDates,
+  findOverlappingEntries,
+} from "@/lib/time-entry-utils";
 
 interface TimeEntriesListProps {
   entries: TimeEntry[];
@@ -51,6 +57,7 @@ export default function TimeEntriesList({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {}
   );
+  const [showConflictResolver, setShowConflictResolver] = useState(false);
 
   // Get metrics data
   const metricsData = useStore(
@@ -58,78 +65,6 @@ export default function TimeEntriesList({
     (state) => state.metrics || []
   ) as Metric[];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
-
-  // Find time overlaps in entries
-  const findOverlappingEntries = (entries: TimeEntry[]): TimeEntry[] => {
-    const result: TimeEntry[] = [];
-    // Sort entries by start time
-    const sortedEntries = [...entries].sort(
-      (a, b) =>
-        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-    );
-
-    // Check each entry against all others for overlaps
-    for (let i = 0; i < sortedEntries.length; i++) {
-      const entry = sortedEntries[i];
-      const startTime = new Date(entry.start_time).getTime();
-      const endTime = new Date(entry.end_time).getTime();
-
-      for (let j = 0; j < sortedEntries.length; j++) {
-        if (i === j) continue; // Skip comparing with self
-
-        const otherEntry = sortedEntries[j];
-        const otherStartTime = new Date(otherEntry.start_time).getTime();
-        const otherEndTime = new Date(otherEntry.end_time).getTime();
-
-        // Allow a small buffer (e.g., 1 second) for back-to-back entries
-        // This helps avoid flagging Pomodoro -> Break transitions
-        const bufferMs = 1000; // 1 second buffer
-
-        // Check if there's a significant overlap (more than our buffer)
-        const hasOverlap =
-          // Entry starts before other ends AND entry ends after other starts
-          (startTime < otherEndTime - bufferMs &&
-            endTime > otherStartTime + bufferMs) ||
-          // OR other starts before entry ends AND other ends after entry starts
-          (otherStartTime < endTime - bufferMs &&
-            otherEndTime > startTime + bufferMs);
-
-        // Specific check for exact same timestamps (which can happen with programmatic creation)
-        const hasExactSameTimestamps =
-          startTime === otherStartTime && endTime === otherEndTime;
-
-        if (hasOverlap && !hasExactSameTimestamps) {
-          if (!result.includes(entry)) {
-            result.push(entry);
-          }
-          if (!result.includes(otherEntry)) {
-            result.push(otherEntry);
-          }
-        }
-      }
-    }
-
-    return result;
-  };
-
-  // Convert UTC dates to local dates for grouping
-  const convertToLocalDates = (entries: TimeEntry[]): TimeEntry[] => {
-    return entries.map((entry) => {
-      const startTime = new Date(entry.start_time);
-      const endTime = new Date(entry.end_time);
-
-      // Create a copy of the entry with local date string
-      return {
-        ...entry,
-        // Store original dates in new property for display
-        original_start_time: entry.start_time,
-        original_end_time: entry.end_time,
-        // Use local date strings for grouping
-        start_time: startTime,
-        end_time: endTime,
-      };
-    });
-  };
 
   // Sort entries by start time, newest first
   const sortedEntries = useMemo(() => {
@@ -347,6 +282,17 @@ export default function TimeEntriesList({
             <AlertTriangle className="h-4 w-4" />
             <span className="hidden sm:inline">Show Overlapping</span>
           </Button>
+          {overlappingEntries.length > 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setShowConflictResolver(true)}
+              className="gap-2"
+            >
+              <Scissors className="h-4 w-4" />
+              <span className="hidden sm:inline">Resolve Conflicts</span>
+            </Button>
+          )}
 
           <Button
             variant="outline"
@@ -504,6 +450,11 @@ export default function TimeEntriesList({
           </Card>
         ))
       )}
+      <TimeEntryConflictResolver
+        onDataChange={onDataChange}
+        open={showConflictResolver}
+        onOpenChange={setShowConflictResolver}
+      />
     </div>
   );
 }
