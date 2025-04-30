@@ -39,6 +39,7 @@ export default function ReusableDialog({
   contentClassName,
   showXIcon = true,
   titleIcon,
+  triggerClassName,
 }: {
   title?: string | ReactNode;
   description?: string | ReactNode;
@@ -66,13 +67,19 @@ export default function ReusableDialog({
   contentClassName?: string;
   showXIcon?: boolean;
   titleIcon?: ReactNode;
+  triggerClassName?: string;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {showTrigger && (
         <AlertDialogTrigger asChild>
           {trigger || (
-            <Button variant={variant} size={size} disabled={loading}>
+            <Button
+              variant={variant}
+              size={size}
+              disabled={loading}
+              className={triggerClassName}
+            >
               {triggerIcon}
               {triggerText && (
                 <span className={triggerIcon ? "ml-2" : ""}>{triggerText}</span>

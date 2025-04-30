@@ -1,19 +1,9 @@
-// src/components/data-table/bulk-edit-dialog.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  Loader2,
-  Edit,
-} from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { FieldDefinition } from "@/types/types";
-import { ApiService } from "@/services/api";
-import { toast } from "sonner";
-import { DataStoreName, updateEntry } from "@/store/data-store";
+import { DataStoreName } from "@/store/data-store";
 import DataForm from "@/components/data-form/data-form";
 import { Badge } from "@/components/ui/badge";
 
@@ -35,7 +25,6 @@ export function BulkEditDialog({
   onDataChange,
 }: BulkEditDialogProps) {
   const [currentRecordIndex, setCurrentRecordIndex] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [modifiedRecords, setModifiedRecords] = useState<Record<string, any>[]>(
     []
   );
@@ -43,6 +32,8 @@ export function BulkEditDialog({
     null
   );
   const [isComplete, setIsComplete] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [formKey, setFormKey] = useState(0); // Add a key state to force form re-render
 
   // Reset state when dialog opens or records change
   useEffect(() => {
@@ -51,58 +42,52 @@ export function BulkEditDialog({
       setModifiedRecords([]);
       setIsComplete(false);
       setRecordData(selectedRecords[0]);
+      setFormKey((prev) => prev + 1); // Increment form key to force re-render
     }
-  }, [open, selectedRecords]);
+  }, [open]);
 
-  const handleFormSubmit = async (data: Record<string, any>) => {
-    if (!recordData) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const recordId = recordData.id;
-
-      // Submit the update
-      const response = await ApiService.updateRecord(recordId, data);
-
-      if (response) {
-        // Update the store
-        updateEntry(recordId, response, datasetId);
-
-        // Add to modified records list
-        setModifiedRecords((prev) => [...prev, response]);
-
-        // Move to next record or complete
-        if (currentRecordIndex < selectedRecords.length - 1) {
-          setCurrentRecordIndex(currentRecordIndex + 1);
-          setRecordData(selectedRecords[currentRecordIndex + 1]);
-        } else {
-          setIsComplete(true);
-        }
-
-        toast.success("Record updated successfully");
-      }
-    } catch (error) {
-      console.error("Error updating record:", error);
-      toast.error("Failed to update record");
-    } finally {
-      setIsSubmitting(false);
+  // Update recordData whenever currentRecordIndex changes
+  useEffect(() => {
+    if (
+      selectedRecords.length > 0 &&
+      currentRecordIndex < selectedRecords.length
+    ) {
+      setRecordData(selectedRecords[currentRecordIndex]);
+      setFormKey((prev) => prev + 1); // Increment form key to force re-render
     }
-  };
+  }, [currentRecordIndex, selectedRecords]);
 
   const handleSkip = () => {
     if (currentRecordIndex < selectedRecords.length - 1) {
       setCurrentRecordIndex(currentRecordIndex + 1);
-      setRecordData(selectedRecords[currentRecordIndex + 1]);
+      // recordData will be updated by the useEffect
     } else {
       setIsComplete(true);
     }
   };
 
+  const handleSuccessfulEdit = (recordId: string) => {
+    setIsProcessing(true);
+
+    // Find the updated record from the id
+    const updatedRecord = selectedRecords.find(
+      (record) => record.id === recordId
+    );
+
+    if (updatedRecord) {
+      // Add to modified records list
+      setModifiedRecords((prev) => [...prev, updatedRecord]);
+    }
+
+    handleSkip();
+
+    setIsProcessing(false);
+  };
+
   const handlePrevious = () => {
     if (currentRecordIndex > 0) {
       setCurrentRecordIndex(currentRecordIndex - 1);
-      setRecordData(selectedRecords[currentRecordIndex - 1]);
+      // recordData will be updated by the useEffect
     }
   };
 
@@ -200,7 +185,7 @@ export function BulkEditDialog({
           variant="outline"
           size="sm"
           onClick={handlePrevious}
-          disabled={currentRecordIndex === 0 || isSubmitting}
+          disabled={currentRecordIndex === 0 || isProcessing}
         >
           <ChevronLeft className="h-4 w-4 mr-1" /> Previous
         </Button>
@@ -208,7 +193,7 @@ export function BulkEditDialog({
           variant="outline"
           size="sm"
           onClick={handleSkip}
-          disabled={isSubmitting}
+          disabled={isProcessing}
         >
           Skip <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
@@ -226,12 +211,13 @@ export function BulkEditDialog({
       }
       open={open}
       onOpenChange={(newOpen) => {
-        if (!isSubmitting) {
+        if (!isProcessing) {
           onOpenChange(newOpen);
         }
       }}
       triggerText="Bulk Edit Selected"
       triggerIcon={<Edit className="h-4 w-4 mr-2" />}
+      triggerClassName="bg-yellow-500 dark:bg-yellow-600 text-white hover:bg-yellow-600 dark:hover:bg-yellow-700 focus:ring-yellow-500 focus:ring-offset-yellow-200"
       contentClassName="max-w-3xl max-h-[90vh] overflow-y-auto"
       customContent={
         isComplete ? (
@@ -242,71 +228,20 @@ export function BulkEditDialog({
 
             {recordData && (
               <DataForm
+                key={`edit-form-${formKey}`} // Use the formKey state to force re-render
                 fields={fields}
                 datasetId={datasetId}
-                initialData={recordData}
-                onSubmit={handleFormSubmit}
+                initialValues={recordData}
+                onSuccess={handleSuccessfulEdit}
                 submitLabel="Save & Next"
-                showHeader={false}
-                showSubmitButton={true}
-                isSubmitting={isSubmitting}
-                useInlineLayout={false}
-                hideResetButton={true}
+                mode="edit"
+                recordId={recordData.id}
               />
             )}
           </div>
         )
       }
-      customFooter={
-        isComplete ? (
-          <Button onClick={handleComplete}>Close</Button>
-        ) : (
-          <div className="flex justify-between w-full">
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleSkip}
-                disabled={isSubmitting}
-              >
-                Skip
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => {
-                  // Trigger form submit by finding the submit button and clicking it
-                  const submitButton = document.querySelector(
-                    'button[type="submit"]'
-                  );
-                  if (submitButton instanceof HTMLButtonElement) {
-                    submitButton.click();
-                  }
-                }}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save & Next
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )
-      }
+      customFooter={<div />}
     />
   );
 }
