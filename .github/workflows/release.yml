@@ -19,9 +19,9 @@ jobs:
             extension: .exe
             artifact_name: windows_amd64
           - os: macos-latest
-            platform: darwin
+            platform: darwin/universal
             extension: ""
-            artifact_name: darwin_amd64
+            artifact_name: darwin_universal
           - os: ubuntu-latest
             platform: linux
             extension: ""
@@ -111,7 +111,7 @@ jobs:
           }
 
       - name: Rename binary (macOS)
-        if: matrix.platform == 'darwin'
+        if: matrix.platform == 'darwin/universal'
         run: |
           cd build/bin
           ls -la
