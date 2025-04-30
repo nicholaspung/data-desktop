@@ -40,6 +40,7 @@ export default function ReusableDialog({
   showXIcon = true,
   titleIcon,
   triggerClassName,
+  disableDefaultConfirm = false,
 }: {
   title?: string | ReactNode;
   description?: string | ReactNode;
@@ -68,6 +69,7 @@ export default function ReusableDialog({
   showXIcon?: boolean;
   titleIcon?: ReactNode;
   triggerClassName?: string;
+  disableDefaultConfirm?: boolean;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -129,7 +131,14 @@ export default function ReusableDialog({
               {cancelText}
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={onConfirm}
+              onClick={(e) => {
+                if (disableDefaultConfirm) {
+                  e.preventDefault();
+                }
+                if (onConfirm) {
+                  onConfirm(e);
+                }
+              }}
               className={
                 confirmVariant === "destructive"
                   ? "bg-destructive text-destructive-foreground"

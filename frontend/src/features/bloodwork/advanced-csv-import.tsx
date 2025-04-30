@@ -39,6 +39,7 @@ interface ValidationResult {
     recordCount: number;
     existingTest: boolean;
   }[];
+  hasValidRows: boolean; // New property to check if at least one valid row exists
 }
 
 export default function BloodworkCSVImport() {
@@ -55,6 +56,7 @@ export default function BloodworkCSVImport() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
+  const [skipInvalidRows, setSkipInvalidRows] = useState(true); // New state for skipping invalid rows
   const [activeTab, setActiveTab] = useState("upload");
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
 
@@ -216,19 +218,28 @@ export default function BloodworkCSVImport() {
           });
 
           // Set validation result
-          setValidationResult({
+          const result = {
             valid: invalidRows.length === 0,
             invalidRows,
             validRowCount: data.length - invalidRows.length,
             dateGroups: Array.from(dateGroups.values()),
-          });
+            hasValidRows: data.length - invalidRows.length > 0, // Check if we have at least one valid row
+          };
+
+          setValidationResult(result);
 
           // Switch to the validation tab if there are errors
           if (invalidRows.length > 0) {
             setActiveTab("validation");
-            toast.warning(
-              `Found ${invalidRows.length} invalid rows in the CSV`
-            );
+            if (result.hasValidRows) {
+              toast.warning(
+                `Found ${invalidRows.length} invalid rows, but ${result.validRowCount} valid rows are ready to import`
+              );
+            } else {
+              toast.error(
+                `Found ${invalidRows.length} invalid rows and no valid data to import`
+              );
+            }
           } else if (data.length === 0) {
             toast.error("The CSV file is empty or has no valid data");
           } else {
@@ -248,8 +259,14 @@ export default function BloodworkCSVImport() {
   };
 
   const processCSV = async () => {
-    if (!file || !validationResult || !validationResult.valid) {
-      toast.error("Please select a valid file to import");
+    if (
+      !file ||
+      !validationResult ||
+      (!validationResult.valid && !validationResult.hasValidRows)
+    ) {
+      toast.error(
+        "Please select a valid file with at least one valid row to import"
+      );
       return;
     }
 
@@ -263,10 +280,20 @@ export default function BloodworkCSVImport() {
     });
 
     try {
+      // Filter out invalid rows if skip is enabled
+      const dataToProcess = skipInvalidRows
+        ? parsedData.filter(
+            (row, index) =>
+              !validationResult.invalidRows.some(
+                (invalid) => invalid.rowIndex - 2 === index
+              )
+          )
+        : parsedData;
+
       // Group records by date
       const recordsByDate: Record<string, CSVRow[]> = {};
 
-      parsedData.forEach((row) => {
+      dataToProcess.forEach((row) => {
         if (!row.blood_marker_name || !row.date) {
           return; // Skip rows with missing required data
         }
@@ -477,11 +504,11 @@ export default function BloodworkCSVImport() {
           succeeded: prev.succeeded + successCount,
           failed: prev.failed + failCount,
         }));
+        toast.success(
+          `Imported ${successCount} blood results across ${dateKeys.length} dates`
+        );
       }
 
-      toast.success(
-        `Imported ${progress.succeeded} blood results across ${dateKeys.length} dates`
-      );
       setOpen(false);
     } catch (error) {
       console.error("CSV import error:", error);
@@ -534,6 +561,7 @@ export default function BloodworkCSVImport() {
         onConfirm={
           activeTab === "review" ? processCSV : () => setActiveTab("review")
         }
+        disableDefaultConfirm={activeTab !== "review"}
         loading={isProcessing}
         confirmIcon={
           activeTab === "review" ? (
@@ -543,11 +571,13 @@ export default function BloodworkCSVImport() {
         footerActionDisabled={
           (activeTab === "upload" && !file) ||
           (activeTab === "validation" &&
-            (!validationResult || !validationResult.valid)) ||
+            (!validationResult ||
+              (!validationResult.valid && !validationResult.hasValidRows))) ||
           isProcessing
         }
+        contentClassName="max-h-[95vh] overflow-hidden max-w-[800px]"
         customContent={
-          <div className="p-4 space-y-4">
+          <div className="py-4">
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}
@@ -558,271 +588,331 @@ export default function BloodworkCSVImport() {
                 <TabsTrigger value="validation" disabled={!file}>
                   Validation
                 </TabsTrigger>
-                <TabsTrigger value="review" disabled={!validationResult?.valid}>
+                <TabsTrigger
+                  value="review"
+                  disabled={
+                    !validationResult ||
+                    (!validationResult.valid && !validationResult.hasValidRows)
+                  }
+                >
                   Review
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="upload" className="space-y-4 mt-4">
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>CSV Format</AlertTitle>
-                  <AlertDescription>
-                    Your CSV must have columns for blood_marker_name, date, and
-                    either value_number or value_text (at least one is
-                    required). Optionally include notes column.
-                  </AlertDescription>
-                </Alert>
+              <ScrollArea className="h-[calc(60vh-100px)] px-4 mt-4">
+                <TabsContent value="upload" className="space-y-4">
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>CSV Format</AlertTitle>
+                    <AlertDescription>
+                      Your CSV must have columns for blood_marker_name, date,
+                      and either value_number or value_text (at least one is
+                      required). Optionally include notes column.
+                    </AlertDescription>
+                  </Alert>
 
-                <div className="flex justify-between items-center">
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={generateCSVTemplate}
-                  >
-                    <Download className="h-4 w-4" />
-                    Download Template
-                  </Button>
+                  <div className="flex justify-between items-center">
+                    <Button
+                      variant="outline"
+                      className="gap-2"
+                      onClick={generateCSVTemplate}
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Template
+                    </Button>
 
-                  <p className="text-sm text-muted-foreground">
-                    {bloodMarkers.length === 0
-                      ? "No markers found. Please add markers first."
-                      : `Template contains ${bloodMarkers.length} markers`}
-                  </p>
-                </div>
-
-                <div className="grid w-full items-center gap-1.5">
-                  <label htmlFor="csvFile" className="text-sm font-medium">
-                    Select CSV File
-                  </label>
-                  <input
-                    id="csvFile"
-                    type="file"
-                    accept=".csv"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
-                    onChange={handleFileChange}
-                    disabled={isProcessing}
-                  />
-                </div>
-
-                {file && (
-                  <div className="text-sm text-muted-foreground">
-                    File selected: {file.name} ({(file.size / 1024).toFixed(2)}{" "}
-                    KB)
+                    <p className="text-sm text-muted-foreground">
+                      {bloodMarkers.length === 0
+                        ? "No markers found. Please add markers first."
+                        : `Template contains ${bloodMarkers.length} markers`}
+                    </p>
                   </div>
-                )}
-              </TabsContent>
 
-              <TabsContent value="validation" className="space-y-4 mt-4">
-                {validationResult && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      {validationResult.valid ? (
-                        <Check className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <div className="grid w-full items-center gap-1.5">
+                    <label htmlFor="csvFile" className="text-sm font-medium">
+                      Select CSV File
+                    </label>
+                    <input
+                      id="csvFile"
+                      type="file"
+                      accept=".csv"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
+                      onChange={handleFileChange}
+                      disabled={isProcessing}
+                    />
+                  </div>
+
+                  {file && (
+                    <div className="text-sm text-muted-foreground">
+                      File selected: {file.name} (
+                      {(file.size / 1024).toFixed(2)} KB)
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="validation" className="space-y-4">
+                  {validationResult && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        {validationResult.valid ? (
+                          <Check className="h-5 w-5 text-green-500" />
+                        ) : validationResult.hasValidRows ? (
+                          <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        ) : (
+                          <AlertTriangle className="h-5 w-5 text-red-500" />
+                        )}
+
+                        <h3 className="text-lg font-semibold">
+                          {validationResult.valid
+                            ? "Validation Successful"
+                            : validationResult.hasValidRows
+                              ? "Some Issues Found"
+                              : "No Valid Rows Found"}
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="border rounded-md p-3">
+                          <p className="text-sm font-medium mb-1">Valid Rows</p>
+                          <p className="text-2xl font-bold">
+                            {validationResult.validRowCount}
+                          </p>
+                        </div>
+
+                        <div className="border rounded-md p-3">
+                          <p className="text-sm font-medium mb-1">
+                            Invalid Rows
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {validationResult.invalidRows.length}
+                          </p>
+                        </div>
+                      </div>
+
+                      {validationResult.invalidRows.length > 0 && (
+                        <div className="border rounded-md">
+                          <div className="bg-muted p-2 font-medium">
+                            Invalid Rows
+                          </div>
+                          <ScrollArea className="h-48">
+                            <div className="p-2 space-y-2">
+                              {validationResult.invalidRows.map(
+                                (item, index) => (
+                                  <div
+                                    key={index}
+                                    className="border-b pb-2 last:border-0"
+                                  >
+                                    <div className="flex justify-between">
+                                      <p className="text-sm font-medium">
+                                        Row {item.rowIndex}
+                                      </p>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        {item.errors.length}{" "}
+                                        {item.errors.length === 1
+                                          ? "error"
+                                          : "errors"}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                      {`Marker: ${item.row.blood_marker_name || "missing"}, `}
+                                      {`Date: ${item.row.date || "missing"}, `}
+                                      {`Value Number: ${item.row.value_number || "missing"}, `}
+                                      {`Value Text: ${item.row.value_text || "missing"}`}
+                                    </p>
+                                    <ul className="text-xs text-red-500 mt-1">
+                                      {item.errors.map((error, i) => (
+                                        <li key={i}>• {error}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </ScrollArea>
+                        </div>
                       )}
 
-                      <h3 className="text-lg font-semibold">
-                        {validationResult.valid
-                          ? "Validation Successful"
-                          : "Validation Issues Found"}
-                      </h3>
-                    </div>
+                      {!validationResult.valid && (
+                        <>
+                          {validationResult.hasValidRows ? (
+                            <div className="flex items-center space-x-2 pt-2">
+                              <Checkbox
+                                id="skipInvalidRows"
+                                checked={skipInvalidRows}
+                                onCheckedChange={(checked) =>
+                                  setSkipInvalidRows(checked === true)
+                                }
+                              />
+                              <Label
+                                htmlFor="skipInvalidRows"
+                                className="text-sm"
+                              >
+                                Skip invalid rows during import
+                              </Label>
+                            </div>
+                          ) : (
+                            <Alert variant="destructive">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTitle>Cannot Proceed</AlertTitle>
+                              <AlertDescription>
+                                No valid rows found. Please fix the validation
+                                errors before proceeding. You can go back to the
+                                upload tab and select a corrected file.
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </TabsContent>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="border rounded-md p-3">
-                        <p className="text-sm font-medium mb-1">Valid Rows</p>
-                        <p className="text-2xl font-bold">
-                          {validationResult.validRowCount}
-                        </p>
+                <TabsContent value="review" className="space-y-4">
+                  {validationResult && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Check className="h-5 w-5 text-green-500" />
+                        <h3 className="text-lg font-semibold">
+                          Ready to Import
+                        </h3>
                       </div>
 
-                      <div className="border rounded-md p-3">
-                        <p className="text-sm font-medium mb-1">Invalid Rows</p>
-                        <p className="text-2xl font-bold">
-                          {validationResult.invalidRows.length}
-                        </p>
-                      </div>
-                    </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="border rounded-md p-3">
+                          <p className="text-sm font-medium mb-1">Total Rows</p>
+                          <p className="text-2xl font-bold">
+                            {validationResult.validRowCount}
+                          </p>
+                        </div>
 
-                    {validationResult.invalidRows.length > 0 && (
+                        <div className="border rounded-md p-3">
+                          <p className="text-sm font-medium mb-1">
+                            Date Groups
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {validationResult.dateGroups.length}
+                          </p>
+                        </div>
+                      </div>
+
+                      {validationResult.invalidRows.length > 0 &&
+                        skipInvalidRows && (
+                          <Alert>
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>Skipping Invalid Rows</AlertTitle>
+                            <AlertDescription>
+                              {validationResult.invalidRows.length} invalid
+                              row(s) will be skipped during import.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
                       <div className="border rounded-md">
                         <div className="bg-muted p-2 font-medium">
-                          Invalid Rows
+                          Dates Summary
                         </div>
                         <ScrollArea className="h-48">
                           <div className="p-2 space-y-2">
-                            {validationResult.invalidRows.map((item, index) => (
+                            {validationResult.dateGroups.map((group, index) => (
                               <div
                                 key={index}
                                 className="border-b pb-2 last:border-0"
                               >
                                 <div className="flex justify-between">
                                   <p className="text-sm font-medium">
-                                    Row {item.rowIndex}
+                                    {format(
+                                      group.formattedDate,
+                                      "MMMM d, yyyy"
+                                    )}
                                   </p>
-                                  <Badge variant="outline" className="text-xs">
-                                    {item.errors.length}{" "}
-                                    {item.errors.length === 1
-                                      ? "error"
-                                      : "errors"}
+                                  <Badge
+                                    variant={
+                                      group.existingTest
+                                        ? "outline"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {group.existingTest
+                                      ? "Existing Test"
+                                      : "New Test"}
                                   </Badge>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
-                                  {`Marker: ${item.row.blood_marker_name || "missing"}, `}
-                                  {`Date: ${item.row.date || "missing"}, `}
-                                  {`Value Number: ${item.row.value_number || "missing"}, `}
-                                  {`Value Text: ${item.row.value_text || "missing"}`}
+                                  {group.recordCount}{" "}
+                                  {group.recordCount === 1
+                                    ? "marker result"
+                                    : "marker results"}
                                 </p>
-                                <ul className="text-xs text-red-500 mt-1">
-                                  {item.errors.map((error, i) => (
-                                    <li key={i}>• {error}</li>
-                                  ))}
-                                </ul>
                               </div>
                             ))}
                           </div>
                         </ScrollArea>
                       </div>
-                    )}
 
-                    {!validationResult.valid && (
-                      <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Cannot Proceed</AlertTitle>
+                      <div className="flex items-center space-x-2 pt-2">
+                        <Checkbox
+                          id="overwriteExisting"
+                          checked={overwriteExisting}
+                          onCheckedChange={(checked) =>
+                            setOverwriteExisting(checked === true)
+                          }
+                        />
+                        <Label htmlFor="overwriteExisting" className="text-sm">
+                          Overwrite existing results for the same markers and
+                          dates
+                        </Label>
+                      </div>
+
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Import Information</AlertTitle>
                         <AlertDescription>
-                          Please fix the validation errors before proceeding.
-                          You can go back to the upload tab and select a
-                          corrected file.
+                          {validationResult.dateGroups.some(
+                            (g) => g.existingTest
+                          ) ? (
+                            <>
+                              {overwriteExisting
+                                ? "Existing test data may be overwritten based on your selection."
+                                : "Existing test dates will be preserved and only new marker results will be added."}
+                            </>
+                          ) : (
+                            "All dates in this import will create new test records."
+                          )}
                         </AlertDescription>
                       </Alert>
-                    )}
-                  </>
-                )}
-              </TabsContent>
+                    </>
+                  )}
 
-              <TabsContent value="review" className="space-y-4 mt-4">
-                {validationResult && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <Check className="h-5 w-5 text-green-500" />
-                      <h3 className="text-lg font-semibold">Ready to Import</h3>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="border rounded-md p-3">
-                        <p className="text-sm font-medium mb-1">Total Rows</p>
-                        <p className="text-2xl font-bold">
-                          {validationResult.validRowCount}
-                        </p>
-                      </div>
-
-                      <div className="border rounded-md p-3">
-                        <p className="text-sm font-medium mb-1">Date Groups</p>
-                        <p className="text-2xl font-bold">
-                          {validationResult.dateGroups.length}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="border rounded-md">
-                      <div className="bg-muted p-2 font-medium">
-                        Dates Summary
-                      </div>
-                      <ScrollArea className="h-48">
-                        <div className="p-2 space-y-2">
-                          {validationResult.dateGroups.map((group, index) => (
-                            <div
-                              key={index}
-                              className="border-b pb-2 last:border-0"
-                            >
-                              <div className="flex justify-between">
-                                <p className="text-sm font-medium">
-                                  {format(group.formattedDate, "MMMM d, yyyy")}
-                                </p>
-                                <Badge
-                                  variant={
-                                    group.existingTest ? "outline" : "secondary"
-                                  }
-                                  className="text-xs"
-                                >
-                                  {group.existingTest
-                                    ? "Existing Test"
-                                    : "New Test"}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                {group.recordCount}{" "}
-                                {group.recordCount === 1
-                                  ? "marker result"
-                                  : "marker results"}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Checkbox
-                        id="overwriteExisting"
-                        checked={overwriteExisting}
-                        onCheckedChange={(checked) =>
-                          setOverwriteExisting(checked === true)
-                        }
+                  {isProcessing && (
+                    <div className="space-y-2">
+                      <Progress
+                        value={(progress.processed / progress.total) * 100}
                       />
-                      <Label htmlFor="overwriteExisting" className="text-sm">
-                        Overwrite existing results for the same markers and
-                        dates
-                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Processing {progress.processed} of {progress.total}{" "}
+                        dates...
+                      </p>
+                      {progress.errors.length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-2">
+                          <p className="font-medium">Errors:</p>
+                          <ul className="list-disc pl-4">
+                            {progress.errors.slice(0, 3).map((error, i) => (
+                              <li key={i}>{error}</li>
+                            ))}
+                            {progress.errors.length > 3 && (
+                              <li>...and {progress.errors.length - 3} more</li>
+                            )}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>Import Information</AlertTitle>
-                      <AlertDescription>
-                        {validationResult.dateGroups.some(
-                          (g) => g.existingTest
-                        ) ? (
-                          <>
-                            {overwriteExisting
-                              ? "Existing test data may be overwritten based on your selection."
-                              : "Existing test dates will be preserved and only new marker results will be added."}
-                          </>
-                        ) : (
-                          "All dates in this import will create new test records."
-                        )}
-                      </AlertDescription>
-                    </Alert>
-                  </>
-                )}
-
-                {isProcessing && (
-                  <div className="space-y-2">
-                    <Progress
-                      value={(progress.processed / progress.total) * 100}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Processing {progress.processed} of {progress.total}{" "}
-                      dates...
-                    </p>
-                    {progress.errors.length > 0 && (
-                      <div className="text-xs text-muted-foreground mt-2">
-                        <p className="font-medium">Errors:</p>
-                        <ul className="list-disc pl-4">
-                          {progress.errors.slice(0, 3).map((error, i) => (
-                            <li key={i}>{error}</li>
-                          ))}
-                          {progress.errors.length > 3 && (
-                            <li>...and {progress.errors.length - 3} more</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </TabsContent>
+                  )}
+                </TabsContent>
+              </ScrollArea>
             </Tabs>
           </div>
         }
