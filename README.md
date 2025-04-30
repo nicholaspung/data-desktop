@@ -39,17 +39,16 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - add a way to save files (maybe for sure make it into a different table in SQLite?)
 
-- bug: in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
-- bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
-
-- in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
+- low priority bug: in daily tracker view, if a user modifies a number input metric, it visually showsthe old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
+- low priority bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
+- low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
+- low priority bug: make the markdown CSS better looking
 
 - see why the line chart doesn't show the x data for the one right next to the last x data description
-- make the dashnoard able to be in like "specific card heights and card widths" or just hardcode it in
+- make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
 - add a way to enable/disable certain features from showing
 - add a way to select the database you want to use
 - update icons for the datasets
-- make the markdown CSS better looking
 - add a way to minimize/maximize/reset the view for the application
 - fixed the <div> cannot be a child of <p> error from React
 
