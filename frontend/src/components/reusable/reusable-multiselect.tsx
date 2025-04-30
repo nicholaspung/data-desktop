@@ -135,17 +135,16 @@ export default function ReusableMultiSelect({
           disabled={disabled || isLoading}
           onClick={() => setOpen(!open)}
         >
-          <div className="flex flex-wrap gap-1 overflow-hidden">
+          <div className="flex flex-wrap gap-2 overflow-hidden items-center">
             {selected.length > 0 ? (
               <>
-                <div className="flex-1 flex flex-wrap gap-1 overflow-hidden">
+                <div className="flex flex-wrap gap-2 overflow-hidden">
                   {selected.slice(0, maxDisplay).map((id) => {
                     const option = getOptionById(id);
                     return (
                       <Badge
                         key={id}
                         variant="secondary"
-                        className="mr-1 mb-1"
                         onClick={(e) => handleRemove(id, e)}
                       >
                         {option?.label || id}

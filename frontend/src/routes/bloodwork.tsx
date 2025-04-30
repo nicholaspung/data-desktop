@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BloodworkCSVImport from "@/features/bloodwork/advanced-csv-import";
 
 export const Route = createFileRoute("/bloodwork")({
   component: BloodworkPage,
@@ -35,6 +36,7 @@ export default function BloodworkPage() {
         >
           <div className="flex space-x-2">
             <AddBloodworkDialog />
+            <BloodworkCSVImport />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="px-2 flex">

@@ -21,6 +21,8 @@ import BloodMarkerInput from "./blood-marker-input";
 import useLoadData from "@/hooks/useLoadData";
 import { useFieldDefinitions } from "../field-definitions/field-definitions-store";
 import { dateStrToLocalDate } from "@/lib/date-utils";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useRef } from "react";
 
 export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   const { getDatasetFields } = useFieldDefinitions();
@@ -45,6 +47,9 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   const [existingBloodworkId, setExistingBloodworkId] = useState<string | null>(
     null
   );
+
+  // Reference for the virtualized list container
+  const parentRef = useRef<HTMLDivElement>(null);
 
   // Get blood markers from store
   const bloodMarkers = useStore(
@@ -184,6 +189,14 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       (marker.category &&
         marker.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Create a virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: filteredMarkers.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 60, // Estimated height of each row in pixels
+    overscan: 5, // Number of items to render before/after the visible area
+  });
 
   // Handle marker input change
   const handleMarkerChange = (
@@ -457,27 +470,59 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                   : "No markers match your search criteria."}
               </div>
             ) : (
-              <div className="max-h-[400px] overflow-y-auto">
-                {filteredMarkers.map((marker) => {
-                  // Check if this marker already has results for the selected date
-                  const hasExistingResult = resultExistsForMarker(marker.id);
-                  const lastResult = getLastResultForMarker(marker.id);
+              <div
+                ref={parentRef}
+                className="max-h-[400px] overflow-y-auto"
+                style={{
+                  height: "400px",
+                  width: "100%",
+                  overflow: "auto",
+                }}
+              >
+                {/* Virtual list container */}
+                <div
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: "100%",
+                    position: "relative",
+                  }}
+                >
+                  {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                    const marker = filteredMarkers[virtualItem.index];
+                    // Check if this marker already has results for the selected date
+                    const hasExistingResult = resultExistsForMarker(marker.id);
+                    const lastResult = getLastResultForMarker(marker.id);
 
-                  return (
-                    <BloodMarkerInput
-                      key={marker.id}
-                      marker={marker}
-                      value={markerValues[marker.id]?.value || ""}
-                      valueType={markerValues[marker.id]?.valueType || "number"}
-                      onChange={(value, valueType) =>
-                        handleMarkerChange(marker.id, value, valueType)
-                      }
-                      disabled={isExistingDate && hasExistingResult}
-                      isExisting={hasExistingResult}
-                      lastResult={lastResult}
-                    />
-                  );
-                })}
+                    return (
+                      <div
+                        key={virtualItem.key}
+                        data-index={virtualItem.index}
+                        ref={rowVirtualizer.measureElement}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualItem.start}px)`,
+                        }}
+                      >
+                        <BloodMarkerInput
+                          marker={marker}
+                          value={markerValues[marker.id]?.value || ""}
+                          valueType={
+                            markerValues[marker.id]?.valueType || "number"
+                          }
+                          onChange={(value, valueType) =>
+                            handleMarkerChange(marker.id, value, valueType)
+                          }
+                          disabled={isExistingDate && hasExistingResult}
+                          isExisting={hasExistingResult}
+                          lastResult={lastResult}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

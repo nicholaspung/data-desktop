@@ -476,16 +476,15 @@ export function BatchEntryTable({
         );
       case "select-multiple":
         return (
-          <div style={{ minWidth: "500px", width: "100%" }}>
-            <ReusableMultiSelect
-              options={field.options || []}
-              selected={value ? value : []}
-              onChange={(values) =>
-                updateEntryField(entryIndex, field.key, values)
-              }
-              title={field.displayName}
-            />
-          </div>
+          <ReusableMultiSelect
+            options={field.options || []}
+            selected={value ? value : []}
+            onChange={(values) =>
+              updateEntryField(entryIndex, field.key, values)
+            }
+            title={field.displayName}
+            className="min-w-[30rem]"
+          />
         );
       default:
         return <span style={cellStyle}>{JSON.stringify(value)}</span>;

@@ -448,6 +448,7 @@ const EditableCell = ({
             selected={Array.isArray(editValue) ? editValue : []}
             onChange={(values) => setEditValue(values)}
             title={column.id as string}
+            className="min-w-[30rem]"
           />
         );
 
