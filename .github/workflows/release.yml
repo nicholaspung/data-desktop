@@ -102,7 +102,7 @@ jobs:
           $exeFile = Get-ChildItem -Path . -Filter *.exe | Select-Object -First 1
           if ($exeFile) {
             Write-Host "Found exe file: $($exeFile.Name)"
-            Rename-Item -Path $exeFile.Name -NewName "DailyReflection_${{ matrix.artifact_name }}${{ matrix.extension }}"
+            Rename-Item -Path $exeFile.Name -NewName "DataDesktop_${{ matrix.artifact_name }}${{ matrix.extension }}"
             Get-ChildItem -Path .
           } else {
             Write-Host "No exe file found!"
@@ -118,9 +118,9 @@ jobs:
           appName=$(ls | grep .app)
           if [ -n "$appName" ]; then
             echo "Found app: $appName"
-            mv "$appName" "DailyReflection_${{ matrix.artifact_name }}.app"
+            mv "$appName" "DataDesktop_${{ matrix.artifact_name }}.app"
             # Create a zip file for macOS app
-            zip -r "DailyReflection_${{ matrix.artifact_name }}.zip" "DailyReflection_${{ matrix.artifact_name }}.app"
+            zip -r "DataDesktop_${{ matrix.artifact_name }}.zip" "DataDesktop_${{ matrix.artifact_name }}.app"
             ls -la
           else
             echo "No .app bundle found!"
@@ -139,13 +139,13 @@ jobs:
             for binary in $binaries; do
               echo "Found binary: $binary"
               # Copy instead of rename to maintain the original
-              cp "$binary" "DailyReflection_${{ matrix.artifact_name }}"
-              chmod +x "DailyReflection_${{ matrix.artifact_name }}"
+              cp "$binary" "DataDesktop_${{ matrix.artifact_name }}"
+              chmod +x "DataDesktop_${{ matrix.artifact_name }}"
               # We'll only process the first binary found
               break
             done
             # Create a tar.gz archive for better distribution
-            tar -czf "DailyReflection_${{ matrix.artifact_name }}.tar.gz" "DailyReflection_${{ matrix.artifact_name }}"
+            tar -czf "DataDesktop_${{ matrix.artifact_name }}.tar.gz" "DataDesktop_${{ matrix.artifact_name }}"
             echo "Contents of build/bin directory after tar creation:"
             ls -la
           else
@@ -170,7 +170,7 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DailyReflection_${{ matrix.artifact_name }}
+          name: DataDesktop_${{ matrix.artifact_name }}
           path: build/bin/
           if-no-files-found: error
 
@@ -215,17 +215,17 @@ jobs:
           find artifacts -name "*.tar.gz" -exec cp {} release_files/ \;
 
           # Fallback - direct copy of Linux executables if tar.gz not found
-          if [ ! -f "release_files/DailyReflection_linux_amd64.tar.gz" ]; then
+          if [ ! -f "release_files/DataDesktop_linux_amd64.tar.gz" ]; then
             echo "No tar.gz found, copying Linux executable directly:"
-            cp artifacts/DailyReflection_linux_amd64/DailyReflection_linux_amd64 release_files/ || \
-            cp artifacts/DailyReflection_linux_amd64/DailyReflection release_files/DailyReflection_linux_amd64 || \
+            cp artifacts/DataDesktop_linux_amd64/DataDesktop_linux_amd64 release_files/ || \
+            cp artifacts/DataDesktop_linux_amd64/DataDesktop release_files/DataDesktop_linux_amd64 || \
             echo "Failed to copy Linux executable"
             
             # Create tar.gz if executable was copied successfully
-            if [ -f "release_files/DailyReflection_linux_amd64" ]; then
+            if [ -f "release_files/DataDesktop_linux_amd64" ]; then
               echo "Creating tar.gz from copied executable:"
               cd release_files
-              tar -czf "DailyReflection_linux_amd64.tar.gz" "DailyReflection_linux_amd64"
+              tar -czf "DataDesktop_linux_amd64.tar.gz" "DataDesktop_linux_amd64"
               cd ..
             fi
           fi

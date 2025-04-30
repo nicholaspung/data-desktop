@@ -39,12 +39,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
 - add a way to save files (maybe for sure make it into a different table in SQLite?)
 
-- for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
-- in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
-
-- in bloodwork add inputs, add virtualization [DONE 2025-04-30]
-- in bloodwork, add a "download template"/upload data that create a CSV of all the current blood markers, for a user to input into a CSV, and then upload the updated CSV
-
 - bug: in daily tracker view, if a user modifies a number input metric, it visually shows the old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
 - bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
 
@@ -68,6 +62,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 
 ### IN PROGRESS
+
+- for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
+- in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
 
 ### DONE
 
@@ -264,5 +261,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - it would be nice if the options I chose for table view stayed when I updated a value [DONE 2025-04-29]
 - add a bulk edit section, that can also use the `batch-entry-table` (doing it a different way instead) [DONE 2025-04-30]
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good [DONE 2025-04-30]
+- in bloodwork add inputs, add virtualization [DONE 2025-04-30]
+- in bloodwork, add a "download template"/upload data that create a CSV of all the current blood markers, for a user to input into a CSV, and then upload the updated CSV [DONE 2025-04-30]
 
 ### GAVE UP
