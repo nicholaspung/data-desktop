@@ -15,6 +15,7 @@ import loadingStore from "@/store/loading-store";
 import RefreshDatasetButton from "../reusable/refresh-dataset-button";
 import ReusableSelect from "../reusable/reusable-select";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { BulkEditDialog } from "./bulk-edit-dialog";
 
 export default function GenericDataTable({
   datasetId,
@@ -56,8 +57,12 @@ export default function GenericDataTable({
 
   // Parse URL parameters for table state
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [tableMode, setTableMode] = useState<"view" | "edit" | "delete">(
-    search.mode ? (search.mode as "view" | "edit" | "delete") : "view"
+  const [tableMode, setTableMode] = useState<
+    "view" | "edit" | "delete" | "bulk-edit"
+  >(
+    search.mode
+      ? (search.mode as "view" | "edit" | "delete" | "bulk-edit")
+      : "view"
   );
   const [updatedRowIds, setUpdatedRowIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(
@@ -88,6 +93,7 @@ export default function GenericDataTable({
         }
       : null
   );
+  const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -322,6 +328,7 @@ export default function GenericDataTable({
               { id: "view", label: "View Mode" },
               !disableEdit && { id: "edit", label: "Edit Mode" },
               !disableDelete && { id: "delete", label: "Delete Mode" },
+              !disableEdit && { id: "bulk-edit", label: "Bulk Edit Mode" },
             ].filter((i) => i)}
             value={tableMode}
             onChange={(value: any) => {
@@ -335,6 +342,21 @@ export default function GenericDataTable({
             title={"mode"}
             triggerClassName={"w-[150px]"}
           />
+
+          {tableMode === "bulk-edit" && selectedRows.length > 0 && (
+            <BulkEditDialog
+              open={bulkEditDialogOpen}
+              onOpenChange={setBulkEditDialogOpen}
+              selectedRecords={
+                selectedRows
+                  .map((id) => data.find((item) => item.id === id))
+                  .filter(Boolean) as Record<string, any>[]
+              }
+              fields={fields}
+              datasetId={datasetId}
+              onDataChange={handleDataUpdated}
+            />
+          )}
 
           {/* Delete Button - Only visible in delete mode with selections */}
           {tableMode === "delete" && selectedRows.length > 0 && (
@@ -372,7 +394,9 @@ export default function GenericDataTable({
                   ? "highlight-row"
                   : ""
               }
-              enableSelection={tableMode === "delete"}
+              enableSelection={
+                tableMode === "delete" || tableMode === "bulk-edit"
+              }
               dataKey={dataKey}
               selectedRows={selectedRows}
               onSelectedRowsChange={setSelectedRows}

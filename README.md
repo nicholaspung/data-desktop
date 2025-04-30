@@ -34,10 +34,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
 
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
-- it would be nice if the options I chose for table view stayed when I updated a value
 - update how the multiselect looks like in both data-form and data-table, right now it doesn't look good
 - add a bulk edit section, that can also use the `batch-entry-table`
-- when in `batch-entry-table`, for relational data, also show the secondary field
 
 - add a way in the backend to make a field unique
 - add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
@@ -265,5 +263,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - for the feature layout/info panel items, can we make it locally saved whether or not those things are opened or closed? [DONE 2025-04-28]
 - see if there's an easier way to fix the autolap time entries [DONE 2025-04-29]
 - in quick-metric-logger, make it so that when a user types in the "search metrics", it filters for that selection, rather than making it completely disappear [DONE 2025-04-29]
+- it would be nice if the options I chose for table view stayed when I updated a value [DONE 2025-04-29]
 
 ### GAVE UP
