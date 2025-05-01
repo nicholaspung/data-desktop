@@ -17,6 +17,7 @@ import {
   BookOpen,
   Clock,
   Calendar,
+  CalendarCheck2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,11 @@ const sidebarItems: SidebarItem[] = [
     title: "Journaling",
     icon: <BookOpen className="h-5 w-5" />,
     href: "/journaling",
+  },
+  {
+    title: "Time Planner",
+    icon: <CalendarCheck2 className="h-5 w-5" />,
+    href: "/time-planner",
   },
   {
     title: "DEXA Scans",

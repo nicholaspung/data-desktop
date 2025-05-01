@@ -59,6 +59,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
+- time planner component to help a user plan out their week
+
 ### DONE
 
 - Fix form component [DONE 2025-03-31]
