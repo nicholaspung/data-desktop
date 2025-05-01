@@ -17,6 +17,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface OnboardingStep {
   title: string;
@@ -165,46 +166,54 @@ export default function OnboardingModal() {
     <ReusableDialog
       title=""
       customContent={
-        <div className="space-y-6 py-4">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              {currentStepData.icon}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <ScrollArea className="flex-1 pr-3">
+            <div className="space-y-6 py-4">
+              <div className="text-center">
+                <div className="flex justify-center mb-4">
+                  {currentStepData.icon}
+                </div>
+                <h2 className="text-2xl font-bold mb-2">
+                  {currentStepData.title}
+                </h2>
+                <p className="text-muted-foreground mb-4">
+                  {currentStepData.description}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-center">
+                  Key Features:
+                </h3>
+                <ul className="space-y-2">
+                  {currentStepData.features.map((feature, index) => (
+                    <li key={index} className="flex items-start text-sm">
+                      <ChartLine className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex justify-center gap-1">
+                {ONBOARDING_STEPS.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2 w-2 rounded-full transition-colors ${
+                      index === currentStep ? "bg-primary" : "bg-muted"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">{currentStepData.title}</h2>
-            <p className="text-muted-foreground mb-4">
-              {currentStepData.description}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm text-center">Key Features:</h3>
-            <ul className="space-y-2">
-              {currentStepData.features.map((feature, index) => (
-                <li key={index} className="flex items-start text-sm">
-                  <ChartLine className="h-4 w-4 text-primary mr-2 mt-0.5 flex-shrink-0" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="flex justify-center gap-1">
-            {ONBOARDING_STEPS.map((_, index) => (
-              <div
-                key={index}
-                className={`h-2 w-2 rounded-full transition-colors ${
-                  index === currentStep ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
+          </ScrollArea>
         </div>
       }
       open={showOnboarding}
       onOpenChange={setShowOnboarding}
       showTrigger={false}
       customFooter={
-        <div className="flex justify-between w-full">
+        <div className="flex justify-between w-full mt-4">
           <div>
             {currentStep > 0 && (
               <Button
@@ -234,7 +243,7 @@ export default function OnboardingModal() {
           </div>
         </div>
       }
-      contentClassName="sm:max-w-[600px]"
+      contentClassName="sm:max-w-[600px] h-[80vh] max-h-[600px] flex flex-col"
     />
   );
 }

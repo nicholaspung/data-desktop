@@ -61,10 +61,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- fixed MacOS build problems - currently database is not connected
+- fixed MacOS build problems - currently database is not connected [DONE 2025-04-30]
+- in onboarding modal, need to make a minimum height and then it will scroll if too small, maybe this is just a reusable-dialog thing [DONE 2025-04-30]
+- for quick metric logger, on a calendar, allow the user to select however many metrics, also display metirc names with their description, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric (if a user passes a few metrics props in, it will default show those, otherwise, a user will be shown no metrics and they have to select) [DONE 2025-04-30]
 
-- in onboarding modal, need to make a minimum height and then it will scroll if too small, maybe this is just a reusable-dialog thing
-- for quick metric logger, on a calendar, allow the user to select however many metrics, also display metirc names with their description, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric (if a user passes a few metrics props in, it will default show those, otherwise, a user will be shown no metrics and they have to select)
 - add this into the experiment daily logs view
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
 

@@ -16,6 +16,7 @@ import {
   ClipboardCheck,
   BookOpen,
   Clock,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,11 @@ const sidebarItems: SidebarItem[] = [
     title: "Quick Metric Logger",
     icon: <ClipboardCheck className="h-5 w-5" />,
     href: "/metric",
+  },
+  {
+    title: "Metric Calendar",
+    icon: <Calendar className="h-5 w-5" />,
+    href: "/metric-calendar",
   },
   {
     title: "Experiments",

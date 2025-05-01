@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as TimeTrackerImport } from './routes/time-tracker'
+import { Route as MetricCalendarImport } from './routes/metric-calendar'
 import { Route as MetricImport } from './routes/metric'
 import { Route as JournalingImport } from './routes/journaling'
 import { Route as ExperimentsImport } from './routes/experiments'
@@ -27,6 +28,12 @@ import { Route as IndexImport } from './routes/index'
 const TimeTrackerRoute = TimeTrackerImport.update({
   id: '/time-tracker',
   path: '/time-tracker',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const MetricCalendarRoute = MetricCalendarImport.update({
+  id: '/metric-calendar',
+  path: '/metric-calendar',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -151,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricImport
       parentRoute: typeof rootRoute
     }
+    '/metric-calendar': {
+      id: '/metric-calendar'
+      path: '/metric-calendar'
+      fullPath: '/metric-calendar'
+      preLoaderRoute: typeof MetricCalendarImport
+      parentRoute: typeof rootRoute
+    }
     '/time-tracker': {
       id: '/time-tracker'
       path: '/time-tracker'
@@ -173,6 +187,7 @@ export interface FileRoutesByFullPath {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/metric-calendar': typeof MetricCalendarRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
 
@@ -186,6 +201,7 @@ export interface FileRoutesByTo {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/metric-calendar': typeof MetricCalendarRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
 
@@ -200,6 +216,7 @@ export interface FileRoutesById {
   '/experiments': typeof ExperimentsRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
+  '/metric-calendar': typeof MetricCalendarRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
 
@@ -215,6 +232,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/metric-calendar'
     | '/time-tracker'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -227,6 +245,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/metric-calendar'
     | '/time-tracker'
   id:
     | '__root__'
@@ -239,6 +258,7 @@ export interface FileRouteTypes {
     | '/experiments'
     | '/journaling'
     | '/metric'
+    | '/metric-calendar'
     | '/time-tracker'
   fileRoutesById: FileRoutesById
 }
@@ -253,6 +273,7 @@ export interface RootRouteChildren {
   ExperimentsRoute: typeof ExperimentsRoute
   JournalingRoute: typeof JournalingRoute
   MetricRoute: typeof MetricRoute
+  MetricCalendarRoute: typeof MetricCalendarRoute
   TimeTrackerRoute: typeof TimeTrackerRoute
 }
 
@@ -266,6 +287,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExperimentsRoute: ExperimentsRoute,
   JournalingRoute: JournalingRoute,
   MetricRoute: MetricRoute,
+  MetricCalendarRoute: MetricCalendarRoute,
   TimeTrackerRoute: TimeTrackerRoute,
 }
 
@@ -288,6 +310,7 @@ export const routeTree = rootRoute
         "/experiments",
         "/journaling",
         "/metric",
+        "/metric-calendar",
         "/time-tracker"
       ]
     },
@@ -317,6 +340,9 @@ export const routeTree = rootRoute
     },
     "/metric": {
       "filePath": "metric.tsx"
+    },
+    "/metric-calendar": {
+      "filePath": "metric-calendar.tsx"
     },
     "/time-tracker": {
       "filePath": "time-tracker.tsx"
