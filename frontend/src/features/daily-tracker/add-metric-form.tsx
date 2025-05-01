@@ -59,16 +59,16 @@ export default function AddMetricForm({
 
   // Schedule fields
   const [scheduleFrequency, setScheduleFrequency] = useState<
-    "daily" | "weekly" | "custom"
+    "daily" | "weekly" | "interval" | "custom"
   >((metric?.schedule_frequency as any) || "daily");
   const [scheduleStartDate, setScheduleStartDate] = useState<string>(
     metric?.schedule_start_date
-      ? new Date(metric.schedule_start_date).toISOString().split("T")[0]
+      ? new Date(metric.schedule_start_date).toLocaleDateString("en-CA") // YYYY-MM-DD format
       : ""
   );
   const [scheduleEndDate, setScheduleEndDate] = useState<string>(
     metric?.schedule_end_date
-      ? new Date(metric.schedule_end_date).toISOString().split("T")[0]
+      ? new Date(metric.schedule_end_date).toLocaleDateString("en-CA") // YYYY-MM-DD format
       : ""
   );
   const [scheduleDays, setScheduleDays] = useState<string[]>(
@@ -125,6 +125,13 @@ export default function AddMetricForm({
         !!metric?.schedule_end_date ||
         (Array.isArray(metric?.schedule_days) &&
           metric.schedule_days.length > 0))
+  );
+
+  const [scheduleIntervalValue, setScheduleIntervalValue] = useState<number>(
+    metric?.schedule_interval_value || 1
+  );
+  const [scheduleIntervalUnit, setScheduleIntervalUnit] = useState<string>(
+    metric?.schedule_interval_unit || "days"
   );
 
   // Format category options for autocomplete
@@ -277,6 +284,14 @@ export default function AddMetricForm({
         active,
         private: isPrivate,
         schedule_frequency: showSchedulingOptions ? scheduleFrequency : null,
+        schedule_interval_value:
+          showSchedulingOptions && scheduleFrequency === "interval"
+            ? scheduleIntervalValue
+            : null,
+        schedule_interval_unit:
+          showSchedulingOptions && scheduleFrequency === "interval"
+            ? scheduleIntervalUnit
+            : null,
         schedule_start_date:
           showSchedulingOptions && scheduleStartDate
             ? new Date(
@@ -311,6 +326,7 @@ export default function AddMetricForm({
         });
 
         if (response) {
+          console.log("Metric updated successfully:", response);
           updateEntry(metric.id, response, "metrics");
           toast.success("Metric updated successfully");
         }
@@ -711,6 +727,7 @@ export default function AddMetricForm({
                       options={[
                         { id: "daily", label: "Daily" },
                         { id: "weekly", label: "Weekly" },
+                        { id: "interval", label: "Interval" },
                         { id: "custom", label: "Custom" },
                       ]}
                     />
@@ -733,6 +750,36 @@ export default function AddMetricForm({
                         ]}
                         placeholder="Select days..."
                       />
+                    </div>
+                  )}
+
+                  {scheduleFrequency === "interval" && (
+                    <div className="flex items-end gap-4">
+                      <div className="space-y-2 flex-1">
+                        <Label htmlFor="scheduleIntervalValue">Every</Label>
+                        <Input
+                          id="scheduleIntervalValue"
+                          type="number"
+                          min="1"
+                          value={scheduleIntervalValue}
+                          onChange={(e) =>
+                            setScheduleIntervalValue(parseInt(e.target.value))
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2 flex-1">
+                        <Label htmlFor="scheduleIntervalUnit">Unit</Label>
+                        <ReusableSelect
+                          value={scheduleIntervalUnit}
+                          onChange={(value) => setScheduleIntervalUnit(value)}
+                          title="unit"
+                          options={[
+                            { id: "days", label: "Days" },
+                            { id: "weeks", label: "Weeks" },
+                            { id: "months", label: "Months" },
+                          ]}
+                        />
+                      </div>
                     </div>
                   )}
 

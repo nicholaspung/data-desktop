@@ -1,6 +1,15 @@
 // src/features/experiments/schedule-utils.ts
 import { Metric } from "@/store/experiment-definitions";
-import { isBefore, isAfter, isSameDay } from "date-fns";
+import {
+  isBefore,
+  isAfter,
+  isSameDay,
+  differenceInDays,
+  differenceInWeeks,
+  addWeeks,
+  differenceInMonths,
+  addMonths,
+} from "date-fns";
 
 /**
  * Checks if a metric is scheduled to be shown on a given date
@@ -16,9 +25,10 @@ export function isMetricScheduledForDate(metric: Metric, date: Date): boolean {
     return true;
   }
 
+  let startDate: Date | null = null;
   // Check if date is within the schedule's date range
   if (metric.schedule_start_date) {
-    const startDate = new Date(metric.schedule_start_date);
+    startDate = new Date(metric.schedule_start_date);
     if (isBefore(date, startDate) && !isSameDay(date, startDate)) {
       return false;
     }
@@ -31,37 +41,78 @@ export function isMetricScheduledForDate(metric: Metric, date: Date): boolean {
     }
   }
 
-  // Check if the metric should appear on this day of the week
-  if (metric.schedule_days && metric.schedule_days.length > 0) {
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-    if (!metric.schedule_days.includes(dayOfWeek)) {
+  const intervalValue = metric.schedule_interval_value || 1;
+  const intervalUnit = metric.schedule_interval_unit || "days";
+
+  // Check frequency type
+  switch (metric.schedule_frequency) {
+    case "daily":
+      return true;
+
+    case "weekly":
+      // Weekly scheduling: check day of week
+      if (metric.schedule_days && metric.schedule_days.length > 0) {
+        const dayOfWeek = date.getDay();
+        return metric.schedule_days.includes(dayOfWeek);
+      }
+      return true;
+
+    case "interval":
+      // Interval-based scheduling
+      if (
+        !metric.schedule_start_date ||
+        !metric.schedule_interval_value ||
+        !startDate
+      ) {
+        return false;
+      }
+
+      // Calculate if this date matches the interval pattern
+      switch (intervalUnit) {
+        case "days": {
+          // For day-based intervals, we check if the number of days since start
+          // is divisible by the interval value
+          const diffDays = differenceInDays(date, startDate);
+          return diffDays >= 0 && diffDays % intervalValue === 0;
+        }
+        case "weeks": {
+          // For week-based intervals
+          const diffWeeks = differenceInWeeks(date, startDate);
+          return (
+            diffWeeks >= 0 &&
+            diffWeeks % intervalValue === 0 &&
+            isSameDay(date, addWeeks(startDate, diffWeeks))
+          );
+        }
+        case "months": {
+          // For month-based intervals
+          const diffMonths = differenceInMonths(date, startDate);
+          return (
+            diffMonths >= 0 &&
+            diffMonths % intervalValue === 0 &&
+            isSameDay(date, addMonths(startDate, diffMonths))
+          );
+        }
+        default:
+          return false;
+      }
+
+    case "custom":
+      // Custom scheduling: check specific days
+      if (metric.schedule_days && metric.schedule_days.length > 0) {
+        const dayOfWeek = date.getDay();
+        return metric.schedule_days.includes(dayOfWeek);
+      }
       return false;
-    }
+
+    default:
+      // If no frequency specified but we have schedule_days, use those
+      if (metric.schedule_days && metric.schedule_days.length > 0) {
+        const dayOfWeek = date.getDay();
+        return metric.schedule_days.includes(dayOfWeek);
+      }
+      return true;
   }
-
-  // Add more complex scheduling logic based on frequency
-  if (metric.schedule_frequency === "weekly") {
-    // For weekly, we'd need additional data like which week the metric should appear
-    // This is just a simple implementation
-    const weekNumber = getWeekNumber(date);
-    return weekNumber % 2 === 0; // Show on even weeks
-  }
-
-  // For daily or unspecified frequency, show the metric if it passed the other checks
-  return true;
-}
-
-/**
- * Gets the ISO week number of a date
- */
-function getWeekNumber(date: Date): number {
-  const d = new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  );
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
 /**

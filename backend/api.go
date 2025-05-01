@@ -227,7 +227,40 @@ func (a *App) GetRecord(id string) (map[string]interface{}, error) {
 	return data, nil
 }
 
-// AddRecord adds a new record
+func (a *App) updateMetricLastOccurrence(metricID string, logDate time.Time) error {
+	// First, get the metric record
+	metricRecord, err := database.GetDataRecord(metricID)
+	if err != nil {
+		return err
+	}
+
+	// Parse the metric data
+	var metricData map[string]interface{}
+	err = json.Unmarshal(metricRecord.Data, &metricData)
+	if err != nil {
+		return err
+	}
+
+	// Check if this is an interval-based metric
+	frequency, _ := metricData["schedule_frequency"].(string)
+	if frequency != "interval" {
+		return nil // Not an interval metric, nothing to update
+	}
+
+	// Update the last occurrence date
+	metricData["schedule_last_occurrence"] = logDate.Format(time.RFC3339)
+
+	// Save the updated metric
+	updatedData, err := json.Marshal(metricData)
+	if err != nil {
+		return err
+	}
+
+	metricRecord.Data = updatedData
+	return database.UpdateDataRecord(metricRecord)
+}
+
+// Now modify the AddRecord method to handle daily logs specifically
 func (a *App) AddRecord(datasetID string, data string) (map[string]interface{}, error) {
 	// Validate the dataset exists
 	_, err := database.GetDataset(datasetID)
@@ -247,11 +280,43 @@ func (a *App) AddRecord(datasetID string, data string) (map[string]interface{}, 
 		return nil, err
 	}
 
+	// Special handling for daily logs to update the metric's last occurrence
+	if datasetID == "daily_logs" {
+		// Parse the log data
+		var logData map[string]interface{}
+		err = json.Unmarshal(record.Data, &logData)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if this log has a metric_id
+		if metricID, ok := logData["metric_id"].(string); ok {
+			// Parse the log date
+			var logDate time.Time
+			if dateStr, ok := logData["date"].(string); ok {
+				logDate, err = time.Parse(time.RFC3339, dateStr)
+				if err != nil {
+					// Try other date formats
+					logDate, err = time.Parse("2006-01-02", dateStr)
+					if err != nil {
+						// Just use current time if we can't parse the date
+						logDate = time.Now()
+					}
+				}
+			} else {
+				logDate = time.Now()
+			}
+
+			// Update the metric's last occurrence
+			a.updateMetricLastOccurrence(metricID, logDate)
+		}
+	}
+
 	// Return the record with metadata
 	return a.GetRecord(record.ID)
 }
 
-// UpdateRecord updates an existing record
+// Similarly update the UpdateRecord method
 func (a *App) UpdateRecord(id string, data string) (map[string]interface{}, error) {
 	// Get the existing record
 	record, err := database.GetDataRecord(id)
@@ -265,6 +330,38 @@ func (a *App) UpdateRecord(id string, data string) (map[string]interface{}, erro
 	err = database.UpdateDataRecord(record)
 	if err != nil {
 		return nil, err
+	}
+
+	// Special handling for daily logs to update the metric's last occurrence
+	if record.DatasetID == "daily_logs" {
+		// Parse the log data
+		var logData map[string]interface{}
+		err = json.Unmarshal(record.Data, &logData)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if this log has a metric_id
+		if metricID, ok := logData["metric_id"].(string); ok {
+			// Parse the log date
+			var logDate time.Time
+			if dateStr, ok := logData["date"].(string); ok {
+				logDate, err = time.Parse(time.RFC3339, dateStr)
+				if err != nil {
+					// Try other date formats
+					logDate, err = time.Parse("2006-01-02", dateStr)
+					if err != nil {
+						// Just use current time if we can't parse the date
+						logDate = time.Now()
+					}
+				}
+			} else {
+				logDate = time.Now()
+			}
+
+			// Update the metric's last occurrence
+			a.updateMetricLastOccurrence(metricID, logDate)
+		}
 	}
 
 	// Return the updated record

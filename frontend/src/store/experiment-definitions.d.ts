@@ -40,7 +40,11 @@ export interface Metric {
   schedule_start_date?: Date | null; // When to start showing this metric
   schedule_end_date?: Date | null; // When to stop showing this metric
   schedule_days?: number[]; // Days of week to show (0=Sunday, 6=Saturday)
-  schedule_frequency?: "daily" | "weekly" | "custom"; // How often to show
+  schedule_frequency?: "daily" | "weekly" | "interval" | "custom"; // How often to show
+  // New interval scheduling fields
+  schedule_interval_value?: number;
+  schedule_interval_unit?: "days" | "weeks" | "months";
+  schedule_last_occurrence?: Date | null;
 }
 
 // Enum for metric types

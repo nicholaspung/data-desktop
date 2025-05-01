@@ -67,7 +67,6 @@ func GetExperimentFields() []database.FieldDefinition {
 	}
 }
 
-// GetMetricFields returns the field definitions for the Metric dataset
 func GetMetricFields() []database.FieldDefinition {
 	return []database.FieldDefinition{
 		{
@@ -148,7 +147,29 @@ func GetMetricFields() []database.FieldDefinition {
 			Key:         "schedule_frequency",
 			Type:        database.FieldTypeText,
 			DisplayName: "Frequency",
-			Description: "How often to show this metric (daily, weekly, custom)",
+			Description: "How often to show this metric (daily, weekly, interval, custom)",
+			IsOptional:  true,
+		},
+		// New interval scheduling fields
+		{
+			Key:         "schedule_interval_value",
+			Type:        database.FieldTypeNumber,
+			DisplayName: "Interval Value",
+			Description: "Number value for custom interval (e.g., every 3 days/weeks/months)",
+			IsOptional:  true,
+		},
+		{
+			Key:         "schedule_interval_unit",
+			Type:        database.FieldTypeText,
+			DisplayName: "Interval Unit",
+			Description: "Unit for custom interval (days, weeks, months)",
+			IsOptional:  true,
+		},
+		{
+			Key:         "schedule_last_occurrence",
+			Type:        database.FieldTypeDate,
+			DisplayName: "Last Occurrence",
+			Description: "Date when this metric was last shown (for interval calculations)",
 			IsOptional:  true,
 		},
 		{

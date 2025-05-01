@@ -44,10 +44,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 - low priority bug: make the markdown CSS better looking
 
-- see why the line chart doesn't show the x data for the one right next to the last x data description
 - make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
 - add a way to enable/disable certain features from showing
-- add a way to select the database you want to use
 - update icons for the datasets
 - add a way to minimize/maximize/reset the view for the application
 - fixed the <div> cannot be a child of <p> error from React
@@ -60,8 +58,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
 ### IN PROGRESS
-
-- in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
 
 ### DONE
 
@@ -264,5 +260,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in onboarding modal, need to make a minimum height and then it will scroll if too small, maybe this is just a reusable-dialog thing [DONE 2025-04-30]
 - for quick metric logger, on a calendar, allow the user to select however many metrics, also display metirc names with their description, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric (if a user passes a few metrics props in, it will default show those, otherwise, a user will be shown no metrics and they have to select) [DONE 2025-04-30]
 - add this into the experiment daily logs view [DONE 2025-04-30]
+- in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date [DONE 2025-04-30]
 
 ### GAVE UP
+
+- see why the line chart doesn't show the x data for the one right next to the last x data description
+- add a way to select the database you want to use
