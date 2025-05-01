@@ -5,7 +5,13 @@ import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import TimePicker from "./time-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CategoryPicker from "./category-picker";
 
 interface EditTimeBlockDialogProps {
@@ -23,32 +29,41 @@ export default function EditTimeBlockDialog({
 }: EditTimeBlockDialogProps) {
   const [title, setTitle] = useState(timeBlock.title);
   const [description, setDescription] = useState(timeBlock.description || "");
-  const [startTime, setStartTime] = useState<Date>(timeBlock.startTime);
-  const [endTime, setEndTime] = useState<Date>(timeBlock.endTime);
+  const [dayOfWeek, setDayOfWeek] = useState<number>(timeBlock.dayOfWeek);
+  const [startHour, setStartHour] = useState<number>(timeBlock.startHour);
+  const [startMinute, setStartMinute] = useState<number>(timeBlock.startMinute);
+  const [endHour, setEndHour] = useState<number>(timeBlock.endHour);
+  const [endMinute, setEndMinute] = useState<number>(timeBlock.endMinute);
   const [category, setCategory] = useState(timeBlock.category);
   const [color, setColor] = useState(timeBlock.color || "#3b82f6");
 
-  // Reset form when dialog opens or timeBlock changes
+  // Reset form and set default values when dialog opens or timeBlock changes
   useEffect(() => {
     if (open) {
       setTitle(timeBlock.title);
       setDescription(timeBlock.description || "");
-      setStartTime(timeBlock.startTime);
-      setEndTime(timeBlock.endTime);
+      setDayOfWeek(timeBlock.dayOfWeek);
+      setStartHour(timeBlock.startHour);
+      setStartMinute(timeBlock.startMinute);
+      setEndHour(timeBlock.endHour);
+      setEndMinute(timeBlock.endMinute);
       setCategory(timeBlock.category);
       setColor(timeBlock.color || "#3b82f6");
     }
   }, [open, timeBlock]);
 
   const handleSubmit = () => {
-    if (!title || !startTime || !endTime || !category) return;
+    if (!title || !category) return;
 
     const updatedBlock: TimeBlock = {
       ...timeBlock,
       title,
       description: description || undefined,
-      startTime,
-      endTime,
+      dayOfWeek,
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
       category,
       color,
     };
@@ -56,9 +71,36 @@ export default function EditTimeBlockDialog({
     onUpdateBlock(updatedBlock);
   };
 
-  const handleSelectCategory = (catName: string, catColor: string) => {
+  const handleSelectCategory = (
+    catId: string,
+    catName: string,
+    catColor: string
+  ) => {
     setCategory(catName);
     setColor(catColor);
+  };
+
+  // Generate hours for select options
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+
+  // Generate minutes for select options (every 15 minutes)
+  const minutes = [0, 15, 30, 45];
+
+  const daysOfWeek = [
+    { name: "Monday", value: 1 },
+    { name: "Tuesday", value: 2 },
+    { name: "Wednesday", value: 3 },
+    { name: "Thursday", value: 4 },
+    { name: "Friday", value: 5 },
+    { name: "Saturday", value: 6 },
+    { name: "Sunday", value: 0 },
+  ];
+
+  // Helper function to format hours for display
+  const formatHour = (hour: number) => {
+    const period = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12AM
+    return `${displayHour}:00 ${period}`;
   };
 
   return (
@@ -81,18 +123,108 @@ export default function EditTimeBlockDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="day">Day</Label>
+            <Select
+              value={dayOfWeek.toString()}
+              onValueChange={(value) => setDayOfWeek(Number(value))}
+            >
+              <SelectTrigger id="day">
+                <SelectValue placeholder="Select day" />
+              </SelectTrigger>
+              <SelectContent>
+                {daysOfWeek.map((day) => (
+                  <SelectItem key={day.value} value={day.value.toString()}>
+                    {day.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Start Time</Label>
-              <TimePicker value={startTime} onChange={setStartTime} />
+              <div className="flex space-x-2">
+                <Select
+                  value={startHour.toString()}
+                  onValueChange={(value) => setStartHour(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hour" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem
+                        key={`start-hour-${hour}`}
+                        value={hour.toString()}
+                      >
+                        {formatHour(hour)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={startMinute.toString()}
+                  onValueChange={(value) => setStartMinute(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Minute" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minutes.map((minute) => (
+                      <SelectItem
+                        key={`start-minute-${minute}`}
+                        value={minute.toString()}
+                      >
+                        :{minute.toString().padStart(2, "0")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="space-y-2">
               <Label>End Time</Label>
-              <TimePicker
-                value={endTime}
-                onChange={setEndTime}
-                minTime={startTime}
-              />
+              <div className="flex space-x-2">
+                <Select
+                  value={endHour.toString()}
+                  onValueChange={(value) => setEndHour(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hour" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map((hour) => (
+                      <SelectItem
+                        key={`end-hour-${hour}`}
+                        value={hour.toString()}
+                      >
+                        {formatHour(hour)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={endMinute.toString()}
+                  onValueChange={(value) => setEndMinute(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Minute" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minutes.map((minute) => (
+                      <SelectItem
+                        key={`end-minute-${minute}`}
+                        value={minute.toString()}
+                      >
+                        :{minute.toString().padStart(2, "0")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

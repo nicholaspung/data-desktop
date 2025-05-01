@@ -3,8 +3,11 @@ export interface TimeBlock {
   id: string;
   title: string;
   description?: string;
-  startTime: Date;
-  endTime: Date;
+  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  startHour: number; // Hours in 24-hour format
+  startMinute: number; // Minutes
+  endHour: number; // Hours in 24-hour format
+  endMinute: number; // Minutes
   category: string;
   color?: string;
 }

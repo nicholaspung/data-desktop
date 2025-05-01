@@ -60,6 +60,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - time planner component to help a user plan out their week
+- add a way to save the time block entries according to the date/time it was created in the backend
+
 - the wails dev/prod doesn't seem to be creating different databases
 
 ### DONE

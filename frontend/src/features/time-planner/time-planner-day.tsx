@@ -1,6 +1,5 @@
 // src/features/time-planner/time-planner-day.tsx
 import { useState } from "react";
-import { format, differenceInMinutes, isSameDay } from "date-fns";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { TimeBlock } from "./types";
 import { Button } from "@/components/ui/button";
@@ -13,15 +12,15 @@ import {
 import EditTimeBlockDialog from "./edit-time-block-dialog";
 
 interface TimePlannerDayProps {
-  date: Date;
+  dayIndex: number;
   timeBlocks: TimeBlock[];
   onEdit: (oldBlock: TimeBlock, newBlock: TimeBlock) => void;
   onDelete: (block: TimeBlock) => void;
-  onAddBlock?: (date: Date) => void;
+  onAddBlock?: (dayIndex: number) => void;
 }
 
 export default function TimePlannerDay({
-  date,
+  dayIndex,
   timeBlocks,
   onEdit,
   onDelete,
@@ -30,16 +29,15 @@ export default function TimePlannerDay({
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  // Filter blocks to ensure they belong to this date
-  // (Although timeBlocks should already be filtered by the parent)
-  const dateBlocks = timeBlocks.filter((block) =>
-    isSameDay(block.startTime, date)
-  );
-
   // Sort blocks by start time
-  const sortedBlocks = [...dateBlocks].sort(
-    (a, b) => a.startTime.getTime() - b.startTime.getTime()
-  );
+  const sortedBlocks = [...timeBlocks].sort((a, b) => {
+    // Compare hours first
+    if (a.startHour !== b.startHour) {
+      return a.startHour - b.startHour;
+    }
+    // If hours are the same, compare minutes
+    return a.startMinute - b.startMinute;
+  });
 
   const handleOpenEdit = (block: TimeBlock) => {
     setEditingBlock(block);
@@ -54,17 +52,34 @@ export default function TimePlannerDay({
     }
   };
 
+  const formatTime = (hour: number, minute: number) => {
+    // Convert 24-hour to 12-hour format with AM/PM
+    const period = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12AM
+    const displayMinute = minute.toString().padStart(2, "0");
+    return `${displayHour}:${displayMinute} ${period}`;
+  };
+
   const getDurationText = (block: TimeBlock) => {
-    const minutes = differenceInMinutes(block.endTime, block.startTime);
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
+    // Calculate duration in minutes
+    const startMinutes = block.startHour * 60 + block.startMinute;
+    const endMinutes = block.endHour * 60 + block.endMinute;
+    let duration = endMinutes - startMinutes;
+
+    // Handle duration that crosses midnight
+    if (duration < 0) {
+      duration += 24 * 60;
+    }
+
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
 
     if (hours === 0) {
       return `${minutes}m`;
-    } else if (remainingMinutes === 0) {
+    } else if (minutes === 0) {
       return `${hours}h`;
     } else {
-      return `${hours}h ${remainingMinutes}m`;
+      return `${hours}h ${minutes}m`;
     }
   };
 
@@ -76,7 +91,7 @@ export default function TimePlannerDay({
             variant="ghost"
             size="sm"
             className="mt-2"
-            onClick={() => onAddBlock(date)}
+            onClick={() => onAddBlock(dayIndex)}
           >
             <PlusCircle className="h-4 w-4 mr-1" />
             Add Time Block
@@ -101,8 +116,8 @@ export default function TimePlannerDay({
             <div className="space-y-1 pr-8">
               <h4 className="font-medium text-sm">{block.title}</h4>
               <div className="text-xs text-muted-foreground">
-                {format(block.startTime, "h:mm a")} -{" "}
-                {format(block.endTime, "h:mm a")}
+                {formatTime(block.startHour, block.startMinute)} -{" "}
+                {formatTime(block.endHour, block.endMinute)}
                 <span className="mx-1">•</span>
                 {getDurationText(block)}
               </div>

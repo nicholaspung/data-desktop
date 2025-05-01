@@ -1,35 +1,59 @@
 // src/features/time-planner/add-time-block-dialog.tsx
 import { useState, useEffect } from "react";
-import { setHours, setMinutes, addHours } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import { TimeBlock } from "./types";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import TimePicker from "./time-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CategoryPicker from "./category-picker";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AddTimeBlockDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddBlock: (block: TimeBlock) => void;
-  selectedDate: Date | null;
+  selectedDay: number | null;
 }
+
+// Create an array of time options in 15-minute increments
+const generateTimeOptions = () => {
+  const options = [];
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const formattedHour = hour % 12 || 12; // Convert 0 to 12 for 12AM
+      const period = hour >= 12 ? "PM" : "AM";
+      const formattedMinute = minute.toString().padStart(2, "0");
+
+      const display = `${formattedHour}:${formattedMinute} ${period}`;
+      const value = `${hour}:${minute}`; // Store as 24-hour format for processing
+
+      options.push({ display, value });
+    }
+  }
+  return options;
+};
+
+const TIME_OPTIONS = generateTimeOptions();
 
 export default function AddTimeBlockDialog({
   open,
   onOpenChange,
   onAddBlock,
-  selectedDate,
+  selectedDay,
 }: AddTimeBlockDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [startTime, setStartTime] = useState<Date>(new Date());
-  const [endTime, setEndTime] = useState<Date>(new Date());
+  const [dayOfWeek, setDayOfWeek] = useState<number>(1); // Monday as default
+  const [startTime, setStartTime] = useState<string>("9:0"); // Default to 9:00 AM
+  const [endTime, setEndTime] = useState<string>("10:0"); // Default to 10:00 AM
   const [category, setCategory] = useState("");
   const [color, setColor] = useState("#3b82f6"); // Default blue color
 
@@ -39,51 +63,23 @@ export default function AddTimeBlockDialog({
     category?: string;
     time?: string;
   }>({});
-  const [showValidation, setShowValidation] = useState(false);
 
-  // Reset form when dialog opens
+  // Reset form and set default values when dialog opens
   useEffect(() => {
-    if (open && selectedDate) {
-      // Reset all form fields
+    if (open) {
       setTitle("");
       setDescription("");
+      setDayOfWeek(selectedDay !== null ? selectedDay : 1);
+      setStartTime("9:0");
+      setEndTime("10:0");
       setCategory("");
       setColor("#3b82f6");
       setErrors({});
-      setShowValidation(false);
-
-      // Create a new date based on the selected date, but keep time at current or default 9am
-      const now = new Date();
-      // Use the selected date, but with the current time
-      const baseDate = new Date(
-        selectedDate.getFullYear(),
-        selectedDate.getMonth(),
-        selectedDate.getDate(),
-        now.getHours(),
-        now.getMinutes()
-      );
-
-      // If it's before 9am or after 5pm, default to 9am
-      const hour = baseDate.getHours();
-      if (hour < 9 || hour > 17) {
-        const defaultStart = setMinutes(setHours(baseDate, 9), 0); // 9:00 AM
-        setStartTime(defaultStart);
-        setEndTime(addHours(defaultStart, 1)); // 1 hour later
-      } else {
-        // Otherwise use the current time
-        setStartTime(baseDate);
-        setEndTime(addHours(baseDate, 1)); // 1 hour later
-      }
     }
-  }, [open, selectedDate]);
+  }, [open, selectedDay]);
 
-  // Validate form
   const validateForm = () => {
-    const newErrors: {
-      title?: string;
-      category?: string;
-      time?: string;
-    } = {};
+    const newErrors: { title?: string; category?: string; time?: string } = {};
 
     if (!title.trim()) {
       newErrors.title = "Title is required";
@@ -93,29 +89,39 @@ export default function AddTimeBlockDialog({
       newErrors.category = "Category is required";
     }
 
-    if (!startTime || !endTime) {
-      newErrors.time = "Start and end times are required";
-    } else if (startTime >= endTime) {
+    // Parse time values
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+
+    // Calculate total minutes for comparison
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+
+    // Check if end time is before start time (without crossing midnight)
+    if (endTotalMinutes <= startTotalMinutes && !(endHour < startHour)) {
       newErrors.time = "End time must be after start time";
     }
 
     setErrors(newErrors);
-    setShowValidation(true);
-
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+
+    // Parse time values
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
 
     const newBlock: TimeBlock = {
       id: uuidv4(),
       title,
       description: description || undefined,
-      startTime,
-      endTime,
+      dayOfWeek,
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
       category,
       color,
     };
@@ -123,20 +129,40 @@ export default function AddTimeBlockDialog({
     onAddBlock(newBlock);
   };
 
-  const handleSelectCategory = (id: string, name: string, color: string) => {
-    setCategory(name);
-    setColor(color);
-    if (showValidation && errors.category) {
-      setErrors((prev) => ({ ...prev, category: undefined }));
-    }
+  const handleSelectCategory = (
+    catId: string,
+    catName: string,
+    catColor: string
+  ) => {
+    setCategory(catName);
+    setColor(catColor);
+    // Clear category error when selected
+    setErrors((prev) => ({ ...prev, category: undefined }));
   };
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    if (showValidation && errors.title && e.target.value.trim()) {
-      setErrors((prev) => ({ ...prev, title: undefined }));
-    }
+  // Helper function to check if end time is after start time
+  const isEndTimeValid = (start: string, end: string) => {
+    const [startHour, startMinute] = start.split(":").map(Number);
+    const [endHour, endMinute] = end.split(":").map(Number);
+
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+
+    // Allow crossing midnight (e.g., 11 PM to 1 AM)
+    if (endHour < startHour) return true;
+
+    return endTotalMinutes > startTotalMinutes;
   };
+
+  const daysOfWeek = [
+    { name: "Monday", value: 1 },
+    { name: "Tuesday", value: 2 },
+    { name: "Wednesday", value: 3 },
+    { name: "Thursday", value: 4 },
+    { name: "Friday", value: 5 },
+    { name: "Saturday", value: 6 },
+    { name: "Sunday", value: 0 },
+  ];
 
   return (
     <ReusableDialog
@@ -151,99 +177,150 @@ export default function AddTimeBlockDialog({
       customContent={
         <ScrollArea className="max-h-[60vh] pr-3 overflow-y-auto">
           <div className="space-y-4 py-4">
-            {showValidation && Object.keys(errors).length > 0 && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Please fix the following errors:
-                  <ul className="mt-2 list-disc list-inside">
-                    {errors.title && <li>{errors.title}</li>}
-                    {errors.category && <li>{errors.category}</li>}
-                    {errors.time && <li>{errors.time}</li>}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-
             <div className="space-y-2">
-              <Label htmlFor="title" className="flex items-center">
-                Title
-                {errors.title && showValidation && (
-                  <span className="text-destructive ml-1 text-sm">*</span>
-                )}
+              <Label
+                htmlFor="title"
+                className={errors.title ? "text-destructive" : ""}
+              >
+                Title{" "}
+                {errors.title && <span className="text-destructive">*</span>}
               </Label>
               <Input
                 id="title"
                 placeholder="Meeting, Work, Exercise, etc."
                 value={title}
-                onChange={handleTitleChange}
-                className={
-                  errors.title && showValidation ? "border-destructive" : ""
-                }
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (e.target.value.trim()) {
+                    setErrors((prev) => ({ ...prev, title: undefined }));
+                  }
+                }}
+                className={errors.title ? "border-destructive" : ""}
               />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="day">Day</Label>
+              <Select
+                value={dayOfWeek.toString()}
+                onValueChange={(value) => setDayOfWeek(Number(value))}
+              >
+                <SelectTrigger id="day">
+                  <SelectValue placeholder="Select day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {daysOfWeek.map((day) => (
+                    <SelectItem key={day.value} value={day.value.toString()}>
+                      {day.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label
-                  className={
-                    errors.time && showValidation ? "text-destructive" : ""
-                  }
+                  htmlFor="start-time"
+                  className={errors.time ? "text-destructive" : ""}
                 >
                   Start Time
-                  {errors.time && showValidation && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
                 </Label>
-                <TimePicker
+                <Select
                   value={startTime}
-                  onChange={(date) => {
-                    setStartTime(date);
-                    if (showValidation && errors.time && date < endTime) {
+                  onValueChange={(value) => {
+                    setStartTime(value);
+                    // Clear time error if the new selection is valid
+                    if (isEndTimeValid(value, endTime)) {
                       setErrors((prev) => ({ ...prev, time: undefined }));
+                    } else {
+                      setErrors((prev) => ({
+                        ...prev,
+                        time: "End time must be after start time",
+                      }));
                     }
                   }}
-                />
+                >
+                  <SelectTrigger
+                    id="start-time"
+                    className={errors.time ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={`start-${option.value}`}
+                        value={option.value}
+                      >
+                        {option.display}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
                 <Label
-                  className={
-                    errors.time && showValidation ? "text-destructive" : ""
-                  }
+                  htmlFor="end-time"
+                  className={errors.time ? "text-destructive" : ""}
                 >
-                  End Time
-                  {errors.time && showValidation && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
+                  End Time{" "}
+                  {errors.time && <span className="text-destructive">*</span>}
                 </Label>
-                <TimePicker
+                <Select
                   value={endTime}
-                  onChange={(date) => {
-                    setEndTime(date);
-                    if (showValidation && errors.time && startTime < date) {
+                  onValueChange={(value) => {
+                    setEndTime(value);
+                    // Clear time error if the new selection is valid
+                    if (isEndTimeValid(startTime, value)) {
                       setErrors((prev) => ({ ...prev, time: undefined }));
+                    } else {
+                      setErrors((prev) => ({
+                        ...prev,
+                        time: "End time must be after start time",
+                      }));
                     }
                   }}
-                  minTime={startTime}
-                />
+                >
+                  <SelectTrigger
+                    id="end-time"
+                    className={errors.time ? "border-destructive" : ""}
+                  >
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={`end-${option.value}`}
+                        value={option.value}
+                      >
+                        {option.display}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.time && (
+                  <p className="text-sm text-destructive">{errors.time}</p>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label
-                className={
-                  errors.category && showValidation ? "text-destructive" : ""
-                }
-              >
-                Category
-                {errors.category && showValidation && (
-                  <span className="text-destructive ml-1">*</span>
-                )}
+              <Label className={errors.category ? "text-destructive" : ""}>
+                Category{" "}
+                {errors.category && <span className="text-destructive">*</span>}
               </Label>
               <CategoryPicker
                 onSelectCategory={handleSelectCategory}
                 selectedCategory={category}
               />
+              {errors.category && (
+                <p className="text-sm text-destructive">{errors.category}</p>
+              )}
             </div>
 
             <div className="space-y-2">
