@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 	"myproject/backend"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -16,6 +17,13 @@ var assets embed.FS
 func main() {
 	// Create an instance of the app
 	app := backend.NewApp()
+
+	// Pass build mode as environment variable
+	if len(os.Args) > 1 && os.Args[1] == "dev" {
+		os.Setenv("BUILD_MODE", "dev")
+	} else {
+		os.Setenv("BUILD_MODE", "production")
+	}
 
 	// Create application with options
 	err := wails.Run(&options.App{

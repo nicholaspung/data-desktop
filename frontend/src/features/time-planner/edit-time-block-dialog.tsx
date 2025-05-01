@@ -71,11 +71,7 @@ export default function EditTimeBlockDialog({
     onUpdateBlock(updatedBlock);
   };
 
-  const handleSelectCategory = (
-    catId: string,
-    catName: string,
-    catColor: string
-  ) => {
+  const handleSelectCategory = (catName: string, catColor: string) => {
     setCategory(catName);
     setColor(catColor);
   };

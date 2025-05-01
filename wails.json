@@ -9,5 +9,12 @@
   "author": {
     "name": "nicholaspung",
     "email": "nicholaspungdev@gmail.com"
+  },
+  "info": {
+    "companyName": "Your Company",
+    "productName": "Data Desktop",
+    "productVersion": "0.0.7",
+    "copyright": "Copyright © 2025",
+    "comments": "Track and visualize your personal data"
   }
 }

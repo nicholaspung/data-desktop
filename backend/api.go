@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,7 +27,6 @@ func NewApp() *App {
 	return &App{}
 }
 
-// Startup is called when the app starts
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
@@ -38,13 +38,32 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	// Define database path based on environment
-	dbPath := filepath.Join(appDir, "DataDesktop.db")
+	var dbPath string
 
-	// For development mode detection
-	if buildMode, ok := ctx.Value("buildMode").(string); ok && buildMode == "dev" {
-		log.Println("Running in development mode")
-		// Use a dev-specific database if desired
-		dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+	// Check if running in development mode by checking the executable path
+	executable, err := os.Executable()
+	if err == nil {
+		executableName := filepath.Base(executable)
+		// In dev mode with 'wails dev', the executable is typically not the final app name
+		// This is a more reliable way to detect dev mode
+		isDev := strings.Contains(executableName, "wails-") || strings.Contains(executableName, "__debug_bin") || os.Getenv("BUILD_MODE") == "dev"
+
+		if isDev {
+			log.Println("Running in development mode (detected via executable name):", executableName)
+			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+		} else {
+			log.Println("Running in production mode with executable:", executableName)
+			dbPath = filepath.Join(appDir, "DataDesktop.db")
+		}
+	} else {
+		// Fallback to just checking environment variable
+		if os.Getenv("BUILD_MODE") == "dev" {
+			log.Println("Running in development mode (detected via environment variable)")
+			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+		} else {
+			log.Println("Running in production mode (fallback)")
+			dbPath = filepath.Join(appDir, "DataDesktop.db")
+		}
 	}
 
 	log.Printf("Using database path: %s", dbPath)

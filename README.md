@@ -25,6 +25,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet is still like a junior engineer that needs help occasionally to make things nice.)
 
+## How to use
+
+- For development, use `wails dev -appargs dev
+  - It will generate a `DataDesktop-dev.db` to use for development mode
+  - WARNING: If you do not use `-appargs dev`, it will use the production database
+
 ## Project management
 
 ### TODOS
