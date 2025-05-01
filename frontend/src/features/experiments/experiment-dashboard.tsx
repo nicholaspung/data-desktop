@@ -1,9 +1,10 @@
+// src/features/experiments/experiment-dashboard.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, isAfter } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
-import { Loader2, Target, BarChart, ListChecks } from "lucide-react";
+import { Loader2, Target, BarChart, Calendar } from "lucide-react";
 import ExperimentMetrics from "./experiment-metrics";
 import ExperimentDashboardProgress from "./experiment-dashboard-progress";
 import ExperimentDashboardHeader from "./experiment-dashboard-header";
@@ -248,16 +249,15 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
             id: "logs",
             label: (
               <span className="flex items-center">
-                <ListChecks className="h-4 w-4 mr-2" />
-                Daily Logs
+                <Calendar className="h-4 w-4 mr-2" />
+                Calendar View
               </span>
             ),
             content: (
               <div className="mt-6">
-                <ExperimentDashboardLogs
-                  dailyLogs={dailyLogs}
-                  metrics={metrics}
-                />
+                {experiment && (
+                  <ExperimentDashboardLogs experiment={experiment} />
+                )}
               </div>
             ),
           },
