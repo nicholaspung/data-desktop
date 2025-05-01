@@ -1,4 +1,4 @@
-// src/components/layout/dashboard-layout.tsx
+// src/components/layout/dashboard-layout.tsx (modified)
 import React, { useState, useEffect } from "react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import {
   Clock,
   Calendar,
   CalendarCheck2,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useStore } from "@tanstack/react-store";
+import settingsStore from "@/store/settings-store";
 
 interface SidebarItem {
   title: string;
@@ -33,7 +36,7 @@ interface SidebarItem {
   href: string;
 }
 
-const sidebarItems: SidebarItem[] = [
+const defaultSidebarItems: SidebarItem[] = [
   {
     title: "Home",
     icon: <Home className="h-5 w-5" />,
@@ -89,6 +92,11 @@ const sidebarItems: SidebarItem[] = [
     icon: <Database className="h-5 w-5" />,
     href: "/dataset",
   },
+  {
+    title: "Settings",
+    icon: <Settings className="h-5 w-5" />,
+    href: "/settings",
+  },
 ];
 
 export default function DashboardLayout({
@@ -102,6 +110,9 @@ export default function DashboardLayout({
 
   // State to track whether sidebar is expanded or collapsed
   const [isExpanded, setIsExpanded] = useState(true);
+
+  // Get visible routes from settings store
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
 
   // Get the saved preference from localStorage on initial load
   useEffect(() => {
@@ -118,8 +129,13 @@ export default function DashboardLayout({
     localStorage.setItem("sidebarExpanded", String(newState));
   };
 
+  // Filter sidebar items based on settings
+  const filteredSidebarItems = defaultSidebarItems.filter(
+    (item) => visibleRoutes[item.href] !== false
+  );
+
   const getFinalSidebarItems = () => {
-    const sidebarItemsCopy = [...sidebarItems];
+    const sidebarItemsCopy = [...filteredSidebarItems];
     if (import.meta.env.DEV) {
       sidebarItemsCopy.push({
         title: "Debugger",
@@ -129,6 +145,7 @@ export default function DashboardLayout({
     }
     return sidebarItemsCopy;
   };
+
   const finalSidebarItems = getFinalSidebarItems();
 
   return (
@@ -239,7 +256,7 @@ export default function DashboardLayout({
           {" "}
           {/* Viewport height minus top header (4rem) minus sidebar header (64px) */}
           <div className="space-y-1 p-2">
-            {sidebarItems.map((item) => (
+            {finalSidebarItems.map((item) => (
               <Link
                 key={`sidebar-item${item.href}`}
                 to={item.href}

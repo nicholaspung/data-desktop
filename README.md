@@ -51,9 +51,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - low priority bug: make the markdown CSS better looking
 
 - make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
-- add a way to enable/disable certain features from showing
-- update icons for the datasets
-- add a way to minimize/maximize/reset the view for the application
 - fixed the <div> cannot be a child of <p> error from React
 
 - add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
@@ -66,6 +63,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - find a better solution when using wails to do dev/prod for the databases
 
 ### IN PROGRESS
+
+- add a way to enable/disable certain features from showing
+- update icons for the datasets
+- add a way to minimize/maximize/reset the view for the application
 
 ### DONE
 
