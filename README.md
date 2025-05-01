@@ -59,10 +59,13 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a "version history note" to the application
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
-
 ### IN PROGRESS
 
-- for quick metric logger, on a calendar, allow the user to select however many metrics, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric
+- fixed MacOS build problems - currently database is not connected
+
+- in onboarding modal, need to make a minimum height and then it will scroll if too small, maybe this is just a reusable-dialog thing
+- for quick metric logger, on a calendar, allow the user to select however many metrics, also display metirc names with their description, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric (if a user passes a few metrics props in, it will default show those, otherwise, a user will be shown no metrics and they have to select)
+- add this into the experiment daily logs view
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date
 
 ### DONE

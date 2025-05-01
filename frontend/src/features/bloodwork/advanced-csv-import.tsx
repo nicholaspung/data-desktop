@@ -283,7 +283,7 @@ export default function BloodworkCSVImport() {
       // Filter out invalid rows if skip is enabled
       const dataToProcess = skipInvalidRows
         ? parsedData.filter(
-            (row, index) =>
+            (_, index) =>
               !validationResult.invalidRows.some(
                 (invalid) => invalid.rowIndex - 2 === index
               )

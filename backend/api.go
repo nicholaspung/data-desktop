@@ -8,6 +8,9 @@ import (
 	"log"
 	"myproject/backend/database"
 	_ "myproject/backend/database/models" // Import for side effects to register field functions
+	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,8 +30,27 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
+	// Get the app directory for storing the database
+	appDir, err := getAppDataDir()
+	if err != nil {
+		log.Println("Error getting app data directory:", err.Error())
+		return
+	}
+
+	// Define database path based on environment
+	dbPath := filepath.Join(appDir, "DataDesktop.db")
+
+	// For development mode detection
+	if buildMode, ok := ctx.Value("buildMode").(string); ok && buildMode == "dev" {
+		log.Println("Running in development mode")
+		// Use a dev-specific database if desired
+		dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+	}
+
+	log.Printf("Using database path: %s", dbPath)
+
 	// Initialize the database
-	err := database.Initialize("./DataDesktop.db")
+	err = database.Initialize(dbPath)
 	if err != nil {
 		log.Println("Error initializing database:", err.Error())
 		return
@@ -45,6 +67,37 @@ func (a *App) Startup(ctx context.Context) {
 	if err != nil {
 		log.Println("Error cleaning up unused tables:", err.Error())
 	}
+}
+
+// Helper function to get the appropriate app data directory
+func getAppDataDir() (string, error) {
+	var appDir string
+
+	if runtime.GOOS == "darwin" {
+		// For macOS, use Application Support
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		appDir = filepath.Join(homeDir, "Library", "Application Support", "DataDesktop")
+	} else if runtime.GOOS == "windows" {
+		// For Windows, use AppData
+		appDir = filepath.Join(os.Getenv("APPDATA"), "DataDesktop")
+	} else {
+		// For Linux and others, use ~/.config
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		appDir = filepath.Join(homeDir, ".config", "DataDesktop")
+	}
+
+	// Ensure directory exists with proper permissions
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return "", err
+	}
+
+	return appDir, nil
 }
 
 // Shutdown is called when the app is about to quit
