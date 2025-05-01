@@ -50,11 +50,18 @@ export default function TimePlanner() {
 
   // Handle adding a new time block
   const handleAddTimeBlock = (block: TimeBlock) => {
+    // Format date as string for storing as key
     const dateKey = format(block.startTime, "yyyy-MM-dd");
-    setTimeBlocks((prev) => ({
-      ...prev,
-      [dateKey]: [...(prev[dateKey] || []), block],
-    }));
+
+    setTimeBlocks((prev) => {
+      const newBlocks = { ...prev };
+      if (!newBlocks[dateKey]) {
+        newBlocks[dateKey] = [];
+      }
+      newBlocks[dateKey] = [...newBlocks[dateKey], block];
+      return newBlocks;
+    });
+
     setAddDialogOpen(false);
   };
 
@@ -130,7 +137,7 @@ export default function TimePlanner() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">
           Week of {format(currentWeekStart, "MMMM d, yyyy")}

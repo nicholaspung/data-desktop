@@ -92,8 +92,10 @@ export default function CategoryPicker({
   };
 
   // Find the selected category ID
-  const selectedCategoryId =
-    categories.find((cat) => cat.name === selectedCategory)?.id || "";
+  const findSelectedCategoryId = () => {
+    const category = categories.find((cat) => cat.name === selectedCategory);
+    return category ? category.id : "";
+  };
 
   // Predefined colors
   const colorOptions = [
@@ -109,7 +111,10 @@ export default function CategoryPicker({
 
   return (
     <div className="space-y-2">
-      <Select value={selectedCategoryId} onValueChange={handleSelectCategory}>
+      <Select
+        value={findSelectedCategoryId()}
+        onValueChange={handleSelectCategory}
+      >
         <SelectTrigger>
           <SelectValue placeholder="Select a category" />
         </SelectTrigger>

@@ -60,6 +60,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - time planner component to help a user plan out their week
+- the wails dev/prod doesn't seem to be creating different databases
 
 ### DONE
 
