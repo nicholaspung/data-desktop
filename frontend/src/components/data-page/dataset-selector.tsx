@@ -3,11 +3,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { DatasetConfig } from "./data-page";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@tanstack/react-store";
 import settingsStore from "@/store/settings-store";
 import GenericDataPage from "./generic-data-page";
+import ReusableSelect from "@/components/reusable/reusable-select";
+import { Separator } from "../ui/separator";
 
 export function DatasetSelector({
   datasets,
@@ -35,6 +36,14 @@ export function DatasetSelector({
     (dataset) => enabledDatasets[dataset.id] !== false
   );
 
+  // Format datasets for the select component
+  const selectOptions = filteredDatasets.map((dataset) => ({
+    id: dataset.id,
+    label: dataset.title,
+    description: dataset.description,
+    icon: dataset.icon,
+  }));
+
   const selectedDataset = datasets.find(
     (dataset) => dataset.id === selectedDatasetId
   );
@@ -45,6 +54,19 @@ export function DatasetSelector({
       setSelectedDatasetId(search.datasetId);
     }
   }, [search.datasetId]);
+
+  // If selected dataset is no longer enabled, choose the first available
+  useEffect(() => {
+    if (
+      selectedDatasetId &&
+      filteredDatasets.length > 0 &&
+      !filteredDatasets.some((dataset) => dataset.id === selectedDatasetId)
+    ) {
+      handleDatasetChange(filteredDatasets[0].id);
+    } else if (!selectedDatasetId && filteredDatasets.length > 0) {
+      handleDatasetChange(filteredDatasets[0].id);
+    }
+  }, [selectedDatasetId, filteredDatasets]);
 
   // Handle dataset selection change
   const handleDatasetChange = (datasetId: string) => {
@@ -75,44 +97,22 @@ export function DatasetSelector({
     );
   }
 
-  // Render the dataset selector
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{title}</h1>
 
-      <Tabs defaultValue="cards" className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
-            <TabsTrigger value="cards">Cards</TabsTrigger>
-            <TabsTrigger value="table">Table</TabsTrigger>
-          </TabsList>
-        </div>
+      <div className="mb-8">
+        <ReusableSelect
+          options={selectOptions}
+          value={selectedDatasetId}
+          onChange={handleDatasetChange}
+          placeholder="Select a dataset to view"
+          triggerClassName="w-full"
+          title="Dataset"
+        />
+      </div>
 
-        <div className="border rounded-md p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredDatasets.map((dataset) => (
-              <Button
-                key={dataset.id}
-                variant={
-                  selectedDatasetId === dataset.id ? "default" : "outline"
-                }
-                className="h-auto py-4 flex flex-col items-start justify-start"
-                onClick={() => handleDatasetChange(dataset.id)}
-              >
-                <div className="flex items-center mb-2 w-full">
-                  {dataset.icon && <div className="mr-2">{dataset.icon}</div>}
-                  <span className="font-medium">{dataset.title}</span>
-                </div>
-                {dataset.description && (
-                  <p className="text-sm text-muted-foreground text-left">
-                    {dataset.description}
-                  </p>
-                )}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Tabs>
+      <Separator className="mb-4" />
 
       {selectedDataset && (
         <GenericDataPage

@@ -7,11 +7,7 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import {
-  Settings as SettingsIcon,
-  LayoutDashboard,
-  Database,
-} from "lucide-react";
+import { LayoutDashboard, Database } from "lucide-react";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import settingsStore from "@/store/settings-store";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +15,7 @@ import { useFieldDefinitions } from "@/features/field-definitions/field-definiti
 import { Button } from "@/components/ui/button";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableCard from "@/components/reusable/reusable-card";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -50,73 +47,73 @@ const routes = [
     path: "/",
     name: "Dashboard",
     description: "Main application dashboard",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.HOME className="h-4 w-4 mr-2" />,
   },
   {
     path: "/dexa",
     name: "DEXA Scans",
     description: "Track body composition from DEXA scans",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.DEXA_SCAN className="h-4 w-4 mr-2" />,
   },
   {
     path: "/bloodwork",
     name: "Bloodwork",
     description: "Track blood test results and markers",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.BLOODWORK className="h-4 w-4 mr-2" />,
   },
   {
     path: "/calendar",
     name: "Daily Tracker",
     description: "Track daily habits and metrics",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-4 w-4 mr-2" />,
   },
   {
     path: "/experiments",
     name: "Experiments",
     description: "Create and manage self-experiments",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.EXPERIMENTS className="h-4 w-4 mr-2" />,
   },
   {
     path: "/metric",
     name: "Quick Metric Logger",
     description: "Log metrics on-demand",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-4 w-4 mr-2" />,
   },
   {
     path: "/time-tracker",
     name: "Time Tracker",
     description: "Track how you spend your time",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.TIME_TRACKER className="h-4 w-4 mr-2" />,
   },
   {
     path: "/journaling",
     name: "Journaling",
     description: "Journal thoughts, gratitude, and affirmations",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-4 w-4 mr-2" />,
   },
   {
     path: "/metric-calendar",
     name: "Metric Calendar",
     description: "View metrics in calendar format",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.METRIC_CALENDAR className="h-4 w-4 mr-2" />,
   },
   {
     path: "/time-planner",
     name: "Time Planner",
     description: "Plan your weekly schedule",
-    icon: <LayoutDashboard className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.TIME_PLANNER className="h-4 w-4 mr-2" />,
   },
   {
     path: "/dataset",
     name: "Dataset Manager",
     description: "Manage application datasets",
-    icon: <Database className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.DATASETS className="h-4 w-4 mr-2" />,
   },
   {
     path: "/settings",
     name: "Settings",
     description: "Application settings and configuration",
-    icon: <SettingsIcon className="h-4 w-4 mr-2" />,
+    icon: <FEATURE_ICONS.SETTINGS className="h-4 w-4 mr-2" />,
   },
 ];
 

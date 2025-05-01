@@ -64,9 +64,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- add a way to enable/disable certain features from showing
+- add a way to enable/disable certain features from showing [DONE 2025-05-01]
 - update icons for the datasets
-- add a way to minimize/maximize/reset the view for the application
 
 ### DONE
 
@@ -278,3 +277,4 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - see why the line chart doesn't show the x data for the one right next to the last x data description
 - add a way to select the database you want to use
+- add a way to minimize/maximize/reset the view for the application

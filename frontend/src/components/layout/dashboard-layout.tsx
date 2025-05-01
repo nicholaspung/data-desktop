@@ -2,24 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import {
-  HeartPulse,
-  Home,
-  PieChart,
-  ChevronLeft,
-  ChevronRight,
-  MenuIcon,
-  Bug,
-  Database,
-  CalendarCheck,
-  Beaker,
-  ClipboardCheck,
-  BookOpen,
-  Clock,
-  Calendar,
-  CalendarCheck2,
-  Settings,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, MenuIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -29,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useStore } from "@tanstack/react-store";
 import settingsStore from "@/store/settings-store";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 interface SidebarItem {
   title: string;
@@ -39,62 +23,62 @@ interface SidebarItem {
 const defaultSidebarItems: SidebarItem[] = [
   {
     title: "Home",
-    icon: <Home className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.HOME className="h-5 w-5" />,
     href: "/",
   },
   {
     title: "Time Tracker",
-    icon: <Clock className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.TIME_TRACKER className="h-5 w-5" />,
     href: "/time-tracker",
   },
   {
     title: "Daily Tracker",
-    icon: <CalendarCheck className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />,
     href: "/calendar",
   },
   {
     title: "Quick Metric Logger",
-    icon: <ClipboardCheck className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />,
     href: "/metric",
   },
   {
     title: "Metric Calendar",
-    icon: <Calendar className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.METRIC_CALENDAR className="h-5 w-5" />,
     href: "/metric-calendar",
   },
   {
     title: "Experiments",
-    icon: <Beaker className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.EXPERIMENTS className="h-5 w-5" />,
     href: "/experiments",
   },
   {
     title: "Journaling",
-    icon: <BookOpen className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     href: "/journaling",
   },
   {
     title: "Time Planner",
-    icon: <CalendarCheck2 className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.TIME_PLANNER className="h-5 w-5" />,
     href: "/time-planner",
   },
   {
     title: "DEXA Scans",
-    icon: <PieChart className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,
     href: "/dexa",
   },
   {
     title: "Bloodwork",
-    icon: <HeartPulse className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.BLOODWORK className="h-5 w-5" />,
     href: "/bloodwork",
   },
   {
     title: "Datasets",
-    icon: <Database className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DATASETS className="h-5 w-5" />,
     href: "/dataset",
   },
   {
     title: "Settings",
-    icon: <Settings className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.SETTINGS className="h-5 w-5" />,
     href: "/settings",
   },
 ];
@@ -139,7 +123,7 @@ export default function DashboardLayout({
     if (import.meta.env.DEV) {
       sidebarItemsCopy.push({
         title: "Debugger",
-        icon: <Bug className="h-5 w-5" />,
+        icon: <FEATURE_ICONS.DEBUGGER className="h-5 w-5" />,
         href: "/debug",
       });
     }

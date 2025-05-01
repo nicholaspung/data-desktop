@@ -1,0 +1,31 @@
+import {
+  Bug,
+  CalendarClock,
+  CalendarDays,
+  CalendarPlus,
+  ClipboardCheck,
+  Clock,
+  Database,
+  FlaskConical,
+  Home,
+  NotebookPen,
+  PersonStanding,
+  Settings,
+  Syringe,
+} from "lucide-react";
+
+export const FEATURE_ICONS = {
+  HOME: Home,
+  TIME_TRACKER: Clock,
+  DAILY_TRACkER: CalendarDays,
+  QUICK_METRIC_LOGGER: ClipboardCheck,
+  METRIC_CALENDAR: CalendarPlus,
+  EXPERIMENTS: FlaskConical,
+  JOURNALING: NotebookPen,
+  TIME_PLANNER: CalendarClock,
+  DEXA_SCAN: PersonStanding,
+  BLOODWORK: Syringe,
+  DATASETS: Database,
+  SETTINGS: Settings,
+  DEBUGGER: Bug,
+};
