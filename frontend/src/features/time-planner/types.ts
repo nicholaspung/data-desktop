@@ -17,3 +17,12 @@ export type CategoryWithColor = {
   name: string;
   color: string;
 };
+
+export interface TimeBlockConfig {
+  id: string;
+  name: string;
+  description?: string;
+  blocks: TimeBlock[];
+  createdAt: Date;
+  lastModified: Date;
+}

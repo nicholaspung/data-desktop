@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import EditTimeBlockDialog from "./edit-time-block-dialog";
+import TimeBlockDialog from "./time-block-dialog";
 
 interface TimePlannerDayProps {
   dayIndex: number;
@@ -44,11 +44,10 @@ export default function TimePlannerDay({
     setEditDialogOpen(true);
   };
 
-  const handleEdit = (newBlock: TimeBlock) => {
+  const handleUpdateBlock = (newBlock: TimeBlock) => {
     if (editingBlock) {
       onEdit(editingBlock, newBlock);
       setEditingBlock(null);
-      setEditDialogOpen(false);
     }
   };
 
@@ -103,65 +102,66 @@ export default function TimePlannerDay({
   }
 
   return (
-    <div className="divide-y">
-      {sortedBlocks.map((block) => (
-        <div
-          key={block.id}
-          className="p-3 hover:bg-accent/50 transition-colors relative"
-          style={{
-            borderLeft: `4px solid ${block.color || "#888888"}`,
-          }}
-        >
-          <div className="flex justify-between items-start">
-            <div className="space-y-1 pr-8">
-              <h4 className="font-medium text-sm">{block.title}</h4>
-              <div className="text-xs text-muted-foreground">
-                {formatTime(block.startHour, block.startMinute)} -{" "}
-                {formatTime(block.endHour, block.endMinute)}
-                <span className="mx-1">•</span>
-                {getDurationText(block)}
+    <>
+      <div className="divide-y">
+        {sortedBlocks.map((block) => (
+          <div
+            key={block.id}
+            className="p-3 hover:bg-accent/50 transition-colors relative"
+            style={{
+              borderLeft: `4px solid ${block.color || "#888888"}`,
+            }}
+          >
+            <div className="flex justify-between items-start">
+              <div className="space-y-1 pr-8">
+                <h4 className="font-medium text-sm">{block.title}</h4>
+                <div className="text-xs text-muted-foreground">
+                  {formatTime(block.startHour, block.startMinute)} -{" "}
+                  {formatTime(block.endHour, block.endMinute)}
+                  <span className="mx-1">•</span>
+                  {getDurationText(block)}
+                </div>
+                {block.description && (
+                  <p className="text-xs mt-1">{block.description}</p>
+                )}
+                <div className="inline-block px-2 py-1 bg-muted text-xs rounded-full mt-1">
+                  {block.category}
+                </div>
               </div>
-              {block.description && (
-                <p className="text-xs mt-1">{block.description}</p>
-              )}
-              <div className="inline-block px-2 py-1 bg-muted text-xs rounded-full mt-1">
-                {block.category}
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 absolute top-3 right-2"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleOpenEdit(block)}>
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onDelete(block)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 absolute top-3 right-2"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleOpenEdit(block)}>
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDelete(block)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
-      {editingBlock && (
-        <EditTimeBlockDialog
-          open={editDialogOpen}
-          onOpenChange={setEditDialogOpen}
-          timeBlock={editingBlock}
-          onUpdateBlock={handleEdit}
-        />
-      )}
-    </div>
+      {/* Use the unified dialog for editing */}
+      <TimeBlockDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleUpdateBlock}
+        timeBlock={editingBlock || undefined}
+      />
+    </>
   );
 }

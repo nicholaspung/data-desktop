@@ -24,6 +24,7 @@ func CleanupUnusedTables() error {
 		DatasetIDQuestionJournal,
 		DatasetIDTimeEntries,
 		DatasetIDTimeCategories,
+		DatasetIDTimePlannerConfig,
 	}
 
 	// Get all datasets currently in the database

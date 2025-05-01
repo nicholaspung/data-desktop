@@ -24,4 +24,5 @@ var (
 	GetQuestionJournalFields   FieldDefinitionFunc
 	GetTimeEntriesFields       FieldDefinitionFunc
 	GetTimeCategoriesFields    FieldDefinitionFunc
+	GetTimePlannerConfigFields FieldDefinitionFunc
 )

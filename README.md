@@ -63,12 +63,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a "version history note" to the application
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
+- find a better solution when using wails to do dev/prod for the databases
+
 ### IN PROGRESS
-
-- time planner component to help a user plan out their week
-- add a way to save the time block entries according to the date/time it was created in the backend
-
-- the wails dev/prod doesn't seem to be creating different databases
 
 ### DONE
 
@@ -272,6 +269,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - for quick metric logger, on a calendar, allow the user to select however many metrics, also display metirc names with their description, and in the calendar, it will highlight that metric in a different color (automatically assigned) for the user to visually see when they did the metric (if a user passes a few metrics props in, it will default show those, otherwise, a user will be shown no metrics and they have to select) [DONE 2025-04-30]
 - add this into the experiment daily logs view [DONE 2025-04-30]
 - in the metrics data model, for customization, add a way to specify when a metric will show up, it could be that the metric repeats every x days, weeks, or months starting on a specific date [DONE 2025-04-30]
+- the wails dev/prod doesn't seem to be creating different databases [DONE 2025-05-01]
+- time planner component to help a user plan out their week [DONE 2025-05-01]
+- add a way to save the time block entries according to the date/time it was created in the backend [DONE 2025-05-01]
 
 ### GAVE UP
 

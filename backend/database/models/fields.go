@@ -27,4 +27,5 @@ func init() {
 	database.GetQuestionJournalFields = GetQuestionJournalFields
 	database.GetTimeEntriesFields = GetTimeEntriesFields
 	database.GetTimeCategoriesFields = GetTimeCategoriesFields
+	database.GetTimePlannerConfigFields = GetTimePlannerConfigFields
 }

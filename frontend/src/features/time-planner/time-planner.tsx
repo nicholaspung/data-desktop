@@ -1,12 +1,15 @@
 // src/features/time-planner/time-planner.tsx
+// Update the existing file
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import TimePlannerDay from "./time-planner-day";
-import AddTimeBlockDialog from "./add-time-block-dialog";
 import TimePlannerSummary from "./time-planner-summary";
 import { TimeBlock } from "./types";
+import TimePlannerConfigManager from "./time-planner-config-manager";
+import TimeBlockDialog from "./time-block-dialog";
 
 export default function TimePlanner() {
   const [timeBlocks, setTimeBlocks] = useState<Record<number, TimeBlock[]>>({});
@@ -106,10 +109,19 @@ export default function TimePlanner() {
     return Object.values(timeBlocks).flat();
   };
 
+  // Handle loading a configuration
+  const handleLoadConfig = (blocks: Record<number, TimeBlock[]>) => {
+    setTimeBlocks(blocks);
+  };
+
   return (
     <div className="space-y-4 mt-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold">Weekly Schedule</h2>
+        <TimePlannerConfigManager
+          currentTimeBlocks={timeBlocks}
+          onLoadConfig={handleLoadConfig}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
@@ -151,10 +163,10 @@ export default function TimePlanner() {
 
       <TimePlannerSummary timeBlocks={getAllBlocksForWeek()} />
 
-      <AddTimeBlockDialog
+      <TimeBlockDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        onAddBlock={handleAddTimeBlock}
+        onSave={handleAddTimeBlock}
         selectedDay={selectedDay}
       />
     </div>

@@ -1,4 +1,4 @@
-// src/features/time-planner/add-time-block-dialog.tsx
+// src/features/time-planner/time-block-dialog.tsx
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TimeBlock } from "./types";
@@ -16,11 +16,12 @@ import {
 import CategoryPicker from "./category-picker";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface AddTimeBlockDialogProps {
+interface TimeBlockDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddBlock: (block: TimeBlock) => void;
-  selectedDay: number | null;
+  onSave: (block: TimeBlock) => void;
+  timeBlock?: TimeBlock; // If provided, edit mode; if not, add mode
+  selectedDay?: number | null;
 }
 
 // Create an array of time options in 15-minute increments
@@ -43,12 +44,17 @@ const generateTimeOptions = () => {
 
 const TIME_OPTIONS = generateTimeOptions();
 
-export default function AddTimeBlockDialog({
+export default function TimeBlockDialog({
   open,
   onOpenChange,
-  onAddBlock,
+  onSave,
+  timeBlock,
   selectedDay,
-}: AddTimeBlockDialogProps) {
+}: TimeBlockDialogProps) {
+  // Determine if we're in edit mode
+  const isEditMode = !!timeBlock;
+
+  // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState<number>(1); // Monday as default
@@ -64,19 +70,32 @@ export default function AddTimeBlockDialog({
     time?: string;
   }>({});
 
-  // Reset form and set default values when dialog opens
+  // Reset form and set default values when dialog opens or when we switch between add/edit
   useEffect(() => {
     if (open) {
-      setTitle("");
-      setDescription("");
-      setDayOfWeek(selectedDay !== null ? selectedDay : 1);
-      setStartTime("9:0");
-      setEndTime("10:0");
-      setCategory("");
-      setColor("#3b82f6");
       setErrors({});
+
+      if (isEditMode && timeBlock) {
+        // Edit mode - populate with existing data
+        setTitle(timeBlock.title);
+        setDescription(timeBlock.description || "");
+        setDayOfWeek(timeBlock.dayOfWeek);
+        setStartTime(`${timeBlock.startHour}:${timeBlock.startMinute}`);
+        setEndTime(`${timeBlock.endHour}:${timeBlock.endMinute}`);
+        setCategory(timeBlock.category);
+        setColor(timeBlock.color || "#3b82f6");
+      } else {
+        // Add mode - set defaults
+        setTitle("");
+        setDescription("");
+        setDayOfWeek(selectedDay || 1);
+        setStartTime("9:0");
+        setEndTime("10:0");
+        setCategory("");
+        setColor("#3b82f6");
+      }
     }
-  }, [open, selectedDay]);
+  }, [open, timeBlock, isEditMode, selectedDay]);
 
   const validateForm = () => {
     const newErrors: { title?: string; category?: string; time?: string } = {};
@@ -113,8 +132,8 @@ export default function AddTimeBlockDialog({
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
 
-    const newBlock: TimeBlock = {
-      id: uuidv4(),
+    const block: TimeBlock = {
+      id: isEditMode && timeBlock ? timeBlock.id : uuidv4(),
       title,
       description: description || undefined,
       dayOfWeek,
@@ -126,10 +145,15 @@ export default function AddTimeBlockDialog({
       color,
     };
 
-    onAddBlock(newBlock);
+    onSave(block);
+    onOpenChange(false);
   };
 
-  const handleSelectCategory = (catName: string, catColor: string) => {
+  const handleSelectCategory = (
+    id: string,
+    catName: string,
+    catColor: string
+  ) => {
     setCategory(catName);
     setColor(catColor);
     // Clear category error when selected
@@ -162,14 +186,14 @@ export default function AddTimeBlockDialog({
 
   return (
     <ReusableDialog
-      title="Add Time Block"
+      title={isEditMode ? "Edit Time Block" : "Add Time Block"}
       open={open}
       onOpenChange={onOpenChange}
       onConfirm={handleSubmit}
-      confirmText="Add Block"
+      confirmText={isEditMode ? "Update" : "Add Block"}
       disableDefaultConfirm
       showTrigger={false}
-      confirmIcon={<span className="mr-2">+</span>}
+      confirmIcon={isEditMode ? undefined : <span className="mr-2">+</span>}
       customContent={
         <ScrollArea className="max-h-[60vh] pr-3 overflow-y-auto">
           <div className="space-y-4 py-4">

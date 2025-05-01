@@ -186,6 +186,17 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Time Categories dataset: %w", err)
 	}
 
+	err = CreateOrUpdateDataset(
+		DatasetIDTimePlannerConfig,
+		"Time Planner Configurations",
+		"Saved time planner configurations",
+		DatasetTypeTimeTracking,
+		GetTimePlannerConfigFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Time Planner Configs dataset: %w", err)
+	}
+
 	fmt.Println("Dataset sync completed successfully")
 	return nil
 }
