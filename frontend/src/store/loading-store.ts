@@ -21,6 +21,7 @@ const initialState = {
   affirmation: false,
   time_entries: false,
   time_categories: false,
+  todos: false,
 };
 
 // Create the loading store

@@ -149,7 +149,11 @@ export default function TimeBlockDialog({
     onOpenChange(false);
   };
 
-  const handleSelectCategory = (catName: string, catColor: string) => {
+  const handleSelectCategory = (
+    id: string,
+    catName: string,
+    catColor: string
+  ) => {
     setCategory(catName);
     setColor(catColor);
     // Clear category error when selected

@@ -19,6 +19,7 @@ const (
 	DatasetTypeDailyLog     DatasetType = "daily_log"
 	DatasetTypeJournaling   DatasetType = "journaling"
 	DatasetTypeTimeTracking DatasetType = "time_tracking"
+	DatasetTypeTodo         DatasetType = "todos"
 )
 
 // FieldType represents the type of a field

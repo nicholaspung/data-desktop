@@ -24,6 +24,7 @@ const defaultRoutes = {
   "/time-planner": true,
   "/dataset": true,
   "/settings": true,
+  "/todos": true,
 };
 
 // Define initial enabled datasets
@@ -43,6 +44,7 @@ const defaultDatasets = {
   affirmation: true,
   time_entries: true,
   time_categories: true,
+  todos: true,
 };
 
 // Initialize settings from localStorage or defaults

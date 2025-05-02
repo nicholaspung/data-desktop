@@ -8,6 +8,7 @@ import {
   Database,
   FlaskConical,
   Home,
+  ListTodo,
   NotebookPen,
   PersonStanding,
   Settings,
@@ -28,4 +29,5 @@ export const FEATURE_ICONS = {
   DATASETS: Database,
   SETTINGS: Settings,
   DEBUGGER: Bug,
+  TODOS: ListTodo,
 };

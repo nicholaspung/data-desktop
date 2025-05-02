@@ -26,6 +26,7 @@ import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboar
 import appStateStore from "@/store/app-state-store";
 import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
 import settingsStore from "@/store/settings-store";
+import TodoDashboardSummary from "@/features/todos/todo-dashboard-summary";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -163,6 +164,7 @@ function Home() {
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         {visibleRoutes["/calendar"] && <DailyTrackingDashboardSummary />}
+        {visibleRoutes["/todos"] && <TodoDashboardSummary />}
         {visibleRoutes["/time-tracker"] && <TimeTrackerDashboardSummary />}
         {visibleRoutes["/experiments"] && <ExperimentDashboardSummary />}
         {visibleRoutes["/metric"] && <QuickMetricLoggerDashboardSummary />}

@@ -61,10 +61,22 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
 - find a better solution when using wails to do dev/prod for the databases
+- if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store
 
 ### IN PROGRESS
 
-- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
+- time planner adding categories is bugged again [DONE 2025-05-02]
+
+- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item [DONE 2025-05-02]
+- add a way to edit these todos when they are created
+- change the way the todo items look
+- when a user is finished with a todo, make the metric inactive
+- in todo-dashboard-summary, only show the todos that are active/due today, and sort them according to priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low))
+- if a todo is completed, do not allow user to delete
+- add a `private` field to todo and have it be used everywhere todos are displayed
+- see what happens when a todo is overdue
+- todo-deadline-check when I click "view", it doesn't show the current tab - need to add params to `todos.tsx`
+- in `todo-list.tsx` order todo in terms of priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low))
 
 
 ### DONE

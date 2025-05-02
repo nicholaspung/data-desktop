@@ -26,6 +26,7 @@ import {
   TIME_CATEGORIES_FIELD_DEFINITIONS,
   TIME_ENTRIES_FIELD_DEFINITIONS,
 } from "./time-tracking-definitions";
+import { TODO_FIELD_DEFINITIONS } from "./todo-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
@@ -45,6 +46,7 @@ const initialState: FieldDefinitionsState = {
     affirmation: AFFIRMATION_FIELD_DEFINITIONS,
     time_entries: TIME_ENTRIES_FIELD_DEFINITIONS,
     time_categories: TIME_CATEGORIES_FIELD_DEFINITIONS,
+    todos: TODO_FIELD_DEFINITIONS,
   },
 };
 

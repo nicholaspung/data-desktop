@@ -25,4 +25,5 @@ var (
 	GetTimeEntriesFields       FieldDefinitionFunc
 	GetTimeCategoriesFields    FieldDefinitionFunc
 	GetTimePlannerConfigFields FieldDefinitionFunc
+	GetTodoFields              FieldDefinitionFunc
 )

@@ -1,5 +1,4 @@
 // src/store/data-store.ts
-// Updated with experiment-related data types
 
 import { Store } from "@tanstack/react-store";
 import { DEXAScan } from "./dexa-definitions";
@@ -22,6 +21,8 @@ import {
   QuestionJournalEntry,
 } from "./journaling-definitions";
 import { TimeCategory, TimeEntry } from "./time-tracking-definitions";
+import { fieldDefinitionsStore } from "@/features/field-definitions/field-definitions-store";
+import { Todo } from "./todo-definitions";
 
 // Define the types for the data store
 export type DataStoreName =
@@ -39,7 +40,8 @@ export type DataStoreName =
   | "creativity_journal"
   | "affirmation"
   | "time_entries"
-  | "time_categories";
+  | "time_categories"
+  | "todos";
 
 type DataStoreType = {
   dexa: DEXAScan[];
@@ -57,6 +59,7 @@ type DataStoreType = {
   affirmation: Affirmation[];
   time_entries: TimeEntry[];
   time_categories: TimeCategory[];
+  todos: Todo[];
 };
 
 // Initial state for the data store
@@ -76,6 +79,7 @@ const initialState: DataStoreType = {
   affirmation: [],
   time_entries: [],
   time_categories: [],
+  todos: [],
 };
 
 // Create the data store
@@ -92,20 +96,40 @@ export function loadState(
   }));
 }
 
+// Helper function to process a single entry based on field definitions
+function processEntry(entry: Record<string, any>, datasetId: DataStoreName) {
+  const fields = fieldDefinitionsStore.state.datasets[datasetId]?.fields || [];
+
+  const processed = { ...entry };
+
+  // Convert dates
+  fields.forEach((field) => {
+    if (field.type === "date" && processed[field.key]) {
+      processed[field.key] = new Date(processed[field.key]);
+    }
+  });
+
+  return processed;
+}
+
 // Helper function to add a new entry to the store
 export function addEntry(entry: Record<string, any>, datasetId: DataStoreName) {
+  const processedEntry = processEntry(entry, datasetId);
+
   dataStore.setState((state) => ({
     ...state,
-    [datasetId]: [...state[datasetId], entry],
+    [datasetId]: [...state[datasetId], processedEntry],
   }));
 }
 
 // Helper function to update an entry in the store
 export function updateEntry(id: string, entry: any, datasetId: DataStoreName) {
+  const processedEntry = processEntry(entry, datasetId);
+
   dataStore.setState((state) => ({
     ...state,
     [datasetId]: state[datasetId].map((item: any) =>
-      item.id === id ? { ...item, ...entry } : item
+      item.id === id ? { ...item, ...processedEntry } : item
     ),
   }));
 }

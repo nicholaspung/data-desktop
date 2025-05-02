@@ -19,4 +19,5 @@ const (
 	DatasetIDTimeEntries       = "time_entries"
 	DatasetIDTimeCategories    = "time_categories"
 	DatasetIDTimePlannerConfig = "time_planner_configs"
+	DatasetIDTodos             = "todos"
 )

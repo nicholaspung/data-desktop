@@ -197,6 +197,17 @@ func SyncDatasets() error {
 		return fmt.Errorf("failed to sync Time Planner Configs dataset: %w", err)
 	}
 
+	err = CreateOrUpdateDataset(
+		DatasetIDTodos,
+		"Todos",
+		"Tasks and deadlines to track",
+		DatasetTypeTodo, // This type needs to be added to database/models.go
+		GetTodoFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Todo dataset: %w", err)
+	}
+
 	fmt.Println("Dataset sync completed successfully")
 	return nil
 }

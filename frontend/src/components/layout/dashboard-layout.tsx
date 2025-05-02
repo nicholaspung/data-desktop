@@ -37,6 +37,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/calendar",
   },
   {
+    title: "Todos",
+    icon: <FEATURE_ICONS.TODOS className="h-5 w-5" />,
+    href: "/todos",
+  },
+  {
     title: "Quick Metric Logger",
     icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />,
     href: "/metric",
