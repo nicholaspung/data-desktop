@@ -137,7 +137,11 @@ function SettingsPage() {
             onCheckedChange={(checked) =>
               handleRouteToggle(route.path, checked)
             }
-            disabled={route.path === "/settings" || route.path === "/dataset"} // Can't disable settings page
+            disabled={
+              route.path === "/settings" ||
+              route.path === "/dataset" ||
+              route.path === "/"
+            } // Can't disable settings page
           />
         </div>
       ))}

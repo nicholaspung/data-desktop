@@ -64,10 +64,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- add a way to enable/disable certain features from showing [DONE 2025-05-01]
-- update icons for the datasets
-- tie the enable/disable certain features to the dashboard summaries too
-
 - add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
 
 
@@ -276,6 +272,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - the wails dev/prod doesn't seem to be creating different databases [DONE 2025-05-01]
 - time planner component to help a user plan out their week [DONE 2025-05-01]
 - add a way to save the time block entries according to the date/time it was created in the backend [DONE 2025-05-01]
+- add a way to enable/disable certain features from showing [DONE 2025-05-01]
+- update icons for the datasets [DONE 2025-05-01]
+- tie the enable/disable certain features to the dashboard summaries too [DONE 2025-05-01]
 
 ### GAVE UP
 

@@ -9,8 +9,12 @@ import HelpButton from "../onboarding/help-button";
 import { Button } from "../ui/button";
 import { Power } from "lucide-react";
 import TimeTrackerHeaderButton from "@/features/time-tracker/time-tracker-header-button";
+import { useStore } from "@tanstack/react-store";
+import settingsStore from "@/store/settings-store";
 
 export default function Header() {
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+
   const handleDataChange = () => {
     // This will trigger when timer data is saved
   };
@@ -36,9 +40,11 @@ export default function Header() {
       </div>
 
       {/* Time tracker in the middle */}
-      <div className="absolute left-1/2 transform -translate-x-1/2">
-        <TimeTrackerHeaderButton onDataChange={handleDataChange} />
-      </div>
+      {visibleRoutes["/time-tracker"] && (
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <TimeTrackerHeaderButton onDataChange={handleDataChange} />
+        </div>
+      )}
 
       <div className="flex items-center space-x-4">
         <HelpButton />

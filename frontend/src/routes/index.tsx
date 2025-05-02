@@ -25,6 +25,7 @@ import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric
 import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
 import appStateStore from "@/store/app-state-store";
 import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
+import settingsStore from "@/store/settings-store";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -40,6 +41,7 @@ function Home() {
     (state) => state.dashboardDataLoaded
   );
   const setDashboardDataLoaded = appStateStore.state.setDashboardDataLoaded;
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
 
   useEffect(() => {
     // Load data on first application start or if data hasn't been loaded yet
@@ -160,13 +162,13 @@ function Home() {
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <DailyTrackingDashboardSummary />
-        <TimeTrackerDashboardSummary />
-        <ExperimentDashboardSummary />
-        <QuickMetricLoggerDashboardSummary />
-        <JournalingDashboardSummary />
-        <DEXADashboardSummary />
-        <BloodworkDashboardSummary />
+        {visibleRoutes["/calendar"] && <DailyTrackingDashboardSummary />}
+        {visibleRoutes["/time-tracker"] && <TimeTrackerDashboardSummary />}
+        {visibleRoutes["/experiments"] && <ExperimentDashboardSummary />}
+        {visibleRoutes["/metric"] && <QuickMetricLoggerDashboardSummary />}
+        {visibleRoutes["/journaling"] && <JournalingDashboardSummary />}
+        {visibleRoutes["/dexa"] && <DEXADashboardSummary />}
+        {visibleRoutes["/bloodwork"] && <BloodworkDashboardSummary />}
       </div>
 
       <div className="flex flex-col space-y-2">
