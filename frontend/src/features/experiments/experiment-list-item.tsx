@@ -4,18 +4,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Beaker,
-  CalendarDays,
-  ChevronDown,
-  ClipboardCheck,
-} from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { getStatusBadge } from "./experiments-utils";
 import { differenceInDays, format, isAfter } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ProtectedContent } from "@/components/security/protected-content";
 import { Experiment } from "@/store/experiment-definitions";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function ExperimentListItem({
   experiment,
@@ -85,7 +81,7 @@ export default function ExperimentListItem({
         <CardContent className="p-4">
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center">
-              <Beaker className="h-5 w-5 mr-2 text-primary" />
+              <FEATURE_ICONS.EXPERIMENTS className="h-5 w-5 mr-2 text-primary" />
               <h3 className="font-semibold">{experiment.name}</h3>
             </div>
             {getStatusBadge(
@@ -140,7 +136,6 @@ export default function ExperimentListItem({
                   size="sm"
                   onClick={() => handleSelectExperiment(experiment.id)}
                 >
-                  <ClipboardCheck className="h-4 w-4 mr-2" />
                   View Details
                 </Button>
               </div>

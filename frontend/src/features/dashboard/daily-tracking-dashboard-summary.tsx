@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, Clock, Edit } from "lucide-react";
+import { Clock, Edit } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function DailyTrackingDashboardSummary() {
   const [todayLogs, setTodayLogs] = useState<Record<string, DailyLog>>({});
@@ -342,7 +343,7 @@ export default function DailyTrackingDashboardSummary() {
     <>
       <ReusableSummary
         title="Today's Tracking"
-        titleIcon={<CalendarCheck className="h-5 w-5" />}
+        titleIcon={<FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />}
         linkTo="/calendar"
         loading={isLoading}
         emptyState={

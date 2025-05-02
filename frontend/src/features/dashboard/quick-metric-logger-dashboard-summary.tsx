@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import { CheckCircle2, Circle, Lock, ClipboardCheck, Tag } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Tag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -18,6 +18,7 @@ import {
 import { usePin } from "@/hooks/usePin";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function QuickMetricLoggerDashboardSummary() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -423,7 +424,7 @@ export default function QuickMetricLoggerDashboardSummary() {
   return (
     <ReusableSummary
       title="Quick Metric Logger"
-      titleIcon={<ClipboardCheck className="h-5 w-5" />}
+      titleIcon={<FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />}
       linkText="View all"
       linkTo="/metric"
       loading={isLoading}

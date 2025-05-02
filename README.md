@@ -52,8 +52,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
 - fixed the <div> cannot be a child of <p> error from React
+- refactor out icons used in application into lib.ts
 
-- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
 - add a "taking current supplements" section
 - add a body measurement section following the FitNotes application import
 
@@ -66,6 +66,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add a way to enable/disable certain features from showing [DONE 2025-05-01]
 - update icons for the datasets
+- tie the enable/disable certain features to the dashboard summaries too
+
+- add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item
+
 
 ### DONE
 

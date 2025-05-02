@@ -6,13 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import EditableCellConfirmButtons from "@/components/data-table/editable-cell-confirm-buttons";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { format } from "date-fns";
 import { MetricWithLog } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
 import MetricStreakDisplay from "./metric-streak-display";
 import { Progress } from "@/components/ui/progress";
 import NumberValueInput from "./number-input-control";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function DailyTrackerViewCard({
   metric,
@@ -138,7 +139,7 @@ export default function DailyTrackerViewCard({
             variant="outline"
             className="text-xs flex items-center gap-1 bg-blue-50 dark:bg-blue-950"
           >
-            <CalendarIcon className="h-3 w-3" />
+            <FEATURE_ICONS.DAILY_TRACkER className="h-3 w-3" />
             {startDateText && !endDateText && `From ${startDateText}`}
             {!startDateText && endDateText && `Until ${endDateText}`}
             {startDateText &&

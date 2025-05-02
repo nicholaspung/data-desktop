@@ -5,7 +5,7 @@ import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
 import { DEXAScan } from "@/store/dexa-definitions";
 import ReusableSummary from "@/components/reusable/reusable-summary";
-import { PieChart } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function DEXADashboardSummary() {
   const dexaData = useStore(dataStore, (state) => state.dexa) || [];
@@ -30,7 +30,7 @@ export default function DEXADashboardSummary() {
       title="DEXA Scan Summary"
       linkTo="/dexa"
       loading={loading}
-      titleIcon={<PieChart className="h-5 w-5" />}
+      titleIcon={<FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />}
       emptyState={
         !latestScan
           ? {

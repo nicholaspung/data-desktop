@@ -2,22 +2,10 @@
 import { useState } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  CalendarCheck,
-  Beaker,
-  ChartLine,
-  Database,
-  ClipboardCheck,
-  PieChart,
-  HeartPulse,
-  Lock,
-  ArrowRight,
-  ArrowLeft,
-  BookOpen,
-  Clock,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, ChartLine, Lock } from "lucide-react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 interface OnboardingStep {
   title: string;
@@ -31,7 +19,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     title: "Welcome to Data Desktop",
     description:
       "Your personal data tracking platform. Let's explore the key features.",
-    icon: <Database className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.DATASETS className="h-12 w-12 text-primary" />,
     features: [
       "Track DEXA scans for body composition",
       "Monitor bloodwork results",
@@ -44,7 +32,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Daily Tracking",
     description: "Build habits and track metrics with our daily tracker.",
-    icon: <CalendarCheck className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-12 w-12 text-primary" />,
     features: [
       "Create custom categories for organization",
       "Add metrics with flexible scheduling",
@@ -56,7 +44,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "DEXA Scan Tracking",
     description: "Monitor changes in your body composition over time.",
-    icon: <PieChart className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.DEXA_SCAN className="h-12 w-12 text-primary" />,
     features: [
       "Import or manually enter DEXA results",
       "Track body fat, lean mass, and bone density",
@@ -68,7 +56,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Bloodwork Analysis",
     description: "Keep track of your blood biomarkers and reference ranges.",
-    icon: <HeartPulse className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.BLOODWORK className="h-12 w-12 text-primary" />,
     features: [
       "Define custom blood markers",
       "Set reference and optimal ranges",
@@ -81,7 +69,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     title: "Journaling",
     description:
       "Record thoughts, track gratitude, and foster self-reflection.",
-    icon: <BookOpen className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-12 w-12 text-primary" />,
     features: [
       "Keep a daily gratitude journal",
       "Answer thought-provoking questions",
@@ -93,7 +81,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Experiments",
     description: "Track the impact of lifestyle changes scientifically.",
-    icon: <Beaker className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.EXPERIMENTS className="h-12 w-12 text-primary" />,
     features: [
       "Create experiments with clear goals",
       "Attach relevant metrics to track",
@@ -105,7 +93,9 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Quick Metric Logger",
     description: "Log metrics on-demand, outside your regular schedule.",
-    icon: <ClipboardCheck className="h-12 w-12 text-primary" />,
+    icon: (
+      <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-12 w-12 text-primary" />
+    ),
     features: [
       "Log any metric at any time",
       "Perfect for infrequent events",
@@ -117,7 +107,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Time Tracker",
     description: "Monitor, analyze, and optimize how you spend your time.",
-    icon: <Clock className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.TIME_TRACKER className="h-12 w-12 text-primary" />,
     features: [
       "Track time in real-time with the built-in timer",
       "Add manual entries for past activities",

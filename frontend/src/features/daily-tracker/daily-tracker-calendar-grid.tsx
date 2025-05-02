@@ -11,7 +11,7 @@ import {
   startOfWeek,
   endOfWeek,
 } from "date-fns";
-import { Beaker, Calendar, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import dataStore from "@/store/data-store";
 import { isMetricScheduledForDate, parseScheduleDays } from "./schedule-utils";
 import { usePin } from "@/hooks/usePin";
 import { Metric } from "@/store/experiment-definitions";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function DailyTrackerCalendarGrid({
   currentMonth,
@@ -273,7 +274,7 @@ export default function DailyTrackerCalendarGrid({
                       variant="outline"
                       className="h-4 w-4 p-0 flex items-center justify-center bg-blue-100/50 dark:bg-blue-900/50"
                     >
-                      <Calendar className="h-2.5 w-2.5" />
+                      <FEATURE_ICONS.DAILY_TRACkER className="h-2.5 w-2.5" />
                     </Badge>
                   </div>
                 )}
@@ -285,7 +286,7 @@ export default function DailyTrackerCalendarGrid({
                       variant="outline"
                       className="h-4 w-4 p-0 flex items-center justify-center bg-primary/20"
                     >
-                      <Beaker className="h-3 w-3" />
+                      <FEATURE_ICONS.EXPERIMENTS className="h-3 w-3" />
                     </Badge>
                   </div>
                 )}
@@ -320,7 +321,7 @@ export default function DailyTrackerCalendarGrid({
                 {stats.activeExperiments.length > 0 && (
                   <div className="pt-1">
                     <p className="font-medium flex items-center">
-                      <Beaker className="h-3 w-3 mr-1" />
+                      <FEATURE_ICONS.EXPERIMENTS className="h-3 w-3 mr-1" />
                       Active Experiments:
                     </p>
                     <ul className="pl-4 text-sm">

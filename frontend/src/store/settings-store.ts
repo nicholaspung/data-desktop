@@ -43,8 +43,6 @@ const defaultDatasets = {
   affirmation: true,
   time_entries: true,
   time_categories: true,
-  income: false, // New dataset for paycheck tracking
-  taxes: false, // New dataset for tax tracking
 };
 
 // Initialize settings from localStorage or defaults

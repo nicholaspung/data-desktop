@@ -1,6 +1,6 @@
 // src/features/bloodwork/add-bloodwork-dialog.tsx
 import { useState, useEffect } from "react";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, CalendarIcon } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
 import dataStore, { addEntry } from "@/store/data-store";
@@ -14,7 +14,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import BloodMarkerInput from "./blood-marker-input";

@@ -3,26 +3,10 @@ import { useState } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Search,
-  Activity,
-  Beaker,
-  CalendarCheck,
-  Database,
-  FileText,
-  Home,
-  Lock,
-  PieChart,
-  Pipette,
-  BookOpen,
-  HandHeart,
-  Lightbulb,
-  Presentation,
-  BookHeart,
-  Clock,
-} from "lucide-react";
+import { FileText, Lock, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 interface HelpTopic {
   title: string;
@@ -35,7 +19,7 @@ interface HelpTopic {
 const HELP_TOPICS: HelpTopic[] = [
   {
     title: "Getting Started",
-    icon: <Home className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.HOME className="h-5 w-5" />,
     description:
       "Learn how to navigate Data Desktop and start tracking your data. Understand the basic concepts and workflow.",
     keywords: [
@@ -51,7 +35,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Daily Tracking",
-    icon: <CalendarCheck className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />,
     description:
       "Track daily metrics, habits, and goals using the calendar interface. Set up categories and custom schedules for your metrics.",
     keywords: [
@@ -68,7 +52,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "DEXA Scans",
-    icon: <PieChart className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,
     description:
       "Import DEXA scan results and analyze body composition changes over time. View trends in fat mass, lean tissue, and bone density.",
     keywords: [
@@ -86,7 +70,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Bloodwork",
-    icon: <Pipette className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.BLOODWORK className="h-5 w-5" />,
     description:
       "Track blood test results and biomarkers. Set reference ranges and visualize changes in your health markers over time.",
     keywords: [
@@ -102,7 +86,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Journaling",
-    icon: <BookOpen className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:
       "Record your thoughts, gratitude, creative ideas, and daily affirmations. Enhance your wellbeing through self-reflection.",
     keywords: [
@@ -120,7 +104,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Gratitude Journal",
-    icon: <HandHeart className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:
       "Express and track things you're grateful for each day to cultivate a positive mindset and increase your overall wellbeing.",
     keywords: [
@@ -135,7 +119,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Question Journal",
-    icon: <Presentation className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:
       "Answer daily thought-provoking questions to gain insights, foster self-reflection, and track your growth over time.",
     keywords: [
@@ -151,7 +135,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Creativity Journal",
-    icon: <Lightbulb className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:
       "Capture your creative ideas, inspirations, and random thoughts to nurture your creativity and build an idea repository.",
     keywords: [
@@ -167,7 +151,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Daily Affirmations",
-    icon: <BookHeart className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:
       "Create and practice daily affirmations to reinforce positive beliefs, boost confidence, and support your personal goals.",
     keywords: [
@@ -183,7 +167,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Experiments",
-    icon: <Beaker className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.EXPERIMENTS className="h-5 w-5" />,
     description:
       "Create experiments to test the impact of lifestyle changes. Define goals, track metrics, and analyze results.",
     keywords: [
@@ -199,7 +183,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Quick Metric Logger",
-    icon: <Activity className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />,
     description:
       "Log metrics outside of your regular schedule. Useful for infrequent events or metrics you don't track daily.",
     keywords: [
@@ -215,7 +199,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Time Tracker",
-    icon: <Clock className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.TIME_TRACKER className="h-5 w-5" />,
     description:
       "Track how you spend your time with the timer or manual entries. Organize with categories and tags, then analyze with detailed reports.",
     keywords: [
@@ -235,7 +219,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Data Management",
-    icon: <Database className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DATASETS className="h-5 w-5" />,
     description:
       "Import, export, and manage your data. View all datasets and records in table format.",
     keywords: ["data", "dataset", "table", "import", "export", "csv", "manage"],

@@ -3,9 +3,10 @@ import { useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { formatHoursAndMinutes } from "@/lib/time-utils";
-import { Clock, Clock3 } from "lucide-react";
+import { Clock3 } from "lucide-react";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function TimeTrackerDashboardSummary() {
   const timeEntries = useStore(
@@ -157,7 +158,9 @@ export default function TimeTrackerDashboardSummary() {
     return (
       <ReusableSummary
         title="Time Tracking"
-        titleIcon={<Clock className="h-5 w-5 text-primary" />}
+        titleIcon={
+          <FEATURE_ICONS.TIME_TRACKER className="h-5 w-5 text-primary" />
+        }
         linkText="View Time Tracker"
         linkTo="/time-tracker"
         emptyState={{
@@ -194,7 +197,9 @@ export default function TimeTrackerDashboardSummary() {
   return (
     <ReusableSummary
       title="Time Tracking"
-      titleIcon={<Clock className="h-5 w-5 text-primary" />}
+      titleIcon={
+        <FEATURE_ICONS.TIME_TRACKER className="h-5 w-5 text-primary" />
+      }
       linkText="View All"
       linkTo="/time-tracker"
       mainSection={{

@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import { Badge } from "@/components/ui/badge";
-import { Beaker, Calendar } from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
 import { Experiment } from "@/store/experiment-definitions";
@@ -10,6 +9,8 @@ import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
+import { FEATURE_ICONS } from "@/lib/icons";
+import { Calendar } from "lucide-react";
 
 export default function ExperimentDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -103,7 +104,7 @@ export default function ExperimentDashboardSummary() {
   return (
     <ReusableSummary
       title="Active Experiments"
-      titleIcon={<Beaker className="h-5 w-5" />}
+      titleIcon={<FEATURE_ICONS.EXPERIMENTS className="h-5 w-5" />}
       linkTo="/experiments"
       loading={loading}
       emptyState={

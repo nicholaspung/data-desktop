@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Beaker, Calendar, Target } from "lucide-react";
+import { Beaker, Calendar, Target, Loader2 } from "lucide-react";
 import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -7,7 +7,6 @@ import loadingStore from "@/store/loading-store";
 import DailyTrackerNavigation from "./daily-tracker-navigation";
 import DailyTrackerViewCard from "./daily-tracker-view-card";
 import { parseMetricValue } from "../experiments/experiments-utils";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { Separator } from "@/components/ui/separator";

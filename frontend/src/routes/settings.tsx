@@ -7,39 +7,16 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import { LayoutDashboard, Database } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import settingsStore from "@/store/settings-store";
-import { Separator } from "@/components/ui/separator";
-import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 import { Button } from "@/components/ui/button";
-import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { FEATURE_ICONS } from "@/lib/icons";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
-
-// Define the dataset groups for better organization
-const datasetGroups = {
-  "Body Composition": ["dexa"],
-  "Health Metrics": ["bloodwork", "blood_markers", "blood_results"],
-  "Tracking & Habits": [
-    "metrics",
-    "daily_logs",
-    "metric_categories",
-    "experiments",
-    "experiment_metrics",
-  ],
-  Journaling: [
-    "gratitude_journal",
-    "question_journal",
-    "creativity_journal",
-    "affirmation",
-  ],
-  "Time Management": ["time_entries", "time_categories"],
-};
 
 // Define routes with friendly names and icons
 const routes = [
@@ -123,26 +100,10 @@ function SettingsPage() {
     settingsStore,
     (state) => state.setVisibleRoute
   );
-  const enabledDatasets = useStore(
-    settingsStore,
-    (state) => state.enabledDatasets
-  );
-  const setEnabledDataset = useStore(
-    settingsStore,
-    (state) => state.setEnabledDataset
-  );
-
-  const { getAllDatasets } = useFieldDefinitions();
-  const allDatasets = getAllDatasets();
 
   // Handle route visibility toggle
   const handleRouteToggle = (route: string, checked: boolean) => {
     setVisibleRoute(route, checked);
-  };
-
-  // Handle dataset enable/disable toggle
-  const handleDatasetToggle = (dataset: string, checked: boolean) => {
-    setEnabledDataset(dataset, checked);
   };
 
   // Reset all settings to defaults
@@ -183,56 +144,6 @@ function SettingsPage() {
     </div>
   );
 
-  // Datasets Settings Content
-  const datasetsContent = (
-    <div className="space-y-6">
-      {Object.entries(datasetGroups).map(([group, datasetIds]) => (
-        <div key={group} className="space-y-2">
-          <h3 className="font-medium text-lg">{group}</h3>
-          <Separator className="my-2" />
-          <div className="space-y-4">
-            {datasetIds.map((datasetId) => {
-              // Find the dataset details
-              const dataset = allDatasets.find((d) => d.id === datasetId) || {
-                id: datasetId,
-                name: datasetId
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (l) => l.toUpperCase()),
-                description: "Dataset description",
-              };
-
-              return (
-                <div
-                  key={datasetId}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex flex-col">
-                    <Label
-                      htmlFor={`dataset-${datasetId}`}
-                      className="flex items-center"
-                    >
-                      {dataset.name}
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      {dataset.description || "No description available"}
-                    </p>
-                  </div>
-                  <Switch
-                    id={`dataset-${datasetId}`}
-                    checked={enabledDatasets[datasetId] ?? false}
-                    onCheckedChange={(checked) =>
-                      handleDatasetToggle(datasetId, checked)
-                    }
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <FeatureLayout
       header={
@@ -268,43 +179,15 @@ function SettingsPage() {
           </ul>
         </InfoPanel>
 
-        <ReusableTabs
-          tabs={[
-            {
-              id: "navigation",
-              label: "Navigation",
-              content: (
-                <ReusableCard
-                  title={
-                    <div className="flex items-center gap-2">
-                      <LayoutDashboard className="h-5 w-5" />
-                      Navigation Visibility
-                    </div>
-                  }
-                  description="Enable or disable navigation items in the sidebar"
-                  content={navigationContent}
-                />
-              ),
-            },
-            {
-              id: "datasets",
-              label: "Datasets",
-              content: (
-                <ReusableCard
-                  title={
-                    <div className="flex items-center gap-2">
-                      <Database className="h-5 w-5" />
-                      Dataset Management
-                    </div>
-                  }
-                  description="Enable or disable datasets in the application"
-                  content={datasetsContent}
-                />
-              ),
-            },
-          ]}
-          defaultTabId="navigation"
-          className="w-full"
+        <ReusableCard
+          title={
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-5 w-5" />
+              Navigation Visibility
+            </div>
+          }
+          description="Enable or disable navigation items in the sidebar"
+          content={navigationContent}
         />
       </div>
     </FeatureLayout>

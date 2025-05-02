@@ -1,10 +1,10 @@
 // src/features/dashboard/journaling-dashboard-summary.tsx
 import { useEffect, useState } from "react";
-import { BookOpen } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Badge } from "@/components/ui/badge";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function JournalingDashboardSummary() {
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +100,7 @@ export default function JournalingDashboardSummary() {
   return (
     <ReusableSummary
       title="Journaling"
-      titleIcon={<BookOpen className="h-5 w-5" />}
+      titleIcon={<FEATURE_ICONS.JOURNALING className="h-5 w-5" />}
       linkText="Go to Journaling"
       linkTo="/journaling"
       loading={isLoading}
