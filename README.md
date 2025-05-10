@@ -65,15 +65,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- add a way to edit these todos when they are created
-- change the way the todo items look
-- when a user is finished with a todo, make the metric inactive
 - in todo-dashboard-summary, only show the todos that are active/due today, and sort them according to priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low))
-- if a todo is completed, do not allow user to delete
 - add a `private` field to todo and have it be used everywhere todos are displayed
-- see what happens when a todo is overdue
-- todo-deadline-check when I click "view", it doesn't show the current tab - need to add params to `todos.tsx`
-- in `todo-list.tsx` order todo in terms of priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low))
 
 - bug: macos auto time tracking for some reason breaks the application, but the record still records correctly
 
@@ -288,6 +281,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - tie the enable/disable certain features to the dashboard summaries too [DONE 2025-05-01]
 - time planner adding categories is bugged again [DONE 2025-05-02]
 - add somewhere a way to write down deadlines, how many days until the deadline, what necessary actions are needed in order to accomplish said deadline. It can kind of be like a todo-item [DONE 2025-05-02]
+- add a way to edit these todos when they are created [DONE 2025-05-10]
+- change the way the todo items look [DONE 2025-05-10]
+- when a user is finished with a todo, make the metric inactive [DONE 2025-05-10]
+- if a todo is completed, do not allow user to delete [DONE 2025-05-10]
+- see what happens when a todo is overdue [DONE 2025-05-10]
+- in `todo-list.tsx` order todo in terms of priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low)) [DONE 2025-05-10]
 
 ### GAVE UP
 

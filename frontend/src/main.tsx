@@ -10,7 +10,6 @@ import { Toaster } from "./components/ui/sonner";
 import { SecurityProvider } from "./components/security/security-provider";
 import { OnboardingProvider } from "./contexts/onboarding-provider";
 import OnboardingModal from "./components/onboarding/onboarding-modal";
-import TodoDeadlineCheck from "./features/todos/todo-deadline-check";
 
 // Create a new router instance
 const router = createRouter({ routeTree });
@@ -32,7 +31,6 @@ if (rootElement && !rootElement?.innerHTML) {
             <div className="min-h-screen bg-background text-foreground">
               <RouterProvider router={router} />
               <OnboardingModal />
-              <TodoDeadlineCheck />
             </div>
           </OnboardingProvider>
           <Toaster richColors />

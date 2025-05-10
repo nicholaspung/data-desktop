@@ -1,3 +1,4 @@
+// frontend/src/features/todos/todo-form.tsx
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -19,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApiService } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import { Metric } from "@/store/experiment-definitions";
+import { Metric, MetricCategory } from "@/store/experiment-definitions";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,8 +33,12 @@ interface TodoFormProps {
 export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const isEditMode = !!existingTodo;
 
-  // Get metrics from store instead of API call
+  // Get metrics and categories from store instead of API call
   const metrics = useStore(dataStore, (state) => state.metrics as Metric[]);
+  const metricCategories = useStore(
+    dataStore,
+    (state) => state.metric_categories as MetricCategory[]
+  );
   const isLoadingMetrics = useStore(loadingStore, (state) => state.metrics);
 
   // Default state for a new todo
@@ -133,6 +138,31 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
       // Create a metric if enabled and not in edit mode
       let metricId = relatedMetricId;
       if (createMetric && !isEditMode && metricType) {
+        // First, check if "Todo" category exists, if not create it
+        let todoCategoryId: string;
+        const existingCategory = metricCategories.find(
+          (cat) => cat.name === "Todo"
+        );
+
+        if (existingCategory) {
+          todoCategoryId = existingCategory.id;
+        } else {
+          // Create "Todo" category
+          const newCategory = {
+            name: "Todo",
+          };
+          const savedCategory = await ApiService.addRecord(
+            "metric_categories",
+            newCategory
+          );
+          if (savedCategory) {
+            todoCategoryId = savedCategory.id;
+            addEntry(savedCategory, "metric_categories");
+          } else {
+            throw new Error("Failed to create Todo category");
+          }
+        }
+
         // Define the new metric
         const newMetric = {
           name: `${title} Progress`,
@@ -145,6 +175,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
           schedule_frequency: "daily",
           goal_type: metricType === "completion" ? "boolean" : "minimum",
           goal_value: metricType === "completion" ? "true" : "30",
+          category_id: todoCategoryId,
         };
 
         // Save the new metric and get its ID

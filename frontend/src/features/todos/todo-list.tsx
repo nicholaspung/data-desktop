@@ -6,7 +6,7 @@ import loadingStore from "@/store/loading-store";
 import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions.d";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { formatDistanceToNow, isPast } from "date-fns";
 import AddTodoButton from "./add-todo-button";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import TodoStats from "./todo-stats";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
+import { getSortedTodos } from "./todo-utils";
 
 export default function TodoList() {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
@@ -52,31 +53,6 @@ export default function TodoList() {
     });
   };
 
-  // Sort todos by deadline (earliest first) and then by priority
-  const getSortedTodos = (todos: Todo[]) => {
-    return [...todos].sort((a, b) => {
-      // Sort by completion status first
-      if (a.isComplete !== b.isComplete) {
-        return a.isComplete ? 1 : -1;
-      }
-
-      // Then by deadline
-      const aDate = new Date(a.deadline);
-      const bDate = new Date(b.deadline);
-      const dateComparison = aDate.getTime() - bDate.getTime();
-      if (dateComparison !== 0) return dateComparison;
-
-      // Then by priority
-      const priorityOrder = {
-        [TodoPriority.URGENT]: 0,
-        [TodoPriority.HIGH]: 1,
-        [TodoPriority.MEDIUM]: 2,
-        [TodoPriority.LOW]: 3,
-      };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
-  };
-
   const handleCompleteTodo = async (todo: Todo) => {
     const updatedTodo = {
       ...todo,
@@ -90,6 +66,36 @@ export default function TodoList() {
       if (response) {
         updateEntry(todo.id, response, "todos");
         toast.success(`"${todo.title}" marked as completed!`);
+
+        // If todo has a related metric, check if it's in the "Todo" category
+        if (todo.relatedMetricId && todoMetrics[todo.relatedMetricId]) {
+          const metric = todoMetrics[todo.relatedMetricId];
+
+          // Check if the metric belongs to the "Todo" category
+          let shouldDeactivate = false;
+          if (
+            metric.category_id_data &&
+            metric.category_id_data.name === "Todo"
+          ) {
+            shouldDeactivate = true;
+          }
+
+          if (shouldDeactivate) {
+            const updatedMetric = {
+              ...metric,
+              active: false,
+            };
+
+            const metricResponse = await ApiService.updateRecord(
+              todo.relatedMetricId,
+              updatedMetric
+            );
+            if (metricResponse) {
+              updateEntry(todo.relatedMetricId, metricResponse, "metrics");
+              toast.info("Related metric has been marked as inactive");
+            }
+          }
+        }
       }
     } catch (error) {
       console.error("Failed to complete todo:", error);
@@ -202,118 +208,133 @@ export default function TodoList() {
                   : "border-l-blue-500"
             }`}
           >
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardTitle
-                  className={`text-xl ${
-                    todo.isComplete ? "line-through text-muted-foreground" : ""
-                  }`}
-                >
-                  {todo.title}
-                </CardTitle>
-                <div className="flex gap-2">
-                  {!todo.isComplete && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleCompleteTodo(todo)}
-                      className="h-8 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+            <CardContent className="py-3 px-4">
+              <div className="flex items-center justify-between">
+                {/* Left section - Title and info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3">
+                    <h3
+                      className={`font-medium truncate ${
+                        todo.isComplete
+                          ? "line-through text-muted-foreground"
+                          : ""
+                      }`}
                     >
-                      <CheckCircle2 className="h-4 w-4 mr-1" />
-                      Complete
-                    </Button>
-                  )}
-                  <ConfirmDeleteDialog
-                    title={`Delete "${todo.title}"?`}
-                    description="This will permanently remove this todo. This action cannot be undone."
-                    onConfirm={() => handleDeleteTodo(todo.id)}
-                    variant="ghost"
-                    size="sm"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2 items-center">
-                  {getPriorityBadge(todo.priority as TodoPriority)}
-                  {getDeadlineStatus(
-                    todo.deadline.toISOString(),
-                    todo.isComplete
-                  )}
+                      {todo.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      {getPriorityBadge(todo.priority as TodoPriority)}
+                      {getDeadlineStatus(
+                        todo.deadline.toISOString(),
+                        todo.isComplete
+                      )}
 
-                  {todo.tags &&
-                    todo.tags.length > 0 &&
-                    todo.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                </div>
+                      {todo.tags &&
+                        todo.tags.length > 0 &&
+                        todo.tags.slice(0, 2).map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
 
-                {todo.description && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {todo.description}
-                  </p>
-                )}
+                      {todo.tags && todo.tags.length > 2 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{todo.tags.length - 2}
+                        </Badge>
+                      )}
 
-                <div className="pt-2 flex justify-between items-center">
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Deadline: </span>
-                    <span className="font-medium">
-                      {new Date(todo.deadline).toLocaleDateString()}
-                    </span>
-                    {!todo.isComplete && (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        -{" "}
-                        {formatDistanceToNow(new Date(todo.deadline), {
-                          addSuffix: true,
-                        })}
-                      </span>
+                      {todo.relatedMetricId &&
+                        todoMetrics[todo.relatedMetricId] && (
+                          <Badge
+                            variant="outline"
+                            className="flex gap-1 items-center text-xs"
+                          >
+                            <Link
+                              to="/metric"
+                              search={{
+                                query: todoMetrics[todo.relatedMetricId].name,
+                              }}
+                            >
+                              {todoMetrics[todo.relatedMetricId].name}
+                            </Link>
+                          </Badge>
+                        )}
+                    </div>
+                    {todo.description && (
+                      <p className="text-sm text-muted-foreground truncate max-w-xs">
+                        {todo.description}
+                      </p>
                     )}
                   </div>
+                </div>
 
-                  {todo.relatedMetricId &&
-                    todoMetrics[todo.relatedMetricId] && (
-                      <div className="flex items-center">
-                        <Badge
-                          variant="outline"
-                          className="flex gap-1 items-center"
-                        >
-                          <span>Tracks: </span>
-                          <Link
-                            to="/metric"
-                            search={{
-                              query: todoMetrics[todo.relatedMetricId].name,
-                            }}
-                          >
-                            {todoMetrics[todo.relatedMetricId].name}
-                          </Link>
-                        </Badge>
-                      </div>
-                    )}
+                {/* Right section - Actions */}
+                <div className="flex gap-1 ml-4">
+                  {!todo.isComplete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCompleteTodo(todo)}
+                      className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {!todo.isComplete && (
+                    <>
+                      <AddTodoButton
+                        existingTodo={todo}
+                        onSuccess={() => {
+                          // Refresh metrics data after update
+                          const loadMetrics = async () => {
+                            const metrics =
+                              await ApiService.getRecordsWithRelations<any>(
+                                "metrics"
+                              );
+                            const metricMap: Record<string, any> = {};
+                            metrics.forEach((metric) => {
+                              metricMap[metric.id] = metric;
+                            });
+                            setTodoMetrics(metricMap);
+                          };
+                          loadMetrics();
+                        }}
+                      />
+                      <ConfirmDeleteDialog
+                        title={`Delete "${todo.title}"?`}
+                        description="This will permanently remove this todo. This action cannot be undone."
+                        onConfirm={() => handleDeleteTodo(todo.id)}
+                        variant="ghost"
+                        size="sm"
+                      />
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer info */}
+              <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex justify-between items-center">
+                <div>
+                  Deadline: {new Date(todo.deadline).toLocaleDateString()}
+                  {!todo.isComplete && (
+                    <span>
+                      {" "}
+                      -{" "}
+                      {formatDistanceToNow(new Date(todo.deadline), {
+                        addSuffix: true,
+                      })}
+                    </span>
+                  )}
                 </div>
 
                 {todo.failedDeadlines && todo.failedDeadlines.length > 0 && (
-                  <div className="text-sm mt-2 pt-2 border-t">
-                    <p className="text-muted-foreground mb-1">
-                      Failed Deadlines:
-                    </p>
-                    <ul className="space-y-1">
-                      {todo.failedDeadlines.map(
-                        (failed: any, index: number) => (
-                          <li key={index} className="text-muted-foreground">
-                            <span className="line-through">
-                              {new Date(
-                                failed.originalDeadline
-                              ).toLocaleDateString()}
-                            </span>
-                            {failed.reason && ` - ${failed.reason}`}
-                          </li>
-                        )
-                      )}
-                    </ul>
+                  <div>
+                    {todo.failedDeadlines.length} failed deadline
+                    {todo.failedDeadlines.length > 1 ? "s" : ""}
                   </div>
                 )}
               </div>

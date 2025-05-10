@@ -7,6 +7,7 @@ import { Todo } from "@/store/todo-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { isPast, isToday, differenceInDays } from "date-fns";
+import { getSortedTodos } from "./todo-utils";
 
 export default function TodoDashboardSummary() {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
@@ -22,8 +23,10 @@ export default function TodoDashboardSummary() {
       return;
     }
 
+    const sortedTodos = getSortedTodos(todos);
+
     // Filter todos due today
-    const today = todos.filter(
+    const today = sortedTodos.filter(
       (todo) => !todo.isComplete && isToday(new Date(todo.deadline))
     );
     setTodayTodos(today);
