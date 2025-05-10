@@ -87,7 +87,7 @@ export default function TodoDashboardSummary() {
     <ReusableSummary
       title="Todos & Deadlines"
       titleIcon={<FEATURE_ICONS.TODOS className="h-5 w-5" />}
-      linkText="View All Todos"
+      linkText="View All"
       linkTo="/todos"
       loading={false}
       emptyState={

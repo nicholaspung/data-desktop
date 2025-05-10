@@ -8,7 +8,6 @@ import {
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import TodoList from "@/features/todos/todo-list";
 import AddTodoButton from "@/features/todos/add-todo-button";
-import TodoReminders from "@/features/todos/todo-reminders";
 
 export const Route = createFileRoute("/todos")({
   component: TodosPage,
@@ -150,7 +149,6 @@ function TodosPage() {
       }
       sidebarPosition="right"
     >
-      <TodoReminders />
       <TodoList />
     </FeatureLayout>
   );
