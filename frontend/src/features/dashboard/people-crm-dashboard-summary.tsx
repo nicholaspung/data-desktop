@@ -1,121 +1,141 @@
-// frontend/src/features/dashboard/people-crm-dashboard-summary.tsx
-import { useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
-import useLoadData from "@/hooks/useLoadData";
 import {
-  PEOPLE_FIELD_DEFINITIONS,
-  MEETINGS_FIELD_DEFINITIONS,
-} from "@/features/field-definitions/people-crm-definitions";
-import ReusableSummary from "@/components/reusable/reusable-summary";
-import { Users, Calendar, Gift } from "lucide-react";
+  Users,
+  Calendar,
+  NotebookPen,
+  Tag,
+  Gift,
+  ChevronRight,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
+import ReusableSummary from "@/components/reusable/reusable-summary";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { format, differenceInDays, addYears } from "date-fns";
 
 export default function PeopleCRMDashboardSummary() {
   const people = useStore(dataStore, (state) => state.people);
   const meetings = useStore(dataStore, (state) => state.meetings);
-  const isPeopleLoading = useStore(loadingStore, (state) => state.people);
-  const isMeetingsLoading = useStore(loadingStore, (state) => state.meetings);
-
-  // Load data for summary
-  const { loadData: loadPeople } = useLoadData({
-    fields: PEOPLE_FIELD_DEFINITIONS.fields,
-    datasetId: "people",
-    title: "People",
-  });
-
-  const { loadData: loadMeetings } = useLoadData({
-    fields: MEETINGS_FIELD_DEFINITIONS.fields,
-    datasetId: "meetings",
-    title: "Meetings",
-  });
-
-  useEffect(() => {
-    loadPeople();
-    loadMeetings();
-  }, []);
-
-  // Calculate upcoming birthdays (next 30 days)
-  const upcomingBirthdays = people.filter((person) => {
-    if (!person.birthday) return false;
-    const now = new Date();
-    const birthday = new Date(person.birthday);
-    const nextBirthday = new Date(
-      now.getFullYear(),
-      birthday.getMonth(),
-      birthday.getDate()
-    );
-
-    // If birthday has passed this year, check next year
-    if (nextBirthday < now) {
-      nextBirthday.setFullYear(now.getFullYear() + 1);
-    }
-
-    const daysUntil =
-      (nextBirthday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-    return daysUntil <= 30;
-  });
-
-  // Recent meetings (last 7 days)
-  const recentMeetings = meetings.filter((meeting) => {
-    const meetingDate = new Date(meeting.meeting_date);
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return meetingDate >= weekAgo;
-  });
-
-  // Follow-ups needed
-  const followUpsNeeded = meetings.filter(
-    (meeting) =>
-      meeting.follow_up_needed &&
-      meeting.follow_up_date &&
-      new Date(meeting.follow_up_date) >= new Date()
+  const personNotes = useStore(dataStore, (state) => state.person_notes);
+  const personAttributes = useStore(
+    dataStore,
+    (state) => state.person_attributes
+  );
+  const birthdayReminders = useStore(
+    dataStore,
+    (state) => state.birthday_reminders
   );
 
-  // Get latest people added
-  const recentPeople = people
+  const isLoading = useStore(
+    loadingStore,
+    (state) =>
+      state.people ||
+      state.meetings ||
+      state.person_notes ||
+      state.person_attributes
+  );
+
+  // Calculate birthday information
+  const peopleWithBirthdays = people.filter((person) => person.birthday);
+  const today = new Date();
+
+  const upcomingBirthdays = peopleWithBirthdays
+    .map((person) => {
+      const birthday = new Date(person.birthday!);
+      let nextBirthday = new Date(
+        today.getFullYear(),
+        birthday.getMonth(),
+        birthday.getDate()
+      );
+
+      if (nextBirthday < today) {
+        nextBirthday = addYears(nextBirthday, 1);
+      }
+
+      const daysUntil = differenceInDays(nextBirthday, today);
+      const age = nextBirthday.getFullYear() - birthday.getFullYear();
+
+      return {
+        ...person,
+        daysUntil,
+        age,
+        nextBirthday,
+      };
+    })
+    .filter((person) => person.daysUntil <= 30)
+    .sort((a, b) => a.daysUntil - b.daysUntil);
+
+  // Recent meetings (last 5)
+  const recentMeetings = meetings
+    .slice()
     .sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()
     )
-    .slice(0, 3);
+    .slice(0, 5);
 
-  const isLoading = isPeopleLoading || isMeetingsLoading;
+  // Quick stats
+  const stats = {
+    people: people.length,
+    meetings: meetings.length,
+    notes: personNotes.length,
+    attributes: personAttributes.length,
+    upcomingBirthdays: upcomingBirthdays.length,
+    hasReminders: birthdayReminders.length,
+  };
+
+  const getBirthdayBadge = (daysUntil: number) => {
+    if (daysUntil === 0) return "bg-green-500 text-white";
+    if (daysUntil === 1) return "bg-orange-500 text-white";
+    if (daysUntil <= 7) return "bg-blue-500 text-white";
+    return "bg-purple-500 text-white";
+  };
 
   return (
     <ReusableSummary
       title="People CRM"
       titleIcon={<Users className="h-5 w-5" />}
-      linkText="Manage Contacts"
+      linkText="Open People CRM"
       linkTo="/people-crm"
       loading={isLoading}
+      emptyState={
+        people.length === 0
+          ? {
+              message: "No people in your network yet",
+              actionText: "Add Person",
+              actionTo: "/people-crm",
+            }
+          : undefined
+      }
       mainSection={{
-        title: "Network Overview",
-        value: people.length,
-        subText: `${people.length} contacts in your network`,
-        badge:
-          upcomingBirthdays.length > 0
-            ? {
-                variant: "default",
-                children: `${upcomingBirthdays.length} upcoming birthday${upcomingBirthdays.length > 1 ? "s" : ""}`,
-              }
-            : undefined,
+        title: "Network",
+        value: `${stats.people} people`,
+        subText: `Across ${stats.meetings} meetings and ${stats.notes} notes`,
       }}
       sections={[
         {
-          title: "Activity Summary",
+          title: "Quick Stats",
           items: [
             {
-              label: "Recent Meetings",
-              value: recentMeetings.length,
-              subText: "in the last 7 days",
+              label: "Total People",
+              value: stats.people,
             },
             {
-              label: "Follow-ups Needed",
-              value: followUpsNeeded.length,
-              subText: "pending follow-ups",
+              label: "This Month",
+              value: `${
+                meetings.filter(
+                  (m) =>
+                    new Date(m.meeting_date).getMonth() === today.getMonth() &&
+                    new Date(m.meeting_date).getFullYear() ===
+                      today.getFullYear()
+                ).length
+              } meetings`,
+            },
+            {
+              label: "Active Attributes",
+              value: stats.attributes,
             },
           ],
           columns: 2,
@@ -126,81 +146,144 @@ export default function PeopleCRMDashboardSummary() {
         items: [
           {
             content: (
-              <div className="text-center">
-                <Calendar className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <h3 className="font-medium">Next Meeting</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {meetings.length > 0
-                    ? format(
-                        new Date(
-                          meetings.sort(
-                            (a, b) =>
-                              new Date(a.meeting_date).getTime() -
-                              new Date(b.meeting_date).getTime()
-                          )[0].meeting_date
-                        ),
-                        "MMM d"
-                      )
-                    : "None scheduled"}
-                </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Gift className="h-4 w-4 text-primary" />
+                  Upcoming Birthdays
+                </div>
+                {upcomingBirthdays.length > 0 ? (
+                  <div className="space-y-1">
+                    {upcomingBirthdays.slice(0, 3).map((person) => (
+                      <Link
+                        key={person.id}
+                        to="/people-crm"
+                        search={{
+                          tab: "birthdays",
+                          detail: { type: "birthday", id: person.id },
+                        }}
+                        className="block"
+                      >
+                        <div className="flex items-center justify-between text-sm hover:bg-accent/50 rounded px-2 py-1">
+                          <div>
+                            <div className="font-medium">{person.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(person.birthday!, "MMM d")} • {person.age}{" "}
+                              years old
+                            </div>
+                          </div>
+                          <Badge className={getBirthdayBadge(person.daysUntil)}>
+                            {person.daysUntil === 0
+                              ? "Today"
+                              : person.daysUntil === 1
+                                ? "Tomorrow"
+                                : `${person.daysUntil}d`}
+                          </Badge>
+                        </div>
+                      </Link>
+                    ))}
+                    {upcomingBirthdays.length > 3 && (
+                      <Link
+                        to="/people-crm"
+                        search={{ tab: "birthdays" }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        View all {upcomingBirthdays.length} upcoming birthdays
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No birthdays in the next 30 days
+                  </p>
+                )}
               </div>
-            ),
-            action: (
-              <Link to="/people-crm/meetings">
-                <span className="text-xs text-primary hover:underline">
-                  View All
-                </span>
-              </Link>
             ),
           },
           {
             content: (
-              <div className="text-center">
-                <Gift className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <h3 className="font-medium">Next Birthday</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {upcomingBirthdays.length > 0
-                    ? format(new Date(upcomingBirthdays[0].birthday!), "MMM d")
-                    : "None upcoming"}
-                </p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Recent Meetings
+                </div>
+                {recentMeetings.length > 0 ? (
+                  <div className="space-y-1">
+                    {recentMeetings.slice(0, 3).map((meeting) => (
+                      <Link
+                        key={meeting.id}
+                        to="/people-crm"
+                        search={{
+                          tab: "meetings",
+                          detail: { type: "meeting", id: meeting.id },
+                        }}
+                        className="block"
+                      >
+                        <div className="flex items-center justify-between text-sm hover:bg-accent/50 rounded px-2 py-1">
+                          <div>
+                            <div className="font-medium">
+                              {meeting.person_id_data?.name || "Unknown"}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(meeting.meeting_date, "MMM d")} •{" "}
+                              {meeting.location}
+                            </div>
+                          </div>
+                          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </Link>
+                    ))}
+                    {recentMeetings.length > 3 && (
+                      <Link
+                        to="/people-crm"
+                        search={{ tab: "meetings" }}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        View all meetings
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No meetings recorded yet
+                  </p>
+                )}
               </div>
-            ),
-            action: (
-              <Link to="/people-crm/birthdays">
-                <span className="text-xs text-primary hover:underline">
-                  View All
-                </span>
-              </Link>
             ),
           },
         ],
       }}
       footer={
-        <div className="mt-4 pt-4 border-t">
-          <h4 className="text-sm font-medium mb-2">Recent Contacts</h4>
-          <div className="space-y-2">
-            {recentPeople.map((person) => (
-              <Link
-                key={person.id}
-                to={`/people-crm/people/$personId`}
-                params={{ personId: person.id }}
-                className="flex items-center justify-between text-sm hover:bg-accent/50 px-2 py-1 rounded"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="h-3 w-3 text-muted-foreground" />
-                  <span>{person.name}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {format(person.createdAt, "MMM d")}
-                </span>
-              </Link>
-            ))}
-            {recentPeople.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center">
-                No contacts yet
-              </p>
-            )}
-          </div>
+        <div className="flex flex-wrap gap-2 pt-4 border-t">
+          <Link to="/people-crm" search={{ tab: "people" }}>
+            <Button variant="outline" size="sm">
+              <Users className="h-3 w-3 mr-1" />
+              People
+            </Button>
+          </Link>
+          <Link to="/people-crm" search={{ tab: "meetings" }}>
+            <Button variant="outline" size="sm">
+              <Calendar className="h-3 w-3 mr-1" />
+              Meetings
+            </Button>
+          </Link>
+          <Link to="/people-crm" search={{ tab: "notes" }}>
+            <Button variant="outline" size="sm">
+              <NotebookPen className="h-3 w-3 mr-1" />
+              Notes
+            </Button>
+          </Link>
+          <Link to="/people-crm" search={{ tab: "attributes" }}>
+            <Button variant="outline" size="sm">
+              <Tag className="h-3 w-3 mr-1" />
+              Attributes
+            </Button>
+          </Link>
+          <Link to="/people-crm" search={{ tab: "birthdays" }}>
+            <Button variant="outline" size="sm">
+              <Gift className="h-3 w-3 mr-1" />
+              Birthdays
+            </Button>
+          </Link>
         </div>
       }
     />

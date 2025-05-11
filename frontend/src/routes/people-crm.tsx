@@ -39,7 +39,6 @@ function PeopleCRM() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [activeTab, setActiveTab] = useState(search.tab || "people");
-  const [isFlipping, setIsFlipping] = useState(false);
 
   useEffect(() => {
     if (search.tab) {
@@ -48,7 +47,6 @@ function PeopleCRM() {
   }, [search.tab]);
 
   const handleShowDetail = (type: string, id: string) => {
-    setIsFlipping(true);
     navigate({
       search: {
         tab: activeTab,
@@ -61,7 +59,6 @@ function PeopleCRM() {
   };
 
   const handleEditDetail = (type: string, id: string) => {
-    setIsFlipping(true);
     navigate({
       search: {
         tab: activeTab,
@@ -75,22 +72,12 @@ function PeopleCRM() {
   };
 
   const handleBack = () => {
-    setIsFlipping(true);
     navigate({
       search: {
         tab: activeTab,
       },
     });
   };
-
-  useEffect(() => {
-    if (isFlipping) {
-      const timer = setTimeout(() => {
-        setIsFlipping(false);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [isFlipping]);
 
   const renderDetailContent = () => {
     if (!search.detail) return null;
@@ -191,50 +178,28 @@ function PeopleCRM() {
   const showingDetail = !!search.detail;
 
   return (
-    <div className="perspective-1000 w-full h-full overflow-hidden">
-      <div
-        className={`relative w-full h-full transition-transform duration-500 transform-style-preserve-3d ${
-          isFlipping ? (showingDetail ? "rotate-y-180" : "rotate-y-0") : ""
-        }`}
-        style={{
-          transform: showingDetail ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
-      >
-        {/* Front side - List view */}
-        <div
-          className="absolute inset-0 backface-hidden"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          <div className="container mx-auto py-6 space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-2">
-                <Users className="h-8 w-8" />
-                People CRM
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Manage your contacts and relationships
-              </p>
-            </div>
-
-            <ReusableTabs
-              tabs={tabs}
-              defaultTabId={activeTab}
-              className="w-full"
-            />
+    <div className="w-full h-full">
+      {showingDetail ? (
+        renderDetailContent()
+      ) : (
+        <div className="container mx-auto py-6 space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Users className="h-8 w-8" />
+              People CRM
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your contacts and relationships
+            </p>
           </div>
-        </div>
 
-        {/* Back side - Detail view */}
-        <div
-          className="absolute inset-0 backface-hidden"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-        >
-          {showingDetail && renderDetailContent()}
+          <ReusableTabs
+            tabs={tabs}
+            defaultTabId={activeTab}
+            className="w-full"
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

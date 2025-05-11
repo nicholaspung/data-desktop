@@ -16,7 +16,8 @@ export type FieldType =
   | "text"
   | "select-single"
   | "select-multiple"
-  | "markdown";
+  | "markdown"
+  | "tags";
 
 export interface SelectOption {
   id: string;

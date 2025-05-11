@@ -36,6 +36,7 @@ import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
 import { FormMarkdownField } from "./markdown-field";
 import ReusableCard from "../reusable/reusable-card";
+import TagInput from "@/components/reusable/tag-input";
 
 export default function DataForm({
   datasetId,
@@ -629,6 +630,35 @@ export default function DataForm({
                       formField.onChange(e);
                       form.trigger(field.key);
                     }}
+                  />
+                </FormControl>
+                {field.description && (
+                  <FormDescription>{field.description}</FormDescription>
+                )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        );
+
+      case "tags":
+        return (
+          <FormField
+            key={field.key}
+            control={form.control}
+            name={field.key}
+            render={({ field: formField }) => (
+              <FormItem>
+                <FormLabel>{field.displayName}</FormLabel>
+                <FormControl>
+                  <TagInput
+                    value={formField.value || ""}
+                    onChange={(value) => {
+                      formField.onChange(value);
+                      form.trigger(field.key);
+                    }}
+                    generalData={[]}
+                    generalDataTagField="tags"
                   />
                 </FormControl>
                 {field.description && (

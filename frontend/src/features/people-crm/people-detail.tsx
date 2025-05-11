@@ -9,16 +9,18 @@ import {
   Edit,
   Calendar,
   NotebookPen,
-  Plus,
   Gift,
 } from "lucide-react";
 import ReusableCard from "@/components/reusable/reusable-card";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";  
 import { format } from "date-fns";
 import { ApiService } from "@/services/api";
 import { deleteEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import AddMeetingButton from "./add-meeting-button";
+import AddNoteButton from "./add-note-button";
+import AddAttributeButton from "./add-attribute-button";
 
 interface PersonDetailProps {
   personId: string;
@@ -229,18 +231,30 @@ export default function PersonDetail({
             title="Quick Actions"
             content={
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Add Meeting
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <NotebookPen className="h-4 w-4 mr-2" />
-                  Add Note
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Attribute
-                </Button>
+                <AddMeetingButton defaultPersonId={personId} onSuccess={() => {
+                  // Refresh the page data
+                  ApiService.getRecord(personId).then((data) => {
+                    if (data) {
+                      setPerson(data as Person);
+                    }
+                  });
+                }} />
+                <AddNoteButton defaultPersonId={personId} onSuccess={() => {
+                  // Refresh the page data
+                  ApiService.getRecord(personId).then((data) => {
+                    if (data) {
+                      setPerson(data as Person);
+                    }
+                  });
+                }} />
+                <AddAttributeButton defaultPersonId={personId} onSuccess={() => {
+                  // Refresh the page data
+                  ApiService.getRecord(personId).then((data) => {
+                    if (data) {
+                      setPerson(data as Person);
+                    }
+                  });
+                }} />
                 {person.birthday && (
                   <Button variant="outline" className="w-full">
                     <Gift className="h-4 w-4 mr-2" />
