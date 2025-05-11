@@ -28,7 +28,6 @@ import {
   Meeting,
   PersonAttribute,
   PersonNote,
-  PersonChat,
   BirthdayReminder,
   PersonRelationship,
 } from "./people-crm-definitions";
@@ -55,7 +54,6 @@ export type DataStoreName =
   | "meetings"
   | "person_attributes"
   | "person_notes"
-  | "person_chats"
   | "birthday_reminders"
   | "person_relationships";
 
@@ -80,7 +78,6 @@ type DataStoreType = {
   meetings: Meeting[];
   person_attributes: PersonAttribute[];
   person_notes: PersonNote[];
-  person_chats: PersonChat[];
   birthday_reminders: BirthdayReminder[];
   person_relationships: PersonRelationship[];
 };
@@ -107,7 +104,6 @@ const initialState: DataStoreType = {
   meetings: [],
   person_attributes: [],
   person_notes: [],
-  person_chats: [],
   birthday_reminders: [],
   person_relationships: [],
 };

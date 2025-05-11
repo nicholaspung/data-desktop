@@ -36,7 +36,6 @@ function PersonDetail() {
   const people = useStore(dataStore, (state) => state.people);
   const meetings = useStore(dataStore, (state) => state.meetings);
   const personNotes = useStore(dataStore, (state) => state.person_notes);
-  const personChats = useStore(dataStore, (state) => state.person_chats);
 
   const [person, setPerson] = useState<Person | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -95,18 +94,6 @@ function PersonDetail() {
         new Date(b.note_date).getTime() - new Date(a.note_date).getTime()
     );
 
-  // Get person's chat history
-  const personChatHistory = personChats
-    .filter((chat) => chat.person_id === personId)
-    .sort(
-      (a, b) =>
-        new Date(b.chat_date).getTime() - new Date(a.chat_date).getTime()
-    );
-
-  const socialLinks = person.social_links
-    ? JSON.parse(person.social_links)
-    : {};
-
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -119,13 +106,6 @@ function PersonDetail() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold">{person.name}</h1>
-            {(person.occupation || person.company) && (
-              <p className="text-muted-foreground mt-1">
-                {person.occupation}
-                {person.occupation && person.company && " at "}
-                {person.company}
-              </p>
-            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -147,7 +127,6 @@ function PersonDetail() {
         </div>
       </div>
 
-      {/* Person Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
@@ -155,28 +134,6 @@ function PersonDetail() {
             title="Basic Information"
             content={
               <div className="space-y-4">
-                {person.email && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Email:</span>
-                    <a
-                      href={`mailto:${person.email}`}
-                      className="text-primary hover:underline"
-                    >
-                      {person.email}
-                    </a>
-                  </div>
-                )}
-                {person.phone && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Phone:</span>
-                    <a
-                      href={`tel:${person.phone}`}
-                      className="text-primary hover:underline"
-                    >
-                      {person.phone}
-                    </a>
-                  </div>
-                )}
                 {person.address && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Address:</span>
@@ -201,10 +158,11 @@ function PersonDetail() {
                     <span>{format(person.first_met_date, "MMMM d, yyyy")}</span>
                   </div>
                 )}
-                {person.bio && (
+                {person.employment_history && (
                   <div>
-                    <span className="font-medium block mb-1">Bio:</span>
-                    <p className="text-muted-foreground">{person.bio}</p>
+                    <span className="font-medium block mb-1">
+                      Employment History:
+                    </span>
                   </div>
                 )}
                 {person.tags && (
@@ -219,34 +177,11 @@ function PersonDetail() {
                     </div>
                   </div>
                 )}
-                {Object.keys(socialLinks).length > 0 && (
-                  <div>
-                    <span className="font-medium block mb-2">
-                      Social Links:
-                    </span>
-                    <div className="space-y-1">
-                      {Object.entries(socialLinks).map(([platform, link]) => (
-                        <div key={platform} className="flex items-center gap-2">
-                          <span className="capitalize text-muted-foreground">
-                            {platform}:
-                          </span>
-                          <a
-                            href={link as string}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                          >
-                            {link as string}
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             }
           />
 
+          {/* Rest of the component remains the same */}
           {/* Recent Activity */}
           <ReusableCard
             title="Recent Activity"
@@ -295,7 +230,6 @@ function PersonDetail() {
                 ))}
 
                 {personMeetings.length === 0 &&
-                  personChatHistory.length === 0 &&
                   personNotesList.length === 0 && (
                     <div className="text-center py-6 text-muted-foreground">
                       No recent activity
@@ -306,7 +240,7 @@ function PersonDetail() {
           />
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar - remains the same */}
         <div className="space-y-6">
           {/* Quick Actions */}
           <ReusableCard
@@ -365,26 +299,17 @@ function PersonDetail() {
                   <span className="font-medium">{personMeetings.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Chat History</span>
-                  <span className="font-medium">
-                    {personChatHistory.length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-muted-foreground">Notes</span>
                   <span className="font-medium">{personNotesList.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Last Contact</span>
                   <span className="font-medium">
-                    {personMeetings.length > 0 || personChatHistory.length > 0
+                    {personMeetings.length > 0
                       ? format(
                           Math.max(
                             ...personMeetings.map((m) =>
                               new Date(m.meeting_date).getTime()
-                            ),
-                            ...personChatHistory.map((c) =>
-                              new Date(c.chat_date).getTime()
                             )
                           ),
                           "MMM d"

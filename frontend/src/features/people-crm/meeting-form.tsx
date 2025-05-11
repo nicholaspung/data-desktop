@@ -16,14 +16,11 @@ import { CalendarIcon, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import {
-  Meeting,
-  MeetingInput,
-  MeetingLocationType,
-} from "@/store/people-crm-definitions.d";
+import { Meeting, MeetingInput } from "@/store/people-crm-definitions.d";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { MarkdownEditor } from "@/components/reusable/markdown-editor";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 interface MeetingFormProps {
   meeting?: Meeting;
@@ -33,16 +30,6 @@ interface MeetingFormProps {
   defaultPersonId?: string;
 }
 
-const LOCATION_TYPE_OPTIONS = [
-  { id: MeetingLocationType.RESTAURANT, label: "Restaurant" },
-  { id: MeetingLocationType.HOME, label: "Home" },
-  { id: MeetingLocationType.OFFICE, label: "Office" },
-  { id: MeetingLocationType.VIRTUAL, label: "Virtual" },
-  { id: MeetingLocationType.COFFEE_SHOP, label: "Coffee Shop" },
-  { id: MeetingLocationType.OUTDOOR, label: "Outdoor" },
-  { id: MeetingLocationType.OTHER, label: "Other" },
-];
-
 export default function MeetingForm({
   meeting,
   onSubmit,
@@ -51,13 +38,14 @@ export default function MeetingForm({
   defaultPersonId,
 }: MeetingFormProps) {
   const people = useStore(dataStore, (state) => state.people);
+  const meetings = useStore(dataStore, (state) => state.meetings);
 
   // Initialize form data
   const [formData, setFormData] = useState<Partial<MeetingInput>>({
     person_id: meeting?.person_id || defaultPersonId || "",
     meeting_date: meeting?.meeting_date || new Date(),
     location: meeting?.location || "",
-    location_type: meeting?.location_type || MeetingLocationType.OTHER,
+    location_type: meeting?.location_type || "",
     duration_minutes: meeting?.duration_minutes || undefined,
     participants: meeting?.participants || "",
     description: meeting?.description || "",
@@ -121,6 +109,15 @@ export default function MeetingForm({
     ...person,
   }));
 
+  // Get unique location types from all meetings for autocomplete
+  const locationTypes = [
+    ...new Set(meetings.map((m) => m.location_type).filter(Boolean)),
+  ];
+  const locationTypeOptions = locationTypes.map((type) => ({
+    id: type!,
+    label: type!,
+  }));
+
   return (
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
       <Card>
@@ -138,7 +135,6 @@ export default function MeetingForm({
                 options={peopleOptions}
                 value={formData.person_id}
                 onChange={(value) => handleChange("person_id", value)}
-                // className={errors.person_id ? "border-destructive" : ""}
               />
               {errors.person_id && (
                 <p className="text-sm text-destructive">{errors.person_id}</p>
@@ -198,11 +194,15 @@ export default function MeetingForm({
 
             <div className="space-y-2">
               <Label htmlFor="location_type">Location Type</Label>
-              <ReusableSelect
-                title="location type"
-                options={LOCATION_TYPE_OPTIONS}
-                value={formData.location_type}
+              <AutocompleteInput
+                id="location_type"
+                label=""
+                value={formData.location_type || ""}
                 onChange={(value) => handleChange("location_type", value)}
+                options={locationTypeOptions}
+                placeholder="Enter or select location type"
+                showRecentOptions={true}
+                maxRecentOptions={10}
               />
             </div>
 

@@ -26,7 +26,6 @@ const initialState = {
   meetings: false,
   person_attributes: false,
   person_notes: false,
-  person_chats: false,
   birthday_reminders: false,
   person_relationships: false,
 };

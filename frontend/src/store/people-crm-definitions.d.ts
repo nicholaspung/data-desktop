@@ -4,17 +4,11 @@
 export interface Person {
   id: string;
   name: string;
-  email?: string;
-  phone?: string;
   birthday?: Date;
   address?: string;
-  occupation?: string;
-  company?: string;
-  bio?: string;
-  photo_url?: string;
+  employment_history?: string; // Markdown list of occupations/companies
   tags?: string;
   first_met_date?: Date;
-  social_links?: string; // JSON object {twitter, linkedin, etc}
 
   // Metadata
   createdAt: Date;
@@ -29,12 +23,12 @@ export interface Meeting {
   person_id_data?: Person;
   meeting_date: Date;
   location: string;
-  location_type: MeetingLocationType;
+  location_type?: string; // Changed to string for autocomplete
   duration_minutes?: number;
-  participants?: string; // JSON array of person IDs
+  participants?: string;
   description?: string;
   tags?: string;
-  feelings?: string; // How the meeting felt
+  feelings?: string;
   follow_up_needed?: boolean;
   follow_up_date?: Date;
 

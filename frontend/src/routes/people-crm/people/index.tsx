@@ -7,20 +7,13 @@ import loadingStore from "@/store/loading-store";
 import { PEOPLE_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Search,
-  Filter,
-  Users,
-  Mail,
-  Phone,
-  Building,
-} from "lucide-react";
+import { Plus, Search, Filter, Users, MapPin, Calendar } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { Person } from "@/store/people-crm-definitions";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/people-crm/people/")({
   component: PeopleList,
@@ -51,10 +44,7 @@ function PeopleList() {
   const filteredPeople = people.filter((person) => {
     const matchesSearch =
       searchQuery === "" ||
-      person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.occupation?.toLowerCase().includes(searchQuery.toLowerCase());
+      person.name.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesTags =
       selectedTags.length === 0 ||
@@ -87,11 +77,9 @@ function PeopleList() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{person.name}</h3>
-                  {(person.occupation || person.company) && (
-                    <p className="text-sm text-muted-foreground">
-                      {person.occupation}
-                      {person.occupation && person.company && " at "}
-                      {person.company}
+                  {person.employment_history && (
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {person.employment_history.split("\n")[0]}
                     </p>
                   )}
                 </div>
@@ -99,22 +87,16 @@ function PeopleList() {
             </div>
 
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              {person.email && (
+              {person.address && (
                 <div className="flex items-center gap-1">
-                  <Mail className="h-3 w-3" />
-                  {person.email}
+                  <MapPin className="h-3 w-3" />
+                  {person.address}
                 </div>
               )}
-              {person.phone && (
+              {person.first_met_date && (
                 <div className="flex items-center gap-1">
-                  <Phone className="h-3 w-3" />
-                  {person.phone}
-                </div>
-              )}
-              {person.company && !person.occupation && (
-                <div className="flex items-center gap-1">
-                  <Building className="h-3 w-3" />
-                  {person.company}
+                  <Calendar className="h-3 w-3" />
+                  Met: {format(person.first_met_date, "MMM yyyy")}
                 </div>
               )}
             </div>
