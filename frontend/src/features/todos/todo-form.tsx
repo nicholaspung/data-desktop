@@ -18,13 +18,11 @@ import { Calendar as CalendarIcon, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiService } from "@/services/api";
-import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
-import { Metric, MetricCategory } from "@/store/experiment-definitions";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
+import TagInput from "@/components/reusable/tag-input";
 
 interface TodoFormProps {
   onSuccess?: () => void;
@@ -35,12 +33,15 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const isEditMode = !!existingTodo;
 
   // Get metrics and categories from store instead of API call
-  const metrics = useStore(dataStore, (state) => state.metrics as Metric[]);
+  const metrics = useStore(dataStore, (state) => state.metrics);
   const metricCategories = useStore(
     dataStore,
-    (state) => state.metric_categories as MetricCategory[]
+    (state) => state.metric_categories
   );
   const isLoadingMetrics = useStore(loadingStore, (state) => state.metrics);
+
+  // Get all todos to extract available tags
+  const allTodos = useStore(dataStore, (state) => state.todos);
 
   // Default state for a new todo
   const [title, setTitle] = useState(existingTodo?.title || "");
@@ -53,8 +54,10 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const [priority, setPriority] = useState<TodoPriority>(
     (existingTodo?.priority as TodoPriority) || TodoPriority.MEDIUM
   );
-  const [tags, setTags] = useState<string[]>(existingTodo?.tags || []);
-  const [tagInput, setTagInput] = useState("");
+  // Change tags from array to comma-separated string for TagInput
+  const [tagsString, setTagsString] = useState<string>(
+    existingTodo?.tags || ""
+  );
   const [relatedMetricId, setRelatedMetricId] = useState<string>(
     existingTodo?.relatedMetricId || ""
   );
@@ -111,21 +114,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     }
 
     return true;
-  };
-
-  // Handle tag input
-  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && tagInput.trim()) {
-      e.preventDefault();
-      if (!tags.includes(tagInput.trim())) {
-        setTags([...tags, tagInput.trim()]);
-      }
-      setTagInput("");
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   // Handle form submission
@@ -195,7 +183,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         description: description || undefined,
         deadline: deadline.toISOString(),
         priority,
-        tags: tags.length > 0 ? tags : undefined,
+        tags: tagsString,
         relatedMetricId: metricId || undefined,
         metricType: metricType || undefined,
         reminderDate: reminderDate?.toISOString(),
@@ -377,36 +365,14 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="tags">
-          Tags <span className="text-xs text-muted-foreground">(optional)</span>
-        </Label>
-        <div className="flex flex-wrap gap-2 mb-2">
-          {tags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="secondary"
-              className="flex items-center gap-1"
-            >
-              {tag}
-              <X
-                className="h-3 w-3 cursor-pointer"
-                onClick={() => removeTag(tag)}
-              />
-            </Badge>
-          ))}
-        </div>
-        <Input
-          id="tags"
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={handleTagKeyDown}
-          placeholder="Add tags and press Enter"
-        />
-        <p className="text-xs text-muted-foreground">
-          Enter tags one at a time and press Enter
-        </p>
-      </div>
+      {/* Replace the old tags section with TagInput component */}
+      <TagInput
+        value={tagsString}
+        onChange={setTagsString}
+        label="Tags (optional)"
+        generalData={allTodos}
+        generalDataTagField="tags"
+      />
 
       <div className="space-y-4">
         <Label htmlFor="tracking">

@@ -218,39 +218,6 @@ function TimeTrackerForm({
     return () => unsubscribe();
   }, [isPomodoroActive, resetForm]);
 
-  const getAvailableTags = useMemo(() => {
-    if (!timeEntries || timeEntries.length === 0) return [];
-    const tagsSet = new Set<string>();
-
-    timeEntries.forEach((entry) => {
-      if (!entry.tags) return;
-
-      const entryTags = entry.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag.length > 0);
-
-      entryTags.forEach((tag) => tagsSet.add(tag));
-    });
-
-    // Get currently selected tags
-    const selectedTags = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-
-    // Filter out already selected tags
-    const availableTags = Array.from(tagsSet)
-      .filter((tag) => !selectedTags.includes(tag))
-      .sort()
-      .map((tag) => ({
-        id: tag,
-        label: tag,
-      }));
-
-    return availableTags;
-  }, [timeEntries, tags]);
-
   // Local timer tick for immediate feedback
   useEffect(() => {
     // Timer interval for active timer
@@ -698,7 +665,8 @@ function TimeTrackerForm({
             <TagInput
               value={tags}
               onChange={setTags}
-              availableTags={getAvailableTags}
+              generalData={timeEntries}
+              generalDataTagField="tags"
             />
 
             {usePomodoroActive && (

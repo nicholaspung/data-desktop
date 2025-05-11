@@ -5,22 +5,62 @@ import { cn } from "@/lib/utils";
 import AutocompleteInput from "./autocomplete-input";
 import { SelectOption } from "@/types/types";
 import { Label } from "@/components/ui/label";
+import { useMemo } from "react";
 
 interface TagInputProps {
   value: string;
   onChange: (value: string) => void;
-  availableTags: { id: string; label: string }[];
   label?: string;
   className?: string;
+  generalData?: any[];
+  generalDataTagField?: string;
 }
 
 export default function TagInput({
   value,
   onChange,
-  availableTags,
   label = "Tags (comma-separated)",
   className,
+  generalData,
+  generalDataTagField,
 }: TagInputProps) {
+  const getAvailableTags = useMemo(() => {
+    if (!generalData || generalData.length === 0) return [];
+    const tagsSet = new Set<string>();
+
+    if (generalDataTagField) {
+      generalData.forEach((entry) => {
+        if (!entry[generalDataTagField]) return;
+
+        console.log(entry[generalDataTagField]);
+
+        const entryTags = entry[generalDataTagField]
+          .split(",")
+          .map((tag: string) => tag.trim())
+          .filter((tag: string) => tag.length > 0);
+
+        entryTags.forEach((tag: any) => tagsSet.add(tag));
+      });
+    }
+
+    // Get currently selected tags
+    const selectedTags = value
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+
+    // Filter out already selected tags
+    const availableTags = Array.from(tagsSet)
+      .filter((tag) => !selectedTags.includes(tag))
+      .sort()
+      .map((tag) => ({
+        id: tag,
+        label: tag,
+      }));
+
+    return availableTags;
+  }, [generalData, value]);
+
   const handleTagsChange = (tagInput: string) => {
     onChange(tagInput);
   };
@@ -63,7 +103,7 @@ export default function TagInput({
         value={value}
         onChange={handleTagsChange}
         onSelect={handleTagSelect}
-        options={availableTags}
+        options={getAvailableTags}
         placeholder="project, meeting, etc."
         inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
         emptyMessage="Type to add tags or select from previous tags"

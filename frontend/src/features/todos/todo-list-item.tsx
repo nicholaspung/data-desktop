@@ -153,15 +153,18 @@ export default function TodoListItem({
     <>
       {todo.tags &&
         todo.tags.length > 0 &&
-        todo.tags.slice(0, 2).map((tag, index) => (
-          <Badge key={index} variant="secondary" className="text-xs">
-            {tag}
-          </Badge>
-        ))}
+        todo.tags
+          .split(", ")
+          .slice(0, 2)
+          .map((tag, index) => (
+            <Badge key={index} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))}
 
-      {todo.tags && todo.tags.length > 2 && (
+      {todo.tags && todo.tags.split(", ").length > 2 && (
         <Badge variant="secondary" className="text-xs">
-          +{todo.tags.length - 2}
+          +{todo.tags.split(", ").length - 2}
         </Badge>
       )}
 

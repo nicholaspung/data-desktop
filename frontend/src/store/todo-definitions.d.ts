@@ -8,7 +8,7 @@ export interface Todo {
   lastModified: Date;
   status: TodoStatus;
   priority: TodoPriority;
-  tags?: string[];
+  tags?: string;
   relatedMetricId?: string;
   metricType?: "completion" | "time";
   failedDeadlines?: FailedDeadline[];
