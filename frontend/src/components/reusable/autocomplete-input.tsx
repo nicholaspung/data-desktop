@@ -25,6 +25,7 @@ export default function AutocompleteInput({
   maxRecentOptions = 7,
   renderItem,
   continueProvidingSuggestions = false,
+  onKeyDown,
 }: {
   label?: string;
   value: string;
@@ -47,6 +48,7 @@ export default function AutocompleteInput({
     isActive: boolean
   ) => React.ReactNode;
   continueProvidingSuggestions?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -129,6 +131,8 @@ export default function AutocompleteInput({
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    onKeyDown?.(e);
+
     // Skip if no suggestions are shown
     if (!showSuggestions || finalOptions.length === 0) return;
 

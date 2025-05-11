@@ -24,6 +24,7 @@ import { Metric, MetricCategory } from "@/store/experiment-definitions";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 
 interface TodoFormProps {
   onSuccess?: () => void;
@@ -64,6 +65,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     existingTodo?.reminderDate ? new Date(existingTodo.reminderDate) : undefined
   );
   const [createMetric, setCreateMetric] = useState(!isEditMode);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   // For validation
   const [errors, setErrors] = useState<{
@@ -199,6 +201,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         reminderDate: reminderDate?.toISOString(),
         is_complete: false,
         status: TodoStatus.NOT_STARTED,
+        private: isPrivate,
       };
 
       if (isEditMode && existingTodo) {
@@ -218,7 +221,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         const response = await ApiService.addRecord("todos", todoData);
 
         if (response) {
-          console.log(response);
           addEntry(response, "todos");
           toast.success("Todo created successfully");
           onSuccess?.();
@@ -529,6 +531,17 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         <p className="text-xs text-muted-foreground">
           You'll be reminded about this todo on the selected date
         </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="private" className="cursor-pointer">
+          Private (PIN Protected)
+        </Label>
+        <Switch
+          id="private"
+          checked={isPrivate}
+          onCheckedChange={setIsPrivate}
+        />
       </div>
 
       <div className="flex justify-end space-x-2 pt-4">

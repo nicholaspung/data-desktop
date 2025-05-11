@@ -65,9 +65,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in todo-dashboard-summary, only show the todos that are active/due today, and sort them according to priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low))
-- add a `private` field to todo and have it be used everywhere todos are displayed
-
 - bug: macos auto time tracking for some reason breaks the application, but the record still records correctly
 
 
@@ -287,6 +284,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - if a todo is completed, do not allow user to delete [DONE 2025-05-10]
 - see what happens when a todo is overdue [DONE 2025-05-10]
 - in `todo-list.tsx` order todo in terms of priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low)) [DONE 2025-05-10]
+- in todo-dashboard-summary, only show the todos that are active/due today, and sort them according to priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low)) [DONE 2025-05-10]
+- add a `private` field to todo and have it be used everywhere todos are displayed [DONE 2025-05-10]
 
 ### GAVE UP
 

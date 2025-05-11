@@ -15,6 +15,7 @@ export interface Todo {
   reminderDate?: Date;
   isComplete: boolean;
   completedAt?: Date;
+  private?: boolean;
 }
 
 export interface FailedDeadline {

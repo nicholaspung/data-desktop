@@ -91,5 +91,11 @@ func GetTodoFields() []database.FieldDefinition {
 			DisplayName: "Status",
 			Description: "Current status of the todo",
 		},
+		{
+			Key:         "private",
+			Type:        database.FieldTypeBoolean,
+			DisplayName: "Private",
+			Description: "Is todo private?",
+		},
 	}
 }

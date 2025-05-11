@@ -41,11 +41,19 @@ export const startTimer = (
 };
 
 export const stopTimer = () => {
-  timeTrackerStore.setState((prevState) => ({
-    ...prevState,
+  const currentState = timeTrackerStore.state;
+
+  if (!currentState.isTimerActive) return;
+
+  // Update state in a batch to prevent multiple re-renders
+  timeTrackerStore.setState((state) => ({
+    ...state,
     isTimerActive: false,
     startTime: null,
     elapsedSeconds: 0,
+    description: "",
+    categoryId: undefined,
+    tags: "",
   }));
 };
 

@@ -1,7 +1,7 @@
+// frontend/src/features/todos/todo-list-item.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions";
+import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions.d";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { AlertCircle, Calendar, CheckCircle2, Clock } from "lucide-react";
@@ -10,15 +10,19 @@ import { ApiService } from "@/services/api";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { deleteEntry, updateEntry } from "@/store/data-store";
 import { toast } from "sonner";
+import ReusableCard from "@/components/reusable/reusable-card";
+import { ProtectedField } from "@/components/security/protected-content";
 
 export default function TodoListItem({
   todo,
   todoMetrics,
   setTodoMetrics,
+  isCompact,
 }: {
   todo: Todo;
-  todoMetrics: Record<string, any>;
-  setTodoMetrics: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  todoMetrics?: Record<string, any>;
+  setTodoMetrics?: React.Dispatch<React.SetStateAction<Record<string, any>>>;
+  isCompact?: boolean;
 }) {
   const handleCompleteTodo = async (todo: Todo) => {
     const updatedTodo = {
@@ -35,7 +39,11 @@ export default function TodoListItem({
         toast.success(`"${todo.title}" marked as completed!`);
 
         // If todo has a related metric, check if it's in the "Todo" category
-        if (todo.relatedMetricId && todoMetrics[todo.relatedMetricId]) {
+        if (
+          todoMetrics &&
+          todo.relatedMetricId &&
+          todoMetrics[todo.relatedMetricId]
+        ) {
           const metric = todoMetrics[todo.relatedMetricId];
 
           // Check if the metric belongs to the "Todo" category
@@ -140,141 +148,166 @@ export default function TodoListItem({
       </Badge>
     );
   };
+
+  const renderTags = () => (
+    <>
+      {todo.tags &&
+        todo.tags.length > 0 &&
+        todo.tags.slice(0, 2).map((tag, index) => (
+          <Badge key={index} variant="secondary" className="text-xs">
+            {tag}
+          </Badge>
+        ))}
+
+      {todo.tags && todo.tags.length > 2 && (
+        <Badge variant="secondary" className="text-xs">
+          +{todo.tags.length - 2}
+        </Badge>
+      )}
+
+      {todoMetrics &&
+        todo.relatedMetricId &&
+        todoMetrics[todo.relatedMetricId] && (
+          <Badge variant="outline" className="flex gap-1 items-center text-xs">
+            <Link
+              to="/metric"
+              search={{
+                query: todoMetrics[todo.relatedMetricId].name,
+              }}
+            >
+              {todoMetrics[todo.relatedMetricId].name}
+            </Link>
+          </Badge>
+        )}
+    </>
+  );
+
   return (
-    <Card
-      key={todo.id}
-      className={`border-l-4 ${
+    <ReusableCard
+      showHeader={false}
+      cardClassName={`border-l-4 ${
         todo.isComplete
           ? "border-l-green-500"
           : isPast(new Date(todo.deadline))
             ? "border-l-red-500"
             : "border-l-blue-500"
       }`}
-    >
-      <CardContent className="py-3 px-4">
-        <div className="flex items-center justify-between">
-          {/* Left section - Title and info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              <h3
-                className={`font-medium truncate ${
-                  todo.isComplete ? "line-through text-muted-foreground" : ""
-                }`}
-              >
-                {todo.title}
-              </h3>
-              <div className="flex flex-wrap gap-2 items-center">
-                {getPriorityBadge(todo.priority as TodoPriority)}
-                {getDeadlineStatus(
-                  todo.deadline.toISOString(),
-                  todo.isComplete
+      contentClassName="py-3 px-4"
+      content={
+        <div>
+          <div className="flex items-center justify-between">
+            {/* Left section - Title and info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3">
+                <h3
+                  className={`font-medium truncate ${
+                    todo.isComplete ? "line-through text-muted-foreground" : ""
+                  }`}
+                >
+                  {todo.private ? (
+                    <ProtectedField>{todo.title}</ProtectedField>
+                  ) : (
+                    todo.title
+                  )}
+                </h3>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {getPriorityBadge(todo.priority as TodoPriority)}
+                  {getDeadlineStatus(
+                    todo.deadline.toISOString(),
+                    todo.isComplete
+                  )}
+
+                  {todo.private ? (
+                    <ProtectedField>{renderTags()}</ProtectedField>
+                  ) : (
+                    renderTags()
+                  )}
+                </div>
+                {!todo.private && !isCompact && todo.description && (
+                  <p className="text-sm text-muted-foreground truncate max-w-xs">
+                    {todo.description}
+                  </p>
                 )}
-
-                {todo.tags &&
-                  todo.tags.length > 0 &&
-                  todo.tags.slice(0, 2).map((tag, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-
-                {todo.tags && todo.tags.length > 2 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{todo.tags.length - 2}
-                  </Badge>
-                )}
-
-                {todo.relatedMetricId && todoMetrics[todo.relatedMetricId] && (
-                  <Badge
-                    variant="outline"
-                    className="flex gap-1 items-center text-xs"
-                  >
-                    <Link
-                      to="/metric"
-                      search={{
-                        query: todoMetrics[todo.relatedMetricId].name,
-                      }}
-                    >
-                      {todoMetrics[todo.relatedMetricId].name}
-                    </Link>
-                  </Badge>
+                {todo.private && !isCompact && todo.description && (
+                  <ProtectedField>{todo.description}</ProtectedField>
                 )}
               </div>
-              {todo.description && (
-                <p className="text-sm text-muted-foreground truncate max-w-xs">
-                  {todo.description}
-                </p>
+            </div>
+
+            {/* Right section - Actions */}
+            {!isCompact && (
+              <div className="flex gap-1 ml-4">
+                {!todo.isComplete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCompleteTodo(todo)}
+                    className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                )}
+                {!todo.isComplete && (
+                  <>
+                    <AddTodoButton
+                      existingTodo={todo}
+                      onSuccess={() => {
+                        // Refresh metrics data after update
+                        const loadMetrics = async () => {
+                          const metrics =
+                            await ApiService.getRecordsWithRelations<any>(
+                              "metrics"
+                            );
+                          const metricMap: Record<string, any> = {};
+                          metrics.forEach((metric) => {
+                            metricMap[metric.id] = metric;
+                          });
+                          if (setTodoMetrics) {
+                            setTodoMetrics(metricMap);
+                          }
+                        };
+                        loadMetrics();
+                      }}
+                    />
+                    <ConfirmDeleteDialog
+                      title={`Delete "${todo.title}"?`}
+                      description="This will permanently remove this todo. This action cannot be undone."
+                      onConfirm={() => handleDeleteTodo(todo.id)}
+                      variant="ghost"
+                      size="sm"
+                    />
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer info */}
+          <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex justify-between items-center">
+            <div>
+              Deadline: {new Date(todo.deadline).toLocaleDateString()}
+              {!todo.isComplete && (
+                <span>
+                  {" "}
+                  -{" "}
+                  <strong>
+                    {formatDistanceToNow(new Date(todo.deadline), {
+                      addSuffix: true,
+                    })}
+                  </strong>
+                </span>
               )}
             </div>
-          </div>
 
-          {/* Right section - Actions */}
-          <div className="flex gap-1 ml-4">
-            {!todo.isComplete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleCompleteTodo(todo)}
-                className="h-8 w-8 p-0 text-green-600 hover:bg-green-50"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-              </Button>
-            )}
-            {!todo.isComplete && (
-              <>
-                <AddTodoButton
-                  existingTodo={todo}
-                  onSuccess={() => {
-                    // Refresh metrics data after update
-                    const loadMetrics = async () => {
-                      const metrics =
-                        await ApiService.getRecordsWithRelations<any>(
-                          "metrics"
-                        );
-                      const metricMap: Record<string, any> = {};
-                      metrics.forEach((metric) => {
-                        metricMap[metric.id] = metric;
-                      });
-                      setTodoMetrics(metricMap);
-                    };
-                    loadMetrics();
-                  }}
-                />
-                <ConfirmDeleteDialog
-                  title={`Delete "${todo.title}"?`}
-                  description="This will permanently remove this todo. This action cannot be undone."
-                  onConfirm={() => handleDeleteTodo(todo.id)}
-                  variant="ghost"
-                  size="sm"
-                />
-              </>
+            {todo.failedDeadlines && todo.failedDeadlines.length > 0 && (
+              <div>
+                {todo.failedDeadlines.length} failed deadline
+                {todo.failedDeadlines.length > 1 ? "s" : ""}
+              </div>
             )}
           </div>
         </div>
-
-        {/* Footer info */}
-        <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex justify-between items-center">
-          <div>
-            Deadline: {new Date(todo.deadline).toLocaleDateString()}
-            {!todo.isComplete && (
-              <span>
-                {" "}
-                -{" "}
-                {formatDistanceToNow(new Date(todo.deadline), {
-                  addSuffix: true,
-                })}
-              </span>
-            )}
-          </div>
-
-          {todo.failedDeadlines && todo.failedDeadlines.length > 0 && (
-            <div>
-              {todo.failedDeadlines.length} failed deadline
-              {todo.failedDeadlines.length > 1 ? "s" : ""}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      }
+    />
   );
 }

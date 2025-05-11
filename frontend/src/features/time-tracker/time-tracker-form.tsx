@@ -1,5 +1,5 @@
 // src/features/time-tracker/time-tracker-form.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,13 +38,15 @@ import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import { Badge } from "@/components/ui/badge";
 import PomodoroTimer from "./pomodoro-timer";
 import { pomodoroStore, setUsePomodoroActive } from "./pomodoro-store";
+import TagInput from "@/components/reusable/tag-input";
+import ErrorBoundary from "@/components/reusable/error-boundary";
 
 interface TimeTrackerFormProps {
   onDataChange: () => void;
   inPopover?: boolean;
 }
 
-export default function TimeTrackerForm({
+function TimeTrackerForm({
   onDataChange,
   inPopover = false,
 }: TimeTrackerFormProps) {
@@ -145,6 +147,22 @@ export default function TimeTrackerForm({
     return [...timeMetrics, ...entryOptions];
   }, [timeEntries, metricsData]);
 
+  // Reset form to initial state
+  const resetForm = useCallback(() => {
+    setDescription("");
+    setCategoryId(undefined);
+    setTags("");
+    setStartTime("");
+    setEndTime("");
+    setTimerStartTime(null);
+    setElapsedSeconds(0);
+
+    // Make sure we're also in sync with the global state
+    if (globalTimerData.isActive) {
+      stopGlobalTimer();
+    }
+  }, [globalTimerData.isActive]);
+
   // Initialize current time when switching to manual mode
   useEffect(() => {
     if (addState === "manual" && !startTime) {
@@ -162,27 +180,43 @@ export default function TimeTrackerForm({
   // Update local timer state when global state changes
   useEffect(() => {
     const unsubscribe = timeTrackerStore.subscribe((state) => {
-      if (state.currentVal.isTimerActive) {
-        setTimerStartTime(state.currentVal.startTime);
-        setElapsedSeconds(state.currentVal.elapsedSeconds);
-        setDescription(state.currentVal.description);
-        setCategoryId(state.currentVal.categoryId);
-        setTags(state.currentVal.tags);
+      // Only update if state actually changed
+      if (state.currentVal === state.prevVal) return;
 
-        if (state.currentVal.startTime) {
-          const formattedTime = formatDateForInput(state.currentVal.startTime);
-          setStartTime(formattedTime);
+      const currentState = state.currentVal;
+      const prevStateVal = state.prevVal;
+
+      if (currentState.isTimerActive) {
+        // Only update if values actually changed
+        if (currentState.description !== prevStateVal.description) {
+          setDescription(currentState.description);
+        }
+        if (currentState.categoryId !== prevStateVal.categoryId) {
+          setCategoryId(currentState.categoryId);
+        }
+        if (currentState.tags !== prevStateVal.tags) {
+          setTags(currentState.tags);
+        }
+        if (currentState.startTime !== prevStateVal.startTime) {
+          setTimerStartTime(currentState.startTime);
+          if (currentState.startTime) {
+            const formattedTime = formatDateForInput(currentState.startTime);
+            setStartTime(formattedTime);
+          }
+        }
+        if (currentState.elapsedSeconds !== prevStateVal.elapsedSeconds) {
+          setElapsedSeconds(currentState.elapsedSeconds);
         }
       } else {
         // Only reset if we were previously tracking time and not in pomodoro mode
-        if (isTimerActive && !isPomodoroActive) {
+        if (prevStateVal.isTimerActive && !isPomodoroActive) {
           resetForm();
         }
       }
     });
 
     return () => unsubscribe();
-  }, [isTimerActive, isPomodoroActive]);
+  }, [isPomodoroActive, resetForm]);
 
   const getAvailableTags = useMemo(() => {
     if (!timeEntries || timeEntries.length === 0) return [];
@@ -229,25 +263,15 @@ export default function TimeTrackerForm({
         setElapsedSeconds(secondsDiff);
       }, 1000);
 
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+      };
+    }
+    // Reset if timer becomes inactive
+    else if (!isTimerActive) {
+      setElapsedSeconds(0);
     }
   }, [isTimerActive, timerStartTime]);
-
-  // Reset form to initial state
-  const resetForm = () => {
-    setDescription("");
-    setCategoryId(undefined);
-    setTags("");
-    setStartTime("");
-    setEndTime("");
-    setTimerStartTime(null);
-    setElapsedSeconds(0);
-
-    // Make sure we're also in sync with the global state
-    if (globalTimerData.isActive) {
-      stopGlobalTimer();
-    }
-  };
 
   // Start the timer
   const handleStartTimer = () => {
@@ -322,11 +346,20 @@ export default function TimeTrackerForm({
       if (response) {
         addEntry(response, "time_entries");
 
-        await syncTimeEntryWithMetrics(
-          response as TimeEntry,
-          metricsData,
-          dailyLogsData
-        );
+        // Add timeout for sync operation to prevent freezing
+        await Promise.race([
+          syncTimeEntryWithMetrics(
+            response as TimeEntry,
+            metricsData,
+            dailyLogsData
+          ),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Sync timeout")), 5000)
+          ),
+        ]).catch((error) => {
+          console.warn("Metrics sync failed or timed out:", error);
+          // Continue with saving even if sync fails
+        });
       }
 
       // Reset global timer state
@@ -334,9 +367,15 @@ export default function TimeTrackerForm({
 
       // Reset local form state
       resetForm();
-      onDataChange();
+
+      // Add a small delay before triggering onDataChange to prevent race conditions
+      setTimeout(() => {
+        onDataChange();
+      }, 100);
     } catch (error) {
       console.error("Error saving time entry:", error);
+      // Don't freeze the UI on error
+      alert("Failed to save time entry. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -413,38 +452,6 @@ export default function TimeTrackerForm({
       }
       if (option.entry.tags) {
         setTags(option.entry.tags);
-      }
-    }
-  };
-
-  const handleTagsChange = (tagInput: string) => {
-    setTags(tagInput);
-  };
-
-  const handleTagSelect = (option: SelectOption) => {
-    // Extract current tags as an array
-    const currentTags = tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter((t) => t);
-
-    // Check if we're in the middle of typing a new tag
-    // This happens when the last character is not a comma
-    const isTypingNewTag = !tags.trim().endsWith(",") && tags.trim() !== "";
-
-    if (isTypingNewTag) {
-      // Replace the currently typed tag with the selected one
-      // First remove the partial tag being typed
-      const withoutCurrentTag = currentTags.slice(0, -1);
-      // Then add the selected tag
-      const newTags = [...withoutCurrentTag, option.label];
-      setTags(newTags.join(", "));
-    } else {
-      // We're starting a new tag after a comma or at the beginning
-      // Check if the tag is already in the list
-      if (!currentTags.includes(option.label)) {
-        const newTags = [...currentTags, option.label];
-        setTags(newTags.join(", "));
       }
     }
   };
@@ -688,39 +695,11 @@ export default function TimeTrackerForm({
               />
             </div>
 
-            <div className="space-y-2 flex-2">
-              <Label htmlFor="tags" className="text-sm font-medium">
-                Tags (comma-separated)
-              </Label>
-              <AutocompleteInput
-                id="tags"
-                value={tags}
-                onChange={handleTagsChange}
-                onSelect={handleTagSelect}
-                options={getAvailableTags}
-                placeholder="project, meeting, etc."
-                inputClassName="h-10 focus:ring-2 focus:ring-primary/50"
-                emptyMessage="Type to add tags or select from previous tags"
-                showRecentOptions={true}
-                maxRecentOptions={10}
-                continueProvidingSuggestions={true}
-                renderItem={(option, isActive) => (
-                  <div
-                    className={cn(
-                      "w-full",
-                      isActive ? "bg-accent text-accent-foreground" : ""
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="px-2 py-1">
-                        <Tag className="h-3 w-3 mr-1" />
-                        <span>{option.label}</span>
-                      </Badge>
-                    </div>
-                  </div>
-                )}
-              />
-            </div>
+            <TagInput
+              value={tags}
+              onChange={setTags}
+              availableTags={getAvailableTags}
+            />
 
             {usePomodoroActive && (
               <div className="space-x-2">
@@ -867,5 +846,13 @@ export default function TimeTrackerForm({
         </div>
       }
     />
+  );
+}
+
+export default function TimeTrackerFormWrapper(props: TimeTrackerFormProps) {
+  return (
+    <ErrorBoundary>
+      <TimeTrackerForm {...props} />
+    </ErrorBoundary>
   );
 }
