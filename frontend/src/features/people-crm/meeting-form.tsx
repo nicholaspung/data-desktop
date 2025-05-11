@@ -20,7 +20,7 @@ import {
   Meeting,
   MeetingInput,
   MeetingLocationType,
-} from "@/store/people-crm-definitions";
+} from "@/store/people-crm-definitions.d";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { MarkdownEditor } from "@/components/reusable/markdown-editor";
