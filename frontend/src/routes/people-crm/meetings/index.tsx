@@ -5,15 +5,15 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { MEETINGS_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Calendar } from "lucide-react";
+import { Search, Calendar } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { Meeting } from "@/store/people-crm-definitions";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import AddMeetingButton from "@/features/people-crm/add-meeting-button";
 
 export const Route = createFileRoute("/people-crm/meetings/")({
   component: MeetingsList,
@@ -85,7 +85,8 @@ function MeetingsList() {
                         {format(meeting.meeting_date, "MMMM d, yyyy")}
                       </div>
                       <div className="flex items-center gap-1">
-                        {getLocationTypeIcon(meeting.location_type)}
+                        {meeting.location_type &&
+                          getLocationTypeIcon(meeting.location_type)}
                         {meeting.location}
                       </div>
                     </div>
@@ -137,12 +138,7 @@ function MeetingsList() {
             datasetId="meetings"
             title="Meetings"
           />
-          <Link to="/people-crm/meetings/add">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Meeting
-            </Button>
-          </Link>
+          <AddMeetingButton />
         </div>
       </div>
 
@@ -182,12 +178,7 @@ function MeetingsList() {
                   ? "No meetings found matching your search"
                   : "No meetings recorded yet"}
               </p>
-              <Link to="/people-crm/meetings/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Meeting
-                </Button>
-              </Link>
+              <AddMeetingButton />
             </div>
           }
         />

@@ -7,7 +7,7 @@ import loadingStore from "@/store/loading-store";
 import { BIRTHDAY_REMINDERS_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Bell, Calendar, User } from "lucide-react";
+import { Search, Bell, Calendar, User } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
@@ -17,6 +17,7 @@ import { ApiService } from "@/services/api";
 import { deleteEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import AddBirthdayReminderButton from "@/features/people-crm/add-birthday-reminder-button";
 
 export const Route = createFileRoute("/people-crm/birthday-reminders/")({
   component: BirthdayRemindersList,
@@ -119,14 +120,7 @@ function BirthdayRemindersList() {
                   View Person
                 </Button>
               </Link>
-              <Link
-                to={`/people-crm/birthday-reminders/$reminderId/edit`}
-                params={{ reminderId: reminder.id }}
-              >
-                <Button variant="outline" size="sm">
-                  Edit Reminder
-                </Button>
-              </Link>
+              <AddBirthdayReminderButton existingReminder={reminder} />
             </div>
             <ConfirmDeleteDialog
               title="Delete Reminder"
@@ -161,12 +155,7 @@ function BirthdayRemindersList() {
             datasetId="birthday_reminders"
             title="Birthday Reminders"
           />
-          <Link to="/people-crm/birthday-reminders/add">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Reminder
-            </Button>
-          </Link>
+          <AddBirthdayReminderButton />
         </div>
       </div>
 
@@ -206,12 +195,7 @@ function BirthdayRemindersList() {
                   ? "No reminders found matching your search"
                   : "No birthday reminders set yet"}
               </p>
-              <Link to="/people-crm/birthday-reminders/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Reminder
-                </Button>
-              </Link>
+              <AddBirthdayReminderButton />
             </div>
           }
         />

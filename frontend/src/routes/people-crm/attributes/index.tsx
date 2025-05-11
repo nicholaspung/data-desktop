@@ -5,15 +5,15 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { PERSON_ATTRIBUTES_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Tag, User, Calendar } from "lucide-react";
+import { Search, Tag, User, Calendar } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { PersonAttribute } from "@/store/people-crm-definitions";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import AddAttributeButton from "@/features/people-crm/add-attribute-button";
 
 export const Route = createFileRoute("/people-crm/attributes/")({
   component: PersonAttributesList,
@@ -142,12 +142,7 @@ function PersonAttributesList() {
             datasetId="person_attributes"
             title="Attributes"
           />
-          <Link to="/people-crm/attributes/add">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Attribute
-            </Button>
-          </Link>
+          <AddAttributeButton />
         </div>
       </div>
 
@@ -187,12 +182,7 @@ function PersonAttributesList() {
                   ? "No attributes found matching your search"
                   : "No attributes recorded yet"}
               </p>
-              <Link to="/people-crm/attributes/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Attribute
-                </Button>
-              </Link>
+              <AddAttributeButton />
             </div>
           }
         />

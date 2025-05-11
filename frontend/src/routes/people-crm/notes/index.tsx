@@ -5,9 +5,8 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { PERSON_NOTES_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, NotebookPen, Calendar, User } from "lucide-react";
+import { Search, NotebookPen, Calendar, User } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
@@ -15,6 +14,7 @@ import { PersonNote } from "@/store/people-crm-definitions";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
+import AddNoteButton from "@/features/people-crm/add-note-button";
 
 export const Route = createFileRoute("/people-crm/notes/")({
   component: PersonNotesList,
@@ -129,12 +129,7 @@ function PersonNotesList() {
             datasetId="person_notes"
             title="Notes"
           />
-          <Link to="/people-crm/notes/add">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Note
-            </Button>
-          </Link>
+          <AddNoteButton />
         </div>
       </div>
 
@@ -174,12 +169,7 @@ function PersonNotesList() {
                   ? "No notes found matching your search"
                   : "No notes recorded yet"}
               </p>
-              <Link to="/people-crm/notes/add">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Note
-                </Button>
-              </Link>
+              <AddNoteButton />
             </div>
           }
         />
