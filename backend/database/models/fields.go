@@ -35,7 +35,6 @@ func init() {
 	database.GetMeetingsFields = GetMeetingsFields
 	database.GetPersonAttributesFields = GetPersonAttributesFields
 	database.GetPersonNotesFields = GetPersonNotesFields
-	database.GetPersonChatsFields = GetPersonChatsFields
 	database.GetBirthdayRemindersFields = GetBirthdayRemindersFields
 	database.GetPersonRelationshipsFields = GetPersonRelationshipsFields
 }

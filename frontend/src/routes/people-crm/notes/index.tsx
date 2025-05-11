@@ -187,3 +187,5 @@ function PersonNotesList() {
     </div>
   );
 }
+
+export default PersonNotesList;

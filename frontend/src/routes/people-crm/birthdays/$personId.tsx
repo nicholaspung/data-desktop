@@ -64,7 +64,7 @@ function BirthdayDetail() {
     return (
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm/birthdays">
+          <Link to="/people-crm" search={{ tab: "birthdays" }}>
             <Button variant="ghost" size="icon">
               <ChevronLeft className="h-4 w-4" />
             </Button>

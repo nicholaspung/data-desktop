@@ -101,7 +101,7 @@ function AttributeDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm/attributes">
+          <Link to="/people-crm" search={{ tab: "attributes" }}>
             <Button variant="ghost" size="icon">
               <ChevronLeft className="h-4 w-4" />
             </Button>

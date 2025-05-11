@@ -200,3 +200,5 @@ function PersonAttributesList() {
     </div>
   );
 }
+
+export default PersonAttributesList;

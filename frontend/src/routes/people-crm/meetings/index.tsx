@@ -195,3 +195,5 @@ function MeetingsList() {
     </div>
   );
 }
+
+export default MeetingsList;

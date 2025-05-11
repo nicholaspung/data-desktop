@@ -219,3 +219,5 @@ function BirthdayRemindersList() {
     </div>
   );
 }
+
+export default BirthdayRemindersList;

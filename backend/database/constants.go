@@ -26,7 +26,6 @@ const (
 	DatasetIDMeetings            = "meetings"
 	DatasetIDPersonAttributes    = "person_attributes"
 	DatasetIDPersonNotes         = "person_notes"
-	DatasetIDPersonChats         = "person_chats"
 	DatasetIDBirthdayReminders   = "birthday_reminders"
 	DatasetIDPersonRelationships = "person_relationships"
 )

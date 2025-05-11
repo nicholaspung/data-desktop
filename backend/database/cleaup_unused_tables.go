@@ -31,7 +31,6 @@ func CleanupUnusedTables() error {
 		DatasetIDMeetings,
 		DatasetIDPersonAttributes,
 		DatasetIDPersonNotes,
-		DatasetIDPersonChats,
 		DatasetIDBirthdayReminders,
 		DatasetIDPersonRelationships,
 	}

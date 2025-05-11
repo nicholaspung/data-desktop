@@ -254,17 +254,6 @@ func SyncDatasets() error {
 	}
 
 	err = CreateOrUpdateDataset(
-		DatasetIDPersonChats,
-		"Person Chats",
-		"Track chat history with people",
-		DatasetTypePeopleCRM,
-		GetPersonChatsFields(),
-	)
-	if err != nil {
-		return fmt.Errorf("failed to sync Person Chats dataset: %w", err)
-	}
-
-	err = CreateOrUpdateDataset(
 		DatasetIDBirthdayReminders,
 		"Birthday Reminders",
 		"Track birthday reminders for people",

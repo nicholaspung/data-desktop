@@ -88,23 +88,6 @@ export interface PersonNote {
   private: boolean;
 }
 
-// Chat history between you and the person
-export interface PersonChat {
-  id: string;
-  person_id: string;
-  person_id_data?: Person;
-  chat_date: Date;
-  platform: string; // "text", "whatsapp", "email", "slack", etc
-  content: string;
-  sender: "me" | "them";
-  attachments?: string; // JSON array of attachment paths/URLs
-
-  // Metadata
-  createdAt: Date;
-  lastModified: Date;
-  private: boolean;
-}
-
 // Birthday reminders
 export interface BirthdayReminder {
   id: string;
@@ -138,7 +121,6 @@ export type PartialPerson = Partial<Person>;
 export type PartialMeeting = Partial<Meeting>;
 export type PartialPersonAttribute = Partial<PersonAttribute>;
 export type PartialPersonNote = Partial<PersonNote>;
-export type PartialPersonChat = Partial<PersonChat>;
 export type PartialBirthdayReminder = Partial<BirthdayReminder>;
 export type PartialPersonRelationship = Partial<PersonRelationship>;
 
@@ -154,10 +136,6 @@ export type PersonAttributeInput = Omit<
 >;
 export type PersonNoteInput = Omit<
   PersonNote,
-  "id" | "createdAt" | "lastModified" | "person_id_data"
->;
-export type PersonChatInput = Omit<
-  PersonChat,
   "id" | "createdAt" | "lastModified" | "person_id_data"
 >;
 export type BirthdayReminderInput = Omit<

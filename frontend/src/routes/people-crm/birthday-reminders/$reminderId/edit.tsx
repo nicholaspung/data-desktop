@@ -81,7 +81,7 @@ function EditBirthdayReminder() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/people-crm/birthday-reminders">
+        <Link to="/people-crm" search={{ tab: "reminders" }}>
           <Button variant="ghost" size="icon">
             <ChevronLeft className="h-4 w-4" />
           </Button>

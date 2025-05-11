@@ -32,7 +32,6 @@ var (
 	GetMeetingsFields            FieldDefinitionFunc
 	GetPersonAttributesFields    FieldDefinitionFunc
 	GetPersonNotesFields         FieldDefinitionFunc
-	GetPersonChatsFields         FieldDefinitionFunc
 	GetBirthdayRemindersFields   FieldDefinitionFunc
 	GetPersonRelationshipsFields FieldDefinitionFunc
 )

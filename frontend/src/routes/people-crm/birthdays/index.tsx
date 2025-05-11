@@ -352,3 +352,5 @@ function BirthdaysList() {
     </div>
   );
 }
+
+export default BirthdaysList;

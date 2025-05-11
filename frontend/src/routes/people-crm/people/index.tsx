@@ -254,3 +254,5 @@ function PeopleList() {
     </div>
   );
 }
+
+export default PeopleList;

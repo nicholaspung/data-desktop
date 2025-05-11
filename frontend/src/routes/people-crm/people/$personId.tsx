@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   Edit,
   Calendar,
-  MessageCircle,
   NotebookPen,
   Plus,
   Gift,
@@ -113,7 +112,7 @@ function PersonDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm/people">
+          <Link to="/people-crm" search={{ tab: "people" }}>
             <Button variant="ghost" size="icon">
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -274,25 +273,6 @@ function PersonDetail() {
                   </Link>
                 ))}
 
-                {personChatHistory.slice(0, 3).map((chat) => (
-                  <Link
-                    key={chat.id}
-                    to={`/people-crm/chats/$chatId`}
-                    params={{ chatId: chat.id }}
-                    className="block hover:bg-accent/50 rounded p-3 -m-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <div className="font-medium">{chat.platform} Chat</div>
-                        <div className="text-sm text-muted-foreground">
-                          {format(chat.chat_date, "MMMM d, yyyy")}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-
                 {personNotesList.slice(0, 3).map((note) => (
                   <Link
                     key={note.id}
@@ -340,15 +320,6 @@ function PersonDetail() {
                   <Button variant="outline" className="w-full">
                     <Calendar className="h-4 w-4 mr-2" />
                     Add Meeting
-                  </Button>
-                </Link>
-                <Link
-                  to={`/people-crm/chats/add`}
-                  params={{ personId: personId }}
-                >
-                  <Button variant="outline" className="w-full">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Add Chat
                   </Button>
                 </Link>
                 <Link
