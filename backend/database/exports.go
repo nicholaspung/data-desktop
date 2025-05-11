@@ -26,4 +26,13 @@ var (
 	GetTimeCategoriesFields    FieldDefinitionFunc
 	GetTimePlannerConfigFields FieldDefinitionFunc
 	GetTodoFields              FieldDefinitionFunc
+
+	// People CRM field functions
+	GetPeopleFields              FieldDefinitionFunc
+	GetMeetingsFields            FieldDefinitionFunc
+	GetPersonAttributesFields    FieldDefinitionFunc
+	GetPersonNotesFields         FieldDefinitionFunc
+	GetPersonChatsFields         FieldDefinitionFunc
+	GetBirthdayRemindersFields   FieldDefinitionFunc
+	GetPersonRelationshipsFields FieldDefinitionFunc
 )

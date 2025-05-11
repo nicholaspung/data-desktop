@@ -23,6 +23,15 @@ import {
 import { TimeCategory, TimeEntry } from "./time-tracking-definitions";
 import { fieldDefinitionsStore } from "@/features/field-definitions/field-definitions-store";
 import { Todo } from "./todo-definitions";
+import {
+  Person,
+  Meeting,
+  PersonAttribute,
+  PersonNote,
+  PersonChat,
+  BirthdayReminder,
+  PersonRelationship,
+} from "./people-crm-definitions";
 
 // Define the types for the data store
 export type DataStoreName =
@@ -41,7 +50,14 @@ export type DataStoreName =
   | "affirmation"
   | "time_entries"
   | "time_categories"
-  | "todos";
+  | "todos"
+  | "people"
+  | "meetings"
+  | "person_attributes"
+  | "person_notes"
+  | "person_chats"
+  | "birthday_reminders"
+  | "person_relationships";
 
 type DataStoreType = {
   dexa: DEXAScan[];
@@ -60,6 +76,13 @@ type DataStoreType = {
   time_entries: TimeEntry[];
   time_categories: TimeCategory[];
   todos: Todo[];
+  people: Person[];
+  meetings: Meeting[];
+  person_attributes: PersonAttribute[];
+  person_notes: PersonNote[];
+  person_chats: PersonChat[];
+  birthday_reminders: BirthdayReminder[];
+  person_relationships: PersonRelationship[];
 };
 
 // Initial state for the data store
@@ -80,6 +103,13 @@ const initialState: DataStoreType = {
   time_entries: [],
   time_categories: [],
   todos: [],
+  people: [],
+  meetings: [],
+  person_attributes: [],
+  person_notes: [],
+  person_chats: [],
+  birthday_reminders: [],
+  person_relationships: [],
 };
 
 // Create the data store

@@ -1,5 +1,5 @@
 // src/store/loading-store.ts
-// Updated with experiment-related loading states
+// Updated with experiment-related and People CRM loading states
 
 import { Store } from "@tanstack/react-store";
 import { DataStoreName } from "./data-store";
@@ -22,6 +22,13 @@ const initialState = {
   time_entries: false,
   time_categories: false,
   todos: false,
+  people: false,
+  meetings: false,
+  person_attributes: false,
+  person_notes: false,
+  person_chats: false,
+  birthday_reminders: false,
+  person_relationships: false,
 };
 
 // Create the loading store

@@ -201,11 +201,89 @@ func SyncDatasets() error {
 		DatasetIDTodos,
 		"Todos",
 		"Tasks and deadlines to track",
-		DatasetTypeTodo, // This type needs to be added to database/models.go
+		DatasetTypeTodo,
 		GetTodoFields(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to sync Todo dataset: %w", err)
+	}
+
+	// Sync People CRM datasets
+	err = CreateOrUpdateDataset(
+		DatasetIDPeople,
+		"People",
+		"Contacts and people in your network",
+		DatasetTypePeopleCRM,
+		GetPeopleFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync People dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDMeetings,
+		"Meetings",
+		"Track meetings and interactions with people",
+		DatasetTypePeopleCRM,
+		GetMeetingsFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Meetings dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDPersonAttributes,
+		"Person Attributes",
+		"Track random facts and attributes about people",
+		DatasetTypePeopleCRM,
+		GetPersonAttributesFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Person Attributes dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDPersonNotes,
+		"Person Notes",
+		"Daily notes about people",
+		DatasetTypePeopleCRM,
+		GetPersonNotesFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Person Notes dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDPersonChats,
+		"Person Chats",
+		"Track chat history with people",
+		DatasetTypePeopleCRM,
+		GetPersonChatsFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Person Chats dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDBirthdayReminders,
+		"Birthday Reminders",
+		"Track birthday reminders for people",
+		DatasetTypePeopleCRM,
+		GetBirthdayRemindersFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Birthday Reminders dataset: %w", err)
+	}
+
+	err = CreateOrUpdateDataset(
+		DatasetIDPersonRelationships,
+		"Person Relationships",
+		"Track relationships between people in your network",
+		DatasetTypePeopleCRM,
+		GetPersonRelationshipsFields(),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to sync Person Relationships dataset: %w", err)
 	}
 
 	fmt.Println("Dataset sync completed successfully")

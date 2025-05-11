@@ -67,6 +67,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - bug: macos auto time tracking for some reason breaks the application, but the record still records correctly
 
+- add a people crm feature
+
 
 ### DONE
 

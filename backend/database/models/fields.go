@@ -29,4 +29,13 @@ func init() {
 	database.GetTimeCategoriesFields = GetTimeCategoriesFields
 	database.GetTimePlannerConfigFields = GetTimePlannerConfigFields
 	database.GetTodoFields = GetTodoFields
+
+	// People CRM field definitions
+	database.GetPeopleFields = GetPeopleFields
+	database.GetMeetingsFields = GetMeetingsFields
+	database.GetPersonAttributesFields = GetPersonAttributesFields
+	database.GetPersonNotesFields = GetPersonNotesFields
+	database.GetPersonChatsFields = GetPersonChatsFields
+	database.GetBirthdayRemindersFields = GetBirthdayRemindersFields
+	database.GetPersonRelationshipsFields = GetPersonRelationshipsFields
 }

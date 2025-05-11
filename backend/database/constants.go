@@ -20,4 +20,13 @@ const (
 	DatasetIDTimeCategories    = "time_categories"
 	DatasetIDTimePlannerConfig = "time_planner_configs"
 	DatasetIDTodos             = "todos"
+
+	// People CRM datasets
+	DatasetIDPeople              = "people"
+	DatasetIDMeetings            = "meetings"
+	DatasetIDPersonAttributes    = "person_attributes"
+	DatasetIDPersonNotes         = "person_notes"
+	DatasetIDPersonChats         = "person_chats"
+	DatasetIDBirthdayReminders   = "birthday_reminders"
+	DatasetIDPersonRelationships = "person_relationships"
 )

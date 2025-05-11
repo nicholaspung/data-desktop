@@ -26,6 +26,14 @@ func CleanupUnusedTables() error {
 		DatasetIDTimeCategories,
 		DatasetIDTimePlannerConfig,
 		DatasetIDTodos,
+		// People CRM datasets
+		DatasetIDPeople,
+		DatasetIDMeetings,
+		DatasetIDPersonAttributes,
+		DatasetIDPersonNotes,
+		DatasetIDPersonChats,
+		DatasetIDBirthdayReminders,
+		DatasetIDPersonRelationships,
 	}
 
 	// Get all datasets currently in the database

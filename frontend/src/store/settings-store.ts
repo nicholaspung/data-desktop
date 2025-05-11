@@ -25,6 +25,9 @@ const defaultRoutes = {
   "/dataset": true,
   "/settings": true,
   "/todos": true,
+  // People CRM routes
+  "/people": true,
+  "/people-crm": true,
 };
 
 // Define initial enabled datasets
@@ -45,6 +48,14 @@ const defaultDatasets = {
   time_entries: true,
   time_categories: true,
   todos: true,
+  // People CRM datasets
+  people: true,
+  meetings: true,
+  person_attributes: true,
+  person_notes: true,
+  person_chats: true,
+  birthday_reminders: true,
+  person_relationships: true,
 };
 
 // Initialize settings from localStorage or defaults

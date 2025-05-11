@@ -1,5 +1,5 @@
-// src/features/field-definitions/field-definitions-store.ts
-// Updated to include experiment-related datasets
+// frontend/src/features/field-definitions/field-definitions-store.ts
+// Updated to include experiment-related datasets and People CRM
 
 import { FieldDefinition, FieldDefinitionsState } from "@/types/types";
 import { Store } from "@tanstack/react-store";
@@ -27,6 +27,15 @@ import {
   TIME_ENTRIES_FIELD_DEFINITIONS,
 } from "./time-tracking-definitions";
 import { TODO_FIELD_DEFINITIONS } from "./todo-definitions";
+import {
+  PEOPLE_FIELD_DEFINITIONS,
+  MEETINGS_FIELD_DEFINITIONS,
+  PERSON_ATTRIBUTES_FIELD_DEFINITIONS,
+  PERSON_NOTES_FIELD_DEFINITIONS,
+  PERSON_CHATS_FIELD_DEFINITIONS,
+  BIRTHDAY_REMINDERS_FIELD_DEFINITIONS,
+  PERSON_RELATIONSHIPS_FIELD_DEFINITIONS,
+} from "./people-crm-definitions";
 
 // Initial dataset definitions
 const initialState: FieldDefinitionsState = {
@@ -47,6 +56,14 @@ const initialState: FieldDefinitionsState = {
     time_entries: TIME_ENTRIES_FIELD_DEFINITIONS,
     time_categories: TIME_CATEGORIES_FIELD_DEFINITIONS,
     todos: TODO_FIELD_DEFINITIONS,
+    // People CRM datasets
+    people: PEOPLE_FIELD_DEFINITIONS,
+    meetings: MEETINGS_FIELD_DEFINITIONS,
+    person_attributes: PERSON_ATTRIBUTES_FIELD_DEFINITIONS,
+    person_notes: PERSON_NOTES_FIELD_DEFINITIONS,
+    person_chats: PERSON_CHATS_FIELD_DEFINITIONS,
+    birthday_reminders: BIRTHDAY_REMINDERS_FIELD_DEFINITIONS,
+    person_relationships: PERSON_RELATIONSHIPS_FIELD_DEFINITIONS,
   },
 };
 

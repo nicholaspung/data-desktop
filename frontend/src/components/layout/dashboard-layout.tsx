@@ -66,6 +66,12 @@ const defaultSidebarItems: SidebarItem[] = [
     icon: <FEATURE_ICONS.TIME_PLANNER className="h-5 w-5" />,
     href: "/time-planner",
   },
+  // People CRM section
+  {
+    title: "People CRM",
+    icon: <FEATURE_ICONS.PEOPLE_CRM className="h-5 w-5" />,
+    href: "/people-crm",
+  },
   {
     title: "DEXA Scans",
     icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,

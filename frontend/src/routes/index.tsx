@@ -27,6 +27,7 @@ import appStateStore from "@/store/app-state-store";
 import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
 import settingsStore from "@/store/settings-store";
 import TodoDashboardSummary from "@/features/todos/todo-dashboard-summary";
+import PeopleCRMDashboardSummary from "@/features/dashboard/people-crm-dashboard-summary";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -169,6 +170,7 @@ function Home() {
         {visibleRoutes["/experiments"] && <ExperimentDashboardSummary />}
         {visibleRoutes["/metric"] && <QuickMetricLoggerDashboardSummary />}
         {visibleRoutes["/journaling"] && <JournalingDashboardSummary />}
+        {visibleRoutes["/people-crm"] && <PeopleCRMDashboardSummary />}
         {visibleRoutes["/dexa"] && <DEXADashboardSummary />}
         {visibleRoutes["/bloodwork"] && <BloodworkDashboardSummary />}
       </div>
