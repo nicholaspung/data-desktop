@@ -1,5 +1,3 @@
-// frontend/src/routes/people-crm/meetings/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -7,7 +5,6 @@ import loadingStore from "@/store/loading-store";
 import { MEETINGS_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Input } from "@/components/ui/input";
 import { Search, Calendar } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { Meeting } from "@/store/people-crm-definitions";
@@ -15,11 +12,11 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import AddMeetingButton from "@/features/people-crm/add-meeting-button";
 
-export const Route = createFileRoute("/people-crm/meetings/")({
-  component: MeetingsList,
-});
+interface MeetingsListProps {
+  onShowDetail?: (type: string, id: string) => void;
+}
 
-function MeetingsList() {
+export default function MeetingsList({ onShowDetail }: MeetingsListProps) {
   const meetings = useStore(dataStore, (state) => state.meetings);
   const isLoading = useStore(loadingStore, (state) => state.meetings);
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,10 +58,7 @@ function MeetingsList() {
   };
 
   const MeetingCard = ({ meeting }: { meeting: Meeting }) => (
-    <Link
-      to={`/people-crm/meetings/$meetingId`}
-      params={{ meetingId: meeting.id }}
-    >
+    <div onClick={() => onShowDetail?.("meeting", meeting.id)}>
       <ReusableCard
         cardClassName="hover:border-primary/50 transition-colors cursor-pointer"
         content={
@@ -116,7 +110,7 @@ function MeetingsList() {
           </div>
         }
       />
-    </Link>
+    </div>
   );
 
   return (
@@ -186,5 +180,3 @@ function MeetingsList() {
     </div>
   );
 }
-
-export default MeetingsList;

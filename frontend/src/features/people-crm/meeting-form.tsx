@@ -39,7 +39,7 @@ export default function MeetingForm({
     <DataForm
       datasetId="meetings"
       fields={MEETINGS_FIELD_DEFINITIONS.fields}
-      onSuccess={(recordId) => onSubmit({})}
+      onSuccess={() => onSubmit({})}
       onCancel={onCancel}
       initialValues={initialValues}
       submitLabel={meeting ? "Update Meeting" : "Add Meeting"}

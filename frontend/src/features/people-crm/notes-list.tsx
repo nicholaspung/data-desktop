@@ -1,5 +1,3 @@
-// frontend/src/routes/people-crm/notes/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -7,7 +5,6 @@ import loadingStore from "@/store/loading-store";
 import { PERSON_NOTES_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Input } from "@/components/ui/input";
 import { Search, NotebookPen, Calendar, User } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { PersonNote } from "@/store/people-crm-definitions";
@@ -16,11 +13,13 @@ import { Badge } from "@/components/ui/badge";
 import ReactMarkdown from "react-markdown";
 import AddNoteButton from "@/features/people-crm/add-note-button";
 
-export const Route = createFileRoute("/people-crm/notes/")({
-  component: PersonNotesList,
-});
+interface PersonNotesListProps {
+  onShowDetail?: (type: string, id: string) => void;
+}
 
-function PersonNotesList() {
+export default function PersonNotesList({
+  onShowDetail,
+}: PersonNotesListProps) {
   const notes = useStore(dataStore, (state) => state.person_notes);
   const isLoading = useStore(loadingStore, (state) => state.person_notes);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +56,7 @@ function PersonNotesList() {
   };
 
   const PersonNoteCard = ({ note }: { note: PersonNote }) => (
-    <Link to={`/people-crm/notes/$noteId`} params={{ noteId: note.id }}>
+    <div onClick={() => onShowDetail?.("note", note.id)}>
       <ReusableCard
         cardClassName="hover:border-primary/50 transition-colors cursor-pointer"
         content={
@@ -107,7 +106,7 @@ function PersonNotesList() {
           </div>
         }
       />
-    </Link>
+    </div>
   );
 
   return (
@@ -177,5 +176,3 @@ function PersonNotesList() {
     </div>
   );
 }
-
-export default PersonNotesList;

@@ -34,7 +34,7 @@ export default function PersonAttributeForm({
     <DataForm
       datasetId="person_attributes"
       fields={PERSON_ATTRIBUTES_FIELD_DEFINITIONS.fields}
-      onSuccess={(recordId) => onSubmit({})}
+      onSuccess={() => onSubmit({})}
       onCancel={onCancel}
       initialValues={initialValues}
       submitLabel={attribute ? "Update Attribute" : "Add Attribute"}

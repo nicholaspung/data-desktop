@@ -1,5 +1,3 @@
-// frontend/src/routes/people-crm/birthdays/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -8,17 +6,16 @@ import { PEOPLE_FIELD_DEFINITIONS } from "@/features/field-definitions/people-cr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search, Gift, Calendar, Bell, User } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { format, differenceInDays, addYears } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/people-crm/birthdays/")({
-  component: BirthdaysList,
-});
+interface BirthdaysListProps {
+  onShowDetail?: (type: string, id: string) => void;
+}
 
-function BirthdaysList() {
+export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
   const people = useStore(dataStore, (state) => state.people);
   const birthdayReminders = useStore(
     dataStore,
@@ -70,9 +67,7 @@ function BirthdaysList() {
   const filteredPeople = enrichedPeople.filter((person) => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      searchQuery === "" ||
-      person.name.toLowerCase().includes(searchLower) ||
-      person.email?.toLowerCase().includes(searchLower)
+      searchQuery === "" || person.name.toLowerCase().includes(searchLower)
     );
   });
 
@@ -111,72 +106,73 @@ function BirthdaysList() {
   }: {
     person: (typeof enrichedPeople)[0];
   }) => (
-    <ReusableCard
-      content={
-        <div className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Gift className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{person.name}</h3>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(person.birthday!, "MMMM d")}
+    <div onClick={() => onShowDetail?.("birthday", person.id)}>
+      <ReusableCard
+        cardClassName="hover:border-primary/50 transition-colors cursor-pointer"
+        content={
+          <div className="space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Gift className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{person.name}</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(person.birthday!, "MMMM d")}
+                      </div>
+                      <span>Turning {person.age}</span>
                     </div>
-                    <span>Turning {person.age}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                <div className="text-sm font-medium">
-                  {person.daysUntil === 0
-                    ? "Today!"
-                    : person.daysUntil === 1
-                      ? "Tomorrow"
-                      : `In ${person.daysUntil} days`}
-                </div>
-                {getBirthdayBadge(person.daysUntil)}
-
-                {person.reminder && (
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Bell className="h-3 w-3" />
-                    Reminder set
+                <div className="flex items-center gap-4">
+                  <div className="text-sm font-medium">
+                    {person.daysUntil === 0
+                      ? "Today!"
+                      : person.daysUntil === 1
+                        ? "Tomorrow"
+                        : `In ${person.daysUntil} days`}
                   </div>
-                )}
+                  {getBirthdayBadge(person.daysUntil)}
+
+                  {person.reminder && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Bell className="h-3 w-3" />
+                      Reminder set
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-2 pt-2 border-t">
-            <Link
-              to={`/people-crm/people/$personId`}
-              params={{ personId: person.id }}
-            >
-              <Button variant="outline" size="sm">
+            <div className="flex gap-2 pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <User className="h-3 w-3 mr-1" />
                 View Profile
               </Button>
-            </Link>
-            {!person.reminder && (
-              <Link
-                to={`/people-crm/birthday-reminders/add`}
-                params={{ personId: person.id }}
-              >
-                <Button variant="outline" size="sm">
+              {!person.reminder && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Bell className="h-3 w-3 mr-1" />
                   Set Reminder
                 </Button>
-              </Link>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      }
-    />
+        }
+      />
+    </div>
   );
 
   const isLoading = isPeopleLoading || isRemindersLoading;
@@ -200,12 +196,10 @@ function BirthdaysList() {
             datasetId="people"
             title="People"
           />
-          <Link to="/people-crm/birthday-reminders">
-            <Button variant="outline">
-              <Bell className="h-4 w-4 mr-2" />
-              Manage Reminders
-            </Button>
-          </Link>
+          <Button variant="outline">
+            <Bell className="h-4 w-4 mr-2" />
+            Manage Reminders
+          </Button>
         </div>
       </div>
 
@@ -339,12 +333,10 @@ function BirthdaysList() {
                   ? "No birthdays found matching your search"
                   : "No birthdays set yet"}
               </p>
-              <Link to="/people-crm/people">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add People with Birthdays
-                </Button>
-              </Link>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add People with Birthdays
+              </Button>
             </div>
           }
         />
@@ -352,5 +344,3 @@ function BirthdaysList() {
     </div>
   );
 }
-
-export default BirthdaysList;

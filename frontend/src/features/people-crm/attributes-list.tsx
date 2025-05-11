@@ -1,5 +1,3 @@
-// frontend/src/routes/people-crm/attributes/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -7,7 +5,6 @@ import loadingStore from "@/store/loading-store";
 import { PERSON_ATTRIBUTES_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Input } from "@/components/ui/input";
 import { Search, Tag, User, Calendar } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { PersonAttribute } from "@/store/people-crm-definitions";
@@ -15,11 +12,13 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import AddAttributeButton from "@/features/people-crm/add-attribute-button";
 
-export const Route = createFileRoute("/people-crm/attributes/")({
-  component: PersonAttributesList,
-});
+interface PersonAttributesListProps {
+  onShowDetail?: (type: string, id: string) => void;
+}
 
-function PersonAttributesList() {
+export default function PersonAttributesList({
+  onShowDetail,
+}: PersonAttributesListProps) {
   const attributes = useStore(dataStore, (state) => state.person_attributes);
   const isLoading = useStore(loadingStore, (state) => state.person_attributes);
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,10 +62,7 @@ function PersonAttributesList() {
   }: {
     attribute: PersonAttribute;
   }) => (
-    <Link
-      to={`/people-crm/attributes/$attributeId`}
-      params={{ attributeId: attribute.id }}
-    >
+    <div onClick={() => onShowDetail?.("attribute", attribute.id)}>
       <ReusableCard
         cardClassName="hover:border-primary/50 transition-colors cursor-pointer"
         content={
@@ -120,7 +116,7 @@ function PersonAttributesList() {
           </div>
         }
       />
-    </Link>
+    </div>
   );
 
   return (
@@ -190,5 +186,3 @@ function PersonAttributesList() {
     </div>
   );
 }
-
-export default PersonAttributesList;

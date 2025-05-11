@@ -1,5 +1,4 @@
-// frontend/src/routes/people-crm/people/$personId/edit.tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+// frontend/src/routes/people-crm/edit-person.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -10,23 +9,16 @@ import PersonForm from "@/features/people-crm/person-form";
 import { toast } from "sonner";
 import { ChevronLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
 
-interface PersonParams {
+interface EditPersonProps {
   personId: string;
+  onBack: () => void;
 }
 
-export const Route = createFileRoute("/people-crm/people/$personId/edit")({
-  component: EditPerson,
-});
-
-function EditPerson() {
-  const { personId } = Route.useParams() as PersonParams;
-  const navigate = useNavigate();
+export default function EditPerson({ personId, onBack }: EditPersonProps) {
   const people = useStore(dataStore, (state) => state.people);
 
   const [person, setPerson] = useState<Person | null>(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const foundPerson = people.find((p) => p.id === personId);
@@ -43,24 +35,21 @@ function EditPerson() {
   }, [personId, people]);
 
   const handleSubmit = async (data: PersonInput) => {
-    setLoading(true);
     try {
       const updatedPerson = await ApiService.updateRecord(personId, data);
       if (updatedPerson) {
         updateEntry(personId, updatedPerson, "people");
         toast.success("Person updated successfully");
-        navigate({ to: `/people-crm/people/${personId}` });
+        onBack();
       }
     } catch (error) {
       console.error("Error updating person:", error);
       toast.error("Failed to update person");
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate({ to: `/people-crm/people/${personId}` });
+    onBack();
   };
 
   if (!person) {
@@ -76,14 +65,9 @@ function EditPerson() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link
-          to={`/people-crm/people/$personId`}
-          params={{ personId: personId }}
-        >
-          <Button variant="ghost" size="icon">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Edit className="h-8 w-8" />
@@ -100,7 +84,6 @@ function EditPerson() {
         person={person}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
-        loading={loading}
       />
     </div>
   );

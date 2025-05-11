@@ -1,11 +1,10 @@
 // frontend/src/features/people-crm/person-form.tsx
 import DataForm from "@/components/data-form/data-form";
 import { PEOPLE_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
-import { PersonInput } from "@/store/people-crm-definitions";
 
 interface PersonFormProps {
   person?: any;
-  onSubmit: (data: PersonInput) => Promise<void>;
+  onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -32,7 +31,7 @@ export default function PersonForm({
     <DataForm
       datasetId="people"
       fields={PEOPLE_FIELD_DEFINITIONS.fields}
-      onSuccess={(recordId) => onSubmit({})}
+      onSuccess={() => onSubmit({})}
       onCancel={onCancel}
       initialValues={initialValues}
       submitLabel={person ? "Update Person" : "Add Person"}

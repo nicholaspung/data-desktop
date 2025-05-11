@@ -1,6 +1,5 @@
-// frontend/src/routes/people-crm/people/$personId.tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// frontend/src/routes/people-crm/person-detail.tsx
+import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Person } from "@/store/people-crm-definitions";
@@ -13,7 +12,6 @@ import {
   Plus,
   Gift,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -22,17 +20,17 @@ import { deleteEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 
-interface PersonParams {
+interface PersonDetailProps {
   personId: string;
+  onBack: () => void;
+  onEdit: () => void;
 }
 
-export const Route = createFileRoute("/people-crm/people/$personId")({
-  component: PersonDetail,
-});
-
-function PersonDetail() {
-  const { personId } = Route.useParams() as PersonParams;
-  const navigate = useNavigate();
+export default function PersonDetail({
+  personId,
+  onBack,
+  onEdit,
+}: PersonDetailProps) {
   const people = useStore(dataStore, (state) => state.people);
   const meetings = useStore(dataStore, (state) => state.meetings);
   const personNotes = useStore(dataStore, (state) => state.person_notes);
@@ -60,7 +58,7 @@ function PersonDetail() {
       await ApiService.deleteRecord(personId);
       deleteEntry(personId, "people");
       toast.success("Person deleted successfully");
-      navigate({ to: "/people-crm/people" });
+      onBack();
     } catch (error) {
       console.error("Error deleting person:", error);
       toast.error("Failed to delete person");
@@ -99,25 +97,18 @@ function PersonDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm" search={{ tab: "people" }}>
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div>
             <h1 className="text-3xl font-bold">{person.name}</h1>
           </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            to={`/people-crm/people/$personId/edit`}
-            params={{ personId: personId }}
-          >
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={onEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
           <ConfirmDeleteDialog
             title="Delete Person"
             description="Are you sure you want to delete this person? This will also delete all associated meetings, notes, and chat history."
@@ -143,13 +134,9 @@ function PersonDetail() {
                 {person.birthday && (
                   <div className="flex items-center gap-2">
                     <span className="font-medium">Birthday:</span>
-                    <Link
-                      to={`/people-crm/birthdays/$personId`}
-                      params={{ personId: personId }}
-                      className="text-primary hover:underline"
-                    >
+                    <span className="text-primary hover:underline">
                       {format(person.birthday, "MMMM d, yyyy")}
-                    </Link>
+                    </span>
                   </div>
                 )}
                 {person.first_met_date && (
@@ -181,17 +168,14 @@ function PersonDetail() {
             }
           />
 
-          {/* Rest of the component remains the same */}
           {/* Recent Activity */}
           <ReusableCard
             title="Recent Activity"
             content={
               <div className="space-y-4">
                 {personMeetings.slice(0, 3).map((meeting) => (
-                  <Link
+                  <div
                     key={meeting.id}
-                    to={`/people-crm/meetings/$meetingId`}
-                    params={{ meetingId: meeting.id }}
                     className="block hover:bg-accent/50 rounded p-3 -m-3"
                   >
                     <div className="flex items-center gap-3">
@@ -205,14 +189,12 @@ function PersonDetail() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
 
                 {personNotesList.slice(0, 3).map((note) => (
-                  <Link
+                  <div
                     key={note.id}
-                    to={`/people-crm/notes/$noteId`}
-                    params={{ noteId: note.id }}
                     className="block hover:bg-accent/50 rounded p-3 -m-3"
                   >
                     <div className="flex items-center gap-3">
@@ -226,7 +208,7 @@ function PersonDetail() {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
 
                 {personMeetings.length === 0 &&
@@ -240,50 +222,30 @@ function PersonDetail() {
           />
         </div>
 
-        {/* Sidebar - remains the same */}
+        {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
           <ReusableCard
             title="Quick Actions"
             content={
               <div className="grid grid-cols-2 gap-3">
-                <Link
-                  to={`/people-crm/meetings/add`}
-                  params={{ personId: personId }}
-                >
-                  <Button variant="outline" className="w-full">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Add Meeting
-                  </Button>
-                </Link>
-                <Link
-                  to={`/people-crm/notes/add`}
-                  params={{ personId: personId }}
-                >
-                  <Button variant="outline" className="w-full">
-                    <NotebookPen className="h-4 w-4 mr-2" />
-                    Add Note
-                  </Button>
-                </Link>
-                <Link
-                  to={`/people-crm/attributes/add`}
-                  params={{ personId: personId }}
-                >
-                  <Button variant="outline" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Attribute
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Add Meeting
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <NotebookPen className="h-4 w-4 mr-2" />
+                  Add Note
+                </Button>
+                <Button variant="outline" className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Attribute
+                </Button>
                 {person.birthday && (
-                  <Link
-                    to={`/people-crm/birthdays/$personId`}
-                    params={{ personId: personId }}
-                  >
-                    <Button variant="outline" className="w-full">
-                      <Gift className="h-4 w-4 mr-2" />
-                      Birthday Info
-                    </Button>
-                  </Link>
+                  <Button variant="outline" className="w-full">
+                    <Gift className="h-4 w-4 mr-2" />
+                    Birthday Info
+                  </Button>
                 )}
               </div>
             }

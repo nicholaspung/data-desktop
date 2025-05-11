@@ -1,6 +1,5 @@
-// frontend/src/routes/people-crm/birthdays/$personId.tsx
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// frontend/src/routes/people-crm/birthday-detail.tsx
+import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Person } from "@/store/people-crm-definitions";
@@ -13,22 +12,20 @@ import {
   Bell,
   PartyPopper,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { format, differenceInDays, addYears } from "date-fns";
 import { ApiService } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 
-interface BirthdayParams {
+interface BirthdayDetailProps {
   personId: string;
+  onBack: () => void;
 }
 
-export const Route = createFileRoute("/people-crm/birthdays/$personId")({
-  component: BirthdayDetail,
-});
-
-function BirthdayDetail() {
-  const { personId } = Route.useParams() as BirthdayParams;
+export default function BirthdayDetail({
+  personId,
+  onBack,
+}: BirthdayDetailProps) {
   const people = useStore(dataStore, (state) => state.people);
   const birthdayReminders = useStore(
     dataStore,
@@ -64,11 +61,9 @@ function BirthdayDetail() {
     return (
       <div className="container mx-auto py-6 space-y-6">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm" search={{ tab: "birthdays" }}>
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div>
             <h1 className="text-3xl font-bold">{person.name}'s Birthday</h1>
           </div>
@@ -84,15 +79,10 @@ function BirthdayDetail() {
               <p className="text-muted-foreground mb-4">
                 No birthday set for {person.name}
               </p>
-              <Link
-                to={`/people-crm/people/$personId/edit`}
-                params={{ personId: personId }}
-              >
-                <Button>
-                  <User className="h-4 w-4 mr-2" />
-                  Edit Contact to Add Birthday
-                </Button>
-              </Link>
+              <Button>
+                <User className="h-4 w-4 mr-2" />
+                Edit Contact to Add Birthday
+              </Button>
             </div>
           }
         />
@@ -162,11 +152,9 @@ function BirthdayDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm/birthdays">
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               {daysUntil === 0 ? (
@@ -182,25 +170,15 @@ function BirthdayDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            to={`/people-crm/people/$personId`}
-            params={{ personId: personId }}
-          >
-            <Button variant="outline">
-              <User className="h-4 w-4 mr-2" />
-              View Profile
-            </Button>
-          </Link>
+          <Button variant="outline">
+            <User className="h-4 w-4 mr-2" />
+            View Profile
+          </Button>
           {!reminder && (
-            <Link
-              to={`/people-crm/birthday-reminders/add`}
-              params={{ personId: personId }}
-            >
-              <Button>
-                <Bell className="h-4 w-4 mr-2" />
-                Set Reminder
-              </Button>
-            </Link>
+            <Button>
+              <Bell className="h-4 w-4 mr-2" />
+              Set Reminder
+            </Button>
           )}
         </div>
       </div>
@@ -309,30 +287,18 @@ function BirthdayDetail() {
         title="Quick Actions"
         content={
           <div className="flex flex-wrap gap-3">
-            <Link
-              to={`/people-crm/meetings/add`}
-              params={{ personId: personId }}
-            >
-              <Button variant="outline">
-                <Calendar className="h-4 w-4 mr-2" />
-                Schedule Birthday Celebration
-              </Button>
-            </Link>
-            <Link to={`/people-crm/notes/add`} params={{ personId: personId }}>
-              <Button variant="outline">
-                <User className="h-4 w-4 mr-2" />
-                Add Birthday Note
-              </Button>
-            </Link>
-            <Link
-              to={`/people-crm/people/$personId/edit`}
-              params={{ personId: personId }}
-            >
-              <Button variant="outline">
-                <Gift className="h-4 w-4 mr-2" />
-                Edit Birthday Date
-              </Button>
-            </Link>
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              Schedule Birthday Celebration
+            </Button>
+            <Button variant="outline">
+              <User className="h-4 w-4 mr-2" />
+              Add Birthday Note
+            </Button>
+            <Button variant="outline">
+              <Gift className="h-4 w-4 mr-2" />
+              Edit Birthday Date
+            </Button>
           </div>
         }
       />

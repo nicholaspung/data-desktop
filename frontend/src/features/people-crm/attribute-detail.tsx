@@ -1,6 +1,5 @@
-// frontend/src/routes/people-crm/attributes/$attributeId.tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// frontend/src/routes/people-crm/attribute-detail.tsx
+import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { PersonAttribute } from "@/store/people-crm-definitions";
@@ -14,7 +13,6 @@ import {
   Info,
   Link as LinkIcon,
 } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -23,17 +21,17 @@ import { deleteEntry } from "@/store/data-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 
-interface AttributeParams {
+interface AttributeDetailProps {
   attributeId: string;
+  onBack: () => void;
+  onEdit: () => void;
 }
 
-export const Route = createFileRoute("/people-crm/attributes/$attributeId")({
-  component: AttributeDetail,
-});
-
-function AttributeDetail() {
-  const { attributeId } = Route.useParams() as AttributeParams;
-  const navigate = useNavigate();
+export default function AttributeDetail({
+  attributeId,
+  onBack,
+  onEdit,
+}: AttributeDetailProps) {
   const attributes = useStore(dataStore, (state) => state.person_attributes);
 
   const [attribute, setAttribute] = useState<PersonAttribute | null>(null);
@@ -59,7 +57,7 @@ function AttributeDetail() {
       await ApiService.deleteRecord(attributeId);
       deleteEntry(attributeId, "person_attributes");
       toast.success("Attribute deleted successfully");
-      navigate({ to: "/people-crm/attributes" });
+      onBack();
     } catch (error) {
       console.error("Error deleting attribute:", error);
       toast.error("Failed to delete attribute");
@@ -101,11 +99,9 @@ function AttributeDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm" search={{ tab: "attributes" }}>
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Tag className="h-8 w-8" />
@@ -117,15 +113,10 @@ function AttributeDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            to={`/people-crm/attributes/$attributeId/edit`}
-            params={{ attributeId: attributeId }}
-          >
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={onEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
           <ConfirmDeleteDialog
             title="Delete Attribute"
             description="Are you sure you want to delete this attribute? This action cannot be undone."
@@ -215,33 +206,18 @@ function AttributeDetail() {
         title="Related Actions"
         content={
           <div className="flex flex-wrap gap-3">
-            <Link
-              to={`/people-crm/people/$personId`}
-              params={{ personId: attribute.person_id }}
-            >
-              <Button variant="outline">
-                <User className="h-4 w-4 mr-2" />
-                View Contact
-              </Button>
-            </Link>
-            <Link
-              to={`/people-crm/attributes/add`}
-              params={{ personId: attribute.person_id }}
-            >
-              <Button variant="outline">
-                <Tag className="h-4 w-4 mr-2" />
-                Add Another Attribute
-              </Button>
-            </Link>
-            <Link
-              to={`/people-crm/notes/add`}
-              params={{ personId: attribute.person_id }}
-            >
-              <Button variant="outline">
-                <Info className="h-4 w-4 mr-2" />
-                Add Note
-              </Button>
-            </Link>
+            <Button variant="outline">
+              <User className="h-4 w-4 mr-2" />
+              View Contact
+            </Button>
+            <Button variant="outline">
+              <Tag className="h-4 w-4 mr-2" />
+              Add Another Attribute
+            </Button>
+            <Button variant="outline">
+              <Info className="h-4 w-4 mr-2" />
+              Add Note
+            </Button>
           </div>
         }
       />

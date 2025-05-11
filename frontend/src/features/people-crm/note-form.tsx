@@ -4,6 +4,7 @@ import { PERSON_NOTES_FIELD_DEFINITIONS } from "@/features/field-definitions/peo
 
 export default function PersonNoteForm({
   note,
+  onSubmit,
   onCancel,
   defaultPersonId,
 }: {
@@ -29,7 +30,7 @@ export default function PersonNoteForm({
     <DataForm
       datasetId="person_notes"
       fields={PERSON_NOTES_FIELD_DEFINITIONS.fields}
-      onSuccess={(recordId) => onSubmit({})}
+      onSuccess={() => onSubmit({})}
       onCancel={onCancel}
       initialValues={initialValues}
       submitLabel={note ? "Update Note" : "Add Note"}

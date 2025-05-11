@@ -1,5 +1,3 @@
-// frontend/src/routes/people-crm/people/index.tsx
-import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -7,7 +5,6 @@ import loadingStore from "@/store/loading-store";
 import { PEOPLE_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Users, MapPin, Calendar } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import RefreshDatasetButton from "@/components/reusable/refresh-dataset-button";
 import { Person } from "@/store/people-crm-definitions";
@@ -15,11 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import AddPersonButton from "@/features/people-crm/add-person-button";
 
-export const Route = createFileRoute("/people-crm/people/")({
-  component: PeopleList,
-});
+interface PeopleListProps {
+  onShowDetail?: (type: string, id: string) => void;
+}
 
-function PeopleList() {
+export default function PeopleList({ onShowDetail }: PeopleListProps) {
   const people = useStore(dataStore, (state) => state.people);
   const isLoading = useStore(loadingStore, (state) => state.people);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,7 +62,7 @@ function PeopleList() {
   };
 
   const PersonCard = ({ person }: { person: Person }) => (
-    <Link to={`/people-crm/people/$personId`} params={{ personId: person.id }}>
+    <div onClick={() => onShowDetail?.("person", person.id)}>
       <ReusableCard
         cardClassName="hover:border-primary/50 transition-colors cursor-pointer"
         content={
@@ -132,7 +129,7 @@ function PeopleList() {
           </div>
         }
       />
-    </Link>
+    </div>
   );
 
   return (
@@ -226,5 +223,3 @@ function PeopleList() {
     </div>
   );
 }
-
-export default PeopleList;

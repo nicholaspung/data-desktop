@@ -1,12 +1,10 @@
-// frontend/src/routes/people-crm/notes/$noteId.tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+// frontend/src/routes/people-crm/note-detail.tsx
+import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { PersonNote } from "@/store/people-crm-definitions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Edit, NotebookPen, Calendar, User } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -16,17 +14,17 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import ReactMarkdown from "react-markdown";
 
-interface NoteParams {
+interface NoteDetailProps {
   noteId: string;
+  onBack: () => void;
+  onEdit: () => void;
 }
 
-export const Route = createFileRoute("/people-crm/notes/$noteId")({
-  component: NoteDetail,
-});
-
-function NoteDetail() {
-  const { noteId } = Route.useParams() as NoteParams;
-  const navigate = useNavigate();
+export default function NoteDetail({
+  noteId,
+  onBack,
+  onEdit,
+}: NoteDetailProps) {
   const notes = useStore(dataStore, (state) => state.person_notes);
 
   const [note, setNote] = useState<PersonNote | null>(null);
@@ -52,7 +50,7 @@ function NoteDetail() {
       await ApiService.deleteRecord(noteId);
       deleteEntry(noteId, "person_notes");
       toast.success("Note deleted successfully");
-      navigate({ to: "/people-crm/notes" });
+      onBack();
     } catch (error) {
       console.error("Error deleting note:", error);
       toast.error("Failed to delete note");
@@ -90,11 +88,9 @@ function NoteDetail() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/people-crm" search={{ tab: "notes" }}>
-            <Button variant="ghost" size="icon">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <NotebookPen className="h-8 w-8" />
@@ -106,15 +102,10 @@ function NoteDetail() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            to={`/people-crm/notes/$noteId/edit`}
-            params={{ noteId: noteId }}
-          >
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={onEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
           <ConfirmDeleteDialog
             title="Delete Note"
             description="Are you sure you want to delete this note? This action cannot be undone."
@@ -196,33 +187,18 @@ function NoteDetail() {
         title="Related Actions"
         content={
           <div className="flex flex-wrap gap-3">
-            <Link
-              to={`/people-crm/people/$personId`}
-              params={{ personId: note.person_id }}
-            >
-              <Button variant="outline">
-                <User className="h-4 w-4 mr-2" />
-                View Contact
-              </Button>
-            </Link>
-            <Link
-              to={`/people-crm/notes/add`}
-              params={{ personId: note.person_id }}
-            >
-              <Button variant="outline">
-                <NotebookPen className="h-4 w-4 mr-2" />
-                Add Another Note
-              </Button>
-            </Link>
-            <Link
-              to={`/people-crm/meetings/add`}
-              params={{ personId: note.person_id }}
-            >
-              <Button variant="outline">
-                <Calendar className="h-4 w-4 mr-2" />
-                Schedule Meeting
-              </Button>
-            </Link>
+            <Button variant="outline">
+              <User className="h-4 w-4 mr-2" />
+              View Contact
+            </Button>
+            <Button variant="outline">
+              <NotebookPen className="h-4 w-4 mr-2" />
+              Add Another Note
+            </Button>
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              Schedule Meeting
+            </Button>
           </div>
         }
       />

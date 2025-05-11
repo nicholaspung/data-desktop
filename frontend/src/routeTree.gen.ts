@@ -15,6 +15,7 @@ import { Route as TodosImport } from './routes/todos'
 import { Route as TimeTrackerImport } from './routes/time-tracker'
 import { Route as TimePlannerImport } from './routes/time-planner'
 import { Route as SettingsImport } from './routes/settings'
+import { Route as PeopleCrmImport } from './routes/people-crm'
 import { Route as MetricCalendarImport } from './routes/metric-calendar'
 import { Route as MetricImport } from './routes/metric'
 import { Route as JournalingImport } from './routes/journaling'
@@ -25,23 +26,6 @@ import { Route as DatasetImport } from './routes/dataset'
 import { Route as CalendarImport } from './routes/calendar'
 import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
-import { Route as PeopleCrmIndexImport } from './routes/people-crm/index'
-import { Route as PeopleCrmPeopleIndexImport } from './routes/people-crm/people/index'
-import { Route as PeopleCrmNotesIndexImport } from './routes/people-crm/notes/index'
-import { Route as PeopleCrmMeetingsIndexImport } from './routes/people-crm/meetings/index'
-import { Route as PeopleCrmBirthdaysIndexImport } from './routes/people-crm/birthdays/index'
-import { Route as PeopleCrmBirthdayRemindersIndexImport } from './routes/people-crm/birthday-reminders/index'
-import { Route as PeopleCrmAttributesIndexImport } from './routes/people-crm/attributes/index'
-import { Route as PeopleCrmPeoplePersonIdImport } from './routes/people-crm/people/$personId'
-import { Route as PeopleCrmNotesNoteIdImport } from './routes/people-crm/notes/$noteId'
-import { Route as PeopleCrmMeetingsMeetingIdImport } from './routes/people-crm/meetings/$meetingId'
-import { Route as PeopleCrmBirthdaysPersonIdImport } from './routes/people-crm/birthdays/$personId'
-import { Route as PeopleCrmAttributesAttributeIdImport } from './routes/people-crm/attributes/$attributeId'
-import { Route as PeopleCrmPeoplePersonIdEditImport } from './routes/people-crm/people/$personId/edit'
-import { Route as PeopleCrmNotesNoteIdEditImport } from './routes/people-crm/notes/$noteId/edit'
-import { Route as PeopleCrmMeetingsMeetingIdEditImport } from './routes/people-crm/meetings/$meetingId/edit'
-import { Route as PeopleCrmBirthdayRemindersReminderIdEditImport } from './routes/people-crm/birthday-reminders/$reminderId/edit'
-import { Route as PeopleCrmAttributesAttributeIdEditImport } from './routes/people-crm/attributes/$attributeId/edit'
 
 // Create/Update Routes
 
@@ -66,6 +50,12 @@ const TimePlannerRoute = TimePlannerImport.update({
 const SettingsRoute = SettingsImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const PeopleCrmRoute = PeopleCrmImport.update({
+  id: '/people-crm',
+  path: '/people-crm',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -128,118 +118,6 @@ const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
 } as any)
-
-const PeopleCrmIndexRoute = PeopleCrmIndexImport.update({
-  id: '/people-crm/',
-  path: '/people-crm/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmPeopleIndexRoute = PeopleCrmPeopleIndexImport.update({
-  id: '/people-crm/people/',
-  path: '/people-crm/people/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmNotesIndexRoute = PeopleCrmNotesIndexImport.update({
-  id: '/people-crm/notes/',
-  path: '/people-crm/notes/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmMeetingsIndexRoute = PeopleCrmMeetingsIndexImport.update({
-  id: '/people-crm/meetings/',
-  path: '/people-crm/meetings/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmBirthdaysIndexRoute = PeopleCrmBirthdaysIndexImport.update({
-  id: '/people-crm/birthdays/',
-  path: '/people-crm/birthdays/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmBirthdayRemindersIndexRoute =
-  PeopleCrmBirthdayRemindersIndexImport.update({
-    id: '/people-crm/birthday-reminders/',
-    path: '/people-crm/birthday-reminders/',
-    getParentRoute: () => rootRoute,
-  } as any)
-
-const PeopleCrmAttributesIndexRoute = PeopleCrmAttributesIndexImport.update({
-  id: '/people-crm/attributes/',
-  path: '/people-crm/attributes/',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmPeoplePersonIdRoute = PeopleCrmPeoplePersonIdImport.update({
-  id: '/people-crm/people/$personId',
-  path: '/people-crm/people/$personId',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmNotesNoteIdRoute = PeopleCrmNotesNoteIdImport.update({
-  id: '/people-crm/notes/$noteId',
-  path: '/people-crm/notes/$noteId',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const PeopleCrmMeetingsMeetingIdRoute = PeopleCrmMeetingsMeetingIdImport.update(
-  {
-    id: '/people-crm/meetings/$meetingId',
-    path: '/people-crm/meetings/$meetingId',
-    getParentRoute: () => rootRoute,
-  } as any,
-)
-
-const PeopleCrmBirthdaysPersonIdRoute = PeopleCrmBirthdaysPersonIdImport.update(
-  {
-    id: '/people-crm/birthdays/$personId',
-    path: '/people-crm/birthdays/$personId',
-    getParentRoute: () => rootRoute,
-  } as any,
-)
-
-const PeopleCrmAttributesAttributeIdRoute =
-  PeopleCrmAttributesAttributeIdImport.update({
-    id: '/people-crm/attributes/$attributeId',
-    path: '/people-crm/attributes/$attributeId',
-    getParentRoute: () => rootRoute,
-  } as any)
-
-const PeopleCrmPeoplePersonIdEditRoute =
-  PeopleCrmPeoplePersonIdEditImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => PeopleCrmPeoplePersonIdRoute,
-  } as any)
-
-const PeopleCrmNotesNoteIdEditRoute = PeopleCrmNotesNoteIdEditImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => PeopleCrmNotesNoteIdRoute,
-} as any)
-
-const PeopleCrmMeetingsMeetingIdEditRoute =
-  PeopleCrmMeetingsMeetingIdEditImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => PeopleCrmMeetingsMeetingIdRoute,
-  } as any)
-
-const PeopleCrmBirthdayRemindersReminderIdEditRoute =
-  PeopleCrmBirthdayRemindersReminderIdEditImport.update({
-    id: '/people-crm/birthday-reminders/$reminderId/edit',
-    path: '/people-crm/birthday-reminders/$reminderId/edit',
-    getParentRoute: () => rootRoute,
-  } as any)
-
-const PeopleCrmAttributesAttributeIdEditRoute =
-  PeopleCrmAttributesAttributeIdEditImport.update({
-    id: '/edit',
-    path: '/edit',
-    getParentRoute: () => PeopleCrmAttributesAttributeIdRoute,
-  } as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -315,6 +193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricCalendarImport
       parentRoute: typeof rootRoute
     }
+    '/people-crm': {
+      id: '/people-crm'
+      path: '/people-crm'
+      fullPath: '/people-crm'
+      preLoaderRoute: typeof PeopleCrmImport
+      parentRoute: typeof rootRoute
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -343,183 +228,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TodosImport
       parentRoute: typeof rootRoute
     }
-    '/people-crm/': {
-      id: '/people-crm/'
-      path: '/people-crm'
-      fullPath: '/people-crm'
-      preLoaderRoute: typeof PeopleCrmIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/attributes/$attributeId': {
-      id: '/people-crm/attributes/$attributeId'
-      path: '/people-crm/attributes/$attributeId'
-      fullPath: '/people-crm/attributes/$attributeId'
-      preLoaderRoute: typeof PeopleCrmAttributesAttributeIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/birthdays/$personId': {
-      id: '/people-crm/birthdays/$personId'
-      path: '/people-crm/birthdays/$personId'
-      fullPath: '/people-crm/birthdays/$personId'
-      preLoaderRoute: typeof PeopleCrmBirthdaysPersonIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/meetings/$meetingId': {
-      id: '/people-crm/meetings/$meetingId'
-      path: '/people-crm/meetings/$meetingId'
-      fullPath: '/people-crm/meetings/$meetingId'
-      preLoaderRoute: typeof PeopleCrmMeetingsMeetingIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/notes/$noteId': {
-      id: '/people-crm/notes/$noteId'
-      path: '/people-crm/notes/$noteId'
-      fullPath: '/people-crm/notes/$noteId'
-      preLoaderRoute: typeof PeopleCrmNotesNoteIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/people/$personId': {
-      id: '/people-crm/people/$personId'
-      path: '/people-crm/people/$personId'
-      fullPath: '/people-crm/people/$personId'
-      preLoaderRoute: typeof PeopleCrmPeoplePersonIdImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/attributes/': {
-      id: '/people-crm/attributes/'
-      path: '/people-crm/attributes'
-      fullPath: '/people-crm/attributes'
-      preLoaderRoute: typeof PeopleCrmAttributesIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/birthday-reminders/': {
-      id: '/people-crm/birthday-reminders/'
-      path: '/people-crm/birthday-reminders'
-      fullPath: '/people-crm/birthday-reminders'
-      preLoaderRoute: typeof PeopleCrmBirthdayRemindersIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/birthdays/': {
-      id: '/people-crm/birthdays/'
-      path: '/people-crm/birthdays'
-      fullPath: '/people-crm/birthdays'
-      preLoaderRoute: typeof PeopleCrmBirthdaysIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/meetings/': {
-      id: '/people-crm/meetings/'
-      path: '/people-crm/meetings'
-      fullPath: '/people-crm/meetings'
-      preLoaderRoute: typeof PeopleCrmMeetingsIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/notes/': {
-      id: '/people-crm/notes/'
-      path: '/people-crm/notes'
-      fullPath: '/people-crm/notes'
-      preLoaderRoute: typeof PeopleCrmNotesIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/people/': {
-      id: '/people-crm/people/'
-      path: '/people-crm/people'
-      fullPath: '/people-crm/people'
-      preLoaderRoute: typeof PeopleCrmPeopleIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/attributes/$attributeId/edit': {
-      id: '/people-crm/attributes/$attributeId/edit'
-      path: '/edit'
-      fullPath: '/people-crm/attributes/$attributeId/edit'
-      preLoaderRoute: typeof PeopleCrmAttributesAttributeIdEditImport
-      parentRoute: typeof PeopleCrmAttributesAttributeIdImport
-    }
-    '/people-crm/birthday-reminders/$reminderId/edit': {
-      id: '/people-crm/birthday-reminders/$reminderId/edit'
-      path: '/people-crm/birthday-reminders/$reminderId/edit'
-      fullPath: '/people-crm/birthday-reminders/$reminderId/edit'
-      preLoaderRoute: typeof PeopleCrmBirthdayRemindersReminderIdEditImport
-      parentRoute: typeof rootRoute
-    }
-    '/people-crm/meetings/$meetingId/edit': {
-      id: '/people-crm/meetings/$meetingId/edit'
-      path: '/edit'
-      fullPath: '/people-crm/meetings/$meetingId/edit'
-      preLoaderRoute: typeof PeopleCrmMeetingsMeetingIdEditImport
-      parentRoute: typeof PeopleCrmMeetingsMeetingIdImport
-    }
-    '/people-crm/notes/$noteId/edit': {
-      id: '/people-crm/notes/$noteId/edit'
-      path: '/edit'
-      fullPath: '/people-crm/notes/$noteId/edit'
-      preLoaderRoute: typeof PeopleCrmNotesNoteIdEditImport
-      parentRoute: typeof PeopleCrmNotesNoteIdImport
-    }
-    '/people-crm/people/$personId/edit': {
-      id: '/people-crm/people/$personId/edit'
-      path: '/edit'
-      fullPath: '/people-crm/people/$personId/edit'
-      preLoaderRoute: typeof PeopleCrmPeoplePersonIdEditImport
-      parentRoute: typeof PeopleCrmPeoplePersonIdImport
-    }
   }
 }
 
 // Create and export the route tree
-
-interface PeopleCrmAttributesAttributeIdRouteChildren {
-  PeopleCrmAttributesAttributeIdEditRoute: typeof PeopleCrmAttributesAttributeIdEditRoute
-}
-
-const PeopleCrmAttributesAttributeIdRouteChildren: PeopleCrmAttributesAttributeIdRouteChildren =
-  {
-    PeopleCrmAttributesAttributeIdEditRoute:
-      PeopleCrmAttributesAttributeIdEditRoute,
-  }
-
-const PeopleCrmAttributesAttributeIdRouteWithChildren =
-  PeopleCrmAttributesAttributeIdRoute._addFileChildren(
-    PeopleCrmAttributesAttributeIdRouteChildren,
-  )
-
-interface PeopleCrmMeetingsMeetingIdRouteChildren {
-  PeopleCrmMeetingsMeetingIdEditRoute: typeof PeopleCrmMeetingsMeetingIdEditRoute
-}
-
-const PeopleCrmMeetingsMeetingIdRouteChildren: PeopleCrmMeetingsMeetingIdRouteChildren =
-  {
-    PeopleCrmMeetingsMeetingIdEditRoute: PeopleCrmMeetingsMeetingIdEditRoute,
-  }
-
-const PeopleCrmMeetingsMeetingIdRouteWithChildren =
-  PeopleCrmMeetingsMeetingIdRoute._addFileChildren(
-    PeopleCrmMeetingsMeetingIdRouteChildren,
-  )
-
-interface PeopleCrmNotesNoteIdRouteChildren {
-  PeopleCrmNotesNoteIdEditRoute: typeof PeopleCrmNotesNoteIdEditRoute
-}
-
-const PeopleCrmNotesNoteIdRouteChildren: PeopleCrmNotesNoteIdRouteChildren = {
-  PeopleCrmNotesNoteIdEditRoute: PeopleCrmNotesNoteIdEditRoute,
-}
-
-const PeopleCrmNotesNoteIdRouteWithChildren =
-  PeopleCrmNotesNoteIdRoute._addFileChildren(PeopleCrmNotesNoteIdRouteChildren)
-
-interface PeopleCrmPeoplePersonIdRouteChildren {
-  PeopleCrmPeoplePersonIdEditRoute: typeof PeopleCrmPeoplePersonIdEditRoute
-}
-
-const PeopleCrmPeoplePersonIdRouteChildren: PeopleCrmPeoplePersonIdRouteChildren =
-  {
-    PeopleCrmPeoplePersonIdEditRoute: PeopleCrmPeoplePersonIdEditRoute,
-  }
-
-const PeopleCrmPeoplePersonIdRouteWithChildren =
-  PeopleCrmPeoplePersonIdRoute._addFileChildren(
-    PeopleCrmPeoplePersonIdRouteChildren,
-  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -532,27 +244,11 @@ export interface FileRoutesByFullPath {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
-  '/people-crm': typeof PeopleCrmIndexRoute
-  '/people-crm/attributes/$attributeId': typeof PeopleCrmAttributesAttributeIdRouteWithChildren
-  '/people-crm/birthdays/$personId': typeof PeopleCrmBirthdaysPersonIdRoute
-  '/people-crm/meetings/$meetingId': typeof PeopleCrmMeetingsMeetingIdRouteWithChildren
-  '/people-crm/notes/$noteId': typeof PeopleCrmNotesNoteIdRouteWithChildren
-  '/people-crm/people/$personId': typeof PeopleCrmPeoplePersonIdRouteWithChildren
-  '/people-crm/attributes': typeof PeopleCrmAttributesIndexRoute
-  '/people-crm/birthday-reminders': typeof PeopleCrmBirthdayRemindersIndexRoute
-  '/people-crm/birthdays': typeof PeopleCrmBirthdaysIndexRoute
-  '/people-crm/meetings': typeof PeopleCrmMeetingsIndexRoute
-  '/people-crm/notes': typeof PeopleCrmNotesIndexRoute
-  '/people-crm/people': typeof PeopleCrmPeopleIndexRoute
-  '/people-crm/attributes/$attributeId/edit': typeof PeopleCrmAttributesAttributeIdEditRoute
-  '/people-crm/birthday-reminders/$reminderId/edit': typeof PeopleCrmBirthdayRemindersReminderIdEditRoute
-  '/people-crm/meetings/$meetingId/edit': typeof PeopleCrmMeetingsMeetingIdEditRoute
-  '/people-crm/notes/$noteId/edit': typeof PeopleCrmNotesNoteIdEditRoute
-  '/people-crm/people/$personId/edit': typeof PeopleCrmPeoplePersonIdEditRoute
 }
 
 export interface FileRoutesByTo {
@@ -566,27 +262,11 @@ export interface FileRoutesByTo {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
-  '/people-crm': typeof PeopleCrmIndexRoute
-  '/people-crm/attributes/$attributeId': typeof PeopleCrmAttributesAttributeIdRouteWithChildren
-  '/people-crm/birthdays/$personId': typeof PeopleCrmBirthdaysPersonIdRoute
-  '/people-crm/meetings/$meetingId': typeof PeopleCrmMeetingsMeetingIdRouteWithChildren
-  '/people-crm/notes/$noteId': typeof PeopleCrmNotesNoteIdRouteWithChildren
-  '/people-crm/people/$personId': typeof PeopleCrmPeoplePersonIdRouteWithChildren
-  '/people-crm/attributes': typeof PeopleCrmAttributesIndexRoute
-  '/people-crm/birthday-reminders': typeof PeopleCrmBirthdayRemindersIndexRoute
-  '/people-crm/birthdays': typeof PeopleCrmBirthdaysIndexRoute
-  '/people-crm/meetings': typeof PeopleCrmMeetingsIndexRoute
-  '/people-crm/notes': typeof PeopleCrmNotesIndexRoute
-  '/people-crm/people': typeof PeopleCrmPeopleIndexRoute
-  '/people-crm/attributes/$attributeId/edit': typeof PeopleCrmAttributesAttributeIdEditRoute
-  '/people-crm/birthday-reminders/$reminderId/edit': typeof PeopleCrmBirthdayRemindersReminderIdEditRoute
-  '/people-crm/meetings/$meetingId/edit': typeof PeopleCrmMeetingsMeetingIdEditRoute
-  '/people-crm/notes/$noteId/edit': typeof PeopleCrmNotesNoteIdEditRoute
-  '/people-crm/people/$personId/edit': typeof PeopleCrmPeoplePersonIdEditRoute
 }
 
 export interface FileRoutesById {
@@ -601,27 +281,11 @@ export interface FileRoutesById {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
-  '/people-crm/': typeof PeopleCrmIndexRoute
-  '/people-crm/attributes/$attributeId': typeof PeopleCrmAttributesAttributeIdRouteWithChildren
-  '/people-crm/birthdays/$personId': typeof PeopleCrmBirthdaysPersonIdRoute
-  '/people-crm/meetings/$meetingId': typeof PeopleCrmMeetingsMeetingIdRouteWithChildren
-  '/people-crm/notes/$noteId': typeof PeopleCrmNotesNoteIdRouteWithChildren
-  '/people-crm/people/$personId': typeof PeopleCrmPeoplePersonIdRouteWithChildren
-  '/people-crm/attributes/': typeof PeopleCrmAttributesIndexRoute
-  '/people-crm/birthday-reminders/': typeof PeopleCrmBirthdayRemindersIndexRoute
-  '/people-crm/birthdays/': typeof PeopleCrmBirthdaysIndexRoute
-  '/people-crm/meetings/': typeof PeopleCrmMeetingsIndexRoute
-  '/people-crm/notes/': typeof PeopleCrmNotesIndexRoute
-  '/people-crm/people/': typeof PeopleCrmPeopleIndexRoute
-  '/people-crm/attributes/$attributeId/edit': typeof PeopleCrmAttributesAttributeIdEditRoute
-  '/people-crm/birthday-reminders/$reminderId/edit': typeof PeopleCrmBirthdayRemindersReminderIdEditRoute
-  '/people-crm/meetings/$meetingId/edit': typeof PeopleCrmMeetingsMeetingIdEditRoute
-  '/people-crm/notes/$noteId/edit': typeof PeopleCrmNotesNoteIdEditRoute
-  '/people-crm/people/$personId/edit': typeof PeopleCrmPeoplePersonIdEditRoute
 }
 
 export interface FileRouteTypes {
@@ -637,27 +301,11 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/people-crm'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
-    | '/people-crm'
-    | '/people-crm/attributes/$attributeId'
-    | '/people-crm/birthdays/$personId'
-    | '/people-crm/meetings/$meetingId'
-    | '/people-crm/notes/$noteId'
-    | '/people-crm/people/$personId'
-    | '/people-crm/attributes'
-    | '/people-crm/birthday-reminders'
-    | '/people-crm/birthdays'
-    | '/people-crm/meetings'
-    | '/people-crm/notes'
-    | '/people-crm/people'
-    | '/people-crm/attributes/$attributeId/edit'
-    | '/people-crm/birthday-reminders/$reminderId/edit'
-    | '/people-crm/meetings/$meetingId/edit'
-    | '/people-crm/notes/$noteId/edit'
-    | '/people-crm/people/$personId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -670,27 +318,11 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/people-crm'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
-    | '/people-crm'
-    | '/people-crm/attributes/$attributeId'
-    | '/people-crm/birthdays/$personId'
-    | '/people-crm/meetings/$meetingId'
-    | '/people-crm/notes/$noteId'
-    | '/people-crm/people/$personId'
-    | '/people-crm/attributes'
-    | '/people-crm/birthday-reminders'
-    | '/people-crm/birthdays'
-    | '/people-crm/meetings'
-    | '/people-crm/notes'
-    | '/people-crm/people'
-    | '/people-crm/attributes/$attributeId/edit'
-    | '/people-crm/birthday-reminders/$reminderId/edit'
-    | '/people-crm/meetings/$meetingId/edit'
-    | '/people-crm/notes/$noteId/edit'
-    | '/people-crm/people/$personId/edit'
   id:
     | '__root__'
     | '/'
@@ -703,27 +335,11 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/people-crm'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
-    | '/people-crm/'
-    | '/people-crm/attributes/$attributeId'
-    | '/people-crm/birthdays/$personId'
-    | '/people-crm/meetings/$meetingId'
-    | '/people-crm/notes/$noteId'
-    | '/people-crm/people/$personId'
-    | '/people-crm/attributes/'
-    | '/people-crm/birthday-reminders/'
-    | '/people-crm/birthdays/'
-    | '/people-crm/meetings/'
-    | '/people-crm/notes/'
-    | '/people-crm/people/'
-    | '/people-crm/attributes/$attributeId/edit'
-    | '/people-crm/birthday-reminders/$reminderId/edit'
-    | '/people-crm/meetings/$meetingId/edit'
-    | '/people-crm/notes/$noteId/edit'
-    | '/people-crm/people/$personId/edit'
   fileRoutesById: FileRoutesById
 }
 
@@ -738,23 +354,11 @@ export interface RootRouteChildren {
   JournalingRoute: typeof JournalingRoute
   MetricRoute: typeof MetricRoute
   MetricCalendarRoute: typeof MetricCalendarRoute
+  PeopleCrmRoute: typeof PeopleCrmRoute
   SettingsRoute: typeof SettingsRoute
   TimePlannerRoute: typeof TimePlannerRoute
   TimeTrackerRoute: typeof TimeTrackerRoute
   TodosRoute: typeof TodosRoute
-  PeopleCrmIndexRoute: typeof PeopleCrmIndexRoute
-  PeopleCrmAttributesAttributeIdRoute: typeof PeopleCrmAttributesAttributeIdRouteWithChildren
-  PeopleCrmBirthdaysPersonIdRoute: typeof PeopleCrmBirthdaysPersonIdRoute
-  PeopleCrmMeetingsMeetingIdRoute: typeof PeopleCrmMeetingsMeetingIdRouteWithChildren
-  PeopleCrmNotesNoteIdRoute: typeof PeopleCrmNotesNoteIdRouteWithChildren
-  PeopleCrmPeoplePersonIdRoute: typeof PeopleCrmPeoplePersonIdRouteWithChildren
-  PeopleCrmAttributesIndexRoute: typeof PeopleCrmAttributesIndexRoute
-  PeopleCrmBirthdayRemindersIndexRoute: typeof PeopleCrmBirthdayRemindersIndexRoute
-  PeopleCrmBirthdaysIndexRoute: typeof PeopleCrmBirthdaysIndexRoute
-  PeopleCrmMeetingsIndexRoute: typeof PeopleCrmMeetingsIndexRoute
-  PeopleCrmNotesIndexRoute: typeof PeopleCrmNotesIndexRoute
-  PeopleCrmPeopleIndexRoute: typeof PeopleCrmPeopleIndexRoute
-  PeopleCrmBirthdayRemindersReminderIdEditRoute: typeof PeopleCrmBirthdayRemindersReminderIdEditRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -768,25 +372,11 @@ const rootRouteChildren: RootRouteChildren = {
   JournalingRoute: JournalingRoute,
   MetricRoute: MetricRoute,
   MetricCalendarRoute: MetricCalendarRoute,
+  PeopleCrmRoute: PeopleCrmRoute,
   SettingsRoute: SettingsRoute,
   TimePlannerRoute: TimePlannerRoute,
   TimeTrackerRoute: TimeTrackerRoute,
   TodosRoute: TodosRoute,
-  PeopleCrmIndexRoute: PeopleCrmIndexRoute,
-  PeopleCrmAttributesAttributeIdRoute:
-    PeopleCrmAttributesAttributeIdRouteWithChildren,
-  PeopleCrmBirthdaysPersonIdRoute: PeopleCrmBirthdaysPersonIdRoute,
-  PeopleCrmMeetingsMeetingIdRoute: PeopleCrmMeetingsMeetingIdRouteWithChildren,
-  PeopleCrmNotesNoteIdRoute: PeopleCrmNotesNoteIdRouteWithChildren,
-  PeopleCrmPeoplePersonIdRoute: PeopleCrmPeoplePersonIdRouteWithChildren,
-  PeopleCrmAttributesIndexRoute: PeopleCrmAttributesIndexRoute,
-  PeopleCrmBirthdayRemindersIndexRoute: PeopleCrmBirthdayRemindersIndexRoute,
-  PeopleCrmBirthdaysIndexRoute: PeopleCrmBirthdaysIndexRoute,
-  PeopleCrmMeetingsIndexRoute: PeopleCrmMeetingsIndexRoute,
-  PeopleCrmNotesIndexRoute: PeopleCrmNotesIndexRoute,
-  PeopleCrmPeopleIndexRoute: PeopleCrmPeopleIndexRoute,
-  PeopleCrmBirthdayRemindersReminderIdEditRoute:
-    PeopleCrmBirthdayRemindersReminderIdEditRoute,
 }
 
 export const routeTree = rootRoute
@@ -809,23 +399,11 @@ export const routeTree = rootRoute
         "/journaling",
         "/metric",
         "/metric-calendar",
+        "/people-crm",
         "/settings",
         "/time-planner",
         "/time-tracker",
-        "/todos",
-        "/people-crm/",
-        "/people-crm/attributes/$attributeId",
-        "/people-crm/birthdays/$personId",
-        "/people-crm/meetings/$meetingId",
-        "/people-crm/notes/$noteId",
-        "/people-crm/people/$personId",
-        "/people-crm/attributes/",
-        "/people-crm/birthday-reminders/",
-        "/people-crm/birthdays/",
-        "/people-crm/meetings/",
-        "/people-crm/notes/",
-        "/people-crm/people/",
-        "/people-crm/birthday-reminders/$reminderId/edit"
+        "/todos"
       ]
     },
     "/": {
@@ -858,6 +436,9 @@ export const routeTree = rootRoute
     "/metric-calendar": {
       "filePath": "metric-calendar.tsx"
     },
+    "/people-crm": {
+      "filePath": "people-crm.tsx"
+    },
     "/settings": {
       "filePath": "settings.tsx"
     },
@@ -869,73 +450,6 @@ export const routeTree = rootRoute
     },
     "/todos": {
       "filePath": "todos.tsx"
-    },
-    "/people-crm/": {
-      "filePath": "people-crm/index.tsx"
-    },
-    "/people-crm/attributes/$attributeId": {
-      "filePath": "people-crm/attributes/$attributeId.tsx",
-      "children": [
-        "/people-crm/attributes/$attributeId/edit"
-      ]
-    },
-    "/people-crm/birthdays/$personId": {
-      "filePath": "people-crm/birthdays/$personId.tsx"
-    },
-    "/people-crm/meetings/$meetingId": {
-      "filePath": "people-crm/meetings/$meetingId.tsx",
-      "children": [
-        "/people-crm/meetings/$meetingId/edit"
-      ]
-    },
-    "/people-crm/notes/$noteId": {
-      "filePath": "people-crm/notes/$noteId.tsx",
-      "children": [
-        "/people-crm/notes/$noteId/edit"
-      ]
-    },
-    "/people-crm/people/$personId": {
-      "filePath": "people-crm/people/$personId.tsx",
-      "children": [
-        "/people-crm/people/$personId/edit"
-      ]
-    },
-    "/people-crm/attributes/": {
-      "filePath": "people-crm/attributes/index.tsx"
-    },
-    "/people-crm/birthday-reminders/": {
-      "filePath": "people-crm/birthday-reminders/index.tsx"
-    },
-    "/people-crm/birthdays/": {
-      "filePath": "people-crm/birthdays/index.tsx"
-    },
-    "/people-crm/meetings/": {
-      "filePath": "people-crm/meetings/index.tsx"
-    },
-    "/people-crm/notes/": {
-      "filePath": "people-crm/notes/index.tsx"
-    },
-    "/people-crm/people/": {
-      "filePath": "people-crm/people/index.tsx"
-    },
-    "/people-crm/attributes/$attributeId/edit": {
-      "filePath": "people-crm/attributes/$attributeId/edit.tsx",
-      "parent": "/people-crm/attributes/$attributeId"
-    },
-    "/people-crm/birthday-reminders/$reminderId/edit": {
-      "filePath": "people-crm/birthday-reminders/$reminderId/edit.tsx"
-    },
-    "/people-crm/meetings/$meetingId/edit": {
-      "filePath": "people-crm/meetings/$meetingId/edit.tsx",
-      "parent": "/people-crm/meetings/$meetingId"
-    },
-    "/people-crm/notes/$noteId/edit": {
-      "filePath": "people-crm/notes/$noteId/edit.tsx",
-      "parent": "/people-crm/notes/$noteId"
-    },
-    "/people-crm/people/$personId/edit": {
-      "filePath": "people-crm/people/$personId/edit.tsx",
-      "parent": "/people-crm/people/$personId"
     }
   }
 }
