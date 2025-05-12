@@ -72,56 +72,84 @@ export default function ImageCarousel({
 
   return (
     <div
-      className={cn(
-        "relative overflow-hidden rounded-md",
-        fullHeight && "h-full",
-        className
-      )}
+      className={cn("relative", fullHeight && "h-full", className)}
       style={containerStyle}
     >
-      <div
-        className="relative overflow-hidden rounded-md h-full"
-        style={imageContainerStyle}
-      >
-        <img
-          src={normalizedImages[activeIndex].src}
-          alt={
-            normalizedImages[activeIndex].caption || `Image ${activeIndex + 1}`
-          }
-          className={cn(
-            "w-full object-contain",
-            fullHeight ? "h-full" : "object-cover"
-          )}
-        />
+      {/* Navigation buttons positioned outside the image */}
+      {showNavigation && normalizedImages.length > 1 && (
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={prev}
+            className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 rounded-full p-1 z-10"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
 
-        {showNavigation && normalizedImages.length > 1 && (
-          <>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={prev}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 rounded-full p-1 z-10"
+          <div className="overflow-hidden rounded-md w-full h-full">
+            <div
+              className="relative overflow-hidden rounded-md h-full"
+              style={imageContainerStyle}
             >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+              <img
+                src={normalizedImages[activeIndex].src}
+                alt={
+                  normalizedImages[activeIndex].caption ||
+                  `Image ${activeIndex + 1}`
+                }
+                className={cn(
+                  "w-full object-contain",
+                  fullHeight ? "h-full" : "object-cover"
+                )}
+                style={maxHeight ? { maxHeight } : {}}
+              />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={next}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 rounded-full p-1 z-10"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </>
-        )}
-
-        {showCaptions && normalizedImages[activeIndex].caption && (
-          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm z-10">
-            {normalizedImages[activeIndex].caption}
+              {showCaptions && normalizedImages[activeIndex].caption && (
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm z-10">
+                  {normalizedImages[activeIndex].caption}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={next}
+            className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 bg-black/30 text-white hover:bg-black/50 rounded-full p-1 z-10"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* When navigation is disabled, just show the image */}
+      {(!showNavigation || normalizedImages.length <= 1) && (
+        <div
+          className="relative overflow-hidden rounded-md h-full"
+          style={imageContainerStyle}
+        >
+          <img
+            src={normalizedImages[activeIndex].src}
+            alt={
+              normalizedImages[activeIndex].caption ||
+              `Image ${activeIndex + 1}`
+            }
+            className={cn(
+              "w-full object-contain",
+              fullHeight ? "h-full" : "object-cover"
+            )}
+            style={maxHeight ? { maxHeight } : {}}
+          />
+
+          {showCaptions && normalizedImages[activeIndex].caption && (
+            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm z-10">
+              {normalizedImages[activeIndex].caption}
+            </div>
+          )}
+        </div>
+      )}
 
       {showCounter && normalizedImages.length > 1 && (
         <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">

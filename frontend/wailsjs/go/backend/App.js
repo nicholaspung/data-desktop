@@ -34,6 +34,10 @@ export function GetImagePath(arg1) {
   return window['go']['backend']['App']['GetImagePath'](arg1);
 }
 
+export function GetImageWithSize(arg1, arg2) {
+  return window['go']['backend']['App']['GetImageWithSize'](arg1, arg2);
+}
+
 export function GetRecord(arg1) {
   return window['go']['backend']['App']['GetRecord'](arg1);
 }

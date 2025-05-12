@@ -18,6 +18,8 @@ export function GetImage(arg1:string):Promise<string>;
 
 export function GetImagePath(arg1:string):Promise<string>;
 
+export function GetImageWithSize(arg1:string,arg2:string):Promise<string>;
+
 export function GetRecord(arg1:string):Promise<Record<string, any>>;
 
 export function GetRecords(arg1:string):Promise<Array<Record<string, any>>>;

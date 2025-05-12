@@ -45,6 +45,8 @@ func (a *App) Startup(ctx context.Context) {
 		return
 	}
 
+	image.InitializeCache()
+
 	var dbPath string
 
 	executable, err := os.Executable()
@@ -54,18 +56,18 @@ func (a *App) Startup(ctx context.Context) {
 
 		if isDev {
 			log.Println("Running in development mode (detected via executable name):", executableName)
-			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+			dbPath = filepath.Join(appDir, "DatingDesktop-dev.db")
 		} else {
 			log.Println("Running in production mode with executable:", executableName)
-			dbPath = filepath.Join(appDir, "DataDesktop.db")
+			dbPath = filepath.Join(appDir, "DatingDesktop.db")
 		}
 	} else {
 		if os.Getenv("BUILD_MODE") == "dev" {
 			log.Println("Running in development mode (detected via environment variable)")
-			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
+			dbPath = filepath.Join(appDir, "DatingDesktop-dev.db")
 		} else {
 			log.Println("Running in production mode (fallback)")
-			dbPath = filepath.Join(appDir, "DataDesktop.db")
+			dbPath = filepath.Join(appDir, "DatingDesktop.db")
 		}
 	}
 
@@ -96,15 +98,15 @@ func getAppDataDir() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		appDir = filepath.Join(homeDir, "Library", "Application Support", "DataDesktop")
+		appDir = filepath.Join(homeDir, "Library", "Application Support", "DatingDesktop")
 	} else if runtime.GOOS == "windows" {
-		appDir = filepath.Join(os.Getenv("APPDATA"), "DataDesktop")
+		appDir = filepath.Join(os.Getenv("APPDATA"), "DatingDesktop")
 	} else {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
-		appDir = filepath.Join(homeDir, ".config", "DataDesktop")
+		appDir = filepath.Join(homeDir, ".config", "DatingDesktop")
 	}
 
 	if err := os.MkdirAll(appDir, 0755); err != nil {
@@ -221,7 +223,8 @@ func (a *App) GetRecords(datasetID string) ([]map[string]interface{}, error) {
 		data["createdAt"] = record.CreatedAt
 		data["lastModified"] = record.LastModified
 
-		image.ProcessRecord(a.appDataDir, data)
+		// Use thumbnails for record listings
+		image.ProcessRecord(a.appDataDir, data, true)
 
 		result[i] = data
 	}
@@ -246,7 +249,8 @@ func (a *App) GetRecord(id string) (map[string]interface{}, error) {
 	data["createdAt"] = record.CreatedAt
 	data["lastModified"] = record.LastModified
 
-	image.ProcessRecord(a.appDataDir, data)
+	// For single record view, use full resolution
+	image.ProcessRecord(a.appDataDir, data, false)
 
 	return data, nil
 }
@@ -452,7 +456,7 @@ func (a *App) GetRecordsWithRelations(datasetID string) ([]map[string]interface{
 	}
 
 	for _, record := range result {
-		image.ProcessRecord(a.appDataDir, record)
+		image.ProcessRecord(a.appDataDir, record, true)
 	}
 
 	return result, nil
@@ -651,4 +655,26 @@ func (a *App) processGenericArray(arr []interface{}, prefix string) ([]interface
 	}
 
 	return result, nil
+}
+
+func (a *App) GetImageWithSize(relativePath string, size string) (string, error) {
+	if relativePath == "" {
+		return "", nil
+	}
+
+	var imageSize *image.Size
+	switch size {
+	case "thumbnail":
+		s := image.ThumbnailSize
+		imageSize = &s
+	case "medium":
+		s := image.MediumSize
+		imageSize = &s
+	case "original":
+		imageSize = nil
+	default:
+		imageSize = nil
+	}
+
+	return image.GetImageAsBase64(a.appDataDir, relativePath, imageSize)
 }
