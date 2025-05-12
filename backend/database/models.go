@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -90,10 +91,9 @@ func InitializeRelationships(db *sql.DB) error {
 	for _, dataset := range datasets {
 		for _, field := range dataset.Fields {
 			if field.IsRelation && field.RelatedDataset != "" {
-				// Create an index on the JSON field that holds the foreign key
-				indexName := fmt.Sprintf("idx_%s_%s", dataset.ID, field.Key)
+				indexName := fmt.Sprintf("idx_%s_%s", strings.ReplaceAll(dataset.ID, "-", "_"), field.Key)
 				indexSQL := fmt.Sprintf(
-					"CREATE INDEX IF NOT EXISTS %s ON data_records((json_extract(data, '$.%s'))) WHERE dataset_id = '%s'",
+					`CREATE INDEX IF NOT EXISTS %s ON data_records((json_extract(data, '$.%s'))) WHERE dataset_id = '%s'`,
 					indexName, field.Key, dataset.ID,
 				)
 
@@ -149,6 +149,3 @@ func InitializeSchema(db *sql.DB) error {
 
 	return nil
 }
-
-// Note: Initialize function has been removed from this file to avoid duplication with db.go
-// The proper initialization sequence should be called from db.go's Initialize function
