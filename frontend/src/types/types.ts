@@ -7,7 +7,6 @@ export interface DatasetSummary {
   lastUpdated: string | null;
 }
 
-// Define data types for our table
 export type FieldType =
   | "date"
   | "boolean"
@@ -17,7 +16,8 @@ export type FieldType =
   | "select-single"
   | "select-multiple"
   | "markdown"
-  | "tags";
+  | "tags"
+  | "image";
 
 export interface SelectOption {
   id: string;
@@ -29,7 +29,7 @@ export interface ColumnMeta {
   unit?: string;
   description?: string;
   isSearchable?: boolean;
-  // Add relation-specific properties
+
   isRelation?: boolean;
   relatedDataset?: string;
   displayField?: string;
@@ -44,7 +44,7 @@ export interface FieldDefinition {
   unit?: string;
   isSearchable?: boolean;
   isOptional?: boolean;
-  // New relationship fields
+
   isRelation?: boolean;
   relatedDataset?: string;
   relatedField?: string;
@@ -52,13 +52,12 @@ export interface FieldDefinition {
   displayFieldType?: FieldType;
   secondaryDisplayField?: string;
   secondaryDisplayFieldType?: FieldType;
-  // New select field properties
+
   options?: SelectOption[];
 }
 
 export type DatasetType = "dexa" | "bloodwork";
 
-// Interface for the store state
 export interface FieldDefinitionsState {
   datasets: {
     [key: string]: FieldDefinitionsDataset;

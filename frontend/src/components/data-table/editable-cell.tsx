@@ -27,6 +27,7 @@ import { useStore } from "@tanstack/react-store";
 import { getDisplayValue } from "@/lib/table-utils";
 import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
+import ImageUpload from "../reusable/image-upload";
 
 const EditableCell = ({
   value: initialValue,
@@ -46,7 +47,7 @@ const EditableCell = ({
   onDataChange?: () => void;
 }) => {
   const allData = useStore(dataStore, (state) => state);
-  // State for editing mode and value
+
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(initialValue);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,12 +56,10 @@ const EditableCell = ({
   const originalValue = initialValue;
   const cellRef = useRef<HTMLDivElement>(null);
 
-  // Handle outside click to exit edit mode
   useEffect(() => {
     if (!isEditing) return;
 
     const handleClickOutside = (event: MouseEvent) => {
-      // Skip if we're interacting with a popover or dropdown
       if (isInteractingWithPopover) {
         return;
       }
@@ -77,12 +76,10 @@ const EditableCell = ({
             .querySelector(".select-content")
             ?.contains(event.target as Node);
 
-        // Don't close if clicking on popover content or select dropdown
         if (isPopoverContent || isSelectContent) {
           return;
         }
 
-        // Just cancel when clicking outside - let the confirm buttons handle saving
         handleCancel();
       }
     };
@@ -93,17 +90,14 @@ const EditableCell = ({
     };
   }, [isEditing, isInteractingWithPopover]);
 
-  // Reset edit value when initialValue changes or when entering edit mode
   useEffect(() => {
     setEditValue(initialValue);
   }, [initialValue]);
 
-  // Enter edit mode
   const handleEdit = () => {
     setIsEditing(true);
   };
 
-  // Save changes
   const handleSave = async () => {
     if (editValue === initialValue) {
       setIsEditing(false);
@@ -113,34 +107,28 @@ const EditableCell = ({
     setIsSubmitting(true);
 
     try {
-      // Get the record ID
       const recordId = row.original.id;
       if (!recordId) {
         throw new Error("Record ID not found");
       }
 
-      // Get the current record data
       const record = await ApiService.getRecord(recordId);
       if (!record) {
         throw new Error("Record not found");
       }
 
-      // Update only the changed field
       const updatedRecord = {
         ...record,
         [field.key]: editValue,
       };
 
-      // Submit the update
       const response = await ApiService.updateRecord(recordId, updatedRecord);
       if (response) {
         updateEntry(recordId, response, datasetId);
       }
 
-      // Notify success
       toast.success("Cell updated successfully");
 
-      // Trigger data refresh
       if (onDataChange) {
         onDataChange();
       }
@@ -148,7 +136,6 @@ const EditableCell = ({
       console.error("Error updating cell:", error);
       toast.error("Failed to update cell");
 
-      // Revert to initial value
       setEditValue(initialValue);
     } finally {
       setIsSubmitting(false);
@@ -156,22 +143,17 @@ const EditableCell = ({
     }
   };
 
-  // Cancel edit
   const handleCancel = () => {
     setEditValue(initialValue);
     setIsEditing(false);
   };
 
-  // Handle value change
   const handleValueChange = (newValue: any) => {
     setEditValue(newValue);
   };
 
-  // Format the original value based on field type for display
   const getFormattedDisplayValue = (value: any) => {
-    // Handle relation fields
     if (field.isRelation && field.relatedDataset) {
-      // Look for this relation's data in the row
       const relatedDataKey = `${column.id}_data`;
       const relatedData = row.original[relatedDataKey];
 
@@ -182,7 +164,6 @@ const EditableCell = ({
       return value ? `ID: ${value}` : "N/A";
     }
 
-    // Regular field formatting
     switch (field.type) {
       case "date":
         return value instanceof Date
@@ -211,7 +192,6 @@ const EditableCell = ({
     }
   };
 
-  // Default width styles for all cell types
   const cellStyle = {
     width: width || "auto",
     minWidth: "80px",
@@ -219,7 +199,6 @@ const EditableCell = ({
   };
   const cellClassName = "flex flex-row gap-1 align-center justify-center";
 
-  // Render edit mode for relation field
   const renderRelationEditMode = (
     options: {
       id: any;
@@ -232,7 +211,7 @@ const EditableCell = ({
         value={editValue?.toString() || ""}
         onValueChange={(value) => {
           handleValueChange(value);
-          // Add a slight delay before allowing outside clicks to close
+
           setIsInteractingWithPopover(true);
           setTimeout(() => setIsInteractingWithPopover(false), 100);
         }}
@@ -269,9 +248,7 @@ const EditableCell = ({
     </>
   );
 
-  // Render edit mode based on field type
   const renderEditMode = () => {
-    // Handle relation fields with dropdown
     if (field.isRelation && field.relatedDataset) {
       const options = generateOptionsForLoadRelationOptions(
         allData[field.relatedDataset as DataStoreName],
@@ -329,9 +306,8 @@ const EditableCell = ({
             open={isEditing && isInteractingWithPopover}
             onOpenChange={(open) => {
               setIsInteractingWithPopover(open);
-              // If popover is closing and we didn't explicitly save/cancel, it's an outside click
+
               if (!open) {
-                // Keep the edit mode open even if popover closed
                 setIsInteractingWithPopover(false);
               }
             }}
@@ -342,7 +318,7 @@ const EditableCell = ({
                 className="h-8 w-full justify-start text-left font-normal"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Store a temp copy of the current edit value
+
                   setIsInteractingWithPopover(true);
                 }}
               >
@@ -361,7 +337,6 @@ const EditableCell = ({
                   selected={editValue ? new Date(editValue) : undefined}
                   onSelect={(date) => {
                     if (date) {
-                      // Update the date in the UI without closing
                       handleValueChange(date);
                     }
                   }}
@@ -378,18 +353,17 @@ const EditableCell = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Reset to initial value or temp value if available
+
                       handleValueChange(initialValue);
-                      // Close the popover
+
                       setIsInteractingWithPopover(false);
-                      // Use a ref to access the PopoverClose component programmatically
+
                       const closeButton = document.querySelector(
                         "[data-radix-popover-close]"
                       );
                       if (closeButton instanceof HTMLElement) {
                         closeButton.click();
                       } else {
-                        // Fallback method
                         const event = new KeyboardEvent("keydown", {
                           key: "Escape",
                         });
@@ -404,16 +378,15 @@ const EditableCell = ({
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Ensure we're no longer blocking outside clicks
+
                       setIsInteractingWithPopover(false);
-                      // Use a ref to access the PopoverClose component programmatically
+
                       const closeButton = document.querySelector(
                         "[data-radix-popover-close]"
                       );
                       if (closeButton instanceof HTMLElement) {
                         closeButton.click();
                       } else {
-                        // Fallback method
                         const event = new KeyboardEvent("keydown", {
                           key: "Escape",
                         });
@@ -452,13 +425,50 @@ const EditableCell = ({
           />
         );
 
+      case "image":
+        return (
+          <ImageUpload
+            value={editValue || ""}
+            onChange={(value) => handleValueChange(value)}
+            aspectRatio="1/1"
+            maxSize={20}
+          />
+        );
+
       default:
         return <span>{initialValue}</span>;
     }
   };
 
-  // Render the display mode (clickable to edit)
   const renderDisplayMode = () => {
+    if (field.type === "image") {
+      return (
+        <div
+          className={cn(
+            "cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors",
+            "flex items-center justify-center",
+            "min-h-[30px]"
+          )}
+          style={cellStyle}
+          onClick={handleEdit}
+        >
+          {initialValue ? (
+            <div className="w-8 h-8 overflow-hidden rounded-sm">
+              <img
+                src={initialValue}
+                alt="Thumbnail"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <span className="text-muted-foreground italic text-xs">
+              No image
+            </span>
+          )}
+        </div>
+      );
+    }
+
     const formattedValue = getFormattedDisplayValue(initialValue);
 
     return (
@@ -466,7 +476,7 @@ const EditableCell = ({
         className={cn(
           "truncate cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors",
           "flex items-center justify-between",
-          "min-h-[30px]" // Ensure minimum height for empty values
+          "min-h-[30px]"
         )}
         style={cellStyle}
         onClick={handleEdit}
@@ -487,7 +497,6 @@ const EditableCell = ({
     );
   };
 
-  // Small label for original value
   const OriginalValueLabel = () => (
     <div
       className="text-xs text-muted-foreground mb-1 truncate"

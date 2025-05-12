@@ -14,6 +14,10 @@ export function GetDataset(arg1:string):Promise<database.Dataset>;
 
 export function GetDatasets():Promise<Array<database.Dataset>>;
 
+export function GetImage(arg1:string):Promise<string>;
+
+export function GetImagePath(arg1:string):Promise<string>;
+
 export function GetRecord(arg1:string):Promise<Record<string, any>>;
 
 export function GetRecords(arg1:string):Promise<Array<Record<string, any>>>;
@@ -24,6 +28,10 @@ export function GetRelatedRecords(arg1:string,arg2:string):Promise<Array<Record<
 
 export function ImportRecords(arg1:string,arg2:string):Promise<number>;
 
+export function SaveImages(arg1:any,arg2:string):Promise<any>;
+
 export function UpdateDataset(arg1:string,arg2:string,arg3:string,arg4:string):Promise<database.Dataset>;
 
 export function UpdateRecord(arg1:string,arg2:string):Promise<Record<string, any>>;
+
+export function UploadImage(arg1:string,arg2:string):Promise<string>;

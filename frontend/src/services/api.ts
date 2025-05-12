@@ -1,4 +1,3 @@
-// src/services/api.ts - Updated with GetRecordsWithRelations method
 import { DatasetType, FieldDefinition } from "@/types/types";
 import {
   AddRecord,
@@ -9,27 +8,26 @@ import {
   GetDatasets,
   GetRecord,
   GetRecords,
-  GetRecordsWithRelations, // Add this new import
+  GetRecordsWithRelations,
   ImportRecords,
   UpdateDataset,
   UpdateRecord,
+  GetImage,
 } from "../../wailsjs/go/backend/App";
 import { database } from "wailsjs/go/models";
 import { toast } from "sonner";
 
-// API Service with methods to call the backend
 export const ApiService = {
-  // Dataset methods
   async getDatasets(): Promise<database.Dataset[]> {
     try {
       const datasets = await GetDatasets();
-      // Return empty array instead of null if no datasets found
+
       return datasets || [];
     } catch (error) {
       console.error("Failed to get datasets:", error);
-      // Show a toast notification to the user
+
       toast.error("Failed to load datasets. Please restart the application.");
-      // Return empty array to prevent null reference errors
+
       return [];
     }
   },
@@ -90,25 +88,63 @@ export const ApiService = {
     }
   },
 
-  // Record methods
+  async processImages(data: any): Promise<any> {
+    const processItem = async (item: any): Promise<any> => {
+      if (!item) return item;
+
+      if (Array.isArray(item)) {
+        return Promise.all(item.map((i) => processItem(i)));
+      }
+
+      if (typeof item === "object" && item !== null) {
+        const result: Record<string, any> = {};
+
+        for (const [key, value] of Object.entries(item)) {
+          if (
+            typeof value === "string" &&
+            !value.startsWith("data:") &&
+            /\.(jpe?g|png|gif|webp)$/i.test(value) &&
+            (key === "src" || true)
+          ) {
+            try {
+              const base64Image = await GetImage(value);
+              result[key] = base64Image || value;
+            } catch (error) {
+              console.error(`Failed to load image at path ${value}:`, error);
+              result[key] = value;
+            }
+          } else {
+            result[key] = await processItem(value);
+          }
+        }
+
+        return result;
+      }
+
+      return item;
+    };
+
+    return processItem(data);
+  },
+
   async getRecords<T = Record<string, any>>(datasetId: string): Promise<T[]> {
     try {
       const records = await GetRecords(datasetId);
+
       return (records as T[]) || [];
     } catch (error) {
       console.error(`Failed to get records for dataset ${datasetId}:`, error);
       toast.error("Failed to load records");
-      // Return empty array to prevent null reference errors
       return [] as T[];
     }
   },
 
-  // New method to get records with relations included
   async getRecordsWithRelations<T = Record<string, any>>(
     datasetId: string
   ): Promise<T[]> {
     try {
       const records = await GetRecordsWithRelations(datasetId);
+
       return (records as T[]) || [];
     } catch (error) {
       console.error(
@@ -116,7 +152,6 @@ export const ApiService = {
         error
       );
       toast.error("Failed to load records with related data");
-      // Return empty array to prevent null reference errors
       return [] as T[];
     }
   },
@@ -124,6 +159,7 @@ export const ApiService = {
   async getRecord<T = Record<string, any>>(id: string): Promise<T | null> {
     try {
       const record = await GetRecord(id);
+
       return record as T;
     } catch (error) {
       console.error(`Failed to get record ${id}:`, error);

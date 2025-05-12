@@ -1,23 +1,17 @@
-// src/lib/csv-parser.ts
 import { FieldDefinition } from "@/types/types";
 import Papa from "papaparse";
 import { ApiService } from "@/services/api";
 
-/**
- * Parses a CSV file and returns the processed data
- */
 export async function parseCSV(
   file: File,
   fieldDefinitions: FieldDefinition[]
 ): Promise<Record<string, any>[]> {
   return new Promise((resolve, reject) => {
-    // Set up field definitions lookup for quick access
     const fieldMap = new Map<string, FieldDefinition>();
     fieldDefinitions.forEach((field) => {
       fieldMap.set(field.key, field);
     });
 
-    // Create a lookup for relation fields
     const relationFields = fieldDefinitions.filter(
       (field) => field.isRelation && field.relatedDataset
     );
@@ -27,15 +21,12 @@ export async function parseCSV(
       skipEmptyLines: true,
       dynamicTyping: true,
       transformHeader: (header) => {
-        // Standardize headers by trimming whitespace and lowercasing
         return header.trim().toLowerCase();
       },
       complete: async (results) => {
         if (results.errors && results.errors.length > 0) {
-          // Log parsing errors
           console.error("CSV parsing errors:", results.errors);
 
-          // If the errors are critical, reject
           const hasCriticalError = results.errors.some(
             (e) =>
               e.message &&
@@ -54,36 +45,28 @@ export async function parseCSV(
           }
         }
 
-        // Check if we have any data
         if (!results.data || results.data.length === 0) {
           reject(new Error("No data found in CSV file"));
           return;
         }
 
         try {
-          // Load relation data for all relation fields at once
           const relationData = await loadRelationData(relationFields);
 
-          // Process the data according to field definitions
           const processedData = (results.data as Record<string, any>[]).map(
             (row: Record<string, any>, index: number) => {
-              // Generate a new record with ID
               const processedRow: Record<string, any> = {
                 id: crypto.randomUUID(),
               };
 
-              // Process each field based on its type
               fieldDefinitions.forEach((field) => {
                 try {
-                  // Get value from standardized header, handling potential capitalization differences
                   let value =
                     row[field.key] ??
                     row[field.key.toLowerCase()] ??
                     row[field.key.toUpperCase()];
 
-                  // Basic null/undefined check
                   if (value === undefined || value === null) {
-                    // For numeric fields, default to 0, for boolean false, for dates now, for text empty string
                     switch (field.type) {
                       case "number":
                       case "percentage":
@@ -96,7 +79,6 @@ export async function parseCSV(
                         processedRow[field.key] = new Date();
                         break;
                       case "markdown":
-                        // Treat markdown same as text
                         if (typeof value !== "string") {
                           processedRow[field.key] = String(value);
                         } else {
@@ -108,32 +90,26 @@ export async function parseCSV(
                         processedRow[field.key] = "";
                         break;
                     }
-                    return; // Skip further processing for this field
+                    return;
                   }
 
-                  // Handle relation fields
                   if (field.isRelation && field.relatedDataset) {
-                    // If the value is already a valid ID, keep it
                     const relationInfo = relationData[field.key];
                     if (relationInfo && relationInfo.idSet.has(value)) {
                       processedRow[field.key] = value;
                       return;
                     }
 
-                    // Try to match the display value to an ID
                     if (relationInfo && typeof value === "string") {
                       const normalizedValue = value.toLowerCase().trim();
 
-                      // If this is a date-based relation field, try to normalize the date format
                       if (
                         field.displayField &&
                         field.displayFieldType === "date"
                       ) {
                         try {
-                          // Try to parse the date string
                           const dateObj = new Date(normalizedValue);
                           if (!isNaN(dateObj.getTime())) {
-                            // Add the ISO format for lookup
                             const isoDate = dateObj
                               .toISOString()
                               .split("T")[0]
@@ -148,7 +124,6 @@ export async function parseCSV(
                               return;
                             }
 
-                            // Also try month/day/year format
                             const month = dateObj.getMonth() + 1;
                             const day = dateObj.getDate();
                             const year = dateObj.getFullYear();
@@ -165,13 +140,11 @@ export async function parseCSV(
                             }
                           }
                         } catch (e: any) {
-                          // If date parsing fails, continue with the original value
                           console.log(`Failed to parse date: "${value}"`);
                           console.error(`Error: ${e}`);
                         }
                       }
 
-                      // First, check for exact match with the original normalized value
                       const matchedId =
                         relationInfo.displayToIdMap.get(normalizedValue);
 
@@ -180,18 +153,13 @@ export async function parseCSV(
                         return;
                       }
 
-                      // Check for parentheses pattern indicating a secondary display field
-                      // Format expected: "Primary Value (Secondary Value)"
                       if (field.displayField && field.secondaryDisplayField) {
-                        // Find the last opening parenthesis
                         const openParenIndex = normalizedValue.lastIndexOf("(");
 
-                        // Check if we have both opening and closing parentheses
                         if (
                           openParenIndex > 0 &&
                           normalizedValue.endsWith(")")
                         ) {
-                          // Extract primary and secondary values
                           const primaryValue = normalizedValue
                             .substring(0, openParenIndex)
                             .trim();
@@ -202,11 +170,9 @@ export async function parseCSV(
                             )
                             .trim();
 
-                          // Try to find a match with both primary and secondary values
                           const combinedKey = `${primaryValue} - ${secondaryValue}`;
                           const combinedParenKey = `${primaryValue} (${secondaryValue})`;
 
-                          // Check for combined patterns
                           const combinedMatch =
                             relationInfo.displayToIdMap.get(combinedKey) ||
                             relationInfo.displayToIdMap.get(combinedParenKey);
@@ -219,14 +185,11 @@ export async function parseCSV(
                             return;
                           }
 
-                          // Try looking up by primary value while checking for matching secondary value
                           for (const [
                             displayKey,
                             id,
                           ] of relationInfo.displayToIdMap.entries()) {
-                            // Check if this key contains the primary value
                             if (displayKey.includes(primaryValue)) {
-                              // Look up the actual record to check secondary value
                               const records = relationInfo.records || [];
                               const matchingRecord = records.find(
                                 (record) => record.id === id
@@ -250,7 +213,6 @@ export async function parseCSV(
                         }
                       }
 
-                      // If no exact match or parentheses match found, try partial matching
                       for (const [
                         displayValue,
                         id,
@@ -267,43 +229,37 @@ export async function parseCSV(
                         }
                       }
 
-                      // No match found, keep as is (will be validated later)
                       processedRow[field.key] = value;
                       console.warn(
                         `No relation match found for ${field.key}: "${value}"`
                       );
                     } else {
-                      // Keep the value as is
                       processedRow[field.key] = value;
                     }
                     return;
                   }
 
-                  // Apply type conversions for non-relation fields
                   switch (field.type) {
+                    case "image":
+                      processedRow[field.key] = "";
+                      break;
                     case "date":
                       if (value && !(value instanceof Date)) {
-                        // Try to parse various date formats
                         let parsedDate: Date | null = null;
 
-                        // If it's a string, try to parse it
                         if (typeof value === "string") {
-                          // Try direct Date parsing
                           parsedDate = new Date(value);
 
-                          // Check if valid
                           if (isNaN(parsedDate.getTime())) {
-                            // Try different date formats (DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
                             const formats = [
-                              /(\d{1,2})\/(\d{1,2})\/(\d{4})/, // DD/MM/YYYY or MM/DD/YYYY
-                              /(\d{4})-(\d{1,2})-(\d{1,2})/, // YYYY-MM-DD
-                              /(\d{1,2})-(\d{1,2})-(\d{4})/, // DD-MM-YYYY or MM-DD-YYYY
+                              /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
+                              /(\d{4})-(\d{1,2})-(\d{1,2})/,
+                              /(\d{1,2})-(\d{1,2})-(\d{4})/,
                             ];
 
                             for (const format of formats) {
                               const match = value.match(format);
                               if (match) {
-                                // Try to create a date object based on the format
                                 const dateObj = new Date(value);
                                 if (!isNaN(dateObj.getTime())) {
                                   parsedDate = dateObj;
@@ -313,11 +269,9 @@ export async function parseCSV(
                             }
                           }
                         } else if (typeof value === "number") {
-                          // Might be a timestamp or Excel serial date
                           parsedDate = new Date(value);
                         }
 
-                        // If we still couldn't parse it, use today
                         if (!parsedDate || isNaN(parsedDate.getTime())) {
                           parsedDate = new Date();
                           console.warn(
@@ -332,7 +286,6 @@ export async function parseCSV(
                       break;
 
                     case "boolean":
-                      // Handle various boolean representations
                       if (typeof value === "string") {
                         value = value.toLowerCase().trim();
                         processedRow[field.key] =
@@ -350,12 +303,9 @@ export async function parseCSV(
 
                     case "number":
                     case "percentage":
-                      // Ensure numeric values
                       if (typeof value === "string") {
-                        // Remove any % signs, commas, and other non-numeric characters
                         value = value.replace(/[%,$]/g, "").trim();
 
-                        // Try to parse as float
                         const parsed = parseFloat(value);
 
                         if (isNaN(parsed)) {
@@ -377,7 +327,6 @@ export async function parseCSV(
                         processedRow[field.key] = value;
                       }
 
-                      // For percentage type, ensure it's between 0-100
                       if (
                         field.type === "percentage" &&
                         typeof processedRow[field.key] === "number"
@@ -385,7 +334,6 @@ export async function parseCSV(
                         if (processedRow[field.key] < 0) {
                           processedRow[field.key] = 0;
                         } else if (processedRow[field.key] > 100) {
-                          // If it's greatly above 100, it might be a fraction (e.g. 0.325 instead of 32.5%)
                           if (
                             processedRow[field.key] > 1 &&
                             processedRow[field.key] <= 1
@@ -399,7 +347,6 @@ export async function parseCSV(
                       break;
 
                     case "text":
-                      // Ensure text values are strings
                       if (typeof value !== "string") {
                         processedRow[field.key] = String(value);
                       } else {
@@ -415,7 +362,7 @@ export async function parseCSV(
                     `Error processing field "${field.key}" in row ${index + 1}:`,
                     error
                   );
-                  // Provide a safe default based on field type
+
                   switch (field.type) {
                     case "number":
                     case "percentage":
@@ -453,11 +400,6 @@ export async function parseCSV(
   });
 }
 
-/**
- * Load relation data for all relation fields at once
- * @param relationFields List of relation fields to load data for
- * @returns Mapping of field keys to relation data
- */
 async function loadRelationData(relationFields: FieldDefinition[]): Promise<
   Record<
     string,
@@ -477,48 +419,36 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
     }
   > = {};
 
-  // Process each relation field
   for (const field of relationFields) {
     if (!field.relatedDataset || !field.key) continue;
 
     try {
-      // Get the related records
       const records = await ApiService.getRecords(field.relatedDataset);
 
-      // Store all IDs for quick validation
       const idSet = new Set<string>();
 
-      // Map display values to IDs
       const displayToIdMap = new Map<string, string>();
 
-      // Process each record
       records.forEach((record: any) => {
         const id = record.id;
         idSet.add(id);
 
-        // Use display fields if specified
         if (field.displayField && record[field.displayField]) {
           let displayValue;
 
-          // Special handling for date fields
           if (field.displayFieldType === "date" && record[field.displayField]) {
-            // Format date consistently as YYYY-MM-DD
             const dateObj = new Date(record[field.displayField]);
             if (!isNaN(dateObj.getTime())) {
               displayValue = dateObj.toISOString().split("T")[0].toLowerCase();
 
-              // Also add common date formats for better matching
               const month = dateObj.getMonth() + 1;
               const day = dateObj.getDate();
               const year = dateObj.getFullYear();
 
-              // Add MM/DD/YYYY format
               displayToIdMap.set(`${month}/${day}/${year}`.toLowerCase(), id);
 
-              // Add MM-DD-YYYY format
               displayToIdMap.set(`${month}-${day}-${year}`.toLowerCase(), id);
 
-              // Add Month Day, Year format (e.g., "January 1, 2023")
               const monthNames = [
                 "January",
                 "February",
@@ -538,13 +468,11 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
                 id
               );
             } else {
-              // Fallback if date parsing fails
               displayValue = record[field.displayField]
                 .toString()
                 .toLowerCase();
             }
           } else {
-            // Regular non-date field
             displayValue = record[field.displayField].toString().toLowerCase();
           }
 
@@ -556,7 +484,6 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
           ) {
             let secondaryValue;
 
-            // Special handling for secondary date fields
             if (
               field.secondaryDisplayFieldType === "date" &&
               record[field.secondaryDisplayField]
@@ -578,7 +505,6 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
                 .toLowerCase();
             }
 
-            // Create both combined formats: with dash and with parentheses
             const combinedDash = `${displayValue} - ${secondaryValue}`;
             const combinedParen = `${displayValue} (${secondaryValue})`;
 
@@ -588,7 +514,6 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
           }
         }
 
-        // Add common fields that might be used for display
         ["name", "title", "label", "displayName"].forEach((key) => {
           if (record[key]) {
             displayToIdMap.set(record[key].toString().toLowerCase(), id);
@@ -596,11 +521,10 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
         });
       });
 
-      // Store the relation data
       result[field.key] = {
         idSet,
         displayToIdMap,
-        records, // Store the full records for secondary field lookups
+        records,
       };
     } catch (error) {
       console.error(
@@ -618,9 +542,6 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
   return result;
 }
 
-/**
- * Validates a CSV file against expected field definitions
- */
 export async function validateCSV(
   file: File,
   expectedFields: string[]
@@ -628,15 +549,13 @@ export async function validateCSV(
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
-      preview: 5, // Check a few rows to make sure
+      preview: 5,
       skipEmptyLines: true,
       transformHeader: (header) => {
-        // Standardize headers by trimming whitespace and lowercasing
         return header.trim().toLowerCase();
       },
       complete: (results) => {
         if (results.errors && results.errors.length > 0) {
-          // Check for critical errors
           const hasCriticalError = results.errors.some(
             (e) =>
               e.message &&
@@ -659,7 +578,6 @@ export async function validateCSV(
 
         const normalizedHeaders = headers.map((h) => h.toLowerCase());
 
-        // Check which expected fields are missing
         const missingFields = expectedFields.filter(
           (field) => !normalizedHeaders.includes(field.toLowerCase())
         );
@@ -676,32 +594,23 @@ export async function validateCSV(
   });
 }
 
-/**
- * Creates a sample CSV template for downloading
- */
 export function createCSVTemplate(fields: FieldDefinition[]): string {
-  // Extract headers from field definitions
   const headers = fields.map((field) => field.key);
 
-  // Create a row with example data based on field types
   const exampleRow: Record<string, any> = {};
   const headerDesc: Record<string, string> = {};
 
   fields.forEach((field) => {
-    // Add helpful header descriptions for all fields
     headerDesc[field.key] =
       field.displayName + (field.description ? ` - ${field.description}` : "");
 
-    // Add example values based on field type
     if (field.isRelation && field.relatedDataset) {
-      // For relation fields, provide descriptive guidance
       let example = "";
 
       if (field.displayField) {
-        // Special handling for date-based relation fields
         if (field.displayFieldType === "date") {
           const today = new Date();
-          // Format the date in a way that will be recognized (YYYY-MM-DD)
+
           const formattedDate = today.toISOString().split("T")[0];
           example = `${formattedDate}`;
 
@@ -745,17 +654,20 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
         case "text":
           exampleRow[field.key] = "";
           break;
+        case "image":
+          exampleRow[field.key] = "[Image]";
+          headerDesc[field.key] +=
+            " (Images cannot be imported/exported via CSV)";
+          break;
       }
     }
   });
 
-  // Create a second row with field descriptions
   const descriptionRow: Record<string, string> = {};
   headers.forEach((header) => {
     descriptionRow[header] = headerDesc[header] || "";
   });
 
-  // Generate CSV with headers, description row, and example row
   const csvContent = Papa.unparse({
     fields: headers,
     data: [descriptionRow, exampleRow],

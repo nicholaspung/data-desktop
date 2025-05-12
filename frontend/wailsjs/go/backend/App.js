@@ -26,6 +26,14 @@ export function GetDatasets() {
   return window['go']['backend']['App']['GetDatasets']();
 }
 
+export function GetImage(arg1) {
+  return window['go']['backend']['App']['GetImage'](arg1);
+}
+
+export function GetImagePath(arg1) {
+  return window['go']['backend']['App']['GetImagePath'](arg1);
+}
+
 export function GetRecord(arg1) {
   return window['go']['backend']['App']['GetRecord'](arg1);
 }
@@ -46,10 +54,18 @@ export function ImportRecords(arg1, arg2) {
   return window['go']['backend']['App']['ImportRecords'](arg1, arg2);
 }
 
+export function SaveImages(arg1, arg2) {
+  return window['go']['backend']['App']['SaveImages'](arg1, arg2);
+}
+
 export function UpdateDataset(arg1, arg2, arg3, arg4) {
   return window['go']['backend']['App']['UpdateDataset'](arg1, arg2, arg3, arg4);
 }
 
 export function UpdateRecord(arg1, arg2) {
   return window['go']['backend']['App']['UpdateRecord'](arg1, arg2);
+}
+
+export function UploadImage(arg1, arg2) {
+  return window['go']['backend']['App']['UploadImage'](arg1, arg2);
 }

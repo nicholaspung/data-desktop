@@ -1,10 +1,9 @@
-// src/lib/table-utils.ts
 import { ColumnMeta, FieldDefinition } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { getFilterFunctionForField } from "./table-filter-utils";
 import { formatDate } from "./date-utils";
+import ImageViewer from "@/components/reusable/image-viewer";
 
-// Function to format cell values based on type
 export const formatCellValue = (value: any, meta?: ColumnMeta) => {
   if (value === null || value === undefined) return "—";
 
@@ -30,6 +29,8 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
         return "—";
       }
       return value.join(", ");
+    case "image":
+      return { _isImage: true, src: value };
     case "text":
     case "markdown":
     default:
@@ -37,12 +38,11 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
   }
 };
 
-// Helper function to create column definitions with proper rendering and filtering based on field type
 export function createColumn<TData, TValue = any>(
   accessorKey: keyof TData,
   header: string,
   meta: ColumnMeta,
-  field?: FieldDefinition // Optional field definition for advanced features
+  field?: FieldDefinition
 ): ColumnDef<TData, TValue> {
   const column: ColumnDef<TData, TValue> = {
     id: field?.key,
@@ -51,23 +51,39 @@ export function createColumn<TData, TValue = any>(
     meta,
     cell: ({ cell }) => {
       const value = cell.getValue();
+
+      if (meta.type === "image") {
+        if (!value) return "—";
+
+        if (typeof value === "object" && "_isImage" in value) {
+          return (
+            <ImageViewer
+              src={(value as unknown as { src: string }).src}
+              alt={header}
+            />
+          );
+        }
+
+        if (typeof value === "string") {
+          return <ImageViewer src={value} alt={header} />;
+        }
+
+        return "—";
+      }
+
       return formatCellValue(value, meta);
     },
   };
 
-  // Add filtering capability if a field definition is provided
   if (field) {
-    // If the field is searchable, add filter function
     if (field.isSearchable) {
       column.filterFn = getFilterFunctionForField(field);
 
-      // Enable filtering only for searchable fields to avoid confusion
       column.enableColumnFilter = true;
     } else {
       column.enableColumnFilter = false;
     }
 
-    // Add information about whether this is a relation field
     if (field.isRelation) {
       column.meta = {
         ...column.meta,
@@ -91,7 +107,6 @@ export const getDisplayValue = (field: FieldDefinition, record: any) => {
       label = record[field.displayField] || "";
     }
 
-    // Add secondary field if available
     if (
       field.secondaryDisplayField &&
       record[field.secondaryDisplayField] !== undefined &&
@@ -103,9 +118,7 @@ export const getDisplayValue = (field: FieldDefinition, record: any) => {
         label += ` (${record[field.secondaryDisplayField]})`;
       }
     }
-  }
-  // Generic fallback
-  else {
+  } else {
     label = record.name || record.title || `ID: ${record.id}`;
   }
 

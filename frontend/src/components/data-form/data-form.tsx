@@ -1,4 +1,3 @@
-// src/components/data-form/data-form.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,6 +36,7 @@ import ReusableMultiSelect from "../reusable/reusable-multiselect";
 import { FormMarkdownField } from "./markdown-field";
 import ReusableCard from "../reusable/reusable-card";
 import TagInput from "@/components/reusable/tag-input";
+import { FormImageField } from "./image-field";
 
 export default function DataForm({
   datasetId,
@@ -385,6 +385,7 @@ export default function DataForm({
     markdown: fields.filter((field) => field.type === "markdown"),
     selectSingle: fields.filter((field) => field.type === "select-single"),
     selectMultiple: fields.filter((field) => field.type === "select-multiple"),
+    image: fields.filter((field) => field.type === "image"),
   };
 
   const renderField = (field: FieldDefinition) => {
@@ -673,6 +674,15 @@ export default function DataForm({
       case "markdown":
         return (
           <FormMarkdownField
+            key={field.key}
+            field={field}
+            control={form.control}
+          />
+        );
+
+      case "image":
+        return (
+          <FormImageField
             key={field.key}
             field={field}
             control={form.control}
