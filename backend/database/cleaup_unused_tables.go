@@ -1,13 +1,10 @@
-// backend/database/cleanup_unused_tables.go
 package database
 
 import (
 	"fmt"
 )
 
-// CleanupUnusedTables removes datasets that aren't part of the core datasets defined in constants.go
 func CleanupUnusedTables() error {
-	// Get all core dataset IDs from constants
 	coreDatasetIDs := []string{
 		DatasetIDDEXA,
 		DatasetIDBloodwork,
@@ -26,7 +23,6 @@ func CleanupUnusedTables() error {
 		DatasetIDTimeCategories,
 		DatasetIDTimePlannerConfig,
 		DatasetIDTodos,
-		// People CRM datasets
 		DatasetIDPeople,
 		DatasetIDMeetings,
 		DatasetIDPersonAttributes,
@@ -35,14 +31,12 @@ func CleanupUnusedTables() error {
 		DatasetIDPersonRelationships,
 	}
 
-	// Get all datasets currently in the database
 	rows, err := DB.Query("SELECT id FROM datasets")
 	if err != nil {
 		return fmt.Errorf("error querying datasets: %w", err)
 	}
 	defer rows.Close()
 
-	// Collect dataset IDs to delete (those not in core datasets)
 	var datasetsToDelete []string
 	for rows.Next() {
 		var id string
@@ -50,7 +44,6 @@ func CleanupUnusedTables() error {
 			return fmt.Errorf("error scanning dataset ID: %w", err)
 		}
 
-		// Check if this dataset is in our core list
 		isCore := false
 		for _, coreID := range coreDatasetIDs {
 			if id == coreID {
@@ -59,7 +52,6 @@ func CleanupUnusedTables() error {
 			}
 		}
 
-		// If not a core dataset, add to delete list
 		if !isCore {
 			datasetsToDelete = append(datasetsToDelete, id)
 		}
@@ -69,11 +61,9 @@ func CleanupUnusedTables() error {
 		return fmt.Errorf("error iterating dataset rows: %w", err)
 	}
 
-	// Delete non-core datasets and their records
 	if len(datasetsToDelete) > 0 {
 		fmt.Printf("Found %d non-core datasets to delete\n", len(datasetsToDelete))
 
-		// Use a transaction for atomicity
 		tx, err := DB.Begin()
 		if err != nil {
 			return fmt.Errorf("error starting transaction: %w", err)
@@ -81,7 +71,6 @@ func CleanupUnusedTables() error {
 		defer tx.Rollback()
 
 		for _, datasetID := range datasetsToDelete {
-			// Delete records first (due to foreign key constraint)
 			result, err := tx.Exec("DELETE FROM data_records WHERE dataset_id = ?", datasetID)
 			if err != nil {
 				return fmt.Errorf("error deleting records for dataset %s: %w", datasetID, err)
@@ -89,7 +78,6 @@ func CleanupUnusedTables() error {
 
 			recordsDeleted, _ := result.RowsAffected()
 
-			// Then delete the dataset
 			result, err = tx.Exec("DELETE FROM datasets WHERE id = ?", datasetID)
 			if err != nil {
 				return fmt.Errorf("error deleting dataset %s: %w", datasetID, err)
@@ -100,7 +88,6 @@ func CleanupUnusedTables() error {
 			}
 		}
 
-		// Commit the transaction
 		if err := tx.Commit(); err != nil {
 			return fmt.Errorf("error committing transaction: %w", err)
 		}
@@ -108,7 +95,6 @@ func CleanupUnusedTables() error {
 		fmt.Println("No non-core datasets found to delete")
 	}
 
-	// Additionally, check for and clean up any orphaned records
 	fmt.Println("Checking for orphaned records...")
 	result, err := DB.Exec(`
 		DELETE FROM data_records 

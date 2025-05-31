@@ -1,4 +1,3 @@
-// backend/database/db.go
 package database
 
 import (
@@ -12,11 +11,9 @@ import (
 
 var DB *sql.DB
 
-// Initialize initializes the database connection and creates tables if they don't exist
 func Initialize(dbPath string) error {
 	log.Printf("Initializing database at: %s\n", dbPath)
 
-	// Ensure directory exists
 	dbDir := filepath.Dir(dbPath)
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		log.Printf("Error creating directory: %v\n", err)
@@ -31,13 +28,11 @@ func Initialize(dbPath string) error {
 		return err
 	}
 
-	// Test database connection
 	if err = DB.Ping(); err != nil {
 		log.Printf("Database ping failed: %v\n", err)
 		return err
 	}
 
-	// Initialize the database schema
 	log.Printf("Initializing schema...\n")
 	err = InitializeSchema(DB)
 	if err != nil {
@@ -49,7 +44,6 @@ func Initialize(dbPath string) error {
 	return nil
 }
 
-// Close closes the database connection
 func Close() error {
 	if DB != nil {
 		return DB.Close()

@@ -1,24 +1,27 @@
-// backend/database/repository.go
 package database
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// CreateDataset adds a new dataset to the database
 func CreateDataset(dataset Dataset) error {
-	// Set created and modified timestamps
+	err := validateDatasetFields(dataset.Fields)
+	if err != nil {
+		return err
+	}
+
 	now := time.Now()
 	dataset.CreatedAt = now
 	dataset.LastModified = now
 
-	// Convert fields to JSON
 	fieldsJSON, err := json.Marshal(dataset.Fields)
 	if err != nil {
 		return err
@@ -32,7 +35,6 @@ func CreateDataset(dataset Dataset) error {
 	return err
 }
 
-// GetDataset retrieves a dataset by its ID
 func GetDataset(id string) (Dataset, error) {
 	var dataset Dataset
 	var fieldsJSON string
@@ -45,7 +47,6 @@ func GetDataset(id string) (Dataset, error) {
 		return Dataset{}, err
 	}
 
-	// Parse fields JSON
 	err = json.Unmarshal([]byte(fieldsJSON), &dataset.Fields)
 	if err != nil {
 		return Dataset{}, err
@@ -54,12 +55,15 @@ func GetDataset(id string) (Dataset, error) {
 	return dataset, nil
 }
 
-// UpdateDataset updates an existing dataset
 func UpdateDataset(dataset Dataset) error {
-	// Update last modified timestamp
+
+	err := validateDatasetFields(dataset.Fields)
+	if err != nil {
+		return err
+	}
+
 	dataset.LastModified = time.Now()
 
-	// Convert fields to JSON
 	fieldsJSON, err := json.Marshal(dataset.Fields)
 	if err != nil {
 		return err
@@ -85,38 +89,57 @@ func UpdateDataset(dataset Dataset) error {
 	return nil
 }
 
-// DeleteDataset removes a dataset and all its records
 func DeleteDataset(id string) error {
+
+	recordRows, err := DB.Query("SELECT id FROM data_records WHERE dataset_id = ?", id)
+	if err != nil {
+		return err
+	}
+	defer recordRows.Close()
+
+	for recordRows.Next() {
+		var recordID string
+		if err := recordRows.Scan(&recordID); err != nil {
+			return err
+		}
+
+		isReferenced, err := IsRecordReferenced(recordID, id)
+		if err != nil {
+			return err
+		}
+
+		if isReferenced {
+			return fmt.Errorf("cannot delete dataset because record %s is referenced by other records", recordID)
+		}
+	}
+
 	tx, err := DB.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	// Delete all records for this dataset
 	_, err = tx.Exec("DELETE FROM data_records WHERE dataset_id = ?", id)
 	if err != nil {
 		return err
 	}
 
-	// Delete the dataset
 	result, err := tx.Exec("DELETE FROM datasets WHERE id = ?", id)
 	if err != nil {
 		return err
 	}
 
-	rows, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-	if rows == 0 {
+	if rowsAffected == 0 {
 		return errors.New("dataset not found")
 	}
 
 	return tx.Commit()
 }
 
-// ListDatasets returns all datasets
 func ListDatasets() ([]Dataset, error) {
 	rows, err := DB.Query(
 		`SELECT id, name, description, type, fields, created_at, last_modified 
@@ -137,7 +160,6 @@ func ListDatasets() ([]Dataset, error) {
 			return nil, err
 		}
 
-		// Parse fields JSON
 		err = json.Unmarshal([]byte(fieldsJSON), &dataset.Fields)
 		if err != nil {
 			return nil, err
@@ -149,20 +171,21 @@ func ListDatasets() ([]Dataset, error) {
 	return datasets, nil
 }
 
-// AddDataRecord adds a new data record
 func AddDataRecord(record DataRecord) error {
-	// Generate UUID if not provided
 	if record.ID == "" {
 		record.ID = uuid.New().String()
 	}
 
-	// Set timestamps
+	err := validateUniqueConstraints(record, "")
+	if err != nil {
+		return err
+	}
+
 	now := time.Now()
 	record.CreatedAt = now
 	record.LastModified = now
 
-	// Insert record
-	_, err := DB.Exec(
+	_, err = DB.Exec(
 		`INSERT INTO data_records (id, dataset_id, data, created_at, last_modified) 
          VALUES (?, ?, ?, ?, ?)`,
 		record.ID, record.DatasetID, record.Data, record.CreatedAt, record.LastModified,
@@ -174,8 +197,7 @@ func AddDataRecord(record DataRecord) error {
 	return nil
 }
 
-// Function to update the GetDataRecord to include relation data
-func GetDataRecord(id string) (DataRecord, error) {
+func GetDataRecord(id string, fetchRelatedData bool) (DataRecord, error) {
 	var record DataRecord
 
 	err := DB.QueryRow(
@@ -186,18 +208,22 @@ func GetDataRecord(id string) (DataRecord, error) {
 		return DataRecord{}, err
 	}
 
-	// Get related data
-	record, err = loadRelatedData(record)
-	if err != nil {
-		return DataRecord{}, err
+	if fetchRelatedData {
+		record, err = loadRelatedData(record)
+		if err != nil {
+			return DataRecord{}, err
+		}
 	}
 
 	return record, nil
 }
 
-// Function to update a record with related data
 func UpdateDataRecord(record DataRecord) error {
-	// Update last modified timestamp
+	err := validateUniqueConstraints(record, record.ID)
+	if err != nil {
+		return err
+	}
+
 	record.LastModified = time.Now()
 
 	result, err := DB.Exec(
@@ -220,25 +246,20 @@ func UpdateDataRecord(record DataRecord) error {
 	return nil
 }
 
-// Helper function to load related data for a record
 func loadRelatedData(record DataRecord) (DataRecord, error) {
-	// Get the dataset to find relations
 	dataset, err := GetDataset(record.DatasetID)
 	if err != nil {
 		return record, err
 	}
 
-	// Parse record data into map
 	var data map[string]interface{}
 	err = json.Unmarshal(record.Data, &data)
 	if err != nil {
 		return record, err
 	}
 
-	// Check for relations
 	for _, field := range dataset.Fields {
 		if field.IsRelation && field.RelatedDataset != "" && field.RelatedField != "" {
-			// Get the relation ID value
 			relIDValue, exists := data[field.Key]
 			if !exists || relIDValue == nil || relIDValue == "" {
 				continue
@@ -246,24 +267,20 @@ func loadRelatedData(record DataRecord) (DataRecord, error) {
 
 			relID, ok := relIDValue.(string)
 			if !ok {
-				// Try to convert to string if needed
 				relID = fmt.Sprintf("%v", relIDValue)
 			}
 
-			// If there's a valid ID, get the related record
-			if relID != "" {
-				relatedRecord, err := GetDataRecord(relID)
+			if relID != "" && isValidID(relID) {
+				relatedRecord, err := GetDataRecord(relID, false)
 				if err == nil {
 					var relatedData map[string]interface{}
 					err = json.Unmarshal(relatedRecord.Data, &relatedData)
 					if err == nil {
-						// Add metadata
 						relatedData["id"] = relatedRecord.ID
 						relatedData["datasetId"] = relatedRecord.DatasetID
 						relatedData["createdAt"] = relatedRecord.CreatedAt
 						relatedData["lastModified"] = relatedRecord.LastModified
 
-						// Add the related data to the main record with a descriptive key
 						relatedKey := field.Key + "_data"
 						data[relatedKey] = relatedData
 					}
@@ -272,7 +289,6 @@ func loadRelatedData(record DataRecord) (DataRecord, error) {
 		}
 	}
 
-	// Update the record data with related data
 	updatedData, err := json.Marshal(data)
 	if err != nil {
 		return record, err
@@ -282,25 +298,44 @@ func loadRelatedData(record DataRecord) (DataRecord, error) {
 	return record, nil
 }
 
-// DeleteDataRecord removes a data record
-func DeleteDataRecord(id string) error {
+func DeleteDataRecord(id string) (json.RawMessage, error) {
+	record, err := GetDataRecord(id, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = cascadeDeleteReferencedRecords(id, record.DatasetID)
+	if err != nil {
+		return nil, err
+	}
+
+	isReferenced, err := IsRecordReferenced(id, record.DatasetID)
+	if err != nil {
+		return nil, err
+	}
+
+	if isReferenced {
+		return nil, errors.New("cannot delete record because it is referenced by other records")
+	}
+
+	recordData := record.Data
+
 	result, err := DB.Exec("DELETE FROM data_records WHERE id = ?", id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rows, err := result.RowsAffected()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if rows == 0 {
-		return errors.New("record not found")
+		return nil, errors.New("record not found")
 	}
 
-	return nil
+	return recordData, nil
 }
 
-// GetDataRecords retrieves all records for a specific dataset
 func GetDataRecords(datasetID string) ([]DataRecord, error) {
 	rows, err := DB.Query(
 		`SELECT id, dataset_id, data, created_at, last_modified 
@@ -327,7 +362,6 @@ func GetDataRecords(datasetID string) ([]DataRecord, error) {
 	return records, nil
 }
 
-// ImportRecords imports multiple data records in a transaction
 func ImportRecords(records []DataRecord) error {
 	tx, err := DB.Begin()
 	if err != nil {
@@ -346,12 +380,10 @@ func ImportRecords(records []DataRecord) error {
 
 	now := time.Now()
 	for i := range records {
-		// Generate UUID if not provided
 		if records[i].ID == "" {
 			records[i].ID = uuid.New().String()
 		}
 
-		// Set timestamps
 		records[i].CreatedAt = now
 		records[i].LastModified = now
 
@@ -367,107 +399,77 @@ func ImportRecords(records []DataRecord) error {
 	return tx.Commit()
 }
 
-// GetDataRecordsWithRelations retrieves all records for a specific dataset and joins with related datasets
 func GetDataRecordsWithRelations(datasetID string, relations map[string]string) ([]map[string]interface{}, error) {
-	// Get all records from the dataset
 	records, err := GetDataRecords(datasetID)
 	if err != nil {
 		return nil, err
 	}
 
-	// If no relations or records, return early
-	if len(relations) == 0 || len(records) == 0 {
-		// Convert to maps
-		result := make([]map[string]interface{}, len(records))
-		for i, record := range records {
-			var data map[string]interface{}
-			err = json.Unmarshal(record.Data, &data)
-			if err != nil {
-				return nil, err
-			}
-
-			// Add metadata
-			data["id"] = record.ID
-			data["datasetId"] = record.DatasetID
-			data["createdAt"] = record.CreatedAt
-			data["lastModified"] = record.LastModified
-
-			result[i] = data
-		}
-		return result, nil
+	if len(records) == 0 {
+		return []map[string]interface{}{}, nil
 	}
 
-	// Create a map to store relation fields by dataset
-	var relationFields []FieldDefinition
-
-	// Get the dataset to access its fields
 	dataset, err := GetDataset(datasetID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Find all relation fields
+	var relationFields []FieldDefinition
 	for _, field := range dataset.Fields {
 		if field.IsRelation && field.RelatedDataset != "" && field.RelatedField != "" {
 			relationFields = append(relationFields, field)
 		}
 	}
 
-	// Process all records
 	result := make([]map[string]interface{}, len(records))
 	for i, record := range records {
-		// Parse the record data
 		var data map[string]interface{}
 		err = json.Unmarshal(record.Data, &data)
 		if err != nil {
 			return nil, err
 		}
 
-		// Add metadata
 		data["id"] = record.ID
 		data["datasetId"] = record.DatasetID
 		data["createdAt"] = record.CreatedAt
 		data["lastModified"] = record.LastModified
 
-		// Process each relation field
 		for _, field := range relationFields {
-			relID, ok := data[field.Key].(string)
-			if !ok || relID == "" {
-				continue
+			_, requested := relations[field.Key]
+			if len(relations) == 0 || requested {
+				relIDValue, exists := data[field.Key]
+				if !exists || relIDValue == nil || relIDValue == "" {
+					continue
+				}
+
+				relID, ok := relIDValue.(string)
+				if !ok {
+					relID = fmt.Sprintf("%v", relIDValue)
+				}
+
+				if relID != "" && isValidID(relID) {
+					relatedRecord, err := GetDataRecord(relID, true)
+					if err != nil {
+						fmt.Printf("Error fetching related record for field %s with ID %s: %v\n",
+							field.Key, relID, err)
+						continue
+					}
+
+					var relatedData map[string]interface{}
+					err = json.Unmarshal(relatedRecord.Data, &relatedData)
+					if err != nil {
+						continue
+					}
+
+					relatedData["id"] = relatedRecord.ID
+					relatedData["datasetId"] = relatedRecord.DatasetID
+					relatedData["createdAt"] = relatedRecord.CreatedAt
+					relatedData["lastModified"] = relatedRecord.LastModified
+
+					relatedKey := field.Key + "_data"
+					data[relatedKey] = relatedData
+				}
 			}
-
-			// Check if the relID is actually a valid UUID or ID format
-			// If it's not, log the issue but continue processing other relations
-			if !isValidID(relID) {
-				fmt.Printf("Warning: Invalid relation ID format for %s: %s\n", field.Key, relID)
-				continue
-			}
-
-			// Get the related record
-			relatedRecord, err := GetDataRecord(relID)
-			if err != nil {
-				// More detailed error logging
-				fmt.Printf("Error fetching related record for field %s with ID %s: %v\n",
-					field.Key, relID, err)
-				continue
-			}
-
-			// Parse the related record data
-			var relatedData map[string]interface{}
-			err = json.Unmarshal(relatedRecord.Data, &relatedData)
-			if err != nil {
-				continue
-			}
-
-			// Add metadata to related data
-			relatedData["id"] = relatedRecord.ID
-			relatedData["datasetId"] = relatedRecord.DatasetID
-			relatedData["createdAt"] = relatedRecord.CreatedAt
-			relatedData["lastModified"] = relatedRecord.LastModified
-
-			// Add the related data to the main record with a descriptive key
-			relatedKey := field.Key + "_data"
-			data[relatedKey] = relatedData
 		}
 
 		result[i] = data
@@ -476,9 +478,208 @@ func GetDataRecordsWithRelations(datasetID string, relations map[string]string) 
 	return result, nil
 }
 
-// Helper function to check if a string looks like a valid ID
 func isValidID(id string) bool {
-	// Simple check for UUID format or numeric ID
-	// You can enhance this based on your ID format
 	return len(id) > 8 && !strings.Contains(id, "/")
+}
+
+func IsRecordReferenced(id string, datasetID string) (bool, error) {
+
+	_, err := GetDataset(datasetID)
+	if err != nil {
+		return false, fmt.Errorf("failed to get dataset: %w", err)
+	}
+
+	datasets, err := ListDatasets()
+	if err != nil {
+		return false, fmt.Errorf("failed to list datasets: %w", err)
+	}
+
+	for _, otherDataset := range datasets {
+		for _, field := range otherDataset.Fields {
+
+			if field.IsRelation && field.RelatedDataset == datasetID && field.PreventDeleteIfReferenced {
+
+				query := fmt.Sprintf(
+					`SELECT COUNT(*) FROM data_records 
+                     WHERE dataset_id = ? AND json_extract(data, '$.%s') = ?`,
+					field.Key)
+
+				var count int
+				err := DB.QueryRow(query, otherDataset.ID, id).Scan(&count)
+				if err != nil {
+					return false, fmt.Errorf("error checking references: %w", err)
+				}
+
+				if count > 0 {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func validateDatasetFields(fields []FieldDefinition) error {
+	for _, field := range fields {
+		if field.PreventDeleteIfReferenced && field.CascadeDeleteIfReferenced {
+			return fmt.Errorf("field '%s' cannot have both PreventDeleteIfReferenced and CascadeDeleteIfReferenced set to true", field.Key)
+		}
+	}
+	return nil
+}
+
+func validateUniqueConstraints(record DataRecord, excludeRecordID string) error {
+	dataset, err := GetDataset(record.DatasetID)
+	if err != nil {
+		return fmt.Errorf("failed to get dataset: %w", err)
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal(record.Data, &data)
+	if err != nil {
+		return fmt.Errorf("failed to parse record data: %w", err)
+	}
+
+	for _, field := range dataset.Fields {
+		if !field.IsUnique {
+			continue
+		}
+
+		fieldValue, exists := data[field.Key]
+		if !exists || fieldValue == nil {
+			continue
+		}
+
+		var fieldValueStr string
+		switch v := fieldValue.(type) {
+		case string:
+			fieldValueStr = v
+		case float64:
+			fieldValueStr = fmt.Sprintf("%.0f", v)
+		case bool:
+			fieldValueStr = fmt.Sprintf("%t", v)
+		default:
+			fieldValueStr = fmt.Sprintf("%v", v)
+		}
+
+		if fieldValueStr == "" {
+			continue
+		}
+
+		query := fmt.Sprintf(
+			`SELECT id FROM data_records 
+			 WHERE dataset_id = ? AND json_extract(data, '$.%s') = ?`,
+			field.Key)
+
+		var existingRecordID string
+		err := DB.QueryRow(query, record.DatasetID, fieldValueStr).Scan(&existingRecordID)
+
+		if err == nil && existingRecordID != excludeRecordID {
+			return fmt.Errorf("field '%s' must be unique. Value '%s' already exists in another record", field.DisplayName, fieldValueStr)
+		}
+	}
+
+	return nil
+}
+
+func cascadeDeleteReferencedRecords(id string, datasetID string) error {
+	_, err := GetDataset(datasetID)
+	if err != nil {
+		return fmt.Errorf("failed to get dataset: %w", err)
+	}
+
+	datasets, err := ListDatasets()
+	if err != nil {
+		return fmt.Errorf("failed to list datasets: %w", err)
+	}
+
+	var recordsToDelete []string
+
+	for _, otherDataset := range datasets {
+		for _, field := range otherDataset.Fields {
+			if field.IsRelation && field.RelatedDataset == datasetID && field.CascadeDeleteIfReferenced {
+				query := fmt.Sprintf(
+					`SELECT id FROM data_records 
+					 WHERE dataset_id = ? AND json_extract(data, '$.%s') = ?`,
+					field.Key)
+
+				rows, err := DB.Query(query, otherDataset.ID, id)
+				if err != nil {
+					return fmt.Errorf("error finding records to cascade delete: %w", err)
+				}
+				defer rows.Close()
+
+				for rows.Next() {
+					var recordID string
+					if err := rows.Scan(&recordID); err != nil {
+						return fmt.Errorf("error scanning record ID: %w", err)
+					}
+					recordsToDelete = append(recordsToDelete, recordID)
+				}
+			}
+		}
+	}
+
+	for _, recordID := range recordsToDelete {
+		_, err := DeleteDataRecord(recordID)
+		if err != nil {
+			return fmt.Errorf("error cascade deleting record %s: %w", recordID, err)
+		}
+	}
+
+	return nil
+}
+
+func ResetAllData(appDataDir string) error {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec("DELETE FROM data_records")
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("DELETE FROM datasets")
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	err = clearAllFiles(appDataDir)
+	if err != nil {
+		return err
+	}
+
+	return SyncDatasets()
+}
+
+func clearAllFiles(appDataDir string) error {
+	imagesDir := filepath.Join(appDataDir, "images")
+	filesDir := filepath.Join(appDataDir, "files")
+
+	if err := os.RemoveAll(imagesDir); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to clear images directory: %w", err)
+	}
+
+	if err := os.RemoveAll(filesDir); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to clear files directory: %w", err)
+	}
+
+	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+		return fmt.Errorf("failed to recreate images directory: %w", err)
+	}
+
+	if err := os.MkdirAll(filesDir, 0755); err != nil {
+		return fmt.Errorf("failed to recreate files directory: %w", err)
+	}
+
+	return nil
 }

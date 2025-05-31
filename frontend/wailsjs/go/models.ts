@@ -8,9 +8,12 @@ export namespace database {
 	    unit?: string;
 	    isSearchable?: boolean;
 	    isOptional?: boolean;
+	    isUnique?: boolean;
 	    relatedDataset?: string;
 	    relatedField?: string;
 	    isRelation?: boolean;
+	    preventDeleteIfReferenced?: boolean;
+	    cascadeDeleteIfReferenced?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new FieldDefinition(source);
@@ -25,9 +28,12 @@ export namespace database {
 	        this.unit = source["unit"];
 	        this.isSearchable = source["isSearchable"];
 	        this.isOptional = source["isOptional"];
+	        this.isUnique = source["isUnique"];
 	        this.relatedDataset = source["relatedDataset"];
 	        this.relatedField = source["relatedField"];
 	        this.isRelation = source["isRelation"];
+	        this.preventDeleteIfReferenced = source["preventDeleteIfReferenced"];
+	        this.cascadeDeleteIfReferenced = source["cascadeDeleteIfReferenced"];
 	    }
 	}
 	export class Dataset {

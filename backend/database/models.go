@@ -1,4 +1,3 @@
-// backend/database/models.go
 package database
 
 import (
@@ -9,7 +8,6 @@ import (
 	"time"
 )
 
-// DatasetType represents the type of dataset
 type DatasetType string
 
 const (
@@ -24,19 +22,20 @@ const (
 	DatasetTypePeopleCRM    DatasetType = "people_crm"
 )
 
-// FieldType represents the type of a field
 type FieldType string
 
 const (
-	FieldTypeDate       FieldType = "date"
-	FieldTypeBoolean    FieldType = "boolean"
-	FieldTypeNumber     FieldType = "number"
-	FieldTypePercentage FieldType = "percentage"
-	FieldTypeText       FieldType = "text"
-	FieldTypeMarkdown   FieldType = "markdown"
+	FieldTypeDate         FieldType = "date"
+	FieldTypeBoolean      FieldType = "boolean"
+	FieldTypeNumber       FieldType = "number"
+	FieldTypePercentage   FieldType = "percentage"
+	FieldTypeText         FieldType = "text"
+	FieldTypeMarkdown     FieldType = "markdown"
+	FieldTypeJSON         FieldType = "json"
+	FieldTypeFile         FieldType = "file"
+	FieldTypeFileMultiple FieldType = "file-multiple"
 )
 
-// FieldDefinition defines a field's properties
 type FieldDefinition struct {
 	Key          string    `json:"key"`
 	Type         FieldType `json:"type"`
@@ -45,14 +44,15 @@ type FieldDefinition struct {
 	Unit         string    `json:"unit,omitempty"`
 	IsSearchable bool      `json:"isSearchable,omitempty"`
 	IsOptional   bool      `json:"isOptional,omitempty"`
+	IsUnique     bool      `json:"isUnique,omitempty"`
 
-	// New fields for relationships
-	RelatedDataset string `json:"relatedDataset,omitempty"` // ID of the related dataset
-	RelatedField   string `json:"relatedField,omitempty"`   // Field to join on in the related dataset
-	IsRelation     bool   `json:"isRelation,omitempty"`     // Whether this field is a relation
+	RelatedDataset            string `json:"relatedDataset,omitempty"`
+	RelatedField              string `json:"relatedField,omitempty"`
+	IsRelation                bool   `json:"isRelation,omitempty"`
+	PreventDeleteIfReferenced bool   `json:"preventDeleteIfReferenced,omitempty"`
+	CascadeDeleteIfReferenced bool   `json:"cascadeDeleteIfReferenced,omitempty"`
 }
 
-// Dataset represents a collection of data with its field definitions
 type Dataset struct {
 	ID           string            `json:"id"`
 	Name         string            `json:"name"`
@@ -63,7 +63,14 @@ type Dataset struct {
 	LastModified time.Time         `json:"lastModified"`
 }
 
-// DataRecord represents a single record of data
+type DatasetConfig struct {
+	ID          string
+	Name        string
+	Description string
+	Type        DatasetType
+	Fields      []FieldDefinition
+}
+
 type DataRecord struct {
 	ID           string          `json:"id"`
 	DatasetID    string          `json:"datasetId"`
@@ -72,9 +79,7 @@ type DataRecord struct {
 	LastModified time.Time       `json:"lastModified"`
 }
 
-// InitializeRelationships creates tables and indices for relationship fields
 func InitializeRelationships(db *sql.DB) error {
-	// Create an index for improved join performance on dataset_id
 	_, err := db.Exec(`
         CREATE INDEX IF NOT EXISTS idx_data_records_dataset_id ON data_records(dataset_id)
     `)
@@ -82,7 +87,6 @@ func InitializeRelationships(db *sql.DB) error {
 		return err
 	}
 
-	// Go through all datasets and check for relation fields
 	datasets, err := ListDatasets()
 	if err != nil {
 		return err
@@ -92,6 +96,7 @@ func InitializeRelationships(db *sql.DB) error {
 		for _, field := range dataset.Fields {
 			if field.IsRelation && field.RelatedDataset != "" {
 				indexName := fmt.Sprintf("idx_%s_%s", strings.ReplaceAll(dataset.ID, "-", "_"), field.Key)
+
 				indexSQL := fmt.Sprintf(
 					`CREATE INDEX IF NOT EXISTS %s ON data_records((json_extract(data, '$.%s'))) WHERE dataset_id = '%s'`,
 					indexName, field.Key, dataset.ID,
@@ -108,9 +113,7 @@ func InitializeRelationships(db *sql.DB) error {
 	return nil
 }
 
-// InitializeSchema creates the database tables
 func InitializeSchema(db *sql.DB) error {
-	// Create datasets table
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS datasets (
 			id TEXT PRIMARY KEY,
@@ -126,7 +129,6 @@ func InitializeSchema(db *sql.DB) error {
 		return err
 	}
 
-	// Create data_records table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS data_records (
 			id TEXT PRIMARY KEY,
@@ -141,7 +143,6 @@ func InitializeSchema(db *sql.DB) error {
 		return err
 	}
 
-	// Initialize relationship indices and tables
 	err = InitializeRelationships(db)
 	if err != nil {
 		return err

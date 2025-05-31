@@ -2,14 +2,11 @@ package backend
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"myproject/backend/database"
-	_ "myproject/backend/database/models"
-	"myproject/backend/image"
+	"myproject/backend/file"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -39,13 +36,11 @@ func (a *App) Startup(ctx context.Context) {
 
 	a.appDataDir = appDir
 
-	err = image.Initialize(appDir)
+	err = file.Initialize(appDir)
 	if err != nil {
-		log.Println("Error initializing image directory:", err.Error())
+		log.Println("Error initializing file directory:", err.Error())
 		return
 	}
-
-	image.InitializeCache()
 
 	var dbPath string
 
@@ -120,28 +115,6 @@ func (a *App) Shutdown(ctx context.Context) {
 	database.Close()
 }
 
-func (a *App) UploadImage(base64Image string, prefix string) (string, error) {
-	if base64Image == "" {
-		return "", nil
-	}
-
-	return image.SaveImage(a.appDataDir, base64Image, prefix)
-}
-
-func (a *App) GetImagePath(relativePath string) (string, error) {
-	if relativePath == "" {
-		return "", nil
-	}
-
-	fullPath := image.GetImagePath(a.appDataDir, relativePath)
-
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return "", fmt.Errorf("image does not exist")
-	}
-
-	return fullPath, nil
-}
-
 func (a *App) GetDatasets() ([]database.Dataset, error) {
 	return database.ListDatasets()
 }
@@ -204,7 +177,7 @@ func (a *App) DeleteDataset(id string) error {
 	return database.DeleteDataset(id)
 }
 
-func (a *App) GetRecords(datasetID string) ([]map[string]interface{}, error) {
+func (a *App) GetRecords(datasetID string, fetchImages bool) ([]map[string]interface{}, error) {
 	records, err := database.GetDataRecords(datasetID)
 	if err != nil {
 		return nil, err
@@ -223,17 +196,14 @@ func (a *App) GetRecords(datasetID string) ([]map[string]interface{}, error) {
 		data["createdAt"] = record.CreatedAt
 		data["lastModified"] = record.LastModified
 
-		// Use thumbnails for record listings
-		image.ProcessRecord(a.appDataDir, data, true)
-
 		result[i] = data
 	}
 
 	return result, nil
 }
 
-func (a *App) GetRecord(id string) (map[string]interface{}, error) {
-	record, err := database.GetDataRecord(id)
+func (a *App) GetRecord(id string, fetchRelatedData bool, fetchImages bool) (map[string]interface{}, error) {
+	record, err := database.GetDataRecord(id, fetchRelatedData)
 	if err != nil {
 		return nil, err
 	}
@@ -249,14 +219,11 @@ func (a *App) GetRecord(id string) (map[string]interface{}, error) {
 	data["createdAt"] = record.CreatedAt
 	data["lastModified"] = record.LastModified
 
-	// For single record view, use full resolution
-	image.ProcessRecord(a.appDataDir, data, false)
-
 	return data, nil
 }
 
 func (a *App) updateMetricLastOccurrence(metricID string, logDate time.Time) error {
-	metricRecord, err := database.GetDataRecord(metricID)
+	metricRecord, err := database.GetDataRecord(metricID, false)
 	if err != nil {
 		return err
 	}
@@ -283,7 +250,7 @@ func (a *App) updateMetricLastOccurrence(metricID string, logDate time.Time) err
 	return database.UpdateDataRecord(metricRecord)
 }
 
-func (a *App) AddRecord(datasetID string, data string) (map[string]interface{}, error) {
+func (a *App) AddRecord(datasetID string, data string, fetchFiles bool) (map[string]interface{}, error) {
 	_, err := database.GetDataset(datasetID)
 	if err != nil {
 		return nil, err
@@ -295,9 +262,9 @@ func (a *App) AddRecord(datasetID string, data string) (map[string]interface{}, 
 		return nil, err
 	}
 
-	processedData, err := a.SaveImages(recordData, datasetID)
+	processedData, err := a.SaveFiles(recordData, datasetID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to process images: %w", err)
+		return nil, fmt.Errorf("failed to process files: %w", err)
 	}
 
 	processedJSON, err := json.Marshal(processedData)
@@ -316,36 +283,11 @@ func (a *App) AddRecord(datasetID string, data string) (map[string]interface{}, 
 		return nil, err
 	}
 
-	if datasetID == "daily_logs" {
-		var logData map[string]interface{}
-		err = json.Unmarshal(record.Data, &logData)
-		if err != nil {
-			return nil, err
-		}
-
-		if metricID, ok := logData["metric_id"].(string); ok {
-			var logDate time.Time
-			if dateStr, ok := logData["date"].(string); ok {
-				logDate, err = time.Parse(time.RFC3339, dateStr)
-				if err != nil {
-					logDate, err = time.Parse("2006-01-02", dateStr)
-					if err != nil {
-						logDate = time.Now()
-					}
-				}
-			} else {
-				logDate = time.Now()
-			}
-
-			a.updateMetricLastOccurrence(metricID, logDate)
-		}
-	}
-
-	return a.GetRecord(record.ID)
+	return a.GetRecord(record.ID, true, fetchFiles)
 }
 
-func (a *App) UpdateRecord(id string, data string) (map[string]interface{}, error) {
-	record, err := database.GetDataRecord(id)
+func (a *App) UpdateRecord(id string, data string, fetchRelatedData bool, fetchFiles bool) (map[string]interface{}, error) {
+	record, err := database.GetDataRecord(id, fetchRelatedData)
 	if err != nil {
 		return nil, err
 	}
@@ -362,9 +304,9 @@ func (a *App) UpdateRecord(id string, data string) (map[string]interface{}, erro
 		return nil, err
 	}
 
-	processedData, err := a.processDataWithExistingImages(oldData, newData, record.DatasetID)
+	processedData, err := a.processDataWithExistingFiles(oldData, newData, record.DatasetID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to process images: %w", err)
+		return nil, fmt.Errorf("failed to process files: %w", err)
 	}
 
 	processedJSON, err := json.Marshal(processedData)
@@ -380,11 +322,55 @@ func (a *App) UpdateRecord(id string, data string) (map[string]interface{}, erro
 		return nil, err
 	}
 
-	return a.GetRecord(id)
+	return a.GetRecord(id, fetchRelatedData, fetchFiles)
 }
 
 func (a *App) DeleteRecord(id string) error {
-	return database.DeleteDataRecord(id)
+	recordData, err := database.DeleteDataRecord(id)
+	if err != nil {
+		return err
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal(recordData, &data)
+	if err == nil {
+		a.deleteFilesInData(data)
+	}
+
+	return nil
+}
+
+func (a *App) deleteFilesInData(data map[string]interface{}) {
+	for _, value := range data {
+		switch v := value.(type) {
+		case string:
+			if isFilePath(v) {
+				file.DeleteFile(a.appDataDir, v)
+			}
+		case map[string]interface{}:
+			if src, hasSrc := v["src"].(string); hasSrc {
+				if isFilePath(src) {
+					file.DeleteFile(a.appDataDir, src)
+				}
+			}
+			a.deleteFilesInData(v)
+		case []interface{}:
+			for _, item := range v {
+				if m, ok := item.(map[string]interface{}); ok {
+					if src, hasSrc := m["src"].(string); hasSrc {
+						if isFilePath(src) {
+							file.DeleteFile(a.appDataDir, src)
+						}
+					}
+					a.deleteFilesInData(m)
+				} else if s, ok := item.(string); ok {
+					if isFilePath(s) {
+						file.DeleteFile(a.appDataDir, s)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (a *App) ImportRecords(datasetID string, records string) (int, error) {
@@ -433,7 +419,7 @@ func (a *App) GetRelatedRecords(datasetID string, relationsJSON string) ([]map[s
 	return database.GetDataRecordsWithRelations(datasetID, relations)
 }
 
-func (a *App) GetRecordsWithRelations(datasetID string) ([]map[string]interface{}, error) {
+func (a *App) GetRecordsWithRelations(datasetID string, fetchImages bool) ([]map[string]interface{}, error) {
 	dataset, err := database.GetDataset(datasetID)
 	if err != nil {
 		return nil, err
@@ -447,65 +433,97 @@ func (a *App) GetRecordsWithRelations(datasetID string) ([]map[string]interface{
 	}
 
 	if len(relations) == 0 {
-		return a.GetRecords(datasetID)
+		return a.GetRecords(datasetID, fetchImages)
 	}
 
-	result, err := database.GetDataRecordsWithRelations(datasetID, nil)
+	result, err := database.GetDataRecordsWithRelations(datasetID, relations)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, record := range result {
-		image.ProcessRecord(a.appDataDir, record, true)
 	}
 
 	return result, nil
 }
 
-func (a *App) GetImage(imagePath string) (string, error) {
-	if imagePath == "" {
+func (a *App) processGenericArray(arr []interface{}, prefix string) ([]interface{}, error) {
+	result := make([]interface{}, len(arr))
+
+	for i, item := range arr {
+		processed, err := a.processFilesRecursive(item, fmt.Sprintf("%s-%d", prefix, i))
+		if err != nil {
+			return nil, err
+		}
+		result[i] = processed
+	}
+
+	return result, nil
+}
+
+func (a *App) UploadFile(base64File string, prefix string, fileName string) (string, error) {
+	if base64File == "" {
 		return "", nil
 	}
 
-	fullPath := image.GetImagePath(a.appDataDir, imagePath)
+	return file.SaveFile(a.appDataDir, base64File, prefix, fileName)
+}
+
+func (a *App) GetFilePath(relativePath string) (string, error) {
+	if relativePath == "" {
+		return "", nil
+	}
+
+	fullPath := file.GetFilePath(a.appDataDir, relativePath)
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return "", fmt.Errorf("image does not exist")
+		return "", fmt.Errorf("file does not exist")
 	}
 
-	data, err := ioutil.ReadFile(fullPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read image: %w", err)
-	}
-
-	ext := strings.ToLower(filepath.Ext(imagePath))
-	var contentType string
-	switch ext {
-	case ".jpg", ".jpeg":
-		contentType = "image/jpeg"
-	case ".png":
-		contentType = "image/png"
-	case ".gif":
-		contentType = "image/gif"
-	case ".webp":
-		contentType = "image/webp"
-	default:
-		contentType = "application/octet-stream"
-	}
-
-	base64Data := base64.StdEncoding.EncodeToString(data)
-	return "data:" + contentType + ";base64," + base64Data, nil
+	return fullPath, nil
 }
 
-func (a *App) SaveImages(data interface{}, prefix string) (interface{}, error) {
-	return a.processImagesRecursive(data, prefix)
+func (a *App) GetFileAsBase64(relativePath string) (string, error) {
+	if relativePath == "" {
+		return "", nil
+	}
+
+	return file.GetFileAsBase64(a.appDataDir, relativePath)
 }
 
-func (a *App) processImagesRecursive(data interface{}, prefix string) (interface{}, error) {
+func (a *App) DeleteFile(relativePath string) error {
+	return file.DeleteFile(a.appDataDir, relativePath)
+}
+
+func (a *App) ProcessRecord(record map[string]interface{}, fetchFiles bool) error {
+	if fetchFiles {
+		for key, value := range record {
+			if filePath, ok := value.(string); ok && isFilePath(filePath) {
+				base64File, err := file.GetFileAsBase64(a.appDataDir, filePath)
+				if err == nil {
+					record[key] = base64File
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (a *App) UploadFileWithName(base64File string, prefix string, fileName string) (string, error) {
+	if base64File == "" {
+		return "", nil
+	}
+
+	return file.SaveFile(a.appDataDir, base64File, prefix, fileName)
+}
+
+func (a *App) SaveFiles(data interface{}, prefix string) (interface{}, error) {
+	return a.processFilesRecursive(data, prefix)
+}
+
+func (a *App) processFilesRecursive(data interface{}, prefix string) (interface{}, error) {
 	switch v := data.(type) {
 	case map[string]interface{}:
 		for key, value := range v {
-			processed, err := a.processImagesRecursive(value, prefix+"-"+key)
+			processed, err := a.processFilesRecursive(value, prefix+"-"+key)
 			if err != nil {
 				return nil, err
 			}
@@ -515,7 +533,7 @@ func (a *App) processImagesRecursive(data interface{}, prefix string) (interface
 
 	case []interface{}:
 		for i, item := range v {
-			processed, err := a.processImagesRecursive(item, fmt.Sprintf("%s-%d", prefix, i))
+			processed, err := a.processFilesRecursive(item, fmt.Sprintf("%s-%d", prefix, i))
 			if err != nil {
 				return nil, err
 			}
@@ -524,12 +542,21 @@ func (a *App) processImagesRecursive(data interface{}, prefix string) (interface
 		return v, nil
 
 	case string:
-		if strings.HasPrefix(v, "data:image/") {
-			imagePath, err := a.UploadImage(v, prefix)
+		if strings.HasPrefix(v, "data:") {
+			if fileMap, isFileObj := tryParseFileObject(v); isFileObj {
+				fileName := fileMap["fileName"].(string)
+				content := fileMap["content"].(string)
+				filePath, err := a.UploadFileWithName(content, prefix, fileName)
+				if err != nil {
+					return nil, err
+				}
+				return filePath, nil
+			}
+			filePath, err := a.UploadFileWithName(v, prefix, "")
 			if err != nil {
 				return nil, err
 			}
-			return imagePath, nil
+			return filePath, nil
 		}
 		return v, nil
 
@@ -538,11 +565,74 @@ func (a *App) processImagesRecursive(data interface{}, prefix string) (interface
 	}
 }
 
-func (a *App) processDataWithExistingImages(oldData, newData map[string]interface{}, prefix string) (map[string]interface{}, error) {
+func tryParseFileObject(s string) (map[string]interface{}, bool) {
+	if !strings.HasPrefix(s, "{") {
+		return nil, false
+	}
+
+	var fileObj map[string]interface{}
+	err := json.Unmarshal([]byte(s), &fileObj)
+	if err != nil {
+		return nil, false
+	}
+
+	_, hasContent := fileObj["content"]
+	fileName, hasFileName := fileObj["fileName"]
+
+	if hasContent && hasFileName && fileName != "" {
+		return fileObj, true
+	}
+
+	return nil, false
+}
+
+func (a *App) ProcessRecordWithFiles(record map[string]interface{}, fetchFiles bool) error {
+	if fetchFiles {
+		for key, value := range record {
+			if filePath, ok := value.(string); ok && isFilePath(filePath) {
+				base64File, err := file.GetFileAsBase64(a.appDataDir, filePath)
+				if err == nil {
+					record[key] = base64File
+				}
+			}
+
+			if array, ok := value.([]interface{}); ok {
+				for i, item := range array {
+					if itemMap, ok := item.(map[string]interface{}); ok {
+						for itemKey, itemValue := range itemMap {
+							if filePath, ok := itemValue.(string); ok && isFilePath(filePath) {
+								base64File, err := file.GetFileAsBase64(a.appDataDir, filePath)
+								if err == nil {
+									itemMap[itemKey] = base64File
+									array[i] = itemMap
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if nestedMap, ok := value.(map[string]interface{}); ok {
+				a.ProcessRecordWithFiles(nestedMap, fetchFiles)
+			}
+		}
+	}
+
+	return nil
+}
+
+func isFilePath(path string) bool {
+	if path == "" || strings.HasPrefix(path, "data:") {
+		return false
+	}
+
+	return strings.HasPrefix(path, file.FilesDir+"/")
+}
+
+func (a *App) processDataWithExistingFiles(oldData, newData map[string]interface{}, prefix string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
 	for key, newValue := range newData {
-
 		switch v := newValue.(type) {
 		case map[string]interface{}:
 			oldNested, ok := oldData[key].(map[string]interface{})
@@ -550,23 +640,20 @@ func (a *App) processDataWithExistingImages(oldData, newData map[string]interfac
 				oldNested = map[string]interface{}{}
 			}
 
-			processed, err := a.processDataWithExistingImages(oldNested, v, prefix+"-"+key)
+			processed, err := a.processDataWithExistingFiles(oldNested, v, prefix+"-"+key)
 			if err != nil {
 				return nil, err
 			}
 			result[key] = processed
 
 		case []interface{}:
-
-			if isImageArray(v) {
-
-				processedArray, err := a.processImageArray(v, prefix+"-"+key)
+			if isFileArray(v) {
+				processedArray, err := a.processFileArray(v, oldData[key], prefix+"-"+key)
 				if err != nil {
 					return nil, err
 				}
 				result[key] = processedArray
 			} else {
-
 				processedArray, err := a.processGenericArray(v, prefix+"-"+key)
 				if err != nil {
 					return nil, err
@@ -575,20 +662,36 @@ func (a *App) processDataWithExistingImages(oldData, newData map[string]interfac
 			}
 
 		case string:
+			if strings.HasPrefix(v, "data:") {
+				if fileMap, isFileObj := tryParseFileObject(v); isFileObj {
+					fileName := fileMap["fileName"].(string)
+					content := fileMap["content"].(string)
+					filePath, err := a.UploadFileWithName(content, prefix+"-"+key, fileName)
+					if err != nil {
+						return nil, err
+					}
 
-			if strings.HasPrefix(v, "data:image/") {
+					if oldFilePath, ok := oldData[key].(string); ok && oldFilePath != "" && !strings.HasPrefix(oldFilePath, "data:") {
+						if isFilePath(oldFilePath) {
+							_ = file.DeleteFile(a.appDataDir, oldFilePath)
+						}
+					}
 
-				imagePath, err := a.UploadImage(v, prefix+"-"+key)
-				if err != nil {
-					return nil, err
+					result[key] = filePath
+				} else {
+					filePath, err := a.UploadFileWithName(v, prefix+"-"+key, "")
+					if err != nil {
+						return nil, err
+					}
+
+					if oldFilePath, ok := oldData[key].(string); ok && oldFilePath != "" && !strings.HasPrefix(oldFilePath, "data:") {
+						if isFilePath(oldFilePath) {
+							_ = file.DeleteFile(a.appDataDir, oldFilePath)
+						}
+					}
+
+					result[key] = filePath
 				}
-
-				if oldImagePath, ok := oldData[key].(string); ok && oldImagePath != "" && !strings.HasPrefix(oldImagePath, "data:image/") {
-
-					_ = image.DeleteImage(a.appDataDir, oldImagePath)
-				}
-
-				result[key] = imagePath
 			} else {
 				result[key] = v
 			}
@@ -607,33 +710,64 @@ func (a *App) processDataWithExistingImages(oldData, newData map[string]interfac
 	return result, nil
 }
 
-func isImageArray(arr []interface{}) bool {
+func isFileArray(arr []interface{}) bool {
 	if len(arr) == 0 {
 		return false
 	}
 
 	if obj, ok := arr[0].(map[string]interface{}); ok {
-
 		_, hasSrc := obj["src"]
-		return hasSrc
+		_, hasName := obj["name"]
+		return hasSrc || hasName
 	}
 
 	return false
 }
 
-func (a *App) processImageArray(arr []interface{}, prefix string) ([]interface{}, error) {
+func (a *App) processFileArray(arr []interface{}, oldArr interface{}, prefix string) ([]interface{}, error) {
 	result := make([]interface{}, len(arr))
+	oldItems := make(map[string]interface{})
+
+	if oldArrSlice, ok := oldArr.([]interface{}); ok {
+		for _, oldItem := range oldArrSlice {
+			if oldObj, isObj := oldItem.(map[string]interface{}); isObj {
+				if id, hasID := oldObj["id"].(string); hasID {
+					oldItems[id] = oldObj
+				}
+			}
+		}
+	}
 
 	for i, item := range arr {
 		if obj, ok := item.(map[string]interface{}); ok {
+			id, hasID := obj["id"].(string)
 
-			if src, ok := obj["src"].(string); ok && strings.HasPrefix(src, "data:image/") {
-				imagePath, err := a.UploadImage(src, fmt.Sprintf("%s-%d", prefix, i))
+			if src, ok := obj["src"].(string); ok && strings.HasPrefix(src, "data:") {
+				fileName := ""
+				if name, hasName := obj["name"].(string); hasName {
+					fileName = name
+				}
+				filePath, err := a.UploadFileWithName(src, fmt.Sprintf("%s-%d", prefix, i), fileName)
+
 				if err != nil {
 					return nil, err
 				}
-				obj["src"] = imagePath
+
+				if hasID {
+					if oldObj, exists := oldItems[id]; exists {
+						if oldItemObj, isObj := oldObj.(map[string]interface{}); isObj {
+							if oldSrc, hasSrc := oldItemObj["src"].(string); hasSrc && oldSrc != "" && !strings.HasPrefix(oldSrc, "data:") {
+								if isFilePath(oldSrc) {
+									_ = file.DeleteFile(a.appDataDir, oldSrc)
+								}
+							}
+						}
+					}
+				}
+
+				obj["src"] = filePath
 			}
+
 			result[i] = obj
 		} else {
 			result[i] = item
@@ -643,38 +777,10 @@ func (a *App) processImageArray(arr []interface{}, prefix string) ([]interface{}
 	return result, nil
 }
 
-func (a *App) processGenericArray(arr []interface{}, prefix string) ([]interface{}, error) {
-	result := make([]interface{}, len(arr))
-
-	for i, item := range arr {
-		processed, err := a.processImagesRecursive(item, fmt.Sprintf("%s-%d", prefix, i))
-		if err != nil {
-			return nil, err
-		}
-		result[i] = processed
-	}
-
-	return result, nil
+func (a *App) UploadFileChunk(chunkData string, fileName string, chunkIndex int, totalChunks int, sessionId string) (string, error) {
+	return file.UploadFileInChunks(a.appDataDir, chunkData, fileName, chunkIndex, totalChunks, sessionId)
 }
 
-func (a *App) GetImageWithSize(relativePath string, size string) (string, error) {
-	if relativePath == "" {
-		return "", nil
-	}
-
-	var imageSize *image.Size
-	switch size {
-	case "thumbnail":
-		s := image.ThumbnailSize
-		imageSize = &s
-	case "medium":
-		s := image.MediumSize
-		imageSize = &s
-	case "original":
-		imageSize = nil
-	default:
-		imageSize = nil
-	}
-
-	return image.GetImageAsBase64(a.appDataDir, relativePath, imageSize)
+func (a *App) ResetAllData() error {
+	return database.ResetAllData(a.appDataDir)
 }
