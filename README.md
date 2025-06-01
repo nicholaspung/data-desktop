@@ -66,10 +66,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- bug: macos auto time tracking for some reason breaks the application, but the record still records correctly
+- bug: time tracking time entries list shows the date before for the added time entries
+- bug: in time tracking summary for tags, if there's multiple tags for a time entry, i.e. 3, it gets split as if it were 3 time entries, make it so that the time entry summary tag percentage is split by the number of tags 
+- bug: when creating a new metric without a schedule, it toggles on the "scheduled" for some reason
+- bug: when creating a new metric without a goal, it creates the metric with a goal for some reason
+- feature: for metric calendar, only show logs that were completed/modified
 
 - add a people crm feature
-
+- in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
 
 ### DONE
 
@@ -289,6 +293,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in `todo-list.tsx` order todo in terms of priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low)) [DONE 2025-05-10]
 - in todo-dashboard-summary, only show the todos that are active/due today, and sort them according to priority (overdue (urgent-high-medium-low)> active (urgent-high-medium-low)) [DONE 2025-05-10]
 - add a `private` field to todo and have it be used everywhere todos are displayed [DONE 2025-05-10]
+- bug: macos auto time tracking for some reason breaks the application, but the record still records correctly [DONE 2025-05-09]
 
 ### GAVE UP
 
