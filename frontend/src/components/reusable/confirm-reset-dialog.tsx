@@ -1,4 +1,3 @@
-// src/components/reusable/confirm-reset-dialog.tsx
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";

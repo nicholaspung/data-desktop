@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -36,7 +36,9 @@ import ReusableMultiSelect from "../reusable/reusable-multiselect";
 import { FormMarkdownField } from "./markdown-field";
 import ReusableCard from "../reusable/reusable-card";
 import TagInput from "@/components/reusable/tag-input";
-import { FormImageField } from "./image-field";
+import { FormJsonField } from "./json-field";
+import FileUploadField from "./file-upload-field";
+import MultipleFileUploadField from "./multiple-file-upload-field";
 
 export default function DataForm({
   datasetId,
@@ -58,14 +60,14 @@ export default function DataForm({
   fields: FieldDefinition[];
   onSuccess?: (recordId: string) => void;
   onCancel?: () => void;
-  initialValues?: Record<string, any>;
+  initialValues?: Record<string, unknown>;
   submitLabel?: string;
   successMessage?: string;
   mode?: "add" | "edit";
   recordId?: string;
   hideSubmitButton?: boolean;
   persistKey?: string;
-  onChange?: (values: Record<string, any>, isValid: boolean) => void;
+  onChange?: (values: Record<string, unknown>, isValid: boolean) => void;
   forceClear?: boolean;
   title?: string;
 }) {
@@ -76,7 +78,7 @@ export default function DataForm({
 
   const storageKey = persistKey || `form_${datasetId}_data`;
 
-  const loadSavedData = () => {
+  const loadSavedData = useCallback(() => {
     if (mode !== "add" || hasCheckedLocal.current) return null;
 
     hasCheckedLocal.current = true;
@@ -108,61 +110,45 @@ export default function DataForm({
     }
 
     return null;
-  };
+  }, [mode, storageKey, fields]);
 
-  const saveToLocalStorage = (data: Record<string, any>) => {
-    if (mode !== "add") return;
+  const saveToLocalStorage = useCallback(
+    (data: Record<string, unknown>) => {
+      if (mode !== "add") return;
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-    }
-
-    saveTimeoutRef.current = setTimeout(() => {
-      try {
-        if (hasNonEmptyValues(data, fields)) {
-          const processedData = { ...data };
-
-          fields.forEach((field) => {
-            if (
-              field.type === "date" &&
-              processedData[field.key] instanceof Date
-            ) {
-              processedData[field.key] = processedData[field.key].toISOString();
-            }
-          });
-
-          localStorage.setItem(storageKey, JSON.stringify(processedData));
-          setHasSavedData(true);
-        } else {
-          localStorage.removeItem(storageKey);
-          setHasSavedData(false);
-        }
-      } catch (error) {
-        console.error("Error saving to localStorage:", error);
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
       }
-    }, 500);
-  };
 
-  const completeFormReset = () => {
-    const freshDefaults = createFreshDefaultValues(fields);
+      saveTimeoutRef.current = setTimeout(() => {
+        try {
+          if (hasNonEmptyValues(data, fields)) {
+            const processedData = { ...data };
 
-    form.reset(freshDefaults, {
-      keepDirty: false,
-      keepErrors: false,
-      keepDirtyValues: false,
-      keepTouched: false,
-      keepIsSubmitted: false,
-      keepIsValid: false,
-      keepSubmitCount: false,
-    });
+            fields.forEach((field) => {
+              if (
+                field.type === "date" &&
+                processedData[field.key] instanceof Date
+              ) {
+                processedData[field.key] = (
+                  processedData[field.key] as Date
+                ).toISOString();
+              }
+            });
 
-    localStorage.removeItem(storageKey);
-    setHasSavedData(false);
-
-    if (onChange) {
-      onChange(freshDefaults, false);
-    }
-  };
+            localStorage.setItem(storageKey, JSON.stringify(processedData));
+            setHasSavedData(true);
+          } else {
+            localStorage.removeItem(storageKey);
+            setHasSavedData(false);
+          }
+        } catch (error) {
+          console.error("Error saving to localStorage:", error);
+        }
+      }, 500);
+    },
+    [mode, fields, storageKey]
+  );
 
   const getInitialValues = useMemo(() => {
     if (mode === "edit" && Object.keys(initialValues).length > 0) {
@@ -174,7 +160,7 @@ export default function DataForm({
     const savedData = loadSavedData();
 
     return { ...freshDefaults, ...(savedData || {}), ...initialValues };
-  }, []);
+  }, [mode, fields, initialValues, loadSavedData]);
 
   const schema = useMemo(() => {
     const schemaObj: Record<string, z.ZodTypeAny> = {};
@@ -241,6 +227,25 @@ export default function DataForm({
         return;
       }
 
+      const singleFileItemSchema = z
+        .object({
+          id: z.string(),
+          src: z.string(),
+          name: z.string(),
+          type: z.string().optional(),
+        })
+        .passthrough();
+
+      const fileItemSchema = z
+        .object({
+          id: z.string(),
+          src: z.string(),
+          name: z.string(),
+          type: z.string().optional(),
+          order: z.number(),
+        })
+        .passthrough();
+
       switch (field.type) {
         case "date":
           schemaObj[field.key] = isOptional
@@ -277,6 +282,33 @@ export default function DataForm({
             ? z.string().optional()
             : z.string().min(1, `${field.displayName} is required`);
           break;
+        case "file":
+          schemaObj[field.key] = isOptional
+            ? singleFileItemSchema.optional()
+            : singleFileItemSchema;
+          break;
+        case "json":
+          schemaObj[field.key] = isOptional
+            ? z.object({}).passthrough().optional()
+            : z
+                .object({})
+                .passthrough()
+                .refine((val) => val !== null && typeof val === "object", {
+                  message: `${field.displayName} must be a valid object`,
+                });
+          break;
+        case "file-multiple":
+          schemaObj[field.key] = isOptional
+            ? z.array(fileItemSchema).optional()
+            : z
+                .array(fileItemSchema)
+                .min(
+                  1,
+                  isOptional
+                    ? undefined
+                    : `At least one file is required for ${field.displayName}`
+                );
+          break;
       }
     });
 
@@ -289,16 +321,37 @@ export default function DataForm({
     mode: "onBlur",
   });
 
+  const completeFormReset = useCallback(() => {
+    const freshDefaults = createFreshDefaultValues(fields);
+
+    form.reset(freshDefaults, {
+      keepDirty: false,
+      keepErrors: false,
+      keepDirtyValues: false,
+      keepTouched: false,
+      keepIsSubmitted: false,
+      keepIsValid: false,
+      keepSubmitCount: false,
+    });
+
+    localStorage.removeItem(storageKey);
+    setHasSavedData(false);
+
+    if (onChange) {
+      onChange(freshDefaults, false);
+    }
+  }, [fields, storageKey, onChange, form]);
+
   useEffect(() => {
     if (forceClear) {
       completeFormReset();
     }
-  }, [forceClear]);
+  }, [forceClear, completeFormReset]);
 
   useEffect(() => {
     const subscription = form.watch((formValues) => {
       if (mode === "add") {
-        saveToLocalStorage(formValues as Record<string, any>);
+        saveToLocalStorage(formValues as Record<string, unknown>);
       }
     });
 
@@ -308,7 +361,7 @@ export default function DataForm({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [form, mode]);
+  }, [form, mode, saveToLocalStorage]);
 
   useEffect(() => {
     if (!onChange) return;
@@ -318,7 +371,7 @@ export default function DataForm({
         const hasChanges = form.formState.isDirty;
         const isValid =
           Object.keys(form.formState.errors).length === 0 && hasChanges;
-        onChange(formValues as Record<string, any>, isValid);
+        onChange(formValues as Record<string, unknown>, isValid);
       }, 100);
 
       return () => clearTimeout(timeoutId);
@@ -327,29 +380,78 @@ export default function DataForm({
     return () => subscription.unsubscribe();
   }, [form, onChange]);
 
-  const onSubmit = async (values: Record<string, any>) => {
+  const onSubmit = async (values: Record<string, unknown>) => {
     setIsSubmitting(true);
     try {
+      const processedValues = { ...values };
+
+      fields.forEach((field) => {
+        if (
+          field.type === "file" &&
+          typeof processedValues[field.key] === "object" &&
+          processedValues[field.key] !== null
+        ) {
+          const file = processedValues[field.key] as Record<string, unknown>;
+          const fileId = (file.id as string) || crypto.randomUUID();
+          processedValues[field.key] = {
+            id: fileId,
+            src: (file.src as string) || "",
+            name: (file.name as string) || `${fileId}`,
+            type: (file.type as string) || "",
+          };
+        }
+
+        if (
+          field.type === "file-multiple" &&
+          Array.isArray(processedValues[field.key])
+        ) {
+          processedValues[field.key] = (
+            processedValues[field.key] as unknown[]
+          ).map((file: unknown) => {
+            if (
+              typeof file === "object" &&
+              file !== null &&
+              "id" in file &&
+              "src" in file &&
+              "name" in file &&
+              "order" in file &&
+              typeof (file as Record<string, unknown>).order === "number"
+            ) {
+              return file;
+            }
+
+            const fileRecord = file as Record<string, unknown>;
+            const fileId = (fileRecord.id as string) || crypto.randomUUID();
+            return {
+              id: fileId,
+              src: (fileRecord.src as string) || "",
+              name: (fileRecord.name as string) || `${fileId}`,
+              type: (fileRecord.type as string) || "",
+              order:
+                typeof fileRecord.order === "number" ? fileRecord.order : 0,
+            };
+          });
+        }
+      });
+
       let response;
 
       if (mode === "add") {
-        response = await ApiService.addRecord(datasetId, values);
-
-        completeFormReset();
+        response = await ApiService.addRecord(datasetId, processedValues);
 
         if (response) {
           addEntry(response, datasetId);
+          completeFormReset();
         }
       } else if (mode === "edit" && recordId) {
-        response = await ApiService.updateRecord(recordId, values);
+        response = await ApiService.updateRecord(recordId, processedValues);
         if (response) {
           updateEntry(recordId, response, datasetId);
         }
       }
 
-      toast.success(successMessage);
-
       if (onSuccess && response && response.id) {
+        toast.success(successMessage);
         onSuccess(response.id);
       }
     } catch (error) {
@@ -357,7 +459,29 @@ export default function DataForm({
         `Error ${mode === "add" ? "adding" : "updating"} record:`,
         error
       );
-      toast.error(`Failed to ${mode === "add" ? "add" : "update"} record`);
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      if (errorMessage.includes("must be unique")) {
+        const fieldMatch = errorMessage.match(/field '([^']+)' must be unique/);
+        const fieldName = fieldMatch ? fieldMatch[1] : null;
+
+        if (fieldName) {
+          const field = fields.find((f) => f.displayName === fieldName);
+
+          if (field) {
+            form.setError(field.key, {
+              type: "unique",
+              message: `This ${field.displayName.toLowerCase()} already exists. Please choose a different value.`,
+            });
+          }
+        }
+
+        toast.error("Please fix the unique field conflicts and try again");
+      } else {
+        toast.error(`Failed to ${mode === "add" ? "add" : "update"} record`);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -385,7 +509,29 @@ export default function DataForm({
     markdown: fields.filter((field) => field.type === "markdown"),
     selectSingle: fields.filter((field) => field.type === "select-single"),
     selectMultiple: fields.filter((field) => field.type === "select-multiple"),
-    image: fields.filter((field) => field.type === "image"),
+    file: fields.filter((field) => field.type === "file"),
+    fileMultiple: fields.filter((field) => field.type === "file-multiple"),
+    json: fields.filter((field) => field.type === "json"),
+  };
+
+  const renderFieldLabel = (field: FieldDefinition) => {
+    const fieldError = form.formState.errors[field.key];
+    const isUniqueError = fieldError?.type === "unique";
+
+    return (
+      <FormLabel className="flex items-center">
+        {field.displayName}
+        {!field.isOptional && <span className="text-destructive ml-1">*</span>}
+        {field.isUnique && (
+          <span
+            className={`ml-1 ${isUniqueError ? "text-destructive animate-pulse" : "text-orange-500"}`}
+            title="This field must be unique"
+          >
+            ⚡
+          </span>
+        )}
+      </FormLabel>
+    );
   };
 
   const renderField = (field: FieldDefinition) => {
@@ -403,7 +549,7 @@ export default function DataForm({
               onChange: (value: string) => void;
               onBlur: () => void;
               name: string;
-              ref: React.Ref<any>;
+              ref: React.Ref<HTMLElement>;
             };
           }) => (
             <RelationField
@@ -428,7 +574,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => (
               <FormItem>
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <FormControl>
                   <ReusableSelect
                     options={field.options || []}
@@ -456,7 +602,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => (
               <FormItem>
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <FormControl>
                   <ReusableMultiSelect
                     options={field.options || []}
@@ -479,6 +625,12 @@ export default function DataForm({
       }
     }
 
+    if (field.type === "json") {
+      return (
+        <FormJsonField key={field.key} field={field} control={form.control} />
+      );
+    }
+
     switch (field.type) {
       case "date":
         return (
@@ -488,7 +640,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -563,7 +715,7 @@ export default function DataForm({
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>{field.displayName}</FormLabel>
+                    {renderFieldLabel(field)}
                     {field.description && (
                       <FormDescription>{field.description}</FormDescription>
                     )}
@@ -583,7 +735,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField, fieldState }) => (
               <FormItem>
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <FormControl>
                   <Input
                     type="number"
@@ -623,7 +775,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => (
               <FormItem>
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <FormControl>
                   <Input
                     {...formField}
@@ -650,7 +802,7 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => (
               <FormItem>
-                <FormLabel>{field.displayName}</FormLabel>
+                {renderFieldLabel(field)}
                 <FormControl>
                   <TagInput
                     value={formField.value || ""}
@@ -680,12 +832,30 @@ export default function DataForm({
           />
         );
 
-      case "image":
+      case "file":
         return (
-          <FormImageField
+          <FileUploadField
             key={field.key}
-            field={field}
             control={form.control}
+            name={field.key}
+            label={field.displayName}
+            description={field.description}
+            required={!field.isOptional}
+            unique={field.isUnique}
+            acceptedTypes={field.acceptedFileTypes}
+          />
+        );
+      case "file-multiple":
+        return (
+          <MultipleFileUploadField
+            key={field.key}
+            control={form.control}
+            name={field.key}
+            label={field.displayName}
+            description={field.description}
+            required={!field.isOptional}
+            unique={field.isUnique}
+            acceptedTypes={field.acceptedFileTypes}
           />
         );
       default:

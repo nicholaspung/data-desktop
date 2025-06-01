@@ -158,7 +158,12 @@ export default function BloodworkManager() {
                           <DataForm
                             datasetId="bloodwork"
                             fields={bloodworkFields}
-                            initialValues={selectedTestData}
+                            initialValues={
+                              selectedTestData as unknown as Record<
+                                string,
+                                unknown
+                              >
+                            }
                             onSuccess={handleEditSuccess}
                             onCancel={() => setSelectedTest("")}
                             submitLabel="Update Bloodwork Test"

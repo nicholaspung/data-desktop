@@ -1,14 +1,12 @@
-// src/components/data-page/dataset-selector.tsx
 import { useState, useEffect } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { DatasetConfig } from "./data-page";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useStore } from "@tanstack/react-store";
-import settingsStore from "@/store/settings-store";
 import GenericDataPage from "./generic-data-page";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { Separator } from "../ui/separator";
+import settingsStore from "@/store/settings-store";
 
 export function DatasetSelector({
   datasets,
@@ -25,18 +23,15 @@ export function DatasetSelector({
     search.datasetId || defaultDatasetId || ""
   );
 
-  // Get enabled datasets from settings
   const enabledDatasets = useStore(
     settingsStore,
     (state) => state.enabledDatasets
   );
 
-  // Filter datasets based on enabled datasets in settings
   const filteredDatasets = datasets.filter(
     (dataset) => enabledDatasets[dataset.id] !== false
   );
 
-  // Format datasets for the select component
   const selectOptions = filteredDatasets.map((dataset) => ({
     id: dataset.id,
     label: dataset.title,
@@ -48,14 +43,12 @@ export function DatasetSelector({
     (dataset) => dataset.id === selectedDatasetId
   );
 
-  // Update selected dataset when URL changes
   useEffect(() => {
     if (search.datasetId) {
       setSelectedDatasetId(search.datasetId);
     }
   }, [search.datasetId]);
 
-  // If selected dataset is no longer enabled, choose the first available
   useEffect(() => {
     if (
       selectedDatasetId &&
@@ -68,7 +61,6 @@ export function DatasetSelector({
     }
   }, [selectedDatasetId, filteredDatasets]);
 
-  // Handle dataset selection change
   const handleDatasetChange = (datasetId: string) => {
     setSelectedDatasetId(datasetId);
     navigate({
@@ -79,20 +71,19 @@ export function DatasetSelector({
     });
   };
 
-  // If no datasets are available
   if (filteredDatasets.length === 0) {
     return (
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-6">{title}</h1>
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-medium mb-2">No Datasets Available</h2>
-          <p className="text-muted-foreground mb-4">
-            There are no enabled datasets in the application.
-          </p>
-          <Button onClick={() => navigate({ to: "/settings" })}>
-            Go to Settings
-          </Button>
-        </Card>
+        <ReusableCard
+          title="No Datasets Available"
+          contentClassName="text-center"
+          content={
+            <p className="text-muted-foreground mb-4">
+              There are no enabled datasets in the application.
+            </p>
+          }
+        />
       </div>
     );
   }

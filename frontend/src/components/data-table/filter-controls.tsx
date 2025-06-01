@@ -1,4 +1,3 @@
-// src/components/data-table/filter-controls.tsx
 import { Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -24,46 +23,38 @@ export default function FilterControls({
   setFilterColumn: (newFilterColumn: string) => void;
   table: Table<any>;
   searchPlaceholder: string;
-  onExport?: () => void; // Optional callback for when export happens
-  data: any[]; // Full dataset for export
-  fields: FieldDefinition[]; // Field definitions for formatting
-  datasetId: string; // Dataset ID for naming export files
+  onExport?: () => void;
+  data: any[];
+  fields: FieldDefinition[];
+  datasetId: string;
 }) {
-  // Get field map for looking up display names
   const fieldMap = new Map<string, FieldDefinition>();
   fields.forEach((field) => fieldMap.set(field.key, field));
 
-  // Handle export button click
   const handleExport = () => {
-    // Get filtered rows if there's a filter applied, otherwise use all data
     const rowsToExport =
       table.getFilteredRowModel().rows.length > 0
         ? table.getFilteredRowModel().rows.map((row) => row.original)
         : data;
 
-    // Generate a filename with timestamp
     const timestamp = new Date()
       .toISOString()
       .replace(/[:.]/g, "-")
       .substring(0, 19);
     const filename = `${datasetId}_export_${timestamp}.csv`;
 
-    // Get visible columns (excluding the action and select columns)
     const visibleColumns = table
       .getVisibleLeafColumns()
       .filter((column) => column.id !== "actions" && column.id !== "select")
       .map((column) => column.id);
 
-    // Export to CSV with visible columns
     exportToCSV(rowsToExport, fields, filename, visibleColumns);
 
-    // Call optional callback
     if (onExport) {
       onExport();
     }
   };
 
-  // Get placeholder text based on selected field
   const getPlaceholder = () => {
     if (!filterColumn) return searchPlaceholder;
 

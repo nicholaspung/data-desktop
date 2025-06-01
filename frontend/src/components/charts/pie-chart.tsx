@@ -1,4 +1,3 @@
-// src/components/charts/pie-chart.tsx
 import React from "react";
 import {
   PieChart as RechartsPieChart,
@@ -13,10 +12,9 @@ import { COLORS } from "@/lib/date-utils";
 import { PieDataPoint, PieConfig } from "./charts";
 import ReusableCard from "../reusable/reusable-card";
 
-// Custom tooltip component with better styling
 const CustomTooltip = ({ active, payload, formatter, valueUnit }: any) => {
   if (active && payload && payload.length) {
-    const entry = payload[0]; // Pie chart typically has one entry per tooltip
+    const entry = payload[0];
 
     const displayValue = formatter
       ? formatter(entry.value, entry.name, entry.payload)
@@ -36,7 +34,6 @@ const CustomTooltip = ({ active, payload, formatter, valueUnit }: any) => {
   return null;
 };
 
-// Default formatter for tooltip values
 const defaultFormatter = (value: any, valueUnit?: string) => {
   const displayValue = value?.toFixed(2) || 0;
 
@@ -47,7 +44,6 @@ const defaultFormatter = (value: any, valueUnit?: string) => {
   return displayValue;
 };
 
-// Default label renderer
 const renderCustomizedLabel = ({
   cx,
   cy,
@@ -99,11 +95,9 @@ export default function CustomPieChart({
   useCustomColors?: boolean;
   className?: string;
 }) {
-  // Default formatter that includes the value unit if provided
   const defaultFormatterWithUnit = (value: any, name: string) =>
     defaultFormatter(value, name);
 
-  // Handle label prop correctly for Recharts Pie component
   const getLabelProp = (): boolean | PieLabel<any> | undefined => {
     if (pieConfig.label === undefined) {
       return renderCustomizedLabel as PieLabel<any>;
@@ -117,8 +111,6 @@ export default function CustomPieChart({
       return pieConfig.label as PieLabel<any>;
     }
 
-    // React element case - we can't directly use React elements in Pie label prop
-    // so we'd need to create a function that returns the element
     return renderCustomizedLabel as PieLabel<any>;
   };
 

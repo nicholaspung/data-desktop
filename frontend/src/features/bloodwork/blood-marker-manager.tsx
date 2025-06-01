@@ -152,7 +152,12 @@ export default function BloodMarkerManager() {
                           <DataForm
                             datasetId="blood_markers"
                             fields={bloodMarkerFields}
-                            initialValues={selectedMarkerData}
+                            initialValues={
+                              selectedMarkerData as unknown as Record<
+                                string,
+                                unknown
+                              >
+                            }
                             onSuccess={handleEditSuccess}
                             onCancel={() => setSelectedMarker("")}
                             submitLabel="Update Blood Marker"

@@ -21,8 +21,6 @@ import EditableCell from "./editable-cell";
 import FilterControls from "./filter-controls";
 import { toast } from "sonner";
 import { DataStoreName } from "@/store/data-store";
-import { ProtectedField } from "../security/protected-content";
-import { usePin } from "@/hooks/usePin";
 
 export function EditableDataTable<TData extends Record<string, any>, TValue>({
   columns,
@@ -52,8 +50,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 }: {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  fields: FieldDefinition[]; // Added field definitions
-  datasetId: DataStoreName; // Added dataset ID
+  fields: FieldDefinition[];
+  datasetId: DataStoreName;
   filterableColumns?: string[];
   searchPlaceholder?: string;
   className?: string;
@@ -67,8 +65,8 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   initialPage?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
-  onDataChange?: (updatedRowId?: string) => void; // Callback when data changes
-  useInlineEditing?: boolean; // Flag to enable inline editing
+  onDataChange?: (updatedRowId?: string) => void;
+  useInlineEditing?: boolean;
   initialSorting?: { id: string; desc: boolean }[];
   onSortingChange?: (
     columnId: string,
@@ -78,7 +76,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   onFilterChange?: (columnId: string, value: string) => void;
   initialFilterColumn?: string;
 }) {
-  const { isUnlocked } = usePin();
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
     initialFilter ? [initialFilter] : []
@@ -94,11 +91,9 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   });
   const [columnWidths, setColumnWidths] = useState<Record<string, string>>({});
 
-  // Create a field map for quick lookup
   const fieldMap = new Map<string, FieldDefinition>();
   fields.forEach((field) => fieldMap.set(field.key, field));
 
-  // Calculate column widths on initial render and when data changes
   useEffect(() => {
     const widths: Record<string, string> = {};
 
@@ -114,7 +109,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     setColumnWidths(widths);
   }, [columns, data]);
 
-  // Create selection column if selection is enabled
   const selectionColumn: ColumnDef<TData, any> = {
     id: "select",
     header: ({ table }) => (
@@ -156,19 +150,17 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           }
         }}
         aria-label="Select row"
-        onClick={(e) => e.stopPropagation()} // Prevent row click propagation
+        onClick={(e) => e.stopPropagation()}
       />
     ),
     enableSorting: false,
   };
 
-  // Add selection column if enabled
   let tableColumns = [...columns];
   if (enableSelection) {
     tableColumns = [selectionColumn, ...tableColumns];
   }
 
-  // Update internal selection state when selectedRows prop changes
   useEffect(() => {
     if (!data || data.length === 0) return;
 
@@ -183,9 +175,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     setRowSelection(selectionMap);
   }, [selectedRows, data, dataKey]);
 
-  // Create enhanced column defs that support editing
   const editableColumns = tableColumns.map((column) => {
-    // Skip selection column
     if (column.id === "select") {
       return column;
     }
@@ -198,11 +188,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         const value = getValue();
         const field = fieldMap.get(columnId);
 
-        if (row.original.private && !isUnlocked) {
-          return <ProtectedField>{value}</ProtectedField>;
-        }
-
-        // For any editable field that has a field definition
         if (useInlineEditing && field && field.key !== "id") {
           return (
             <EditableCell
@@ -220,11 +205,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           );
         }
 
-        // NON-EDITING MODE BELOW
-
-        // Handle relation fields for view mode
         if (field?.isRelation && field?.relatedDataset) {
-          // Look for the related data in xxx_id_data format
           const relatedKey = `${columnId}_data`;
           const relatedData = row.original[relatedKey];
           if (relatedData) {
@@ -240,19 +221,16 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
               </div>
             );
           } else {
-            // No related data available, show the ID
             return (
               <div className="truncate">{value ? `ID: ${value}` : "—"}</div>
             );
           }
         }
 
-        // If not a relation or not editing, use the original cell renderer if available
         if (column.cell) {
           return flexRender(column.cell, info);
         }
 
-        // Fallback to displaying the value with formatting
         return (
           <div
             className="truncate"
@@ -288,7 +266,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         typeof updater === "function" ? updater(sorting) : updater;
       setSorting(newSorting);
 
-      // Call the callback if provided
       if (onSortingChange && newSorting.length > 0) {
         const sort = newSorting[0];
         onSortingChange(sort.id, sort.desc ? "desc" : "asc");
@@ -301,13 +278,11 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         typeof updater === "function" ? updater(columnFilters) : updater;
       setColumnFilters(newFilters);
 
-      // Call the callback if provided
       if (onFilterChange) {
         const filter = newFilters.find((f) => f.id === filterColumn);
         if (filter) {
           onFilterChange(filter.id, filter.value as string);
         } else if (columnFilters.some((f) => f.id === filterColumn)) {
-          // Filter was cleared
           onFilterChange(filterColumn, "");
         }
       }
@@ -323,13 +298,11 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       rowSelection,
     },
     globalFilterFn: (row, columnId, filterValue) => {
-      // For relation fields, check the display values
       const column = table.getColumn(columnId);
       if (column?.columnDef?.meta?.isRelation) {
         const relatedDataKey = `${columnId}_data`;
         const relatedData = row.original[relatedDataKey];
         if (relatedData) {
-          // Check common display fields
           const displayFields = [
             "name",
             "title",
@@ -348,7 +321,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         }
       }
 
-      // Default behavior for regular fields
       const value = row.getValue(columnId);
       return String(value)
         .toLowerCase()
@@ -377,9 +349,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
     debugTable: process.env.NODE_ENV === "development",
   });
 
-  // Handle row click with logic to avoid editing if selection is enabled
   const handleRowClick = (row: TData) => {
-    // For selection mode, toggle selection
     if (enableSelection) {
       const rowId = String(row[dataKey]);
       const isSelected = selectedRows.includes(rowId);
@@ -405,9 +375,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         newRowSelection[rowIndex] = !isSelected;
         setRowSelection(newRowSelection);
       }
-    }
-    // If onRowClick is provided and we're not in selection mode, call it
-    else if (onRowClick) {
+    } else if (onRowClick) {
       onRowClick(row);
     }
   };
@@ -422,7 +390,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           setFilterColumn(newColumn);
           table.resetColumnFilters();
 
-          // Call the callback if a filter was active
           if (
             onFilterChange &&
             columnFilters.some((f) => f.id === filterColumn)
@@ -522,7 +489,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                     <tr
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
-                      data-row-id={row.original[dataKey]} // Add data attribute for row ID
+                      data-row-id={row.original[dataKey]}
                       className={cn(
                         "border-b",
                         !useInlineEditing && "hover:bg-muted",
@@ -547,7 +514,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                               "p-2 align-middle whitespace-pre-wrap",
                               isFirstColumn &&
                                 "sticky left-0 z-10 bg-background border-r",
-                              // Add editable-cell class if in edit mode and not in select column
+
                               useInlineEditing &&
                                 columnId !== "select" &&
                                 columnId !== "id" &&

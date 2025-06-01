@@ -27,7 +27,10 @@ import { useStore } from "@tanstack/react-store";
 import { getDisplayValue } from "@/lib/table-utils";
 import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
-import ImageUpload from "../reusable/image-upload";
+import FileUpload from "../reusable/file-upload";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import MultipleFileUpload from "../reusable/multiple-file-upload";
+import { JsonEditCell } from "./json-edit-cell";
 
 const EditableCell = ({
   value: initialValue,
@@ -53,6 +56,7 @@ const EditableCell = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInteractingWithPopover, setIsInteractingWithPopover] =
     useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const originalValue = initialValue;
   const cellRef = useRef<HTMLDivElement>(null);
 
@@ -75,8 +79,11 @@ const EditableCell = ({
           !!document
             .querySelector(".select-content")
             ?.contains(event.target as Node);
+        const isDialog = !!document
+          .querySelector('[role="dialog"]')
+          ?.contains(event.target as Node);
 
-        if (isPopoverContent || isSelectContent) {
+        if (isPopoverContent || isSelectContent || isDialog) {
           return;
         }
 
@@ -95,12 +102,24 @@ const EditableCell = ({
   }, [initialValue]);
 
   const handleEdit = () => {
+    if (
+      field.type === "file" ||
+      field.type === "file-multiple" ||
+      field.type === "json"
+    ) {
+      setShowDialog(true);
+    }
     setIsEditing(true);
   };
 
   const handleSave = async () => {
-    if (editValue === initialValue) {
+    if (
+      (field.type !== "file" && editValue === initialValue) ||
+      (field.type === "file" &&
+        JSON.stringify(editValue) === JSON.stringify(initialValue))
+    ) {
       setIsEditing(false);
+      setShowDialog(false);
       return;
     }
 
@@ -140,12 +159,14 @@ const EditableCell = ({
     } finally {
       setIsSubmitting(false);
       setIsEditing(false);
+      setShowDialog(false);
     }
   };
 
   const handleCancel = () => {
     setEditValue(initialValue);
     setIsEditing(false);
+    setShowDialog(false);
   };
 
   const handleValueChange = (newValue: any) => {
@@ -186,6 +207,15 @@ const EditableCell = ({
           return "—";
         }
         return value.join(", ");
+      case "file":
+        return value ? "Image available" : "No image";
+      case "file-multiple":
+        return value ? "Images available" : "No images";
+      case "json":
+        if (value === null || value === undefined) {
+          return "—";
+        }
+        return `${JSON.stringify(value, null, 2).slice(0, 10)}...`;
       case "text":
       default:
         return value || "-";
@@ -268,7 +298,6 @@ const EditableCell = ({
             onClick={(e) => e.stopPropagation()}
           />
         );
-
       case "number":
       case "percentage":
         return (
@@ -288,7 +317,6 @@ const EditableCell = ({
             onClick={(e) => e.stopPropagation()}
           />
         );
-
       case "boolean":
         return (
           <div className="flex justify-center items-center w-full">
@@ -299,7 +327,6 @@ const EditableCell = ({
             />
           </div>
         );
-
       case "date":
         return (
           <Popover
@@ -401,7 +428,6 @@ const EditableCell = ({
             </PopoverContent>
           </Popover>
         );
-
       case "select-single":
         return (
           <ReusableSelect
@@ -413,7 +439,6 @@ const EditableCell = ({
             triggerClassName="w-full"
           />
         );
-
       case "select-multiple":
         return (
           <ReusableMultiSelect
@@ -424,24 +449,19 @@ const EditableCell = ({
             className="min-w-[30rem]"
           />
         );
-
-      case "image":
-        return (
-          <ImageUpload
-            value={editValue || ""}
-            onChange={(value) => handleValueChange(value)}
-            aspectRatio="1/1"
-            maxSize={20}
-          />
-        );
-
+      case "file":
+        return null;
+      case "file-multiple":
+        return null;
+      case "json":
+        return null;
       default:
         return <span>{initialValue}</span>;
     }
   };
 
   const renderDisplayMode = () => {
-    if (field.type === "image") {
+    if (field.type === "file") {
       return (
         <div
           className={cn(
@@ -462,7 +482,48 @@ const EditableCell = ({
             </div>
           ) : (
             <span className="text-muted-foreground italic text-xs">
-              No image
+              No file
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    if (field.type === "file-multiple") {
+      return (
+        <div
+          className={cn(
+            "cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors",
+            "flex items-center justify-center",
+            "min-h-[30px]"
+          )}
+          style={cellStyle}
+          onClick={handleEdit}
+        >
+          {Array.isArray(initialValue) && initialValue.length > 0 ? (
+            <div className="w-8 h-8 overflow-hidden rounded-sm relative">
+              {initialValue[0].src ? (
+                <>
+                  <img
+                    src={initialValue[0].src}
+                    alt="Thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                  {initialValue.length > 1 && (
+                    <div className="absolute bottom-0 right-0 bg-black/70 text-white text-xs px-1 rounded-tl-sm">
+                      {initialValue.length}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground italic text-xs">
+                  Invalid file format
+                </span>
+              )}
+            </div>
+          ) : (
+            <span className="text-muted-foreground italic text-xs">
+              No files
             </span>
           )}
         </div>
@@ -508,7 +569,99 @@ const EditableCell = ({
 
   return (
     <div ref={cellRef}>
-      {isEditing ? (
+      {isEditing && field.type === "file" && showDialog ? (
+        <Dialog
+          open={showDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCancel();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-lg max-h-[600px] overflow-y-auto">
+            <DialogTitle>
+              {initialValue ? "Update Image" : "Upload Image"}
+            </DialogTitle>
+            <div className="py-4">
+              <FileUpload
+                value={editValue || null}
+                onChange={(value) => handleValueChange(value)}
+                maxSize={20}
+              />
+              <div className="flex justify-end mt-4 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSubmitting}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : isEditing && field.type === "file-multiple" && showDialog ? (
+        <Dialog
+          open={showDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCancel();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-lg max-h-[600px] overflow-y-auto">
+            <DialogTitle>
+              {initialValue && initialValue.length > 0
+                ? "Update Images"
+                : "Upload Images"}
+            </DialogTitle>
+            <div className="py-4">
+              <MultipleFileUpload
+                value={editValue || []}
+                onChange={(value) => handleValueChange(value)}
+                maxSize={20}
+              />
+              <div className="flex justify-end mt-4 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSubmitting}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : isEditing && field.type === "json" && showDialog ? (
+        <Dialog
+          open={showDialog}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCancel();
+            }
+          }}
+        >
+          <DialogContent className="sm:max-w-lg max-h-[600px] overflow-y-auto">
+            <DialogTitle>Update JSON</DialogTitle>
+            <div className="py-4">
+              <JsonEditCell
+                value={editValue || {}}
+                onChange={(value) => {
+                  handleValueChange(value);
+                  handleSave();
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : isEditing && field.type !== "file" ? (
         <div style={cellStyle} className="flex flex-col gap-1">
           <OriginalValueLabel />
           <div className={cellClassName}>

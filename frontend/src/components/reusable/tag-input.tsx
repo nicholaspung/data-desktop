@@ -1,4 +1,3 @@
-// src/components/reusable/tag-input.tsx
 import { Badge } from "@/components/ui/badge";
 import { Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,8 +31,6 @@ export default function TagInput({
       generalData.forEach((entry) => {
         if (!entry[generalDataTagField]) return;
 
-        console.log(entry[generalDataTagField]);
-
         const entryTags = entry[generalDataTagField]
           .split(",")
           .map((tag: string) => tag.trim())
@@ -43,13 +40,11 @@ export default function TagInput({
       });
     }
 
-    // Get currently selected tags
     const selectedTags = value
       .split(",")
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    // Filter out already selected tags
     const availableTags = Array.from(tagsSet)
       .filter((tag) => !selectedTags.includes(tag))
       .sort()
@@ -66,26 +61,19 @@ export default function TagInput({
   };
 
   const handleTagSelect = (option: SelectOption) => {
-    // Extract current tags as an array
     const currentTags = value
       .split(",")
       .map((t) => t.trim())
       .filter((t) => t);
 
-    // Check if we're in the middle of typing a new tag
-    // This happens when the last character is not a comma
     const isTypingNewTag = !value.trim().endsWith(",") && value.trim() !== "";
 
     if (isTypingNewTag) {
-      // Replace the currently typed tag with the selected one
-      // First remove the partial tag being typed
       const withoutCurrentTag = currentTags.slice(0, -1);
-      // Then add the selected tag
+
       const newTags = [...withoutCurrentTag, option.label];
       onChange(newTags.join(", "));
     } else {
-      // We're starting a new tag after a comma or at the beginning
-      // Check if the tag is already in the list
       if (!currentTags.includes(option.label)) {
         const newTags = [...currentTags, option.label];
         onChange(newTags.join(", "));

@@ -11,12 +11,11 @@ export default function useLoadData({
   title,
   fetchDataNow = false,
 }: {
-  fields: FieldDefinition[]; // Replace with actual type for fields
+  fields: FieldDefinition[];
   datasetId: DataStoreName;
   title: string;
   fetchDataNow?: boolean;
 }) {
-  // Load data when the component mounts
   useEffect(() => {
     if (fetchDataNow) {
       loadData();

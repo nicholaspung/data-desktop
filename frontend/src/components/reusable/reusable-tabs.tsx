@@ -1,4 +1,3 @@
-// src/components/reusable/reusable-tabs.tsx
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -19,6 +18,7 @@ interface ReusableTabsProps {
   tabsListClassName?: string;
   tabsContentClassName?: string;
   onChange?: (tabId: string) => void;
+  value?: string;
 }
 
 export default function ReusableTabs({
@@ -30,11 +30,16 @@ export default function ReusableTabs({
   tabsListClassName = "",
   tabsContentClassName = "",
   onChange,
+  value,
 }: ReusableTabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultTabId || tabs[0]?.id || "");
+  const [internalActiveTab, setInternalActiveTab] = useState(
+    defaultTabId || tabs[0]?.id || "",
+  );
+
+  const activeTab = value !== undefined ? value : internalActiveTab;
 
   const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
+    setInternalActiveTab(tabId);
     if (onChange) {
       onChange(tabId);
     }
@@ -54,7 +59,7 @@ export default function ReusableTabs({
           orientation === "horizontal" && tabs.length > 0
             ? "flex flex-wrap justify-center gap-1"
             : "",
-          tabsListClassName
+          tabsListClassName,
         )}
       >
         {tabs.map((tab) => (
@@ -65,7 +70,7 @@ export default function ReusableTabs({
               tab.icon ? "flex gap-2 items-center" : "",
               orientation === "horizontal" && tabs.length > 5
                 ? "flex-grow-0"
-                : "flex-1"
+                : "flex-1",
             )}
           >
             {tab.icon && tab.icon}

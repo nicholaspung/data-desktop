@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlusCircle, Table, ListPlus } from "lucide-react";
+import { PlusCircle, Table, ListPlus, Trash2 } from "lucide-react";
 import GenericDataTable from "@/components/data-table/generic-data-table";
 import DataForm from "@/components/data-form/data-form";
 import { BatchEntryTable } from "@/components/data-table/batch-entry-table";
@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { DataStoreName } from "@/store/data-store";
 import { CustomTab } from "./data-page";
 import ReusableTabs, { TabItem } from "@/components/reusable/reusable-tabs";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function GenericDataPage({
   datasetId,
@@ -38,12 +40,31 @@ export default function GenericDataPage({
   tablePageSize?: number;
   highlightedRecordId?: string | null;
 }) {
-  const [key, setKey] = useState(0); // Used to force refresh components
+  const [key, setKey] = useState(0);
 
   const handleDataChange = () => {
     setKey((prev) => prev + 1);
     if (onDataChange) {
       onDataChange();
+    }
+  };
+
+  const clearLocalStorageData = () => {
+    const batchEntryKey = `batch_entry_${datasetId}`;
+    const addFormKey = `${datasetId}_add_form_data`;
+
+    const hadBatchData = localStorage.getItem(batchEntryKey) !== null;
+    localStorage.removeItem(batchEntryKey);
+
+    const hadFormData = localStorage.getItem(addFormKey) !== null;
+    localStorage.removeItem(addFormKey);
+
+    setKey((prev) => prev + 1);
+
+    if (hadBatchData || hadFormData) {
+      toast.success("Local saved data cleared successfully");
+    } else {
+      toast.info("No saved data found to clear");
     }
   };
 
@@ -130,6 +151,15 @@ export default function GenericDataPage({
             <p className="text-muted-foreground mt-1">{description}</p>
           )}
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={clearLocalStorageData}
+          className="text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Clear Saved Data
+        </Button>
       </div>
 
       {allTabs.length > 0 ? (

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Info, AlertTriangle, LightbulbIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import ReusableCard from "@/components/reusable/reusable-card";
 import ReactMarkdown from "react-markdown";
 
 type InfoPanelVariant = "info" | "tip" | "warning";
@@ -29,33 +29,17 @@ export function InfoPanel({
   iconClassName,
   storageKey,
 }: InfoPanelProps) {
-  const [expanded, setExpanded] = useState(() => {
-    if (storageKey) {
-      try {
-        const storedState = localStorage.getItem(`infopanel-${storageKey}`);
-        return storedState !== null ? JSON.parse(storedState) : defaultExpanded;
-      } catch (e) {
-        console.error(e);
-        return defaultExpanded;
-      }
-    }
-    return defaultExpanded;
-  });
+  const [localExpanded, setLocalExpanded] = useState(defaultExpanded);
+  const [storageExpanded, setStorageExpanded] = useInfoPanelState(
+    storageKey || "temp",
+    defaultExpanded
+  );
+
+  const expanded = storageKey ? storageExpanded : localExpanded;
+  const setExpanded = storageKey ? setStorageExpanded : setLocalExpanded;
 
   const toggleExpanded = () => {
-    const newState = !expanded;
-    setExpanded(newState);
-
-    if (storageKey) {
-      try {
-        localStorage.setItem(
-          `infopanel-${storageKey}`,
-          JSON.stringify(newState)
-        );
-      } catch (e) {
-        console.error("Failed to save panel state to localStorage", e);
-      }
-    }
+    setExpanded(!expanded);
   };
 
   const variantStyles: Record<InfoPanelVariant, string> = {
@@ -76,50 +60,51 @@ export function InfoPanel({
   };
 
   return (
-    <Card className={cn("border-l-4", variantStyles[variant], className)}>
-      <CardContent className={cn("p-4", contentClassName)}>
-        {/* Header is now inside CardContent, removing the extra padding */}
-        <div
-          className={cn(
-            "flex flex-row items-center justify-between mb-2",
-            collapsible && "cursor-pointer"
-          )}
-          onClick={collapsible ? toggleExpanded : undefined}
-        >
-          <div className="flex items-center space-x-2">
-            {variantIcons[variant]}
-            <h3 className="text-base font-medium">
-              {title || variant.charAt(0).toUpperCase() + variant.slice(1)}
-            </h3>
-          </div>
-          {collapsible && (
-            <ChevronDown
-              className={cn(
-                "h-5 w-5 transition-transform",
-                expanded ? "transform rotate-180" : ""
-              )}
-            />
-          )}
-        </div>
-
-        {/* Content area */}
-        {expanded && (
-          <div className="text-sm">
-            {typeof children === "string" ? (
-              <ReactMarkdown>{children}</ReactMarkdown>
-            ) : (
-              children
+    <ReusableCard
+      cardClassName={cn("border-l-4", variantStyles[variant], className)}
+      contentClassName={cn(contentClassName, "pt-4")}
+      showHeader={false}
+      content={
+        <>
+          <div
+            className={cn(
+              "flex flex-row items-center justify-between mb-2",
+              collapsible && "cursor-pointer"
+            )}
+            onClick={collapsible ? toggleExpanded : undefined}
+          >
+            <div className="flex items-center space-x-2">
+              {variantIcons[variant]}
+              <h3 className="text-base font-medium">
+                {title || variant.charAt(0).toUpperCase() + variant.slice(1)}
+              </h3>
+            </div>
+            {collapsible && (
+              <ChevronDown
+                className={cn(
+                  "h-5 w-5 transition-transform",
+                  expanded ? "transform rotate-180" : ""
+                )}
+              />
             )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+
+          {/* Content area */}
+          {expanded && (
+            <div className="text-sm">
+              {typeof children === "string" ? (
+                <ReactMarkdown>{children}</ReactMarkdown>
+              ) : (
+                children
+              )}
+            </div>
+          )}
+        </>
+      }
+    />
   );
 }
 
-/**
- * Alternative component with a more compact design
- */
 export function CompactInfoPanel({
   children,
   variant = "info",
@@ -130,35 +115,17 @@ export function CompactInfoPanel({
   contentClassName,
   storageKey,
 }: InfoPanelProps) {
-  const [expanded, setExpanded] = useState(() => {
-    if (storageKey) {
-      try {
-        const storedState = localStorage.getItem(
-          `infopanel-compact-${storageKey}`
-        );
-        return storedState !== null ? JSON.parse(storedState) : defaultExpanded;
-      } catch (e) {
-        console.error(e);
-        return defaultExpanded;
-      }
-    }
-    return defaultExpanded;
-  });
+  const [localExpanded, setLocalExpanded] = useState(defaultExpanded);
+  const [storageExpanded, setStorageExpanded] = useInfoPanelState(
+    storageKey ? `compact-${storageKey}` : "temp",
+    defaultExpanded
+  );
+
+  const expanded = storageKey ? storageExpanded : localExpanded;
+  const setExpanded = storageKey ? setStorageExpanded : setLocalExpanded;
 
   const toggleExpanded = () => {
-    const newState = !expanded;
-    setExpanded(newState);
-
-    if (storageKey) {
-      try {
-        localStorage.setItem(
-          `infopanel-compact-${storageKey}`,
-          JSON.stringify(newState)
-        );
-      } catch (e) {
-        console.error("Failed to save panel state to localStorage", e);
-      }
-    }
+    setExpanded(!expanded);
   };
 
   const variantStyles: Record<
@@ -225,16 +192,12 @@ export function CompactInfoPanel({
   );
 }
 
-/**
- * Hook that manages the expanded state with persistence through localStorage
- */
 export function useInfoPanelState(
   key: string,
   defaultExpanded = true
 ): [boolean, (value: boolean) => void] {
   const storageKey = `infopanel-${key}`;
 
-  // Initialize state from localStorage if available
   const [expanded, setExpandedState] = useState(() => {
     try {
       const stored = localStorage.getItem(storageKey);
@@ -245,7 +208,6 @@ export function useInfoPanelState(
     }
   });
 
-  // Update state and localStorage when toggling
   const setExpanded = (value: boolean) => {
     setExpandedState(value);
     try {

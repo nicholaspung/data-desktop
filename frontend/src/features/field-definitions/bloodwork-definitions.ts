@@ -1,13 +1,14 @@
-// src/features/field-definitions/bloodwork-fields.ts
-import { FieldDefinitionsDataset } from "@/types/types";
+import {
+  FieldDefinitionsDataset,
+  DATASET_REFERENCES,
+  createRelationField,
+} from "@/types/types";
 
-// Main bloodwork dataset definition
 export const BLOODWORK_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "bloodwork",
   name: "Bloodwork",
   description: "Blood test results and markers",
   fields: [
-    // Basic blood test information
     {
       key: "date",
       type: "date",
@@ -39,7 +40,6 @@ export const BLOODWORK_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   ],
 };
 
-// Blood markers dataset definition
 export const BLOOD_MARKERS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "blood_markers",
   name: "Blood Markers",
@@ -118,39 +118,35 @@ export const BLOOD_MARKERS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   ],
 };
 
-// Blood test results dataset definition
 export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "blood_results",
   name: "Blood Results",
   description: "Individual blood marker results for tests",
   fields: [
-    {
-      key: "blood_test_id",
-      type: "text",
-      displayName: "Test ID",
-      description: "ID of the related blood test",
-      isSearchable: true,
-      // Relation field (for reference - will be used in backend)
-      isRelation: true,
-      relatedDataset: "bloodwork",
-      relatedField: "id",
-      displayField: "date",
-      displayFieldType: "date",
-    },
-    {
-      key: "blood_marker_id",
-      type: "text",
-      displayName: "Marker ID",
-      description: "ID of the related blood marker",
-      isSearchable: true,
-      // Relation field (for reference - will be used in backend)
-      isRelation: true,
-      relatedDataset: "blood_markers",
-      relatedField: "id",
-      displayField: "name",
-      secondaryDisplayField: "unit",
-      secondaryDisplayFieldType: "text",
-    },
+    createRelationField(
+      "blood_test_id",
+      "Test ID",
+      DATASET_REFERENCES.BLOODWORK,
+      {
+        description: "ID of the related blood test",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "date",
+        displayFieldType: "date",
+      }
+    ),
+    createRelationField(
+      "blood_marker_id",
+      "Marker ID",
+      DATASET_REFERENCES.BLOOD_MARKERS,
+      {
+        description: "ID of the related blood marker",
+        deleteBehavior: "preventDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+        secondaryDisplayField: "unit",
+        secondaryDisplayFieldType: "text",
+      }
+    ),
     {
       key: "value_number",
       type: "number",

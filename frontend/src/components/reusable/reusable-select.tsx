@@ -37,10 +37,8 @@ export default function ReusableSelect({
   groupByKey?: string;
   useGroups?: boolean;
 }) {
-  // Only perform grouping if useGroups is true
   const renderOptions = () => {
     if (!useGroups) {
-      // Render flat list of options (original behavior)
       return options.map((option) => (
         <SelectItem key={option.id} value={option.id}>
           {renderItem ? renderItem(option) : option.label}
@@ -48,7 +46,6 @@ export default function ReusableSelect({
       ));
     }
 
-    // Group options by the groupByKey property
     const groupedOptions = options.reduce(
       (groups: Record<string, any[]>, option) => {
         const group = (option[groupByKey as keyof any] as string) || "Other";
@@ -61,7 +58,6 @@ export default function ReusableSelect({
       {}
     );
 
-    // Render grouped options
     return Object.entries(groupedOptions).map(
       ([group, groupOptions], groupIndex) => (
         <div key={group}>

@@ -1,26 +1,23 @@
-// src/components/charts/chart-utils.ts
 import { format } from "date-fns";
 
-// Default chart colors
 export const CHART_COLORS = [
-  "#8884d8", // Purple
-  "#82ca9d", // Green
-  "#ffc658", // Yellow
-  "#ff8042", // Orange
-  "#0088FE", // Blue
-  "#00C49F", // Teal
-  "#FFBB28", // Gold
-  "#FF8042", // Coral
-  "#a4de6c", // Light Green
-  "#d0ed57", // Lime
-  "#83a6ed", // Light Blue
-  "#8dd1e1", // Sky Blue
-  "#FF6B6B", // Red
-  "#6A6CFF", // Indigo
-  "#A06AFF", // Purple
+  "#8884d8",
+  "#82ca9d",
+  "#ffc658",
+  "#ff8042",
+  "#0088FE",
+  "#00C49F",
+  "#FFBB28",
+  "#FF8042",
+  "#a4de6c",
+  "#d0ed57",
+  "#83a6ed",
+  "#8dd1e1",
+  "#FF6B6B",
+  "#6A6CFF",
+  "#A06AFF",
 ];
 
-// Format date objects consistently for charts
 export const formatChartDate = (date: Date | string): string => {
   if (!date) return "";
 
@@ -28,7 +25,6 @@ export const formatChartDate = (date: Date | string): string => {
   return format(dateObj, "MMM d, yyyy");
 };
 
-// Pre-process data to ensure dates are formatted consistently
 export const preprocessChartData = <T extends Record<string, any>>(
   data: T[],
   dateKey: string = "date",
@@ -37,10 +33,8 @@ export const preprocessChartData = <T extends Record<string, any>>(
   if (!data || data.length === 0) return [];
 
   return data.map((item) => {
-    // Create a new object with a type that allows additional properties
     const processed = { ...item } as T & { [key: string]: any };
 
-    // Format the date if it exists
     if (processed[dateKey]) {
       (processed as Record<string, any>)[`${dateKey}Formatted`] = formatFn(
         processed[dateKey]
@@ -51,7 +45,6 @@ export const preprocessChartData = <T extends Record<string, any>>(
   });
 };
 
-// Sort data by date
 export const sortByDate = <T extends Record<string, any>>(
   data: T[],
   dateKey: string = "date",
@@ -68,15 +61,14 @@ export const sortByDate = <T extends Record<string, any>>(
   });
 };
 
-// Get color based on value for heatmaps and gradient visualizations
 export const getColorByValue = (
   value: number,
   thresholds: [number, string][] = [
-    [10, "#82ca9d"], // Low - Green
-    [20, "#8884d8"], // Medium-Low - Purple
-    [30, "#ffc658"], // Medium - Yellow
-    [40, "#ff8042"], // Medium-High - Orange
-    [Infinity, "#d32f2f"], // High - Red
+    [10, "#82ca9d"],
+    [20, "#8884d8"],
+    [30, "#ffc658"],
+    [40, "#ff8042"],
+    [Infinity, "#d32f2f"],
   ]
 ): string => {
   for (const [threshold, color] of thresholds) {
@@ -84,10 +76,9 @@ export const getColorByValue = (
       return color;
     }
   }
-  return thresholds[thresholds.length - 1][1]; // Default to last color
+  return thresholds[thresholds.length - 1][1];
 };
 
-// Calculate progress percentage between start and target
 export const calculateProgress = (
   current: number,
   target: number,
@@ -95,19 +86,17 @@ export const calculateProgress = (
   startValue?: number
 ): number => {
   if (isLowerBetter) {
-    // For metrics where lower is better (like body fat %, VAT mass)
-    if (current <= target) return 100; // Already at or below target
+    if (current <= target) return 100;
 
-    const start = startValue ?? current * 1.2; // Default: assume starting point is 20% higher
+    const start = startValue ?? current * 1.2;
     return Math.min(
       100,
       Math.max(0, ((start - current) / (start - target)) * 100)
     );
   } else {
-    // For metrics where higher is better (when gaining weight/muscle is the goal)
-    if (current >= target) return 100; // Already at or above target
+    if (current >= target) return 100;
 
-    const start = startValue ?? current * 0.8; // Default: assume starting point is 20% lower
+    const start = startValue ?? current * 0.8;
     return Math.min(
       100,
       Math.max(0, ((current - start) / (target - start)) * 100)
@@ -115,30 +104,22 @@ export const calculateProgress = (
   }
 };
 
-// Add missing points for line chart interpolation
-// This is a stub function that will be implemented later if needed
 export const fillMissingDates = <T extends Record<string, any>>(
   data: T[],
   dateKey: string = "date"
 ): T[] => {
   if (!data || data.length === 0) return [];
 
-  // Sort the data by date
   return sortByDate(data, dateKey);
-
-  // More advanced date filling logic can be implemented in the future if needed
 };
 
-// Helper function to get the display name for a field
 export const getFieldDisplayName = (fieldKey: string): string => {
-  // Convert snake_case to Title Case with proper spacing
   return fieldKey
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 };
 
-// Helper to get domain for y-axis with appropriate padding
 export const getYAxisDomain = (
   data: any[],
   dataKeys: string[],
@@ -151,7 +132,6 @@ export const getYAxisDomain = (
   let min = Infinity;
   let max = -Infinity;
 
-  // Find min and max values across all specified data keys
   data.forEach((item) => {
     dataKeys.forEach((key) => {
       const value = Number(item[key]);
@@ -162,25 +142,21 @@ export const getYAxisDomain = (
     });
   });
 
-  // If we didn't find any valid values
   if (min === Infinity || max === -Infinity) {
     return [0, "auto" as const];
   }
 
-  // Add padding
   const range = max - min;
-  min = Math.max(0, min - range * padding); // Don't go below zero for most metrics
+  min = Math.max(0, min - range * padding);
   max = max + range * padding;
 
   return [min, max];
 };
 
-// Default formatter for tooltip values
 export const defaultFormatter = (value: any, name: string, props: any) => {
   let displayValue = value?.toFixed(2) || 0;
   const unit = props.unit || "";
 
-  // Special handling for percentage values
   if (
     name.toLowerCase().includes("percentage") ||
     name.toLowerCase().includes("%")
@@ -193,11 +169,10 @@ export const defaultFormatter = (value: any, name: string, props: any) => {
   return displayValue;
 };
 
-// Default function to get colors based on values (for heat maps and similar visualizations)
 export const defaultGetColorByValue = (value: number) => {
-  if (value < 10) return "#82ca9d"; // Low - Green
-  if (value < 20) return "#8884d8"; // Medium-Low - Purple
-  if (value < 30) return "#ffc658"; // Medium - Yellow
-  if (value < 40) return "#ff8042"; // Medium-High - Orange
-  return "#d32f2f"; // High - Red
+  if (value < 10) return "#82ca9d";
+  if (value < 20) return "#8884d8";
+  if (value < 30) return "#ffc658";
+  if (value < 40) return "#ff8042";
+  return "#d32f2f";
 };

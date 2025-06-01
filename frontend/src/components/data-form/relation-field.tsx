@@ -1,4 +1,3 @@
-// src/components/data-form/relation-field.tsx
 import { AlertCircle } from "lucide-react";
 import {
   FormControl,
@@ -14,34 +13,49 @@ import dataStore, { DataStoreName } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
 import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
+import { useFormContext } from "react-hook-form";
 
 export function RelationField({
   field,
   fieldDef,
   onChange,
 }: {
-  field: any; // React Hook Form field
+  field: any;
   fieldDef: FieldDefinition;
   onChange: (value: string) => void;
 }) {
+  const { formState } = useFormContext();
+  const fieldError = formState.errors[fieldDef.key];
+  const isUniqueError = fieldError?.type === "unique";
+  
   const data =
     useStore(
       dataStore,
       (state) => state[fieldDef.relatedDataset as DataStoreName]
-    ) || []; // Get data from the store
+    ) || [];
   const isLoading =
     useStore(
       loadingStore,
       (state) => state[fieldDef.relatedDataset as DataStoreName]
-    ) || false; // Get data from the store
-  // Transform data to options with id and label
+    ) || false;
+
   const options = generateOptionsForLoadRelationOptions(data, fieldDef);
 
-  // If there are no options and we're not loading, display an alert with guidance
   if (options.length === 0) {
     return (
       <FormItem>
-        <FormLabel>{fieldDef.displayName}</FormLabel>
+        <FormLabel className="flex items-center">
+          {fieldDef.displayName}
+          {!fieldDef.isOptional && <span className="text-destructive ml-1">*</span>}
+          {fieldDef.isUnique && (
+            <span 
+              className={`ml-1 ${isUniqueError ? "text-destructive animate-pulse" : "text-orange-500"}`} 
+              title="This field must be unique"
+            >
+              ⚡
+            </span>
+          )}
+        </FormLabel>
         <Alert variant="destructive" className="mb-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -59,7 +73,18 @@ export function RelationField({
 
   return (
     <FormItem>
-      <FormLabel>{fieldDef.displayName}</FormLabel>
+      <FormLabel className="flex items-center">
+        {fieldDef.displayName}
+        {!fieldDef.isOptional && <span className="text-destructive ml-1">*</span>}
+        {fieldDef.isUnique && (
+          <span 
+            className={`ml-1 ${isUniqueError ? "text-destructive animate-pulse" : "text-orange-500"}`} 
+            title="This field must be unique"
+          >
+            ⚡
+          </span>
+        )}
+      </FormLabel>
       <FormControl>
         <ReusableSelect
           options={options}

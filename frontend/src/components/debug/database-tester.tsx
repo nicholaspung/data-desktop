@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import ReusableCard from "@/components/reusable/reusable-card";
 import {
   GetDatasets,
   GetRecords,
@@ -55,8 +49,8 @@ const DatabaseTester = () => {
       setRecords([]);
 
       const data = useRelations
-        ? await GetRecordsWithRelations(selectedDataset)
-        : await GetRecords(selectedDataset);
+        ? await GetRecordsWithRelations(selectedDataset, true)
+        : await GetRecords(selectedDataset, true);
 
       setRecords((data as any) || []);
     } catch (err: any) {
@@ -78,7 +72,7 @@ const DatabaseTester = () => {
       setError("");
       setSelectedRecord(null);
 
-      const data = await GetRecord(recordId);
+      const data = await GetRecord(recordId, true, true);
       setSelectedRecord(data as any);
     } catch (err: any) {
       setError(`Error loading record: ${err.message || err}`);
@@ -100,14 +94,10 @@ const DatabaseTester = () => {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Database Tester</CardTitle>
-          <CardDescription>
-            Test database functions to debug relation issues
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ReusableCard
+        title="Database Tester"
+        description="Test database functions to debug relation issues"
+        content={
           <div className="space-y-4">
             <div className="flex flex-col space-y-2">
               <label className="text-sm font-medium">Select Dataset:</label>
@@ -170,8 +160,8 @@ const DatabaseTester = () => {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
       <ReusableTabs
         tabs={[
           {
@@ -180,8 +170,10 @@ const DatabaseTester = () => {
             content: (
               <div className="space-y-4">
                 {records.length > 0 ? (
-                  <Card>
-                    <CardContent className="p-4">
+                  <ReusableCard
+                    showHeader={false}
+                    contentClassName="pt-6"
+                    content={
                       <div className="overflow-auto max-h-[500px]">
                         {records.slice(0, 5).map((record: any, index) => (
                           <div key={record.id} className="mb-4">
@@ -218,8 +210,8 @@ const DatabaseTester = () => {
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    }
+                  />
                 ) : (
                   <div className="text-center p-8 text-muted-foreground">
                     No records to display. Select a dataset and click "Load
@@ -235,16 +227,14 @@ const DatabaseTester = () => {
             content: (
               <>
                 {selectedRecord ? (
-                  <Card>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold mb-2">
-                        Record ID: {selectedRecord.id}
-                      </h3>
+                  <ReusableCard
+                    title={`Record ID: ${selectedRecord.id}`}
+                    content={
                       <pre className="p-2 text-xs bg-muted rounded overflow-auto max-h-[500px]">
                         {formatJSON(selectedRecord)}
                       </pre>
-                    </CardContent>
-                  </Card>
+                    }
+                  />
                 ) : (
                   <div className="text-center p-8 text-muted-foreground">
                     No record to display. Enter a record ID and click the search

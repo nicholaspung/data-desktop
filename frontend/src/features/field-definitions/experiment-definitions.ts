@@ -1,5 +1,8 @@
-// src/features/field-definitions/experiment-definitions.ts
-import { FieldDefinitionsDataset } from "@/types/types";
+import {
+  FieldDefinitionsDataset,
+  DATASET_REFERENCES,
+  createRelationField,
+} from "@/types/types";
 
 export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "experiments",
@@ -113,18 +116,19 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Default Value",
       description: "Default value for this metric",
     },
-    {
-      key: "category_id",
-      type: "text",
-      displayName: "Category",
-      description: "Category of this metric",
-      isSearchable: true,
-      isRelation: true,
-      isOptional: true,
-      relatedDataset: "metric_categories",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "category_id",
+      "Category",
+      DATASET_REFERENCES.METRIC_CATEGORIES,
+      {
+        description: "Category of this metric",
+        deleteBehavior: "preventDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+        isSearchable: false,
+        isOptional: true,
+      }
+    ),
     {
       key: "active",
       type: "boolean",
@@ -153,7 +157,7 @@ export const METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "schedule_days",
-      type: "select-multiple", // Will be handled via a custom component
+      type: "select-multiple",
       displayName: "Show On Days",
       description: "Which days of the week to show this metric",
       isOptional: true,
@@ -214,30 +218,27 @@ export const DAILY_LOG_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Date of the log",
       isSearchable: true,
     },
-    {
-      key: "metric_id",
-      type: "text",
-      displayName: "Metric",
+    createRelationField("metric_id", "Metric", DATASET_REFERENCES.METRICS, {
       description: "The metric being tracked",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "metrics",
-      relatedField: "id",
+      deleteBehavior: "preventDeleteIfReferenced",
       displayField: "name",
-      secondaryDisplayFieldType: "text",
+      displayFieldType: "text",
       secondaryDisplayField: "description",
-    },
-    {
-      key: "experiment_id",
-      type: "text",
-      displayName: "Experiment",
-      description: "The experiment this log belongs to (if any)",
-      isOptional: true,
-      isRelation: true,
-      relatedDataset: "experiments",
-      relatedField: "id",
-      displayField: "name",
-    },
+      secondaryDisplayFieldType: "text",
+    }),
+    createRelationField(
+      "experiment_id",
+      "Experiment",
+      DATASET_REFERENCES.EXPERIMENTS,
+      {
+        description: "The experiment this log belongs to (if any)",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+        isSearchable: false,
+        isOptional: true,
+      }
+    ),
     {
       key: "value",
       type: "text",
@@ -294,28 +295,23 @@ export const EXPERIMENT_METRIC_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Experiment Metrics",
   description: "Metrics and targets for experiments",
   fields: [
-    {
-      key: "experiment_id",
-      type: "text",
-      displayName: "Experiment",
-      description: "The experiment this metric belongs to",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "experiments",
-      relatedField: "id",
-      displayField: "name",
-    },
-    {
-      key: "metric_id",
-      type: "text",
-      displayName: "Metric",
+    createRelationField(
+      "experiment_id",
+      "Experiment",
+      DATASET_REFERENCES.EXPERIMENTS,
+      {
+        description: "The experiment this metric belongs to",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
+    createRelationField("metric_id", "Metric", DATASET_REFERENCES.METRICS, {
       description: "The metric to track in this experiment",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "metrics",
-      relatedField: "id",
+      deleteBehavior: "preventDeleteIfReferenced",
       displayField: "name",
-    },
+      displayFieldType: "text",
+    }),
     {
       key: "target",
       type: "text",

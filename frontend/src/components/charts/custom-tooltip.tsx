@@ -1,4 +1,3 @@
-// Custom tooltip component with better styling
 export const CustomTooltip = ({ active, payload, label, formatter }: any) => {
   if (active && payload && payload.length) {
     return (

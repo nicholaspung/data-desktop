@@ -1,4 +1,3 @@
-// src/store/settings-store.ts
 import { Store } from "@tanstack/react-store";
 
 interface SettingsState {
@@ -10,7 +9,6 @@ interface SettingsState {
   setEnabledDataset: (dataset: string, enabled: boolean) => void;
 }
 
-// Define the initial visible routes
 const defaultRoutes = {
   "/": true,
   "/dexa": true,
@@ -25,12 +23,10 @@ const defaultRoutes = {
   "/dataset": true,
   "/settings": true,
   "/todos": true,
-  // People CRM routes
   "/people": true,
   "/people-crm": true,
 };
 
-// Define initial enabled datasets
 const defaultDatasets = {
   dexa: true,
   bloodwork: true,
@@ -48,7 +44,6 @@ const defaultDatasets = {
   time_entries: true,
   time_categories: true,
   todos: true,
-  // People CRM datasets
   people: true,
   meetings: true,
   person_attributes: true,
@@ -58,7 +53,6 @@ const defaultDatasets = {
   person_relationships: true,
 };
 
-// Initialize settings from localStorage or defaults
 const getInitialState = (): Partial<SettingsState> => {
   try {
     const savedSettings = localStorage.getItem("app-settings");
@@ -116,7 +110,6 @@ const initialState: SettingsState = {
   },
 } as SettingsState;
 
-// Helper function to save settings to localStorage
 const saveSettings = (state: SettingsState) => {
   try {
     localStorage.setItem(
@@ -132,7 +125,6 @@ const saveSettings = (state: SettingsState) => {
   }
 };
 
-// Create the settings store
 const settingsStore = new Store<SettingsState>(initialState);
 
 export default settingsStore;

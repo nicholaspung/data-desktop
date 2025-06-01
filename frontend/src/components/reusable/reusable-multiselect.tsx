@@ -1,4 +1,3 @@
-// src/components/reusable/reusable-multi-select.tsx
 import { useState, useRef, useEffect } from "react";
 import { Check, ChevronsUpDown, X, Loader2 } from "lucide-react";
 import { Badge } from "../ui/badge";
@@ -18,7 +17,7 @@ import { ScrollArea } from "../ui/scroll-area";
 export interface MultiSelectOption {
   id: string;
   label: string;
-  [key: string]: any; // Allow for additional properties
+  [key: string]: any;
 }
 
 interface ReusableMultiSelectProps {
@@ -58,7 +57,6 @@ export default function ReusableMultiSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [inputValue, setInputValue] = useState("");
 
-  // Group options if needed
   const getGroupedOptions = () => {
     if (!useGroups) return { "": options };
 
@@ -77,31 +75,26 @@ export default function ReusableMultiSelect({
 
   const groupedOptions = getGroupedOptions();
 
-  // Filter function for search
   const filteredOptions = options.filter((option) =>
     option.label.toLowerCase().includes(inputValue.toLowerCase())
   );
 
-  // Helper to find option by ID
   const getOptionById = (id: string) => {
     return options.find((option) => option.id === id);
   };
 
-  // Handle removing a selected item
   const handleRemove = (id: string, e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
     onChange(selected.filter((item) => item !== id));
   };
 
-  // Clear all selected items
   const handleClearAll = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onChange([]);
   };
 
-  // Toggle an option
   const toggleOption = (id: string) => {
     if (selected.includes(id)) {
       onChange(selected.filter((item) => item !== id));
@@ -110,7 +103,6 @@ export default function ReusableMultiSelect({
     }
   };
 
-  // Adjust the width of the popover content to match the trigger
   useEffect(() => {
     if (open && triggerRef.current) {
       const popover = document.querySelector(

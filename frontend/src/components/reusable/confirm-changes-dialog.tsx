@@ -1,4 +1,3 @@
-// src/components/reusable/confirm-changes-dialog.tsx
 import { Button } from "@/components/ui/button";
 import { CircleX } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";

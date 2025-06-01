@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import {
   GetDatasets,
@@ -79,7 +73,7 @@ const RelationDebugger: React.FC = () => {
       setError("");
       setRecords([]);
 
-      const data = await GetRecordsWithRelations(selectedDataset);
+      const data = await GetRecordsWithRelations(selectedDataset, true);
       setRecords((data as Record[]) || []);
 
       if (data && data.length > 0 && datasetDetails) {
@@ -129,7 +123,7 @@ const RelationDebugger: React.FC = () => {
     if (!datasetId || !recordId) return null;
 
     try {
-      return await GetRecord(recordId);
+      return await GetRecord(recordId, true, true);
     } catch (err) {
       console.error(
         `Error loading related record ${recordId} from ${datasetId}:`,
@@ -178,11 +172,8 @@ const RelationDebugger: React.FC = () => {
     if (!str || typeof str !== "string") return false;
 
     return (
-      // MM/DD/YYYY or M/D/YYYY
       /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str) ||
-      // YYYY-MM-DD
       /^\d{4}-\d{2}-\d{2}$/.test(str) ||
-      // Month names
       /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[\s.\-/]?\d{1,2}[\s.\-/]?,?\s?\d{4}$/i.test(
         str
       )
@@ -191,14 +182,10 @@ const RelationDebugger: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Relation Debugger</CardTitle>
-          <CardDescription>
-            Debug database relation issues by analyzing how records are linked
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <ReusableCard
+        title="Relation Debugger"
+        description="Debug database relation issues by analyzing how records are linked"
+        content={
           <div className="space-y-4">
             <div className="flex items-end space-x-2">
               <div className="flex-1">
@@ -261,14 +248,12 @@ const RelationDebugger: React.FC = () => {
               </Alert>
             )}
           </div>
-        </CardContent>
-      </Card>
+        }
+      />
       {Object.keys(relationStats).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Relation Statistics</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <ReusableCard
+          title="Relation Statistics"
+          content={
             <div className="space-y-4">
               {Object.entries(relationStats).map(([fieldKey, stats]) => (
                 <div key={fieldKey} className="border rounded-md p-4">
@@ -313,15 +298,13 @@ const RelationDebugger: React.FC = () => {
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          }
+        />
       )}
       {records.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Records ({records.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <ReusableCard
+          title={`Records (${records.length})`}
+          content={
             <ReusableTabs
               tabs={[
                 {
@@ -504,8 +487,8 @@ const RelationDebugger: React.FC = () => {
               ]}
               defaultTabId="list"
             />
-          </CardContent>
-        </Card>
+          }
+        />
       )}
     </div>
   );

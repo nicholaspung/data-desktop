@@ -12,7 +12,6 @@ export default function Pagination({
   enableSelection?: boolean;
   selectedRows?: string[];
 }) {
-  // Calculate values outside of JSX for clarity
   const { pageIndex, pageSize } = table.getState().pagination;
   const totalRows = table.getFilteredRowModel().rows.length;
   const startRow = pageIndex * pageSize + 1;

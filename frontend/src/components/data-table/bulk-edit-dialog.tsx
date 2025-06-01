@@ -33,34 +33,31 @@ export function BulkEditDialog({
   );
   const [isComplete, setIsComplete] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [formKey, setFormKey] = useState(0); // Add a key state to force form re-render
+  const [formKey, setFormKey] = useState(0);
 
-  // Reset state when dialog opens or records change
   useEffect(() => {
     if (open && selectedRecords.length > 0) {
       setCurrentRecordIndex(0);
       setModifiedRecords([]);
       setIsComplete(false);
       setRecordData(selectedRecords[0]);
-      setFormKey((prev) => prev + 1); // Increment form key to force re-render
+      setFormKey((prev) => prev + 1);
     }
   }, [open]);
 
-  // Update recordData whenever currentRecordIndex changes
   useEffect(() => {
     if (
       selectedRecords.length > 0 &&
       currentRecordIndex < selectedRecords.length
     ) {
       setRecordData(selectedRecords[currentRecordIndex]);
-      setFormKey((prev) => prev + 1); // Increment form key to force re-render
+      setFormKey((prev) => prev + 1);
     }
   }, [currentRecordIndex, selectedRecords]);
 
   const handleSkip = () => {
     if (currentRecordIndex < selectedRecords.length - 1) {
       setCurrentRecordIndex(currentRecordIndex + 1);
-      // recordData will be updated by the useEffect
     } else {
       setIsComplete(true);
     }
@@ -69,13 +66,11 @@ export function BulkEditDialog({
   const handleSuccessfulEdit = (recordId: string) => {
     setIsProcessing(true);
 
-    // Find the updated record from the id
     const updatedRecord = selectedRecords.find(
       (record) => record.id === recordId
     );
 
     if (updatedRecord) {
-      // Add to modified records list
       setModifiedRecords((prev) => [...prev, updatedRecord]);
     }
 
@@ -87,7 +82,6 @@ export function BulkEditDialog({
   const handlePrevious = () => {
     if (currentRecordIndex > 0) {
       setCurrentRecordIndex(currentRecordIndex - 1);
-      // recordData will be updated by the useEffect
     }
   };
 
@@ -98,7 +92,6 @@ export function BulkEditDialog({
     }
   };
 
-  // Summary screen when all records are processed
   const renderSummary = () => (
     <div className="py-6 space-y-6">
       <div className="text-center mb-8">
@@ -168,7 +161,6 @@ export function BulkEditDialog({
     </div>
   );
 
-  // Progress indicator
   const progressBar = (
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2">
@@ -228,7 +220,7 @@ export function BulkEditDialog({
 
             {recordData && (
               <DataForm
-                key={`edit-form-${formKey}`} // Use the formKey state to force re-render
+                key={`edit-form-${formKey}`}
                 fields={fields}
                 datasetId={datasetId}
                 initialValues={recordData}

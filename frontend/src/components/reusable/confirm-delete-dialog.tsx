@@ -1,18 +1,7 @@
-// src/components/reusable/confirm-delete-dialog.tsx
 import { Button } from "@/components/ui/button";
 import { Trash } from "lucide-react";
 import ReusableDialog from "./reusable-dialog";
 
-/**
- * A reusable delete confirmation dialog
- *
- * @example
- * <ConfirmDeleteDialog
- *   title="Delete Record"
- *   description="Are you sure you want to delete this record? This action cannot be undone."
- *   onConfirm={() => handleDelete(record.id)}
- * />
- */
 export function ConfirmDeleteDialog({
   title = "Confirm Delete",
   description = "Are you sure you want to delete this item? This action cannot be undone.",

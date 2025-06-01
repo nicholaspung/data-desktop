@@ -1,7 +1,7 @@
 import { FieldDefinition } from "@/types/types";
 import { format } from "date-fns";
 import { Badge } from "../ui/badge";
-import ImageViewer from "./image-viewer";
+import FileViewer from "./file-viewer";
 
 interface FieldValueDisplayProps {
   field: FieldDefinition;
@@ -66,12 +66,6 @@ export default function FieldValueDisplay({
         </div>
       );
 
-    case "image":
-      if (!value)
-        return <span className="text-muted-foreground italic">No image</span>;
-      return (
-        <ImageViewer src={value} alt={field.displayName} thumbnailSize="lg" />
-      );
 
     case "markdown":
       return (
@@ -79,6 +73,36 @@ export default function FieldValueDisplay({
           {value}
         </div>
       );
+
+    case "file":
+      if (!value)
+        return <span className="text-muted-foreground italic">No file</span>;
+      return <FileViewer src={value.src} fileName={value.name || field.displayName} size="lg" />;
+
+    case "file-multiple":
+      if (!Array.isArray(value) || value.length === 0) {
+        return <span className="text-muted-foreground italic">No files</span>;
+      }
+
+      return (
+        <div className="flex flex-wrap gap-2">
+          {value.map((file, index) => {
+            if (typeof file === "object" && file && file.src) {
+              return (
+                <FileViewer
+                  key={file.id || index}
+                  src={file.src}
+                  fileName={file.name || `File ${index + 1}`}
+                  size="md"
+                />
+              );
+            } else {
+              return null;
+            }
+          })}
+        </div>
+      );
+
 
     case "text":
     default:

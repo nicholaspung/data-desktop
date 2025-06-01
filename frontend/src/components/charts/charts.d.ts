@@ -32,7 +32,6 @@ export interface BarConfig {
   getColorByValue?: (value: number) => string;
 }
 
-// Define the curve types accepted by Recharts
 type CurveType =
   | "basis"
   | "basisClosed"

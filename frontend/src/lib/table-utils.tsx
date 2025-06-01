@@ -2,7 +2,10 @@ import { ColumnMeta, FieldDefinition } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { getFilterFunctionForField } from "./table-filter-utils";
 import { formatDate } from "./date-utils";
-import ImageViewer from "@/components/reusable/image-viewer";
+import { getNestedValue } from "./utils";
+import JsonViewCell from "@/components/data-table/json-view-cell";
+import FileViewCell from "@/components/data-table/file-view-cell";
+import MultipleFileViewCell from "@/components/data-table/multiple-file-view-cell";
 
 export const formatCellValue = (value: any, meta?: ColumnMeta) => {
   if (value === null || value === undefined) return "—";
@@ -29,8 +32,15 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
         return "—";
       }
       return value.join(", ");
-    case "image":
-      return { _isImage: true, src: value };
+    case "json":
+      return <JsonViewCell value={value} title={meta.description} />;
+    case "file":
+      return <FileViewCell value={value as any} />;
+    case "file-multiple":
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return "—";
+      }
+      return <MultipleFileViewCell files={value} />;
     case "text":
     case "markdown":
     default:
@@ -52,23 +62,15 @@ export function createColumn<TData, TValue = any>(
     cell: ({ cell }) => {
       const value = cell.getValue();
 
-      if (meta.type === "image") {
-        if (!value) return "—";
+      if (meta.type === "file") {
+        return <FileViewCell value={value as any} />;
+      }
 
-        if (typeof value === "object" && "_isImage" in value) {
-          return (
-            <ImageViewer
-              src={(value as unknown as { src: string }).src}
-              alt={header}
-            />
-          );
+      if (meta.type === "file-multiple") {
+        if (!value || !Array.isArray(value) || value.length === 0) {
+          return "—";
         }
-
-        if (typeof value === "string") {
-          return <ImageViewer src={value} alt={header} />;
-        }
-
-        return "—";
+        return <MultipleFileViewCell files={value} title={header} />;
       }
 
       return formatCellValue(value, meta);
@@ -100,23 +102,30 @@ export function createColumn<TData, TValue = any>(
 export const getDisplayValue = (field: FieldDefinition, record: any) => {
   let label = "";
 
-  if (field.displayField && record[field.displayField] !== undefined) {
-    if (field.displayFieldType === "date") {
-      label = formatDate(record[field.displayField]);
-    } else {
-      label = record[field.displayField] || "";
-    }
-
-    if (
-      field.secondaryDisplayField &&
-      record[field.secondaryDisplayField] !== undefined &&
-      record[field.secondaryDisplayField] !== ""
-    ) {
-      if (field.secondaryDisplayFieldType === "date") {
-        label += ` (${formatDate(record[field.secondaryDisplayField])})`;
+  if (field.displayField) {
+    const displayValue = getNestedValue(record, field.displayField);
+    if (displayValue !== undefined) {
+      if (field.displayFieldType === "date") {
+        label = formatDate(displayValue);
       } else {
-        label += ` (${record[field.secondaryDisplayField]})`;
+        label = displayValue || "";
       }
+
+      if (field.secondaryDisplayField) {
+        const secondaryValue = getNestedValue(
+          record,
+          field.secondaryDisplayField
+        );
+        if (secondaryValue !== undefined && secondaryValue !== "") {
+          if (field.secondaryDisplayFieldType === "date") {
+            label += ` (${formatDate(secondaryValue)})`;
+          } else {
+            label += ` (${secondaryValue})`;
+          }
+        }
+      }
+    } else {
+      label = record.name || record.title || `ID: ${record.id}`;
     }
   } else {
     label = record.name || record.title || `ID: ${record.id}`;

@@ -5,7 +5,7 @@ export interface DatasetConfig {
   fields: FieldDefinition[];
   icon?: React.ReactNode;
   addLabel?: string;
-  customTabs?: any[]; // Using any for brevity, but you can define the full type from GenericDataPage
+  customTabs?: any[];
   disableBatchEntry?: boolean;
   disableTableView?: boolean;
   disableAddForm?: boolean;
@@ -17,5 +17,5 @@ export interface CustomTab {
   label: string;
   icon?: React.ReactElement;
   content: React.ReactNode;
-  position?: "before" | "after"; // Position relative to standard tabs
+  position?: "before" | "after";
 }

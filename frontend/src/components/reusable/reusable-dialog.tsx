@@ -92,7 +92,7 @@ export default function ReusableDialog({
       )}
       <AlertDialogContent
         className={cn(
-          "max-h-[90vh] flex flex-col", // Added max-height and flex column
+          "max-h-[90vh] flex flex-col",
           contentClassName ? contentClassName : "sm:max-w-[600px]"
         )}
       >
@@ -107,7 +107,14 @@ export default function ReusableDialog({
                 variant="ghost"
                 size="sm"
                 className="h-8 w-8 p-0"
-                onClick={() => onOpenChange && onOpenChange(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (onCancel) {
+                    onCancel();
+                  }
+                  onOpenChange?.(false);
+                }}
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>

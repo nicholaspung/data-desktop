@@ -115,7 +115,9 @@ export default function EditDexaScanButton() {
                 <DataForm
                   datasetId="dexa"
                   fields={dexaFields}
-                  initialValues={selectedScanData}
+                  initialValues={
+                    selectedScanData as unknown as Record<string, unknown>
+                  }
                   onSuccess={handleSuccess}
                   onCancel={() => setSelectedScan("")}
                   submitLabel="Update DEXA Scan"

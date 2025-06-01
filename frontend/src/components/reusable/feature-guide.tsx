@@ -1,4 +1,3 @@
-// src/components/reusable/feature-guide.tsx
 import React, { useState } from "react";
 import { X, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -102,9 +101,6 @@ export function FeatureGuide({
   );
 }
 
-/**
- * A simpler inline help component that toggles help text
- */
 export function InlineHelp({
   children,
   storageKey,

@@ -11,7 +11,7 @@ export default function RefreshDatasetButton({
   datasetId,
   title,
 }: {
-  fields: FieldDefinition[]; // Replace with actual type for fields
+  fields: FieldDefinition[];
   datasetId: DataStoreName;
   title: string;
 }) {

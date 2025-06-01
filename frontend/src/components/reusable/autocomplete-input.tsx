@@ -1,4 +1,3 @@
-// src/components/reusable/autocomplete-input.tsx
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,13 +53,13 @@ export default function AutocompleteInput({
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const [finalOptions, setFinalOptions] = useState<
     (SelectOption & { [key: string]: any })[]
   >([]);
 
   useEffect(() => {
-    // Get recent options (limited by maxRecentOptions)
     const recentOptions = showRecentOptions
       ? [...options]
           .sort((a, b) => {
@@ -75,7 +74,6 @@ export default function AutocompleteInput({
           .slice(0, maxRecentOptions)
       : [];
 
-    // Filter options based on input value if user has typed something
     let filteredOptions = recentOptions;
     if (value.length > 0 && continueProvidingSuggestions) {
       filteredOptions = options;
@@ -86,16 +84,26 @@ export default function AutocompleteInput({
     }
 
     setFinalOptions(filteredOptions);
-  }, [options]);
 
-  // Focus input on mount if autofocus is true
+    optionRefs.current = finalOptions.map(() => null);
+  }, [
+    options,
+    value,
+    continueProvidingSuggestions,
+    maxRecentOptions,
+    showRecentOptions,
+  ]);
+
+  useEffect(() => {
+    optionRefs.current = finalOptions.map(() => null);
+  }, [finalOptions]);
+
   useEffect(() => {
     if (autofocus && inputRef.current) {
       inputRef.current.focus();
     }
   }, [autofocus]);
 
-  // Handle clicking outside to close suggestions
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -114,7 +122,15 @@ export default function AutocompleteInput({
     };
   }, []);
 
-  // Handle selection from suggestions
+  useEffect(() => {
+    if (activeIndex >= 0 && optionRefs.current[activeIndex]) {
+      optionRefs.current[activeIndex]?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
+  }, [activeIndex]);
+
   const handleSelect = (option: SelectOption & { [key: string]: any }) => {
     if (onSelect) {
       onSelect(option);
@@ -123,17 +139,14 @@ export default function AutocompleteInput({
     }
     setShowSuggestions(false);
 
-    // Focus the input after selection
     if (inputRef.current) {
       inputRef.current.focus();
     }
   };
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     onKeyDown?.(e);
 
-    // Skip if no suggestions are shown
     if (!showSuggestions || finalOptions.length === 0) return;
 
     switch (e.key) {
@@ -184,7 +197,6 @@ export default function AutocompleteInput({
           ref={inputRef}
           value={value}
           onBlur={() => {
-            // Delay hiding suggestions to allow for click events
             setTimeout(() => setShowSuggestions(false), 200);
           }}
           onChange={(e) => {
@@ -215,6 +227,9 @@ export default function AutocompleteInput({
               {finalOptions.map((option, index) => (
                 <li
                   key={option.id}
+                  ref={(el) => {
+                    optionRefs.current[index] = el;
+                  }}
                   className={cn(
                     "px-3 py-2 text-sm cursor-pointer",
                     activeIndex === index ? "bg-accent" : "hover:bg-accent/50"

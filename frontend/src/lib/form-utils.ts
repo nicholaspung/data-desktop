@@ -19,9 +19,6 @@ export const hasNonEmptyValues = (
       case "boolean":
         if (value === true) return true;
         break;
-      case "image":
-        if (value && value !== "") return true;
-        break;
       case "select-single":
         if (field.options && field.options.length > 0) {
           const defaultValue = field.options[0].id;
@@ -62,8 +59,14 @@ export const createFreshDefaultValues = (fields: FieldDefinition[]) => {
       case "markdown":
         freshDefaults[field.key] = "";
         break;
-      case "image":
-        freshDefaults[field.key] = "";
+      case "json":
+        freshDefaults[field.key] = {};
+        break;
+      case "file":
+        freshDefaults[field.key] = null;
+        break;
+      case "file-multiple":
+        freshDefaults[field.key] = [];
         break;
       case "select-single":
         freshDefaults[field.key] =

@@ -22,6 +22,9 @@ export default function DataFormContent({
     selectSingle: FieldDefinition[];
     selectMultiple: FieldDefinition[];
     markdown: FieldDefinition[];
+    file: FieldDefinition[];
+    fileMultiple: FieldDefinition[];
+    json: FieldDefinition[];
   };
   hideSubmitButton: boolean;
   isSubmitting: boolean;
@@ -53,13 +56,25 @@ export default function DataFormContent({
         fieldsByType.text.length > 0 ||
         fieldsByType.markdown.length > 0 ||
         fieldsByType.selectSingle.length > 0 ||
-        fieldsByType.selectMultiple.length > 0) && (
+        fieldsByType.selectMultiple.length > 0 ||
+        fieldsByType.json.length > 0) && (
         <div className="grid gap-4 md:grid-cols-2">
           {fieldsByType.numeric.map(renderField)}
           {fieldsByType.text.map(renderField)}
           {fieldsByType.markdown.map(renderField)}
           {fieldsByType.selectSingle.map(renderField)}
           {fieldsByType.selectMultiple.map(renderField)}
+          {fieldsByType.json.map(renderField)}
+        </div>
+      )}
+
+
+      {/* File and File-multiple fields */}
+      {(fieldsByType.file.length > 0 ||
+        fieldsByType.fileMultiple.length > 0) && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {fieldsByType.file.map(renderField)}
+          {fieldsByType.fileMultiple.map(renderField)}
         </div>
       )}
 

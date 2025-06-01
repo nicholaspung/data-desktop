@@ -1,5 +1,8 @@
-// frontend/src/features/field-definitions/people-crm-definitions.ts
-import { FieldDefinitionsDataset } from "@/types/types";
+import {
+  FieldDefinitionsDataset,
+  DATASET_REFERENCES,
+  createRelationField,
+} from "@/types/types";
 
 export const PEOPLE_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "people",
@@ -63,17 +66,17 @@ export const MEETINGS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Meetings",
   description: "Track meetings and interactions with people",
   fields: [
-    {
-      key: "person_id",
-      type: "text",
-      displayName: "Person",
-      description: "Who did you meet with?",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "person_id",
+      "Person",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "Who did you meet with?",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
     {
       key: "meeting_date",
       type: "date",
@@ -158,17 +161,17 @@ export const PERSON_ATTRIBUTES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Person Attributes",
   description: "Track random facts and attributes about people",
   fields: [
-    {
-      key: "person_id",
-      type: "text",
-      displayName: "Person",
-      description: "Who is this attribute about?",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "person_id",
+      "Person",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "Who is this attribute about?",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
     {
       key: "attribute_name",
       type: "text",
@@ -233,17 +236,17 @@ export const PERSON_NOTES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Person Notes",
   description: "Daily notes about people",
   fields: [
-    {
-      key: "person_id",
-      type: "text",
-      displayName: "Person",
-      description: "Who is this note about?",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "person_id",
+      "Person",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "Who is this note about?",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
     {
       key: "note_date",
       type: "date",
@@ -293,17 +296,17 @@ export const BIRTHDAY_REMINDERS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Birthday Reminders",
   description: "Track birthday reminders for people",
   fields: [
-    {
-      key: "person_id",
-      type: "text",
-      displayName: "Person",
-      description: "Whose birthday?",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "person_id",
+      "Person",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "Whose birthday?",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
     {
       key: "reminder_date",
       type: "date",
@@ -331,28 +334,28 @@ export const PERSON_RELATIONSHIPS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "Person Relationships",
   description: "Track relationships between people in your network",
   fields: [
-    {
-      key: "person1_id",
-      type: "text",
-      displayName: "Person 1",
-      description: "First person in relationship",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
-    {
-      key: "person2_id",
-      type: "text",
-      displayName: "Person 2",
-      description: "Second person in relationship",
-      isSearchable: true,
-      isRelation: true,
-      relatedDataset: "people",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "person1_id",
+      "Person 1",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "First person in relationship",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
+    createRelationField(
+      "person2_id",
+      "Person 2",
+      DATASET_REFERENCES.PEOPLE,
+      {
+        description: "Second person in relationship",
+        deleteBehavior: "cascadeDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+      }
+    ),
     {
       key: "relationship_type",
       type: "select-single",

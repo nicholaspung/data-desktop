@@ -5,15 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/**
- * Creates a debounced function that delays invoking the provided function
- * until after the specified wait time has elapsed since the last time it was invoked.
- *
- * @param func The function to debounce
- * @param wait The number of milliseconds to delay
- * @param immediate If true, trigger the function on the leading edge instead of the trailing edge
- * @returns A debounced version of the original function
- */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait = 300,
@@ -40,3 +31,9 @@ export function debounce<T extends (...args: any[]) => any>(
     }
   };
 }
+
+export const getNestedValue = (obj: any, path: string): any => {
+  return path.split(".").reduce((current, key) => {
+    return current && current[key] !== undefined ? current[key] : undefined;
+  }, obj);
+};

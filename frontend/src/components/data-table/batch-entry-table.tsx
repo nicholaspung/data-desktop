@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash, Loader2 } from "lucide-react";
+import { Plus, Save, Trash, Loader2, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -40,7 +40,7 @@ export function BatchEntryTable({
   fields,
   title,
   onSuccess,
-  maxBatchSize = 50,
+  maxBatchSize = 500,
   onNavigateToTable,
 }: {
   datasetId: DataStoreName;
@@ -60,13 +60,21 @@ export function BatchEntryTable({
   const storageKey = `batch_entry_${datasetId}`;
 
   const [entries, setEntries] = useState<Record<string, any>[]>([]);
+  const [pendingEntries, setPendingEntries] = useState<Record<string, any>[]>(
+    []
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
+  const [currentBatch, setCurrentBatch] = useState(1);
 
   const relationFields = fields.filter(
     (field) => field.isRelation && field.relatedDataset
   );
+
+  const totalEntries = entries.length + pendingEntries.length;
+  const totalBatches = Math.ceil(totalEntries / maxBatchSize);
+  const hasNextBatch = pendingEntries.length > 0;
 
   function getEmptyEntry(): Record<string, any> {
     const entry: Record<string, any> = { id: crypto.randomUUID() };
@@ -95,23 +103,21 @@ export function BatchEntryTable({
   useEffect(() => {
     try {
       const savedEntries = localStorage.getItem(storageKey);
+      const savedPendingEntries = localStorage.getItem(`${storageKey}_pending`);
+
       if (savedEntries) {
         const parsedEntries = JSON.parse(savedEntries);
-
         const processedEntries = parsedEntries.map(
           (entry: Record<string, any>) => {
             const processedEntry = { ...entry };
-
             fields.forEach((field) => {
               if (field.type === "date" && processedEntry[field.key]) {
                 processedEntry[field.key] = new Date(processedEntry[field.key]);
               }
             });
-
             return processedEntry;
           }
         );
-
         setEntries(processedEntries);
 
         const hasRealData = hasNonEmptyEntries(processedEntries);
@@ -126,9 +132,26 @@ export function BatchEntryTable({
       } else {
         setEntries([getEmptyEntry()]);
       }
+
+      if (savedPendingEntries) {
+        const parsedPendingEntries = JSON.parse(savedPendingEntries);
+        const processedPendingEntries = parsedPendingEntries.map(
+          (entry: Record<string, any>) => {
+            const processedEntry = { ...entry };
+            fields.forEach((field) => {
+              if (field.type === "date" && processedEntry[field.key]) {
+                processedEntry[field.key] = new Date(processedEntry[field.key]);
+              }
+            });
+            return processedEntry;
+          }
+        );
+        setPendingEntries(processedPendingEntries);
+      }
     } catch (error) {
       console.error("Error loading saved entries:", error);
       setEntries([getEmptyEntry()]);
+      setPendingEntries([]);
     }
   }, [datasetId, fields]);
 
@@ -183,7 +206,6 @@ export function BatchEntryTable({
         if (hasData) {
           const entriesToSave = entries.map((entry) => {
             const entryCopy = { ...entry };
-
             fields.forEach((field) => {
               if (
                 field.type === "date" &&
@@ -192,7 +214,6 @@ export function BatchEntryTable({
                 entryCopy[field.key] = entryCopy[field.key].toISOString();
               }
             });
-
             return entryCopy;
           });
 
@@ -206,7 +227,45 @@ export function BatchEntryTable({
         console.error("Error handling entries localStorage:", error);
       }
     }
-  }, [entries, datasetId, fields]);
+
+    if (pendingEntries.length > 0) {
+      try {
+        const pendingEntriesToSave = pendingEntries.map((entry) => {
+          const entryCopy = { ...entry };
+          fields.forEach((field) => {
+            if (field.type === "date" && entryCopy[field.key] instanceof Date) {
+              entryCopy[field.key] = entryCopy[field.key].toISOString();
+            }
+          });
+          return entryCopy;
+        });
+        localStorage.setItem(
+          `${storageKey}_pending`,
+          JSON.stringify(pendingEntriesToSave)
+        );
+      } catch (error) {
+        console.error("Error handling pending entries localStorage:", error);
+      }
+    } else {
+      localStorage.removeItem(`${storageKey}_pending`);
+    }
+  }, [entries, pendingEntries, datasetId, fields]);
+
+  const loadNextBatch = useCallback(() => {
+    if (pendingEntries.length === 0) return;
+
+    const nextBatchSize = Math.min(maxBatchSize, pendingEntries.length);
+    const nextBatch = pendingEntries.slice(0, nextBatchSize);
+    const remainingPending = pendingEntries.slice(nextBatchSize);
+
+    setEntries(nextBatch);
+    setPendingEntries(remainingPending);
+    setCurrentBatch(currentBatch + 1);
+
+    toast.info(
+      `Loaded batch ${currentBatch + 1} of ${totalBatches} (${nextBatch.length} entries)`
+    );
+  }, [pendingEntries, maxBatchSize, currentBatch, totalBatches]);
 
   const addEntry = () => {
     if (entries.length >= maxBatchSize) {
@@ -275,16 +334,21 @@ export function BatchEntryTable({
         localStorage.removeItem(storageKey);
         setHasSavedData(false);
 
-        setEntries([getEmptyEntry()]);
-
         await loadData();
 
-        if (onSuccess) {
-          onSuccess();
-        }
+        if (hasNextBatch) {
+          loadNextBatch();
+        } else {
+          setEntries([getEmptyEntry()]);
+          setCurrentBatch(1);
 
-        if (onNavigateToTable) {
-          onNavigateToTable();
+          if (onSuccess) {
+            onSuccess();
+          }
+
+          if (onNavigateToTable) {
+            onNavigateToTable();
+          }
         }
       } else {
         toast.error("No records were added");
@@ -299,7 +363,10 @@ export function BatchEntryTable({
 
   const clearEntries = () => {
     setEntries([getEmptyEntry()]);
+    setPendingEntries([]);
+    setCurrentBatch(1);
     localStorage.removeItem(storageKey);
+    localStorage.removeItem(`${storageKey}_pending`);
     setHasSavedData(false);
     toast.info("All entries cleared");
   };
@@ -317,22 +384,31 @@ export function BatchEntryTable({
 
       const processedData = await resolveRelationRefs(parsedData);
 
-      const limitedData = processedData.slice(0, maxBatchSize);
+      if (processedData.length > 0) {
+        const currentBatchData = processedData.slice(0, maxBatchSize);
+        const remainingData = processedData.slice(maxBatchSize);
 
-      if (limitedData.length > 0) {
-        const dataWithIds = limitedData.map((item) => ({
+        const dataWithIds = currentBatchData.map((item) => ({
+          ...item,
+          id: crypto.randomUUID(),
+        }));
+
+        const pendingDataWithIds = remainingData.map((item) => ({
           ...item,
           id: crypto.randomUUID(),
         }));
 
         setEntries(dataWithIds);
+        setPendingEntries(pendingDataWithIds);
+        setCurrentBatch(1);
 
-        if (parsedData.length > maxBatchSize) {
-          toast.warning(
-            `Loaded first ${maxBatchSize} records from CSV. Please submit these first before importing more.`
+        if (remainingData.length > 0) {
+          const totalBatches = Math.ceil(processedData.length / maxBatchSize);
+          toast.success(
+            `Loaded ${processedData.length} records from CSV. Showing batch 1 of ${totalBatches} (${dataWithIds.length} entries). Submit this batch to continue with the next.`
           );
         } else {
-          toast.success(`Loaded ${limitedData.length} records from CSV`);
+          toast.success(`Loaded ${currentBatchData.length} records from CSV`);
         }
       } else {
         toast.error("No valid data found in CSV");
@@ -510,9 +586,21 @@ export function BatchEntryTable({
       content={
         <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-between">
-            <Badge variant="outline">
-              {entries.length} {entries.length === 1 ? "entry" : "entries"}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">
+                {entries.length} {entries.length === 1 ? "entry" : "entries"}
+              </Badge>
+              {totalBatches > 1 && (
+                <Badge variant="secondary">
+                  Batch {currentBatch} of {totalBatches} ({totalEntries} total)
+                </Badge>
+              )}
+              {hasNextBatch && (
+                <Badge variant="destructive">
+                  {pendingEntries.length} pending
+                </Badge>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -593,11 +681,27 @@ export function BatchEntryTable({
               </div>
             </div>
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {hasNextBatch && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={loadNextBatch}
+                  disabled={isSubmitting}
+                >
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Load Next Batch (
+                  {Math.min(maxBatchSize, pendingEntries.length)} entries)
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {pendingEntries.length} entries remaining
+                </span>
+              </div>
+            )}
             <Button
               onClick={submitEntries}
               disabled={isSubmitting || entries.length === 0}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 ml-auto"
             >
               {isSubmitting ? (
                 <>
@@ -607,7 +711,7 @@ export function BatchEntryTable({
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Submit All Entries
+                  Submit {hasNextBatch ? "Current Batch" : "All Entries"}
                 </>
               )}
             </Button>

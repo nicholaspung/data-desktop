@@ -1,5 +1,8 @@
-// src/features/field-definitions/time-tracking-definitions.ts
-import { FieldDefinitionsDataset } from "@/types/types";
+import {
+  FieldDefinitionsDataset,
+  DATASET_REFERENCES,
+  createRelationField,
+} from "@/types/types";
 
 export const TIME_ENTRIES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "time_entries",
@@ -34,18 +37,19 @@ export const TIME_ENTRIES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Duration of the activity in minutes",
       isSearchable: false,
     },
-    {
-      key: "category_id",
-      type: "text",
-      displayName: "Category",
-      description: "Category of the activity",
-      isSearchable: true,
-      isRelation: true,
-      isOptional: true,
-      relatedDataset: "time_categories",
-      relatedField: "id",
-      displayField: "name",
-    },
+    createRelationField(
+      "category_id",
+      "Category",
+      DATASET_REFERENCES.TIME_CATEGORIES,
+      {
+        description: "Category of the activity",
+        deleteBehavior: "preventDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+        isSearchable: false,
+        isOptional: true,
+      }
+    ),
     {
       key: "tags",
       type: "text",

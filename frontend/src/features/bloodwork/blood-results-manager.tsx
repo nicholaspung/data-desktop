@@ -192,7 +192,12 @@ export default function BloodResultsManager() {
                           <DataForm
                             datasetId="blood_results"
                             fields={bloodResultFields}
-                            initialValues={selectedResultData}
+                            initialValues={
+                              selectedResultData as unknown as Record<
+                                string,
+                                unknown
+                              >
+                            }
                             onSuccess={handleEditSuccess}
                             onCancel={() => setSelectedResult("")}
                             submitLabel="Update Blood Result"

@@ -4,21 +4,21 @@ import { FieldDefinition } from "@/types/types";
 
 export const getProcessedRecords = async (
   datasetId: DataStoreName,
-  fields: FieldDefinition[]
+  fields: FieldDefinition[],
+  fetchRelations: boolean = true
 ) => {
-  // Use the appropriate API method
-  const records = await ApiService.getRecordsWithRelations(datasetId);
+  const records = fetchRelations 
+    ? await ApiService.getRecordsWithRelations(datasetId)
+    : await ApiService.getRecords(datasetId);
 
   const sortedRecords = [...records].sort(
     (a, b) =>
       new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
   );
 
-  // Process dates to ensure they're Date objects
   const processedRecords = sortedRecords.map((record) => {
     const processed = { ...record };
 
-    // Convert dates
     fields.forEach((field) => {
       if (field.type === "date" && processed[field.key]) {
         processed[field.key] = new Date(processed[field.key]);

@@ -4,10 +4,7 @@
   "description": "Desktop application for data, including import/export, analysis, and graphs.",
   "scripts": {
     "release": "node ./release.js",
-    "generate-field-definitions": "node ./scripts/field-sync-generator-2.js dexa bloodwork markers results experiment metric daily_log metric_category experiment_metric",
-    "transform": "node ./scripts/csv-transformer.js",
-    "transform:comma": "node ./scripts/csv-transformer.js --comma",
-    "transform:bloodwork": "node scripts/bloodtest-csv-transformer.js"
+    "dev": "wails dev -appargs dev -tags webkit2_41"
   },
   "author": "nicholaspungdev@gmail.com",
   "license": "GNU AGPLv3",

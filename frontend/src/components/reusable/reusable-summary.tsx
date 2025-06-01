@@ -1,4 +1,3 @@
-// src/components/reusable/reusable-summary.tsx
 import { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,7 +63,7 @@ interface ReusableSummaryProps {
   footer?: ReactNode;
   className?: string;
   contentClassName?: string;
-  customContent?: ReactNode; // New property for full-width custom content
+  customContent?: ReactNode;
 }
 
 function StatusBadge({
@@ -108,7 +107,6 @@ export default function ReusableSummary({
     </div>
   );
 
-  // If loading, show skeleton UI
   if (loading) {
     return (
       <ReusableCard
@@ -127,7 +125,6 @@ export default function ReusableSummary({
     );
   }
 
-  // If showing empty state
   if (emptyState) {
     return (
       <ReusableCard
@@ -151,7 +148,6 @@ export default function ReusableSummary({
     );
   }
 
-  // If custom content is provided, render it directly
   if (customContent) {
     return (
       <ReusableCard
@@ -164,7 +160,6 @@ export default function ReusableSummary({
     );
   }
 
-  // Standard content rendering
   return (
     <ReusableCard
       useSeparator={true}

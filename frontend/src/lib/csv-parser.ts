@@ -1,6 +1,8 @@
 import { FieldDefinition } from "@/types/types";
 import Papa from "papaparse";
 import { ApiService } from "@/services/api";
+import { getNestedValue } from "./utils";
+import { formatDate } from "./date-utils";
 
 export async function parseCSV(
   file: File,
@@ -118,9 +120,6 @@ export async function parseCSV(
                               relationInfo.displayToIdMap.get(isoDate);
                             if (matchedIdFromIso) {
                               processedRow[field.key] = matchedIdFromIso;
-                              console.log(
-                                `Found date match using ISO format: "${value}" → "${isoDate}" → ID: ${matchedIdFromIso}`
-                              );
                               return;
                             }
 
@@ -133,23 +132,18 @@ export async function parseCSV(
                               relationInfo.displayToIdMap.get(mmddyyyy);
                             if (matchedIdFromMmDdYyyy) {
                               processedRow[field.key] = matchedIdFromMmDdYyyy;
-                              console.log(
-                                `Found date match using MM/DD/YYYY format: "${value}" → "${mmddyyyy}" → ID: ${matchedIdFromMmDdYyyy}`
-                              );
                               return;
                             }
                           }
                         } catch (e: any) {
-                          console.log(`Failed to parse date: "${value}"`);
                           console.error(`Error: ${e}`);
                         }
                       }
 
-                      const matchedId =
+                      const exactMatchId =
                         relationInfo.displayToIdMap.get(normalizedValue);
-
-                      if (matchedId) {
-                        processedRow[field.key] = matchedId;
+                      if (exactMatchId) {
+                        processedRow[field.key] = exactMatchId;
                         return;
                       }
 
@@ -179,33 +173,44 @@ export async function parseCSV(
 
                           if (combinedMatch) {
                             processedRow[field.key] = combinedMatch;
-                            console.log(
-                              `Found combined match for "${value}" with primary "${primaryValue}" and secondary "${secondaryValue}"`
-                            );
                             return;
                           }
 
                           for (const [
-                            displayKey,
+                            ,
                             id,
                           ] of relationInfo.displayToIdMap.entries()) {
-                            if (displayKey.includes(primaryValue)) {
-                              const records = relationInfo.records || [];
-                              const matchingRecord = records.find(
-                                (record) => record.id === id
-                              );
+                            const records = relationInfo.records || [];
+                            const matchingRecord = records.find(
+                              (record) => record.id === id
+                            );
+
+                            if (matchingRecord) {
+                              const primaryFieldValue = field.displayField
+                                ? getNestedValue(
+                                    matchingRecord,
+                                    field.displayField
+                                  )
+                                : null;
+
+                              const matchingSecondaryValue =
+                                field.secondaryDisplayField
+                                  ? getNestedValue(
+                                      matchingRecord,
+                                      field.secondaryDisplayField
+                                    )
+                                  : null;
 
                               if (
-                                matchingRecord &&
-                                matchingRecord[field.secondaryDisplayField] &&
-                                matchingRecord[field.secondaryDisplayField]
-                                  .toString()
-                                  .toLowerCase() === secondaryValue
+                                primaryFieldValue &&
+                                matchingSecondaryValue &&
+                                primaryFieldValue.toString().toLowerCase() ===
+                                  primaryValue &&
+                                formatDate(
+                                  matchingSecondaryValue
+                                ).toLowerCase() === secondaryValue
                               ) {
                                 processedRow[field.key] = id;
-                                console.log(
-                                  `Found record match with primary "${primaryValue}" and confirmed secondary "${secondaryValue}"`
-                                );
                                 return;
                               }
                             }
@@ -213,19 +218,69 @@ export async function parseCSV(
                         }
                       }
 
-                      for (const [
-                        displayValue,
-                        id,
-                      ] of relationInfo.displayToIdMap.entries()) {
-                        if (
-                          displayValue.includes(normalizedValue) ||
-                          normalizedValue.includes(displayValue)
-                        ) {
-                          processedRow[field.key] = id;
-                          console.log(
-                            `Found partial match for "${value}" with "${displayValue}"`
+                      if (field.secondaryDisplayField) {
+                        const records = relationInfo.records || [];
+                        for (const record of records) {
+                          const primaryFieldValue = field.displayField
+                            ? getNestedValue(record, field.displayField)
+                            : null;
+                          const secondaryFieldValue = getNestedValue(
+                            record,
+                            field.secondaryDisplayField
                           );
-                          return;
+
+                          if (primaryFieldValue && secondaryFieldValue) {
+                            let primaryMatch = false;
+                            let secondaryMatch = false;
+
+                            if (
+                              primaryFieldValue.toString().toLowerCase() ===
+                              normalizedValue
+                            ) {
+                              primaryMatch = true;
+                            }
+
+                            if (field.secondaryDisplayFieldType === "date") {
+                              try {
+                                const inputDate = new Date(normalizedValue);
+                                const recordDate = new Date(
+                                  secondaryFieldValue
+                                );
+
+                                if (
+                                  !isNaN(inputDate.getTime()) &&
+                                  !isNaN(recordDate.getTime())
+                                ) {
+                                  const inputLocalDate =
+                                    inputDate.toLocaleDateString("en-CA");
+                                  const recordLocalDate =
+                                    recordDate.toLocaleDateString("en-CA");
+                                  secondaryMatch =
+                                    inputLocalDate === recordLocalDate;
+                                } else {
+                                  secondaryMatch =
+                                    secondaryFieldValue
+                                      .toString()
+                                      .toLowerCase() === normalizedValue;
+                                }
+                              } catch (e) {
+                                console.error(`Error parsing date: ${e}`);
+                                secondaryMatch =
+                                  secondaryFieldValue
+                                    .toString()
+                                    .toLowerCase() === normalizedValue;
+                              }
+                            } else {
+                              secondaryMatch =
+                                secondaryFieldValue.toString().toLowerCase() ===
+                                normalizedValue;
+                            }
+
+                            if (primaryMatch || secondaryMatch) {
+                              processedRow[field.key] = record.id;
+                              return;
+                            }
+                          }
                         }
                       }
 
@@ -240,7 +295,7 @@ export async function parseCSV(
                   }
 
                   switch (field.type) {
-                    case "image":
+                    case "file":
                       processedRow[field.key] = "";
                       break;
                     case "date":
@@ -248,24 +303,44 @@ export async function parseCSV(
                         let parsedDate: Date | null = null;
 
                         if (typeof value === "string") {
-                          parsedDate = new Date(value);
+                          const formats = [
+                            /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/,
+                            /^(\d{4})-(\d{1,2})-(\d{1,2})$/,
+                            /^(\d{1,2})-(\d{1,2})-(\d{4})$/,
+                          ];
 
-                          if (isNaN(parsedDate.getTime())) {
-                            const formats = [
-                              /(\d{1,2})\/(\d{1,2})\/(\d{4})/,
-                              /(\d{4})-(\d{1,2})-(\d{1,2})/,
-                              /(\d{1,2})-(\d{1,2})-(\d{4})/,
-                            ];
+                          for (const format of formats) {
+                            const match = value.match(format);
+                            if (match) {
+                              let year, month, day;
 
-                            for (const format of formats) {
-                              const match = value.match(format);
-                              if (match) {
-                                const dateObj = new Date(value);
-                                if (!isNaN(dateObj.getTime())) {
-                                  parsedDate = dateObj;
-                                  break;
-                                }
+                              if (
+                                format === formats[0] ||
+                                format === formats[2]
+                              ) {
+                                month = parseInt(match[1], 10);
+                                day = parseInt(match[2], 10);
+                                year = parseInt(match[3], 10);
+                              } else {
+                                year = parseInt(match[1], 10);
+                                month = parseInt(match[2], 10);
+                                day = parseInt(match[3], 10);
                               }
+
+                              parsedDate = new Date(year, month - 1, day);
+                              if (!isNaN(parsedDate.getTime())) {
+                                break;
+                              }
+                            }
+                          }
+
+                          if (!parsedDate || isNaN(parsedDate.getTime())) {
+                            const fallbackDate = new Date(value);
+                            if (!isNaN(fallbackDate.getTime())) {
+                              const offset = fallbackDate.getTimezoneOffset();
+                              parsedDate = new Date(
+                                fallbackDate.getTime() + offset * 60 * 1000
+                              );
                             }
                           }
                         } else if (typeof value === "number") {
@@ -433,11 +508,15 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
         const id = record.id;
         idSet.add(id);
 
-        if (field.displayField && record[field.displayField]) {
+        const displayFieldValue = field.displayField
+          ? getNestedValue(record, field.displayField)
+          : null;
+
+        if (field.displayField && displayFieldValue) {
           let displayValue;
 
-          if (field.displayFieldType === "date" && record[field.displayField]) {
-            const dateObj = new Date(record[field.displayField]);
+          if (field.displayFieldType === "date" && displayFieldValue) {
+            const dateObj = new Date(displayFieldValue);
             if (!isNaN(dateObj.getTime())) {
               displayValue = dateObj.toISOString().split("T")[0].toLowerCase();
 
@@ -468,41 +547,36 @@ async function loadRelationData(relationFields: FieldDefinition[]): Promise<
                 id
               );
             } else {
-              displayValue = record[field.displayField]
-                .toString()
-                .toLowerCase();
+              displayValue = displayFieldValue.toString().toLowerCase();
             }
           } else {
-            displayValue = record[field.displayField].toString().toLowerCase();
+            displayValue = displayFieldValue.toString().toLowerCase();
           }
 
           displayToIdMap.set(displayValue, id);
 
-          if (
-            field.secondaryDisplayField &&
-            record[field.secondaryDisplayField]
-          ) {
+          const secondaryFieldValue = field.secondaryDisplayField
+            ? getNestedValue(record, field.secondaryDisplayField)
+            : null;
+
+          if (field.secondaryDisplayField && secondaryFieldValue) {
             let secondaryValue;
 
             if (
               field.secondaryDisplayFieldType === "date" &&
-              record[field.secondaryDisplayField]
+              secondaryFieldValue
             ) {
-              const dateObj = new Date(record[field.secondaryDisplayField]);
+              const dateObj = new Date(secondaryFieldValue);
               if (!isNaN(dateObj.getTime())) {
                 secondaryValue = dateObj
                   .toISOString()
                   .split("T")[0]
                   .toLowerCase();
               } else {
-                secondaryValue = record[field.secondaryDisplayField]
-                  .toString()
-                  .toLowerCase();
+                secondaryValue = secondaryFieldValue.toString().toLowerCase();
               }
             } else {
-              secondaryValue = record[field.secondaryDisplayField]
-                .toString()
-                .toLowerCase();
+              secondaryValue = secondaryFieldValue.toString().toLowerCase();
             }
 
             const combinedDash = `${displayValue} - ${secondaryValue}`;
@@ -617,9 +691,9 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
           headerDesc[field.key] +=
             ` (Enter date in YYYY-MM-DD format or MM/DD/YYYY, the system will match to the correct record)`;
         } else if (field.secondaryDisplayField) {
-          example = `Name (Secondary Value)`;
+          example = `Primary Display (Secondary Display)`;
           headerDesc[field.key] +=
-            ` (You can use format "Primary (Secondary)" to match by both fields)`;
+            ` (Use format "Primary Display (Secondary Display)" to match records with secondary display fields)`;
         } else {
           example = `Enter ${field.displayName} value`;
         }
@@ -654,7 +728,7 @@ export function createCSVTemplate(fields: FieldDefinition[]): string {
         case "text":
           exampleRow[field.key] = "";
           break;
-        case "image":
+        case "file":
           exampleRow[field.key] = "[Image]";
           headerDesc[field.key] +=
             " (Images cannot be imported/exported via CSV)";

@@ -1,4 +1,3 @@
-// src/components/layout/feature-layout.tsx
 import { ReactNode } from "react";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import { FeatureGuide } from "@/components/reusable/feature-guide";
@@ -18,9 +17,6 @@ interface FeatureHeaderProps {
   className?: string;
 }
 
-/**
- * A reusable feature header component that includes title, description, and help panel
- */
 export function FeatureHeader({
   title,
   description,
@@ -74,9 +70,6 @@ interface FeatureLayoutProps {
   className?: string;
 }
 
-/**
- * A layout component that can include help information in a sidebar
- */
 export function FeatureLayout({
   header,
   children,
@@ -85,7 +78,7 @@ export function FeatureLayout({
   className,
 }: FeatureLayoutProps) {
   return (
-    <div className={cn("container mx-auto py-6", className)}>
+    <div className={cn("container mx-auto", className)}>
       {header}
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -105,9 +98,6 @@ export function FeatureLayout({
   );
 }
 
-/**
- * A sidebar component specifically for help content
- */
 export function HelpSidebar({
   title = "Help & Tips",
   children,

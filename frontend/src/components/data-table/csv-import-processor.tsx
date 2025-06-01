@@ -356,7 +356,6 @@ export function CSVImportProcessor({
         description={`Upload and process your CSV file with ${title.toLowerCase()} records.`}
         open={isOpen}
         onOpenChange={(open) => {
-          // Prevent closing when processing
           if (isProcessing && !open) {
             return;
           }

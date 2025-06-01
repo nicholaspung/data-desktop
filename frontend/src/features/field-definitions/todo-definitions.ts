@@ -1,5 +1,8 @@
-// frontend/src/features/field-definitions/todo-definitions.ts
-import { FieldDefinitionsDataset } from "@/types/types";
+import {
+  FieldDefinitionsDataset,
+  DATASET_REFERENCES,
+  createRelationField,
+} from "@/types/types";
 
 export const TODO_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   id: "todos",
@@ -46,17 +49,19 @@ export const TODO_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Comma-separated tags for categorization",
       isOptional: true,
     },
-    {
-      key: "related_metric_id",
-      type: "text",
-      displayName: "Related Metric",
-      description: "Metric linked to this todo for tracking progress",
-      isRelation: true,
-      relatedDataset: "metrics",
-      relatedField: "id",
-      displayField: "name",
-      isOptional: true,
-    },
+    createRelationField(
+      "related_metric_id",
+      "Related Metric",
+      DATASET_REFERENCES.METRICS,
+      {
+        description: "Metric linked to this todo for tracking progress",
+        deleteBehavior: "preventDeleteIfReferenced",
+        displayField: "name",
+        displayFieldType: "text",
+        isSearchable: false,
+        isOptional: true,
+      }
+    ),
     {
       key: "metric_type",
       type: "select-single",

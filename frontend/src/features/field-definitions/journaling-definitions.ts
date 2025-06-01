@@ -1,4 +1,3 @@
-// frontend/src/features/field-definitions/gratitude-journal-definitions.ts
 import { FieldDefinitionsDataset } from "@/types/types";
 
 export const GRATITUDE_JOURNAL_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
