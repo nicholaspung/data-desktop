@@ -22,7 +22,6 @@ export default function PeopleList({ onShowDetail }: PeopleListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Extract all unique tags
   const allTags = people
     .reduce((tags: string[], person) => {
       if (person.tags) {
@@ -37,7 +36,6 @@ export default function PeopleList({ onShowDetail }: PeopleListProps) {
     }, [])
     .sort();
 
-  // Filter people based on search and tags
   const filteredPeople = people.filter((person) => {
     const matchesSearch =
       searchQuery === "" ||

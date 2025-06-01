@@ -1,4 +1,3 @@
-// src/routes/index.tsx - Updated with reconnection message when data is empty
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +36,6 @@ function Home() {
   const [summaries, setSummaries] = useState<DatasetSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get data loading state from the store
   const dashboardDataLoaded = useStore(
     appStateStore,
     (state) => state.dashboardDataLoaded
@@ -46,7 +44,6 @@ function Home() {
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
 
   useEffect(() => {
-    // Load data on first application start or if data hasn't been loaded yet
     if (!dashboardDataLoaded) {
       loadSummaries();
     } else {
@@ -57,17 +54,14 @@ function Home() {
   const loadSummaries = async () => {
     setIsLoading(true);
     try {
-      // Get all datasets
       const datasets = await ApiService.getDatasets();
 
-      // Add null check to handle case where datasets is null
       if (!datasets || datasets.length === 0) {
         setSummaries([]);
         setIsLoading(false);
         return;
       }
 
-      // Create a list of promises to get record counts for each dataset
       const countPromises = datasets.map(async (dataset) => {
         try {
           const processedRecords =
@@ -76,7 +70,7 @@ function Home() {
               dataset.fields as FieldDefinition[]
             )) || [];
 
-          loadState(processedRecords, dataset.id as DataStoreName); // Load the records into the store
+          loadState(processedRecords, dataset.id as DataStoreName);
 
           return {
             id: dataset.id,
@@ -85,7 +79,6 @@ function Home() {
             lastUpdated: processedRecords[0]
               ? processedRecords[0].lastModified
               : null,
-            // Assign icons based on dataset type
             icon: getDatasetIcon(dataset.type),
             href: `/dataset`,
           };
@@ -104,22 +97,18 @@ function Home() {
         }
       });
 
-      // Wait for all promises to resolve
       const results = await Promise.all(countPromises);
       setSummaries(results);
 
-      // Mark as loaded in the store
       setDashboardDataLoaded(true);
     } catch (error) {
       console.error("Error loading dataset summaries:", error);
-      // In case of error, set empty summaries to prevent UI errors
       setSummaries([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Helper function to get the icon for a dataset type
   const getDatasetIcon = (type: string) => {
     switch (type) {
       case "dexa":
@@ -132,12 +121,10 @@ function Home() {
   };
 
   const handleRefresh = () => {
-    // Reset the data loading state to force reload
     setDashboardDataLoaded(false);
     loadSummaries();
   };
 
-  // Loading overlay
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50">

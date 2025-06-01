@@ -24,11 +24,9 @@ export default function ExperimentDashboardProgress({
     daysRemaining: number;
   };
 }) {
-  // Generate chart data for completion trends
   const generateCompletionChartData = () => {
     if (!experiment || dailyLogs.length === 0) return [];
 
-    // Group logs by date
     const logsByDate = dailyLogs.reduce((acc: Record<string, any[]>, log) => {
       const dateStr = format(new Date(log.date), "yyyy-MM-dd");
       if (!acc[dateStr]) acc[dateStr] = [];
@@ -36,13 +34,11 @@ export default function ExperimentDashboardProgress({
       return acc;
     }, {});
 
-    // Generate data points
     return Object.keys(logsByDate)
       .sort()
       .map((dateStr) => {
         const logs = logsByDate[dateStr];
 
-        // Calculate completion rate for boolean metrics on this date
         const booleanMetrics = experimentMetrics
           .filter((em) => {
             const metric = metrics.find((m) => m.id === em.metric_id);
@@ -73,13 +69,13 @@ export default function ExperimentDashboardProgress({
           displayDate: format(
             new Date(Number(year), Number(monthPlus1) - 1, Number(day)),
             "MMM d"
-          ), // The issue was here - the date was correct but displayed wrong
+          ),
           completionRate,
           logCount: logs.length,
         };
       });
   };
-  // Prepare chart configurations
+
   const completionChartData = generateCompletionChartData();
 
   const lineConfig: LineConfig[] = [

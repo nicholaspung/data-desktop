@@ -1,4 +1,3 @@
-// src/routes/time-tracker.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import TimeTracker from "@/features/time-tracker/time-tracker";
 import {
@@ -20,7 +19,6 @@ export const Route = createFileRoute("/time-tracker")({
   component: TimeTrackerPage,
 });
 
-// Define the guide content sections
 const timeTrackerGuideContent = [
   {
     title: "Getting Started",
@@ -93,7 +91,6 @@ function TimeTrackerPage() {
   const [showConflictChecker, setShowConflictChecker] = useState(false);
   const timeEntries = useStore(dataStore, (state) => state.time_entries);
 
-  // Find overlapping entries
   const overlappingEntries = useMemo(() => {
     return findOverlappingEntries(timeEntries);
   }, [timeEntries]);
@@ -177,9 +174,7 @@ function TimeTrackerPage() {
       <TimeTracker />
       <PomodoroNotification />
       <TimeEntryConflictResolver
-        onDataChange={() => {
-          // Refresh data if needed
-        }}
+        onDataChange={() => {}}
         open={showConflictChecker}
         onOpenChange={setShowConflictChecker}
       />

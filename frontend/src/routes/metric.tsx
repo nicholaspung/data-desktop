@@ -1,4 +1,3 @@
-// src/routes/metric.tsx
 import {
   FeatureHeader,
   FeatureLayout,
@@ -16,7 +15,6 @@ export const Route = createFileRoute("/metric")({
 });
 
 function MetricInfoPage() {
-  // Define the guide content sections for the feature guide
   const metricLoggerGuideContent = [
     {
       title: "Getting Started",

@@ -1,4 +1,3 @@
-// frontend/src/features/todos/todo-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -25,13 +24,11 @@ export default function TodoDashboardSummary() {
 
     const sortedTodos = getSortedTodos(todos);
 
-    // Filter todos due today
     const today = sortedTodos.filter(
       (todo) => !todo.isComplete && isToday(new Date(todo.deadline))
     );
     setTodayTodos(today);
 
-    // Filter upcoming todos (next 7 days, excluding today)
     const upcoming = sortedTodos.filter((todo) => {
       if (todo.isComplete || isToday(new Date(todo.deadline))) return false;
       const daysUntil = differenceInDays(new Date(todo.deadline), new Date());
@@ -39,7 +36,6 @@ export default function TodoDashboardSummary() {
     });
     setUpcomingTodos(upcoming);
 
-    // Filter overdue todos
     const overdue = sortedTodos.filter(
       (todo) =>
         !todo.isComplete &&

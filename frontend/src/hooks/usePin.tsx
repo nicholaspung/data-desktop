@@ -1,4 +1,3 @@
-// src/hooks/usePin.tsx
 import { useContext } from "react";
 import PinContext from "@/contexts/pin-context";
 
@@ -9,7 +8,6 @@ export const usePin = () => {
     throw new Error("usePin must be used within a PinProvider");
   }
 
-  // Simplify dialog opener functions
   const openPinEntryDialog = () => {
     context.setShowPinEntry(true);
   };

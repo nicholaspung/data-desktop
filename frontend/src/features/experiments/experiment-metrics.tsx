@@ -1,4 +1,3 @@
-// src/features/experiments/experiment-metrics.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,6 @@ const ExperimentMetrics = ({
   showAddButton?: boolean;
   editable?: boolean;
 }) => {
-  // State
   const [experimentMetrics, setExperimentMetrics] = useState<
     ExperimentMetric[]
   >([]);
@@ -45,20 +43,16 @@ const ExperimentMetrics = ({
   const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
 
-  // Get data from store
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const experimentMetricsData =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
 
-  // Fetch experiment metrics on mount and when experimentId changes
   useEffect(() => {
     loadExperimentMetrics();
   }, [experimentId, experimentMetricsData]);
 
-  // Load experiment metrics
   const loadExperimentMetrics = async () => {
     try {
-      // Filter experiment metrics for this experiment
       const metricsForExperiment = experimentMetricsData.filter(
         (m: any) => m.experiment_id === experimentId
       );
@@ -70,12 +64,10 @@ const ExperimentMetrics = ({
     }
   };
 
-  // Add or update a metric to the experiment
   const saveMetric = async () => {
     setLoading(true);
 
     try {
-      // Prepare the metric data
       const metricData = {
         experiment_id: experimentId,
         metric_id: selectedMetricId,
@@ -86,7 +78,6 @@ const ExperimentMetrics = ({
       };
 
       if (editingMetric) {
-        // Update existing metric
         const response = await ApiService.updateRecord(editingMetric.id, {
           ...editingMetric,
           ...metricData,
@@ -97,7 +88,6 @@ const ExperimentMetrics = ({
           toast.success("Experiment metric updated");
         }
       } else {
-        // Add new metric
         const response = await ApiService.addRecord(
           "experiment_metrics",
           metricData
@@ -109,7 +99,6 @@ const ExperimentMetrics = ({
         }
       }
 
-      // Reset form and close dialog
       setDialogOpen(false);
       resetForm();
       await loadExperimentMetrics();
@@ -121,7 +110,6 @@ const ExperimentMetrics = ({
     }
   };
 
-  // Delete a metric from the experiment
   const deleteMetric = async (metricId: string) => {
     if (!editable) return;
 
@@ -137,7 +125,6 @@ const ExperimentMetrics = ({
     }
   };
 
-  // Reset form fields
   const resetForm = () => {
     setSelectedMetricId("");
     setTargetValue("0");
@@ -147,21 +134,18 @@ const ExperimentMetrics = ({
     setEditingMetric(null);
   };
 
-  // Open dialog to edit a metric
   const openEditDialog = (metric: ExperimentMetric) => {
     if (!editable) return;
 
     setEditingMetric(metric);
     setSelectedMetricId(metric.metric_id);
 
-    // Parse target value based on metric type
     const metricInfo: any = metrics.find((m: any) => m.id === metric.metric_id);
     if (metricInfo) {
       try {
         setTargetValue(JSON.parse(metric.target));
       } catch (e: any) {
         console.error(e);
-        // If parsing fails, set a default based on type
         if (metricInfo.type === "boolean") {
           setTargetValue(true);
         } else {
@@ -176,7 +160,6 @@ const ExperimentMetrics = ({
     setDialogOpen(true);
   };
 
-  // Format the target value for display
   const formatTargetValue = (metric: ExperimentMetric): string => {
     const metricInfo: any = metrics.find((m: any) => m.id === metric.metric_id);
     if (!metricInfo) return "N/A";
@@ -208,7 +191,6 @@ const ExperimentMetrics = ({
     }
   };
 
-  // Render the appropriate form field based on metric type
   const renderTargetField = () => {
     const metricInfo: any = metrics.find((m: any) => m.id === selectedMetricId);
     if (!metricInfo) return null;
@@ -275,7 +257,6 @@ const ExperimentMetrics = ({
     }
   };
 
-  // Render content for a metric card
   const renderMetricContent = (metric: ExperimentMetric) => {
     return (
       <div className="relative">

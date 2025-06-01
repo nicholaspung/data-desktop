@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-category-manager.tsx
 import { useState, useEffect } from "react";
 import { TimeCategory } from "@/store/time-tracking-definitions";
 import { Button } from "@/components/ui/button";
@@ -21,24 +20,23 @@ interface TimeCategoryManagerProps {
   onDataChange: () => void;
 }
 
-// Function to generate a random color
 const getRandomColor = (): string => {
   const colors = [
-    "#3b82f6", // blue
-    "#10b981", // green
-    "#f59e0b", // amber
-    "#ef4444", // red
-    "#8b5cf6", // purple
-    "#ec4899", // pink
-    "#0ea5e9", // sky
-    "#14b8a6", // teal
-    "#f97316", // orange
-    "#6366f1", // indigo
-    "#84cc16", // lime
-    "#9333ea", // violet
-    "#06b6d4", // cyan
-    "#d946ef", // fuchsia
-    "#f43f5e", // rose
+    "#3b82f6",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#0ea5e9",
+    "#14b8a6",
+    "#f97316",
+    "#6366f1",
+    "#84cc16",
+    "#9333ea",
+    "#06b6d4",
+    "#d946ef",
+    "#f43f5e",
   ];
 
   return colors[Math.floor(Math.random() * colors.length)];
@@ -57,7 +55,6 @@ export default function TimeCategoryManager({
   const [editColor, setEditColor] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  // Set a random color when the component mounts
   useEffect(() => {
     setNewColor(getRandomColor());
   }, []);
@@ -76,7 +73,6 @@ export default function TimeCategoryManager({
       if (category) {
         addEntry(category, "time_categories");
         setNewCategory("");
-        // Set a new random color after adding
         setNewColor(getRandomColor());
         onDataChange();
       }
@@ -190,7 +186,6 @@ export default function TimeCategoryManager({
             className="flex flex-row items-center border rounded-md p-3"
           >
             {editingId === category.id ? (
-              // Edit mode
               <div className="flex-1 flex flex-col sm:flex-row gap-2 items-center">
                 <Input
                   type="color"
@@ -215,7 +210,6 @@ export default function TimeCategoryManager({
                 </div>
               </div>
             ) : (
-              // View mode
               <div className="flex-1 flex flex-row items-center gap-2">
                 <div
                   className="w-6 h-6 rounded-full mr-3"

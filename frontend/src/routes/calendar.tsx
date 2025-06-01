@@ -13,7 +13,6 @@ export const Route = createFileRoute("/calendar")({
   component: RouteComponent,
 });
 
-// Define the guide content sections
 const dailyTrackerGuideContent = [
   {
     title: "What is Daily Tracking?",

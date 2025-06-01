@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-entries-calendar.tsx
 import { useState, useMemo } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,7 +31,6 @@ export default function TimeEntriesCalendar({
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  // Calculate start and end of the current view (day or week)
   const { startDate, endDate } = useMemo(() => {
     const start = new Date(selectedDate);
     start.setHours(0, 0, 0, 0);
@@ -40,11 +38,9 @@ export default function TimeEntriesCalendar({
     const end = new Date(selectedDate);
 
     if (viewMode === "week") {
-      // Get start of week (Sunday)
       const day = start.getDay();
       start.setDate(start.getDate() - day);
 
-      // End of week (Saturday)
       end.setDate(start.getDate() + 6);
     }
 
@@ -53,7 +49,6 @@ export default function TimeEntriesCalendar({
     return { startDate: start, endDate: end };
   }, [selectedDate, viewMode]);
 
-  // Filter entries for the selected date range
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
       const entryDate = new Date(entry.start_time);
@@ -61,7 +56,6 @@ export default function TimeEntriesCalendar({
     });
   }, [entries, startDate, endDate]);
 
-  // Generate days for the current view
   const days = useMemo(() => {
     const daysArray = [];
     const currentDay = new Date(startDate);
@@ -74,7 +68,6 @@ export default function TimeEntriesCalendar({
     return daysArray;
   }, [startDate, endDate]);
 
-  // Navigate to previous/next day or week
   const navigatePrevious = () => {
     const newDate = new Date(selectedDate);
     if (viewMode === "day") {
@@ -99,7 +92,6 @@ export default function TimeEntriesCalendar({
     setSelectedDate(new Date());
   };
 
-  // Get the formatted date range for display
   const getDateRangeDisplay = () => {
     if (viewMode === "day") {
       return selectedDate.toLocaleDateString(undefined, {
@@ -122,9 +114,8 @@ export default function TimeEntriesCalendar({
     );
   }
 
-  // Time labels for the calendar (5am - 11pm)
   const timeLabels = Array.from({ length: 19 }, (_, i) => {
-    const hour = i + 5; // Start at 5am
+    const hour = i + 5;
     return hour > 12 ? `${hour - 12}pm` : hour === 12 ? "12pm" : `${hour}am`;
   });
 
@@ -258,42 +249,34 @@ interface DayColumnProps {
 function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
   const isToday = formatDateString(day) === formatDateString(new Date());
 
-  // Process entries to place them in columns side by side if they overlap
   const processedEntries = useMemo(() => {
     if (entries.length === 0) return [];
 
-    // Sort entries by start time
     const sortedEntries = [...entries].sort(
       (a, b) =>
         new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
     );
 
-    // Track columns for overlapping entries
     const entryColumns: ProcessedTimeEntry[][] = [];
 
-    // Process each entry to find its column position
     const processedEntries: ProcessedTimeEntry[] = [];
 
     sortedEntries.forEach((entry) => {
       const startTime = new Date(entry.start_time);
       const endTime = new Date(entry.end_time);
 
-      // Find the first column where this entry doesn't overlap with any existing entry
       let columnIndex = 0;
       let foundColumn = false;
 
       while (!foundColumn) {
-        // Create column if it doesn't exist
         if (!entryColumns[columnIndex]) {
           entryColumns[columnIndex] = [];
           foundColumn = true;
         } else {
-          // Check if this entry overlaps with any entry in this column
           const overlaps = entryColumns[columnIndex].some((existingEntry) => {
             const existingStart = new Date(existingEntry.start_time);
             const existingEnd = new Date(existingEntry.end_time);
 
-            // Check for overlap
             return (
               (startTime <= existingEnd && startTime >= existingStart) ||
               (endTime <= existingEnd && endTime >= existingStart) ||
@@ -309,14 +292,12 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
         }
       }
 
-      // Add entry to its column
       entryColumns[columnIndex].push({
         ...entry,
         columnIndex,
-        totalColumns: 0, // Will be updated after all entries are processed
+        totalColumns: 0,
       });
 
-      // Add to processed entries
       processedEntries.push({
         ...entry,
         columnIndex,
@@ -324,7 +305,6 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
       });
     });
 
-    // Update total columns for each entry
     const totalColumns = entryColumns.length;
     processedEntries.forEach((entry) => {
       entry.totalColumns = totalColumns;
@@ -333,34 +313,27 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
     return processedEntries;
   }, [entries]);
 
-  // Position entries in the column based on their time
   const renderEntries = () => {
     return processedEntries.map((entry) => {
       const startTime = new Date(entry.start_time);
       const endTime = new Date(entry.end_time);
 
-      // Calculate position based on hours (5am to 11pm = 0 to 1080px)
       const startHour = startTime.getHours() + startTime.getMinutes() / 60;
       const endHour = endTime.getHours() + endTime.getMinutes() / 60;
 
-      // Clamp to our visible range
       const visibleStartHour = Math.max(5, Math.min(23, startHour));
       const visibleEndHour = Math.max(5, Math.min(23, endHour));
 
-      // Convert to percentages
       const top = ((visibleStartHour - 5) / 18) * 100;
       const height = ((visibleEndHour - visibleStartHour) / 18) * 100;
 
-      // If entry is too small, ensure minimum height
-      const minHeight = 1.5; // percent
+      const minHeight = 1.5;
       const adjustedHeight = Math.max(height, minHeight);
 
-      // Calculate width and left offset based on column
       const columnWidth = entry.totalColumns ? 100 / entry.totalColumns : 100;
       const left = entry.columnIndex * columnWidth;
       const width = columnWidth;
 
-      // Find the category for color
       const category = categories.find((c) => c.id === entry.category_id);
 
       return (
@@ -373,7 +346,6 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
             left: `${left}%`,
             width: `${width}%`,
             backgroundColor: category?.color || "#3b82f6",
-            // Add a subtle border to distinguish overlapping entries
             border: "1px solid rgba(255,255,255,0.3)",
           }}
           onClick={() => onEditEntry(entry)}
@@ -422,12 +394,10 @@ function CurrentTimeIndicator() {
   const now = new Date();
   const currentHour = now.getHours() + now.getMinutes() / 60;
 
-  // Only show if within our visible range (5am-11pm)
   if (currentHour < 5 || currentHour > 23) {
     return null;
   }
 
-  // Calculate position (5am to 11pm = 0 to 100%)
   const top = ((currentHour - 5) / 18) * 100;
 
   return (

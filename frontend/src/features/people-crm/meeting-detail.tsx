@@ -11,7 +11,6 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
-// frontend/src/routes/people-crm/meeting-detail.tsx
 export function MeetingDetail({
   meetingId,
   onBack,

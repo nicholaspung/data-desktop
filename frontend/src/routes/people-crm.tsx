@@ -1,4 +1,3 @@
-// frontend/src/routes/people-crm/index.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import ReusableTabs from "@/components/reusable/reusable-tabs";

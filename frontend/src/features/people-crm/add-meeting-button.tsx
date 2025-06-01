@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/add-meeting-button.tsx
 import { useState } from "react";
 import { PlusCircle, Pencil } from "lucide-react";
 import MeetingForm from "./meeting-form";

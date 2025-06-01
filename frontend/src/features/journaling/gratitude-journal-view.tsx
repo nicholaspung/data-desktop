@@ -1,4 +1,3 @@
-// src/features/journaling/gratitude-journal-view.tsx
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { GratitudeJournalEntry } from "@/store/journaling-definitions";

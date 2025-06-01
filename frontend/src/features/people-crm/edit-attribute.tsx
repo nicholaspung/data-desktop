@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import PersonAttributeForm from "./attribute-form";
 import { PersonAttribute } from "@/store/people-crm-definitions";
 
-// frontend/src/routes/people-crm/edit-attribute.tsx
 export function EditAttribute({
   attributeId,
   onBack,
@@ -28,7 +27,7 @@ export function EditAttribute({
   }, [attributeId, attributes]);
 
   interface HandleSubmitData {
-    [key: string]: any; // Replace with specific fields if known
+    [key: string]: any;
   }
 
   const handleSubmit = async (data: HandleSubmitData): Promise<void> => {

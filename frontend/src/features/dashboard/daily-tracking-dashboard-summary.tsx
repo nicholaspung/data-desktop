@@ -1,4 +1,3 @@
-// src/features/dashboard/daily-tracking-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,6 @@ export default function DailyTrackingDashboardSummary() {
   const [metricNotes, setMetricNotes] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Get data from store
   const allMetrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const experimentMetrics =
@@ -41,19 +39,15 @@ export default function DailyTrackingDashboardSummary() {
   const experiments = useStore(dataStore, (state) => state.experiments) || [];
   const today = startOfDay(new Date());
 
-  // Helper function to find the experiment ID for a given metric
   const findExperimentForMetric = (metricId: string): string | undefined => {
-    // Find all experiment metrics for this metric
     const metricExperiments = experimentMetrics.filter(
       (em) => em.metric_id === metricId
     );
 
-    // Get the active experiments
     const activeExperiments = experiments.filter(
       (exp) => exp.status === "active"
     );
 
-    // Find the first active experiment that includes this metric
     const activeExperimentMetric = metricExperiments.find((em) =>
       activeExperiments.some((exp) => exp.id === em.experiment_id)
     );
@@ -61,18 +55,15 @@ export default function DailyTrackingDashboardSummary() {
     return activeExperimentMetric?.experiment_id;
   };
 
-  // Load metrics and today's logs
   useEffect(() => {
     setIsLoading(true);
 
-    // Get active metrics that are scheduled for today
     const activeMetrics = allMetrics.filter(
       (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
     );
 
     setMetrics(activeMetrics);
 
-    // Get logs for today
     const logsMap: Record<string, DailyLog> = {};
 
     dailyLogs.forEach((log) => {
@@ -89,13 +80,10 @@ export default function DailyTrackingDashboardSummary() {
     setIsLoading(false);
   }, [allMetrics, dailyLogs]);
 
-  // Toggle boolean metric completion
   const toggleMetric = async (metric: Metric) => {
     if (metric.type !== "boolean") {
-      // For non-boolean metrics, open the modal
       setCurrentMetric(metric);
 
-      // Set initial values if there's an existing log
       const existingLog = todayLogs[metric.id];
       if (existingLog) {
         try {
@@ -106,7 +94,6 @@ export default function DailyTrackingDashboardSummary() {
           setMetricNotes(existingLog.notes || "");
         }
       } else {
-        // Set default value for new log
         setMetricValue(metric.default_value || "");
         setMetricNotes("");
       }
@@ -115,7 +102,6 @@ export default function DailyTrackingDashboardSummary() {
       return;
     }
 
-    // For boolean metrics, toggle completion
     setLoading((prev) => ({ ...prev, [metric.id]: true }));
 
     try {
@@ -123,7 +109,6 @@ export default function DailyTrackingDashboardSummary() {
       const experimentId = findExperimentForMetric(metric.id);
 
       if (existingLog) {
-        // Toggle existing log
         let currentValue;
         try {
           currentValue = JSON.parse(existingLog.value);
@@ -136,7 +121,7 @@ export default function DailyTrackingDashboardSummary() {
         const response = await ApiService.updateRecord(existingLog.id, {
           ...existingLog,
           value: JSON.stringify(newValue),
-          experiment_id: experimentId, // Attach experiment ID
+          experiment_id: experimentId,
         });
 
         if (response) {
@@ -151,12 +136,11 @@ export default function DailyTrackingDashboardSummary() {
           );
         }
       } else {
-        // Create new log
         const newLog = {
           date: today,
           metric_id: metric.id,
-          experiment_id: experimentId, // Attach experiment ID
-          value: "true", // JSON.stringify(true)
+          experiment_id: experimentId,
+          value: "true",
           notes: "",
         };
 
@@ -180,7 +164,6 @@ export default function DailyTrackingDashboardSummary() {
     }
   };
 
-  // Save non-boolean metric value
   const saveMetricValue = async () => {
     if (!currentMetric) return;
 
@@ -191,12 +174,11 @@ export default function DailyTrackingDashboardSummary() {
       const experimentId = findExperimentForMetric(currentMetric.id);
 
       if (existingLog) {
-        // Update existing log
         const response = await ApiService.updateRecord(existingLog.id, {
           ...existingLog,
           value: JSON.stringify(metricValue),
           notes: metricNotes,
-          experiment_id: experimentId, // Attach experiment ID
+          experiment_id: experimentId,
         });
 
         if (response) {
@@ -211,11 +193,10 @@ export default function DailyTrackingDashboardSummary() {
           );
         }
       } else {
-        // Create new log
         const newLog = {
           date: today,
           metric_id: currentMetric.id,
-          experiment_id: experimentId, // Attach experiment ID
+          experiment_id: experimentId,
           value: JSON.stringify(metricValue),
           notes: metricNotes,
         };
@@ -244,7 +225,6 @@ export default function DailyTrackingDashboardSummary() {
     }
   };
 
-  // Check if a boolean metric is completed
   const isMetricCompleted = (metric: Metric): boolean => {
     const log = todayLogs[metric.id];
     if (!log) return false;
@@ -257,11 +237,9 @@ export default function DailyTrackingDashboardSummary() {
       }
     }
 
-    // For non-boolean metrics, consider it completed if a log exists
     return true;
   };
 
-  // Get display value for a non-boolean metric
   const getMetricDisplayValue = (metric: Metric): string => {
     const log = todayLogs[metric.id];
     if (!log) return "-";
@@ -274,12 +252,10 @@ export default function DailyTrackingDashboardSummary() {
     }
   };
 
-  // Get completion count
   const getCompletedCount = (): number => {
     return metrics.filter((metric) => isMetricCompleted(metric)).length;
   };
 
-  // Metrics list component
   const metricsList = (
     <div className="space-y-2 pt-2">
       {metrics.map((metric) => (

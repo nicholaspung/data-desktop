@@ -1,4 +1,3 @@
-// frontend/src/routes/people-crm/note-detail.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -35,7 +34,6 @@ export default function NoteDetail({
     if (foundNote) {
       setNote(foundNote);
     } else {
-      // Try to load from API if not in store
       ApiService.getRecord(noteId).then((data) => {
         if (data) {
           setNote(data as PersonNote);

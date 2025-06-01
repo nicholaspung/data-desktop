@@ -1,4 +1,3 @@
-// src/features/journaling/affirmation-view.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,6 @@ export default function AffirmationView() {
   );
   const [hasLoggedToday, setHasLoggedToday] = useState(false);
 
-  // Access the data from the store
   const entries = useStore(
     dataStore,
     (state) => state.affirmation as Affirmation[]
@@ -32,7 +30,6 @@ export default function AffirmationView() {
     (state) => state.daily_logs as DailyLog[]
   );
 
-  // Get the latest affirmation, sorted by date
   const latestAffirmation =
     entries.length > 0
       ? [...entries].sort(
@@ -40,15 +37,12 @@ export default function AffirmationView() {
         )[0]
       : null;
 
-  // Find the affirmation metric and check if it's been logged today
   useEffect(() => {
-    // Look for the "completed daily affirmation" metric
     const metric = metrics.find(
       (m) => m.name?.toLowerCase() === "completed daily affirmation" && m.active
     );
     setAffirmationMetric(metric || null);
 
-    // Check if the metric has been logged today
     if (metric) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -65,14 +59,12 @@ export default function AffirmationView() {
     }
   }, [entries, metrics, dailyLogs]);
 
-  // Handle logging the affirmation practice
   const handleLogPractice = async () => {
     if (!latestAffirmation || !affirmationMetric) return;
 
     try {
       const today = new Date();
 
-      // Create new log entry for affirmation metric
       const newLog = {
         date: today,
         metric_id: affirmationMetric.id,
@@ -94,7 +86,6 @@ export default function AffirmationView() {
     }
   };
 
-  // Display explanation info card
   const InfoCard = () => (
     <InfoPanel
       title="About Daily Affirmations"
@@ -106,7 +97,6 @@ export default function AffirmationView() {
     </InfoPanel>
   );
 
-  // Display current affirmation
   const CurrentAffirmation = () => (
     <Card>
       <CardHeader className="pb-3 border-b flex flex-row justify-between items-center">
@@ -186,7 +176,7 @@ export default function AffirmationView() {
         <AffirmationForm
           latestAffirmation={latestAffirmation}
           setIsEditing={setIsEditing}
-          hasTodaysAffirmation={false} // Not needed anymore as we're just showing the latest
+          hasTodaysAffirmation={false}
         />
       ) : (
         <CurrentAffirmation />

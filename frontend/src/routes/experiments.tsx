@@ -14,7 +14,6 @@ export const Route = createFileRoute("/experiments")({
   component: ExperimentsPage,
 });
 
-// Define the guide content sections
 const experimentsGuideContent = [
   {
     title: "Getting Started",

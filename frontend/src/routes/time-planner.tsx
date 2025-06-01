@@ -1,4 +1,3 @@
-// src/routes/time-planner.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import {
   FeatureHeader,
@@ -11,7 +10,6 @@ export const Route = createFileRoute("/time-planner")({
   component: TimePlannerPage,
 });
 
-// Define the guide content sections
 const timePlannerGuideContent = [
   {
     title: "Getting Started",

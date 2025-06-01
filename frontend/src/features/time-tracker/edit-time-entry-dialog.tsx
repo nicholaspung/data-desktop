@@ -1,4 +1,3 @@
-// src/features/time-tracker/edit-time-entry-dialog.tsx
 import { useState, useEffect } from "react";
 import { TimeEntry } from "@/store/time-tracking-definitions";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,6 @@ export default function EditTimeEntryDialog({
   const [endTime, setEndTime] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Get all time entries to find the previous entry
   const allTimeEntries = useStore(
     dataStore,
     (state) => state.time_entries as TimeEntry[]
@@ -44,7 +42,6 @@ export default function EditTimeEntryDialog({
   const categories = useStore(dataStore, (state) => state.time_categories);
 
   useEffect(() => {
-    // Format dates for datetime-local inputs
     const formatDateForInput = (date: Date) => {
       return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
         .toISOString()
@@ -72,7 +69,6 @@ export default function EditTimeEntryDialog({
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
 
-      // Store the original entry for comparison
       const originalEntry = { ...entry };
 
       const updatedEntry = {
@@ -90,7 +86,6 @@ export default function EditTimeEntryDialog({
       if (response) {
         updateEntry(entry.id, response, "time_entries");
 
-        // Sync with time metrics, passing the original entry for comparison
         await syncTimeEntryWithMetrics(
           response as TimeEntry,
           metricsData,
@@ -126,10 +121,8 @@ export default function EditTimeEntryDialog({
   };
 
   const findPreviousEntryEndTime = () => {
-    // Get the current entry's start time
     const currentStartTime = new Date(entry.start_time).getTime();
 
-    // Find all entries that ended before this one started
     const earlierEntries = allTimeEntries.filter(
       (e) =>
         e.id !== entry.id && new Date(e.end_time).getTime() <= currentStartTime
@@ -137,7 +130,6 @@ export default function EditTimeEntryDialog({
 
     if (earlierEntries.length === 0) return null;
 
-    // Sort by end time in descending order and take the most recent one
     earlierEntries.sort(
       (a, b) => new Date(b.end_time).getTime() - new Date(a.end_time).getTime()
     );
@@ -162,7 +154,6 @@ export default function EditTimeEntryDialog({
     );
   };
 
-  // Convert categories to format expected by ReusableSelect
   const categoryOptions = categories.map((category) => ({
     id: category.id,
     label: category.name,

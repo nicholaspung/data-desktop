@@ -1,4 +1,3 @@
-// frontend/src/features/todos/todo-list.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -18,7 +17,6 @@ export default function TodoList() {
   const isLoading = useStore(loadingStore, (state) => state.todos);
   const [todoMetrics, setTodoMetrics] = useState<Record<string, any>>({});
 
-  // Load related metrics data for todos
   useEffect(() => {
     const loadMetrics = async () => {
       const metrics = await ApiService.getRecordsWithRelations<any>("metrics");
@@ -32,7 +30,6 @@ export default function TodoList() {
     loadMetrics();
   }, []);
 
-  // Filter todos based on active tab
   const getFilteredTodos = (tabId: string) => {
     return todos.filter((todo) => {
       switch (tabId) {
@@ -91,7 +88,6 @@ export default function TodoList() {
     );
   }
 
-  // Define tabs configuration for ReusableTabs
   const tabs = [
     {
       id: "all",

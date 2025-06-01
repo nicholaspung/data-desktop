@@ -1,4 +1,3 @@
-// src/features/journaling/question-of-the-day.tsx
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -38,11 +37,9 @@ export default function QuestionOfTheDay({
   );
 
   useEffect(() => {
-    // Get today's date (midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // See if we already have an entry for today
     const todayEntry = entries.find((entry) => {
       const entryDate = new Date(entry.date);
       entryDate.setHours(0, 0, 0, 0);
@@ -64,24 +61,20 @@ export default function QuestionOfTheDay({
     setIsSubmitting(true);
     try {
       const today = new Date();
-      // Add markdown formatting to include the question at the top
+
       const formattedEntry = `## ${todayQuestion}\n\n${answer}`;
 
-      // Create entry data
       const entryData = {
         date: today,
         entry: formattedEntry,
       };
 
-      // Save to database
       const result = await ApiService.addRecord("question_journal", entryData);
       if (result) {
-        // Add to state
         addEntry(result, "question_journal");
         toast.success("Your answer has been saved");
-        setAnswer(""); // Clear the form
+        setAnswer("");
 
-        // Navigate to history if requested
         if (setActiveTab) {
           setActiveTab("history");
         }

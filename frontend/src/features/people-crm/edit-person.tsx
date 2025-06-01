@@ -1,4 +1,3 @@
-// frontend/src/routes/people-crm/edit-person.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -25,7 +24,6 @@ export default function EditPerson({ personId, onBack }: EditPersonProps) {
     if (foundPerson) {
       setPerson(foundPerson);
     } else {
-      // Try to load from API if not in store
       ApiService.getRecord(personId).then((data) => {
         if (data) {
           setPerson(data as Person);

@@ -1,4 +1,3 @@
-// src/features/experiments/experiment-dashboard.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, isAfter } from "date-fns";

@@ -1,4 +1,3 @@
-// src/features/time-planner/time-planner-summary.tsx
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -36,19 +35,16 @@ interface TitleSummary {
 export default function TimePlannerSummary({
   timeBlocks,
 }: TimePlannerSummaryProps) {
-  // Calculate summary by category
   const categorySummary = useMemo(() => {
     const summary: Record<string, CategorySummary> = {};
 
     timeBlocks.forEach((block) => {
-      // Calculate minutes between start and end time
       const startMinutes = block.startHour * 60 + block.startMinute;
       const endMinutes = block.endHour * 60 + block.endMinute;
 
-      // Handle cases where end time is on the next day (e.g., 11 PM to 1 AM)
       let duration = endMinutes - startMinutes;
       if (duration < 0) {
-        duration += 24 * 60; // Add 24 hours in minutes
+        duration += 24 * 60;
       }
 
       if (!summary[block.category]) {
@@ -65,19 +61,16 @@ export default function TimePlannerSummary({
     return Object.values(summary).sort((a, b) => b.minutes - a.minutes);
   }, [timeBlocks]);
 
-  // Calculate summary by title
   const titleSummary = useMemo(() => {
     const summary: Record<string, TitleSummary> = {};
 
     timeBlocks.forEach((block) => {
-      // Calculate minutes between start and end time
       const startMinutes = block.startHour * 60 + block.startMinute;
       const endMinutes = block.endHour * 60 + block.endMinute;
 
-      // Handle cases where end time is on the next day (e.g., 11 PM to 1 AM)
       let duration = endMinutes - startMinutes;
       if (duration < 0) {
-        duration += 24 * 60; // Add 24 hours in minutes
+        duration += 24 * 60;
       }
 
       if (!summary[block.title]) {
@@ -95,18 +88,14 @@ export default function TimePlannerSummary({
     return Object.values(summary).sort((a, b) => b.minutes - a.minutes);
   }, [timeBlocks]);
 
-  // Calculate total hours for the week
   const totalTrackedMinutes = useMemo(() => {
     return categorySummary.reduce((sum, category) => sum + category.minutes, 0);
   }, [categorySummary]);
 
-  // Calculate total hours available in a week (24*7 hours)
   const TOTAL_WEEK_MINUTES = 24 * 7 * 60;
 
-  // Calculate untracked time
   const untrackedMinutes = TOTAL_WEEK_MINUTES - totalTrackedMinutes;
 
-  // Add untracked time to category summary if there is any
   const fullCategorySummary = useMemo(() => {
     if (untrackedMinutes <= 0) return categorySummary;
 
@@ -115,7 +104,7 @@ export default function TimePlannerSummary({
       {
         name: "Untracked Time",
         minutes: untrackedMinutes,
-        color: "#e5e7eb", // Light gray for untracked time
+        color: "#e5e7eb",
       },
     ];
   }, [categorySummary, untrackedMinutes]);
@@ -124,7 +113,6 @@ export default function TimePlannerSummary({
   const untrackedHours = (untrackedMinutes / 60).toFixed(1);
   const weekTotalHours = (TOTAL_WEEK_MINUTES / 60).toFixed(1);
 
-  // Format minutes as hours and minutes
   const formatMinutes = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
@@ -138,14 +126,12 @@ export default function TimePlannerSummary({
     }
   };
 
-  // Format data for category chart
   const categoryChartData = fullCategorySummary.map((category) => ({
     name: category.name,
     value: category.minutes,
     color: category.color,
   }));
 
-  // Format data for title chart - only use top 10 for better visualization
   const titleChartData = titleSummary.slice(0, 10).map((item) => ({
     name: item.title,
     value: item.minutes,

@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-tracker-form.tsx
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +49,6 @@ function TimeTrackerForm({
   onDataChange,
   inPopover = false,
 }: TimeTrackerFormProps) {
-  // Get time entries from store for previous entry reference
   const timeEntries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
@@ -66,10 +64,8 @@ function TimeTrackerForm({
     (state) => state.usePomodoroActive
   );
 
-  // Get global timer state
   const globalTimerData = getTimerData();
 
-  // Initialize form with global timer data if timer is active
   const [description, setDescription] = useState(
     globalTimerData.isActive ? globalTimerData.description : ""
   );
@@ -82,7 +78,6 @@ function TimeTrackerForm({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  // Timer state - sync with global state if timer is active
   const [timerStartTime, setTimerStartTime] = useState<Date | null>(
     globalTimerData.isActive ? globalTimerData.startTime : null
   );
@@ -90,24 +85,19 @@ function TimeTrackerForm({
     globalTimerData.isActive ? globalTimerData.elapsedSeconds : 0
   );
 
-  // Loading state
   const [isSaving, setIsSaving] = useState(false);
 
-  // Add state
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
 
-  // Generate options for autocomplete from previous entries
   const descriptionOptions = useMemo(() => {
     const uniqueDescriptions = new Map<string, TimeEntry>();
 
-    // Get the most recent entry for each unique description
     timeEntries.forEach((entry) => {
       if (!uniqueDescriptions.has(entry.description) && entry.description) {
         uniqueDescriptions.set(entry.description, entry);
       }
     });
 
-    // Get time-type metrics to add to suggestions
     const timeMetrics = metricsData
       .filter((m: any) => m.type === "time" && m.active)
       .map((metric: any) => ({
@@ -117,17 +107,14 @@ function TimeTrackerForm({
         metric: metric,
       }));
 
-    // Create a set of time metric names for easy lookup
     const timeMetricNames = new Set(
       metricsData
         .filter((m: any) => m.type === "time" && m.active)
         .map((m: any) => m.name.toLowerCase())
     );
 
-    // Convert to options array for the autocomplete with all related data
     const entryOptions = Array.from(uniqueDescriptions.values()).map(
       (entry) => {
-        // Check if this entry matches a time metric name
         const isTimeMetric = timeMetricNames.has(
           entry.description.toLowerCase()
         );
@@ -136,18 +123,15 @@ function TimeTrackerForm({
           id: entry.id,
           label: entry.description,
           entry: entry,
-          isMetric: isTimeMetric, // Set to true if it matches a time metric
-          // Include category information if available (from relation data)
+          isMetric: isTimeMetric,
           category_id_data: entry.category_id_data,
         };
       }
     );
 
-    // Combine metrics first, then previous entries
     return [...timeMetrics, ...entryOptions];
   }, [timeEntries, metricsData]);
 
-  // Reset form to initial state
   const resetForm = useCallback(() => {
     setDescription("");
     setCategoryId(undefined);
@@ -157,13 +141,11 @@ function TimeTrackerForm({
     setTimerStartTime(null);
     setElapsedSeconds(0);
 
-    // Make sure we're also in sync with the global state
     if (globalTimerData.isActive) {
       stopGlobalTimer();
     }
   }, [globalTimerData.isActive]);
 
-  // Initialize current time when switching to manual mode
   useEffect(() => {
     if (addState === "manual" && !startTime) {
       setCurrentTimeAsStartTime();
@@ -171,23 +153,19 @@ function TimeTrackerForm({
   }, [addState]);
 
   useEffect(() => {
-    // If both pomodoro and regular timer are inactive, reset the form
     if (!isPomodoroActive && !isTimerActive) {
       resetForm();
     }
   }, [isPomodoroActive, isTimerActive]);
 
-  // Update local timer state when global state changes
   useEffect(() => {
     const unsubscribe = timeTrackerStore.subscribe((state) => {
-      // Only update if state actually changed
       if (state.currentVal === state.prevVal) return;
 
       const currentState = state.currentVal;
       const prevStateVal = state.prevVal;
 
       if (currentState.isTimerActive) {
-        // Only update if values actually changed
         if (currentState.description !== prevStateVal.description) {
           setDescription(currentState.description);
         }
@@ -208,7 +186,6 @@ function TimeTrackerForm({
           setElapsedSeconds(currentState.elapsedSeconds);
         }
       } else {
-        // Only reset if we were previously tracking time and not in pomodoro mode
         if (prevStateVal.isTimerActive && !isPomodoroActive) {
           resetForm();
         }
@@ -218,9 +195,7 @@ function TimeTrackerForm({
     return () => unsubscribe();
   }, [isPomodoroActive, resetForm]);
 
-  // Local timer tick for immediate feedback
   useEffect(() => {
-    // Timer interval for active timer
     if (isTimerActive && timerStartTime) {
       const interval = setInterval(() => {
         const now = new Date();
@@ -233,53 +208,41 @@ function TimeTrackerForm({
       return () => {
         clearInterval(interval);
       };
-    }
-    // Reset if timer becomes inactive
-    else if (!isTimerActive) {
+    } else if (!isTimerActive) {
       setElapsedSeconds(0);
     }
   }, [isTimerActive, timerStartTime]);
 
-  // Start the timer
   const handleStartTimer = () => {
     const now = new Date();
     const formattedNow = formatDateForInput(now);
     setStartTime(formattedNow);
 
-    // Only call the global store function
     startGlobalTimer(description, categoryId, tags);
-
-    // No need to set local state, it will come from the store
   };
 
-  // Helper to format date for datetime-local input
   const formatDateForInput = (date: Date): string => {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
   };
 
-  // Set current time as start time
   const setCurrentTimeAsStartTime = () => {
     const now = new Date();
     const formattedNow = formatDateForInput(now);
     setStartTime(formattedNow);
   };
 
-  // Set end time of last entry as start time for this entry
   const setLastEntryEndTimeAsStartTime = () => {
     if (timeEntries.length === 0) {
-      // If no previous entries, use current time
       setCurrentTimeAsStartTime();
       return;
     }
 
-    // Sort entries by end time, descending
     const sortedEntries = [...timeEntries].sort((a, b) => {
       return new Date(b.end_time).getTime() - new Date(a.end_time).getTime();
     });
 
-    // Get the most recent entry
     const lastEntry = sortedEntries[0];
     if (lastEntry && lastEntry.end_time) {
       const lastEndTime = new Date(lastEntry.end_time);
@@ -313,7 +276,6 @@ function TimeTrackerForm({
       if (response) {
         addEntry(response, "time_entries");
 
-        // Add timeout for sync operation to prevent freezing
         await Promise.race([
           syncTimeEntryWithMetrics(
             response as TimeEntry,
@@ -325,23 +287,18 @@ function TimeTrackerForm({
           ),
         ]).catch((error) => {
           console.warn("Metrics sync failed or timed out:", error);
-          // Continue with saving even if sync fails
         });
       }
 
-      // Reset global timer state
       stopGlobalTimer();
 
-      // Reset local form state
       resetForm();
 
-      // Add a small delay before triggering onDataChange to prevent race conditions
       setTimeout(() => {
         onDataChange();
       }, 100);
     } catch (error) {
       console.error("Error saving time entry:", error);
-      // Don't freeze the UI on error
       alert("Failed to save time entry. Please try again.");
     } finally {
       setIsSaving(false);
@@ -381,7 +338,6 @@ function TimeTrackerForm({
       if (response) {
         addEntry(response, "time_entries");
 
-        // Sync with time metrics
         await syncTimeEntryWithMetrics(
           response as TimeEntry,
           metricsData,
@@ -398,7 +354,6 @@ function TimeTrackerForm({
     }
   };
 
-  // Handle selection of a previous entry from autocomplete
   const handleDescriptionSelect = (
     option: SelectOption & {
       entry?: TimeEntry;
@@ -408,12 +363,9 @@ function TimeTrackerForm({
   ) => {
     setDescription(option.label);
 
-    // If selecting a metric
     if (option.isMetric && option.metric) {
       // For metrics, no need to set category automatically
-    }
-    // For previous entries
-    else if (option.entry) {
+    } else if (option.entry) {
       if (option.entry.category_id) {
         setCategoryId(option.entry.category_id);
       }
@@ -423,7 +375,6 @@ function TimeTrackerForm({
     }
   };
 
-  // Add this new function to sort tags alphabetically when saving
   const getSortedTags = () => {
     if (!tags) return "";
 
@@ -451,7 +402,6 @@ function TimeTrackerForm({
         inPopover
           ? "border-0 shadow-none"
           : "border-2 shadow-lg transition-all duration-300",
-        // Apply different styling based on timer state
         isPomodoroActive && isPomodoroBreak
           ? "border-blue-500 dark:border-blue-600 shadow-blue-100 dark:shadow-blue-900/20"
           : isPomodoroActive && !isPomodoroBreak

@@ -1,5 +1,3 @@
-// First, let's create a store to track data loading state
-// src/store/app-state-store.ts
 import { Store } from "@tanstack/react-store";
 
 type AppStateStore = {

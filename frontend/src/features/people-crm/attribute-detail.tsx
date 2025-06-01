@@ -1,4 +1,3 @@
-// frontend/src/routes/people-crm/attribute-detail.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -42,7 +41,6 @@ export default function AttributeDetail({
     if (foundAttribute) {
       setAttribute(foundAttribute);
     } else {
-      // Try to load from API if not in store
       ApiService.getRecord(attributeId).then((data) => {
         if (data) {
           setAttribute(data as PersonAttribute);

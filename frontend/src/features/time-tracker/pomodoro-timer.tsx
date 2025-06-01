@@ -1,4 +1,3 @@
-// src/features/time-tracker/pomodoro-timer.tsx
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useStore } from "@tanstack/react-store";
@@ -36,7 +35,6 @@ export default function PomodoroTimer({
   categoryId: initialCategoryId,
   tags: initialTags,
 }: PomodoroTimerProps) {
-  // Pomodoro timer state
   const isActive = useStore(pomodoroStore, (state) => state.isActive);
   const isBreak = useStore(pomodoroStore, (state) => state.isBreak);
   const startTime = useStore(pomodoroStore, (state) => state.startTime);
@@ -51,7 +49,6 @@ export default function PomodoroTimer({
   const totalSeconds = useStore(pomodoroStore, (state) => state.totalSeconds);
   const breakSeconds = useStore(pomodoroStore, (state) => state.breakSeconds);
 
-  // Time tracker state - for description, category, and tags
   const timeTrackerDescription = useStore(
     timeTrackerStore,
     (state) => state.description
@@ -66,7 +63,6 @@ export default function PomodoroTimer({
     (state) => state.isTimerActive
   );
 
-  // Other store data
   const metricsData = useStore(dataStore, (state) => state.metrics || []);
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs || []);
 
@@ -75,8 +71,6 @@ export default function PomodoroTimer({
   const [notificationPermission, setNotificationPermission] =
     useState<NotificationPermission | null>(null);
 
-  // Get the active description, category, and tags
-  // If Pomodoro is active, these might change as the user edits the form
   const getActiveDescription = () => {
     return timeTrackerDescription || initialDescription;
   };
@@ -89,7 +83,6 @@ export default function PomodoroTimer({
     return timeTrackerTags || initialTags;
   };
 
-  // Initialize audio
   useEffect(() => {
     audioRef.current = new Audio("/pomodoro-end.mp3");
     return () => {
@@ -100,26 +93,21 @@ export default function PomodoroTimer({
     };
   }, []);
 
-  // Check for timer completion
   useEffect(() => {
     if (isActive && !isBreak && remainingSeconds === 0) {
-      // Pomodoro completed
       if (audioRef.current) {
         audioRef.current
           .play()
           .catch((err) => console.error("Error playing audio:", err));
       }
-      // Don't automatically switch to break mode
     }
 
     if (isActive && isBreak && remainingBreakSeconds === 0) {
-      // Break completed
       if (audioRef.current) {
         audioRef.current
           .play()
           .catch((err) => console.error("Error playing audio:", err));
       }
-      // Don't automatically end the break
     }
   }, [isActive, isBreak, remainingSeconds, remainingBreakSeconds]);
 
@@ -127,12 +115,10 @@ export default function PomodoroTimer({
     if (typeof window !== "undefined" && "Notification" in window) {
       setNotificationPermission(Notification.permission);
 
-      // Update permission state if it changes
       const handlePermissionChange = () => {
         setNotificationPermission(Notification.permission);
       };
 
-      // For older browsers that might support this
       if ("onpermissionchange" in Notification.prototype) {
         Notification.prototype.onpermissionchange = handlePermissionChange;
       }
@@ -147,10 +133,8 @@ export default function PomodoroTimer({
   };
 
   const handleStartPomodoro = () => {
-    // Start the pomodoro timer
     startPomodoro();
 
-    // Also start a global timer to track time entry
     if (!timeTrackerIsActive) {
       startGlobalTimer(
         getActiveDescription(),
@@ -171,12 +155,10 @@ export default function PomodoroTimer({
       const endTime = new Date();
       const durationMinutes = Math.ceil((totalSeconds - remainingSeconds) / 60);
 
-      // Use current description, category and tags from the timeTrackerStore
       const currentDescription = getActiveDescription();
       const currentCategoryId = getActiveCategoryId();
       const currentTags = getActiveTags();
 
-      // Add pomodoro tag
       const pomodoroTags = currentTags
         ? `${currentTags}, pomodoro`
         : "pomodoro";
@@ -203,22 +185,17 @@ export default function PomodoroTimer({
         onDataChange();
       }
 
-      // First stop the current pomodoro timer
       stopPomodoro();
 
-      // Delay starting the break just slightly to ensure timestamps don't overlap
       setTimeout(() => {
-        // Start break with a new timer session
         startBreak();
       }, 1000);
 
-      // Stop the global timer if it's running
       if (timeTrackerIsActive) {
         stopTimer();
       }
     } catch (error) {
       console.error("Error saving pomodoro entry:", error);
-      // Make sure we don't leave the timers in an inconsistent state
       stopPomodoro();
       if (timeTrackerIsActive) {
         stopTimer();
@@ -239,12 +216,10 @@ export default function PomodoroTimer({
         (breakSeconds - remainingBreakSeconds) / 60
       );
 
-      // Use current description, category and tags from the timeTrackerStore
       const currentDescription = getActiveDescription();
       const currentCategoryId = getActiveCategoryId();
       const currentTags = getActiveTags();
 
-      // Add break tag
       const breakTags = currentTags
         ? `${currentTags}, pomodoro break`
         : "pomodoro break";
@@ -271,9 +246,7 @@ export default function PomodoroTimer({
         onDataChange();
       }
 
-      // Stop the pomodoro completely
       stopPomodoro();
-      // Reset global state
       if (timeTrackerIsActive) {
         stopTimer();
       }
@@ -288,7 +261,6 @@ export default function PomodoroTimer({
     ? ((breakSeconds - remainingBreakSeconds) / breakSeconds) * 100
     : ((totalSeconds - remainingSeconds) / totalSeconds) * 100;
 
-  // Get the current description from the form or props
   const currentDescription = getActiveDescription();
 
   if (!isActive) {

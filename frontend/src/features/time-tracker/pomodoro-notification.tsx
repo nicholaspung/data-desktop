@@ -1,4 +1,3 @@
-// src/features/time-tracker/pomodoro-notification.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useStore } from "@tanstack/react-store";
 import { pomodoroStore } from "./pomodoro-store";
@@ -13,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Coffee, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Check if browser supports notifications
 const notificationsSupported =
   typeof window !== "undefined" && "Notification" in window;
 
@@ -30,10 +28,8 @@ export default function PomodoroNotification() {
     (state) => state.remainingBreakSeconds
   );
 
-  // Request notification permission on mount
   useEffect(() => {
     if (notificationsSupported && Notification.permission === "default") {
-      // We'll ask for permission when user interacts with the page
       const askForPermission = () => {
         Notification.requestPermission();
         document.removeEventListener("click", askForPermission);
@@ -47,23 +43,19 @@ export default function PomodoroNotification() {
     }
   }, []);
 
-  // Function to show OS notification
   const showOSNotification = useCallback((title: string, body: string) => {
     if (!notificationsSupported) return;
 
     if (Notification.permission === "granted") {
       try {
-        // Create and show notification
         const notification = new Notification(title, {
           body,
-          icon: "/favicon.ico", // Replace with your app's icon
+          icon: "/favicon.ico",
           silent: false,
         });
 
-        // Auto close after 5 seconds
         setTimeout(() => notification.close(), 5000);
 
-        // Handle click on notification
         notification.onclick = () => {
           window.focus();
           notification.close();
@@ -75,11 +67,9 @@ export default function PomodoroNotification() {
   }, []);
 
   useEffect(() => {
-    // Show notification when timer reaches zero
     if (isActive && !isBreak && remainingSeconds === 0) {
       setShowNotification(true);
 
-      // Show OS notification
       showOSNotification(
         "Pomodoro Complete!",
         "Your Pomodoro session is complete. Time for a break!"
@@ -89,7 +79,6 @@ export default function PomodoroNotification() {
     if (isActive && isBreak && remainingBreakSeconds === 0) {
       setShowNotification(true);
 
-      // Show OS notification
       showOSNotification(
         "Break Time Complete!",
         "Your break time is over. Ready to start a new Pomodoro?"

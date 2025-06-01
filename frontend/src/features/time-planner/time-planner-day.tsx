@@ -1,4 +1,3 @@
-// src/features/time-planner/time-planner-day.tsx
 import { useState } from "react";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { TimeBlock } from "./types";
@@ -29,13 +28,11 @@ export default function TimePlannerDay({
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  // Sort blocks by start time
   const sortedBlocks = [...timeBlocks].sort((a, b) => {
-    // Compare hours first
     if (a.startHour !== b.startHour) {
       return a.startHour - b.startHour;
     }
-    // If hours are the same, compare minutes
+
     return a.startMinute - b.startMinute;
   });
 
@@ -52,20 +49,17 @@ export default function TimePlannerDay({
   };
 
   const formatTime = (hour: number, minute: number) => {
-    // Convert 24-hour to 12-hour format with AM/PM
     const period = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour % 12 || 12; // Convert 0 to 12 for 12AM
+    const displayHour = hour % 12 || 12;
     const displayMinute = minute.toString().padStart(2, "0");
     return `${displayHour}:${displayMinute} ${period}`;
   };
 
   const getDurationText = (block: TimeBlock) => {
-    // Calculate duration in minutes
     const startMinutes = block.startHour * 60 + block.startMinute;
     const endMinutes = block.endHour * 60 + block.endMinute;
     let duration = endMinutes - startMinutes;
 
-    // Handle duration that crosses midnight
     if (duration < 0) {
       duration += 24 * 60;
     }

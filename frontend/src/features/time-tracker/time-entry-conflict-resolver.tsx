@@ -53,20 +53,17 @@ export default function TimeEntryConflictResolver({
     });
   }, [entries]);
 
-  // Use the utility function to find overlapping pairs
   const overlappingPairs = useMemo(() => {
     return findOverlappingPairs(sortedEntries);
   }, [sortedEntries]);
 
   const currentConflict = overlappingPairs[currentPage] || null;
 
-  // Function to get category by ID
   const getCategoryById = (id?: string) => {
     if (!id) return null;
     return categories.find((cat) => cat.id === id) || null;
   };
 
-  // Helper to add overlap-fix tag to entries
   const addOverlapFixTag = (tags?: string): string => {
     if (!tags) return "overlap-fix";
 
@@ -77,14 +74,12 @@ export default function TimeEntryConflictResolver({
     return tagList.join(", ");
   };
 
-  // Handle deletion of an entry
   const handleDelete = async (entry: TimeEntry) => {
     try {
       setIsProcessing(true);
       await ApiService.deleteRecord(entry.id);
       deleteEntry(entry.id, "time_entries");
 
-      // Move to next or close if done
       handleNextOrFinish();
       toast.success("Entry deleted successfully");
     } catch (error) {
@@ -95,39 +90,29 @@ export default function TimeEntryConflictResolver({
     }
   };
 
-  // Split overlapping time entries into three segments:
-  // 1. First entry's non-overlapping part
-  // 2. Overlapping part as a new entry
-  // 3. Second entry's non-overlapping part
   const handleSplit = async (entry1: TimeEntry, entry2: TimeEntry) => {
     try {
       setIsProcessing(true);
 
-      // Get the timestamps
       const start1 = new Date(entry1.start_time).getTime();
       const end1 = new Date(entry1.end_time).getTime();
       const start2 = new Date(entry2.start_time).getTime();
       const end2 = new Date(entry2.end_time).getTime();
 
-      // Calculate overlap range
       const overlapStart = Math.max(start1, start2);
       const overlapEnd = Math.min(end1, end2);
 
-      // Only proceed if there is an actual overlap
       if (overlapEnd <= overlapStart) {
         toast.error("No overlap detected between entries");
         setIsProcessing(false);
         return;
       }
 
-      // Create a merged description for the overlap segment
       const mergedDescription = `${entry1.description} + ${entry2.description}`;
 
-      // Determine which segments need to be created/modified
-      const hasSegment1 = overlapStart > start1; // First entry has a segment before overlap
-      const hasSegment3 = overlapEnd < end2; // Second entry has a segment after overlap
+      const hasSegment1 = overlapStart > start1;
+      const hasSegment3 = overlapEnd < end2;
 
-      // Calculate durations in minutes
       const segment1Duration = hasSegment1
         ? Math.round((overlapStart - start1) / (1000 * 60))
         : 0;
@@ -138,12 +123,10 @@ export default function TimeEntryConflictResolver({
         ? Math.round((end2 - overlapEnd) / (1000 * 60))
         : 0;
 
-      // Start a tally of successful operations
       let operationsCompleted = 0;
-      // Count how many operations we'll do (converting booleans to numbers with +)
+
       const totalOperations = (hasSegment1 ? 1 : 0) + 1 + (hasSegment3 ? 1 : 0);
 
-      // 1. Update the first entry to end at overlap start (if needed)
       if (hasSegment1) {
         const updatedEntry1 = {
           ...entry1,
@@ -161,23 +144,19 @@ export default function TimeEntryConflictResolver({
           operationsCompleted++;
         }
       } else {
-        // If first entry starts at overlap start, delete it
         await ApiService.deleteRecord(entry1.id);
         deleteEntry(entry1.id, "time_entries");
         operationsCompleted++;
       }
 
-      // 2. Create new entry for the overlapping segment
       const overlapEntry = {
         description: mergedDescription,
         start_time: new Date(overlapStart).toISOString(),
         end_time: new Date(overlapEnd).toISOString(),
         duration_minutes: overlapDuration,
-        // Combine tags from both entries if they exist and add overlap-fix tag
         tags: addOverlapFixTag(
           [entry1.tags, entry2.tags].filter(Boolean).join(", ")
         ),
-        // Use category from first entry by default
         category_id: entry1.category_id,
         private: false,
       };
@@ -191,7 +170,6 @@ export default function TimeEntryConflictResolver({
         operationsCompleted++;
       }
 
-      // 3. Update the second entry to start at overlap end (if needed)
       if (hasSegment3) {
         const updatedEntry2 = {
           ...entry2,
@@ -209,13 +187,11 @@ export default function TimeEntryConflictResolver({
           operationsCompleted++;
         }
       } else {
-        // If second entry ends at overlap end, delete it
         await ApiService.deleteRecord(entry2.id);
         deleteEntry(entry2.id, "time_entries");
         operationsCompleted++;
       }
 
-      // Check if all operations completed successfully
       if (operationsCompleted === totalOperations) {
         toast.success("Entries split successfully with overlap segment");
         handleNextOrFinish();
@@ -232,19 +208,16 @@ export default function TimeEntryConflictResolver({
     }
   };
 
-  // Truncate the first entry to end when the second begins
   const handleTruncateFirst = async (entry1: TimeEntry, entry2: TimeEntry) => {
     try {
       setIsProcessing(true);
 
-      // Adjust end time of first entry to start time of second entry
       const updatedEntry = {
         ...entry1,
         end_time: new Date(entry2.start_time).toISOString(),
         tags: addOverlapFixTag(entry1.tags),
       };
 
-      // Recalculate duration
       const start = new Date(updatedEntry.start_time);
       const end = new Date(updatedEntry.end_time);
       const durationMinutes = Math.max(
@@ -254,14 +227,12 @@ export default function TimeEntryConflictResolver({
 
       updatedEntry.duration_minutes = durationMinutes;
 
-      // Save the updated entry
       const response = await ApiService.updateRecord(entry1.id, updatedEntry);
 
       if (response) {
         updateEntry(entry1.id, response, "time_entries");
         toast.success("Entry adjusted successfully");
 
-        // Move to next conflict
         handleNextOrFinish();
       }
     } catch (error) {
@@ -272,19 +243,16 @@ export default function TimeEntryConflictResolver({
     }
   };
 
-  // Truncate the second entry to start when the first ends
   const handleTruncateSecond = async (entry1: TimeEntry, entry2: TimeEntry) => {
     try {
       setIsProcessing(true);
 
-      // Adjust start time of second entry to end time of first entry
       const updatedEntry = {
         ...entry2,
         start_time: new Date(entry1.end_time).toISOString(),
         tags: addOverlapFixTag(entry2.tags),
       };
 
-      // Recalculate duration
       const start = new Date(updatedEntry.start_time);
       const end = new Date(updatedEntry.end_time);
       const durationMinutes = Math.max(
@@ -294,14 +262,12 @@ export default function TimeEntryConflictResolver({
 
       updatedEntry.duration_minutes = durationMinutes;
 
-      // Save the updated entry
       const response = await ApiService.updateRecord(entry2.id, updatedEntry);
 
       if (response) {
         updateEntry(entry2.id, response, "time_entries");
         toast.success("Entry adjusted successfully");
 
-        // Move to next conflict
         handleNextOrFinish();
       }
     } catch (error) {
@@ -312,7 +278,6 @@ export default function TimeEntryConflictResolver({
     }
   };
 
-  // Move to next conflict or close dialog if done
   const handleNextOrFinish = () => {
     if (currentPage < overlappingPairs.length - 1) {
       setCurrentPage(currentPage + 1);
@@ -323,11 +288,9 @@ export default function TimeEntryConflictResolver({
     }
   };
 
-  // Determine if we're on the last conflict or if there are no conflicts
   const isLastOrNoConflicts =
     currentPage >= overlappingPairs.length - 1 || overlappingPairs.length === 0;
 
-  // Dialog content for reusable dialog
   const dialogContent = currentConflict ? (
     <ScrollArea className="overflow-y-auto pr-4">
       <div className="space-y-4">
@@ -444,7 +407,6 @@ export default function TimeEntryConflictResolver({
     </div>
   );
 
-  // Custom footer for the dialog
   const dialogFooter = (
     <div className="flex justify-between items-center gap-2 w-full">
       <div className="text-sm text-muted-foreground">
@@ -498,7 +460,6 @@ export default function TimeEntryConflictResolver({
   );
 }
 
-// Component for visualizing the timeline of overlapping entries
 function EntryTimeline({
   entry1,
   entry2,
@@ -506,18 +467,15 @@ function EntryTimeline({
   entry1: TimeEntry;
   entry2: TimeEntry;
 }) {
-  // Convert dates to timestamps
   const start1 = new Date(entry1.start_time).getTime();
   const end1 = new Date(entry1.end_time).getTime();
   const start2 = new Date(entry2.start_time).getTime();
   const end2 = new Date(entry2.end_time).getTime();
 
-  // Find the earliest start and latest end to establish timeline boundaries
   const earliestStart = Math.min(start1, start2);
   const latestEnd = Math.max(end1, end2);
   const totalDuration = latestEnd - earliestStart;
 
-  // Calculate positions as percentages of total timeline
   const entry1Start = ((start1 - earliestStart) / totalDuration) * 100;
   const entry1Width = ((end1 - start1) / totalDuration) * 100;
   const entry2Start = ((start2 - earliestStart) / totalDuration) * 100;
@@ -571,7 +529,6 @@ function EntryTimeline({
   );
 }
 
-// Card component for displaying a time entry - updated with matching border colors and removed edit/delete buttons
 function EntryCard({
   entry,
   category,

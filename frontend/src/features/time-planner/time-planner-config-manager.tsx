@@ -1,4 +1,3 @@
-// src/features/time-planner/time-planner-config-manager.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Save, FolderOpen } from "lucide-react";
@@ -38,7 +37,6 @@ export default function TimePlannerConfigManager({
   const [newConfigDescription, setNewConfigDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Load saved configs when component mounts
   useEffect(() => {
     loadSavedConfigs();
   }, []);
@@ -64,10 +62,8 @@ export default function TimePlannerConfigManager({
 
     setLoading(true);
     try {
-      // Convert blocks object to array for storage
       const blocksArray = Object.values(currentTimeBlocks).flat();
 
-      // Create config object
       const newConfig: Omit<
         TimeBlockConfig,
         "id" | "createdAt" | "lastModified"
@@ -81,11 +77,9 @@ export default function TimePlannerConfigManager({
       toast.success("Configuration saved successfully");
       setSaveDialogOpen(false);
 
-      // Reset form
       setNewConfigName("");
       setNewConfigDescription("");
 
-      // Reload configs
       await loadSavedConfigs();
     } catch (error) {
       console.error("Failed to save configuration:", error);
@@ -98,11 +92,9 @@ export default function TimePlannerConfigManager({
   const handleSelectConfig = (config: TimeBlockConfig) => {
     setConfigToLoad(config);
 
-    // If there are existing blocks, show confirmation dialog
     if (Object.keys(currentTimeBlocks).length > 0) {
       setConfirmDialogOpen(true);
     } else {
-      // If no existing blocks, load directly
       processConfigLoad(config);
     }
 
@@ -110,10 +102,8 @@ export default function TimePlannerConfigManager({
   };
 
   const processConfigLoad = (config: TimeBlockConfig) => {
-    // Load saved categories first
     loadCategories(config.blocks);
 
-    // Convert blocks array back to record structure
     const blocksByDay: Record<number, TimeBlock[]> = {};
 
     config.blocks.forEach((block) => {
@@ -123,14 +113,11 @@ export default function TimePlannerConfigManager({
       blocksByDay[block.dayOfWeek].push(block);
     });
 
-    // Update the planner
     onLoadConfig(blocksByDay);
     toast.success(`Loaded configuration: ${config.name}`);
   };
 
-  // Helper function to ensure all categories from config blocks are added to localStorage
   const loadCategories = (blocks: TimeBlock[]) => {
-    // Get existing categories from localStorage
     let categories: { id: string; name: string; color: string }[] = [];
     try {
       const saved = localStorage.getItem("timeBlockCategories");
@@ -142,10 +129,8 @@ export default function TimePlannerConfigManager({
       categories = [];
     }
 
-    // Get unique categories from blocks
     const categoryMap = new Map<string, { name: string; color: string }>();
 
-    // First build a map of categories from the blocks
     blocks.forEach((block) => {
       if (block.category && !categoryMap.has(block.category)) {
         categoryMap.set(block.category, {
@@ -155,12 +140,10 @@ export default function TimePlannerConfigManager({
       }
     });
 
-    // Then check if each category exists in our existing categories
     let hasNewCategories = false;
     categoryMap.forEach((categoryData, categoryName) => {
       const exists = categories.some((cat) => cat.name === categoryName);
       if (!exists) {
-        // Add the missing category with a new ID
         categories.push({
           id: crypto.randomUUID(),
           name: categoryName,
@@ -170,7 +153,6 @@ export default function TimePlannerConfigManager({
       }
     });
 
-    // Save updated categories if there are new ones
     if (hasNewCategories) {
       localStorage.setItem("timeBlockCategories", JSON.stringify(categories));
     }

@@ -1,4 +1,3 @@
-// src/features/dexa/visualization/bone-density-tab.tsx
 import { useState } from "react";
 import { ComparisonSelector } from "./comparison-selector";
 import { format } from "date-fns";
@@ -15,11 +14,9 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
 
-  // Find selected scans
   const selectedScan = data.find((scan) => scan.id === selectedDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
-  // Bone density metrics
   const boneDensityMetrics = [
     { key: "bone_density_g_cm2_head", name: "Head" },
     { key: "bone_density_g_cm2_arms", name: "Arms" },
@@ -31,20 +28,15 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
     { key: "bone_density_g_cm2_total", name: "Total" },
   ];
 
-  // Calculate T-score estimate (simplified calculation)
-  // T-score is typically (patient BMD - young adult mean BMD) / standard deviation
-  // For visualization purposes, we're using a simplified estimate
   const calculateTScoreEstimate = (bmd: number | undefined) => {
     if (!bmd) return 0;
 
-    // Reference values (simplified)
-    const youngAdultMean = 1.2; // g/cm²
+    const youngAdultMean = 1.2;
     const standardDeviation = 0.1;
 
     return (bmd - youngAdultMean) / standardDeviation;
   };
 
-  // Get bone density data for a single scan
   const getBoneDensityData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
@@ -52,12 +44,11 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
       const value = scan[metric.key as keyof DEXAScan] as number;
       const tScore = calculateTScoreEstimate(value);
 
-      // Determine color based on T-score (WHO classification)
-      let color = "#82ca9d"; // Normal (Green)
+      let color = "#82ca9d";
       if (tScore < -1.0 && tScore >= -2.5) {
-        color = "#ffc658"; // Osteopenia (Yellow)
+        color = "#ffc658";
       } else if (tScore < -2.5) {
-        color = "#ff8042"; // Osteoporosis (Orange)
+        color = "#ff8042";
       }
 
       return {
@@ -69,7 +60,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
     });
   };
 
-  // Get bone density trend data
   const getBoneDensityTrendData = () => {
     return data
       .map((item) => {
@@ -88,7 +78,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
       .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
   };
 
-  // Get total BMD trend data
   const getTotalBMDTrendData = () => {
     return data
       .map((item) => ({
@@ -102,7 +91,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
       );
   };
 
-  // Generate radar chart data for comparison
   const getRadarComparisonData = () => {
     if (!selectedScan || !comparisonScan) return [];
 
@@ -118,7 +106,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
     }));
   };
 
-  // Configure bone density lines
   const getBoneDensityLineConfigs = () => {
     return boneDensityMetrics.map((metric, index) => ({
       dataKey: metric.name,
@@ -128,7 +115,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
     }));
   };
 
-  // Get color by index (useful for consistent coloring)
   const getColorByIndex = (index: number) => {
     const colors = [
       "#8884d8",
@@ -143,19 +129,16 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
     return colors[index % colors.length];
   };
 
-  // Function to get color for bar chart that works with the BarConfig interface
   const getBarColor = (value: number) => {
     const densityData = getBoneDensityData(selectedScan);
-    // Find the corresponding item using the value as a lookup
     const item = densityData.find((d) => d["BMD (g/cm²)"] === value);
     return item ? item.color : "#8884d8";
   };
 
-  // Function to get color for T-score
   const getTScoreColor = (value: number) => {
-    if (value < -2.5) return "#ff8042"; // Osteoporosis
-    if (value < -1.0) return "#ffc658"; // Osteopenia
-    return "#82ca9d"; // Normal
+    if (value < -2.5) return "#ff8042";
+    if (value < -1.0) return "#ffc658";
+    return "#82ca9d";
   };
 
   return (
@@ -171,7 +154,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
       />
 
       {viewMode === "single" ? (
-        // Single view
         <div className="space-y-6">
           {/* Total BMD trend over time */}
           <CustomLineChart
@@ -257,7 +239,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
           </Card>
         </div>
       ) : (
-        // Comparison view
         <div className="space-y-6">
           {/* Bone Density Radar Comparison */}
           <CustomRadarChart

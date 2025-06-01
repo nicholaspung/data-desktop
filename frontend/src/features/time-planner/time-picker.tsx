@@ -1,4 +1,3 @@
-// src/features/time-planner/time-picker.tsx
 import { useState, useEffect } from "react";
 import { format, parse, setHours, setMinutes } from "date-fns";
 import {
@@ -14,7 +13,7 @@ interface TimePickerProps {
   onChange: (value: Date) => void;
   minTime?: Date;
   maxTime?: Date;
-  interval?: number; // Minutes interval
+  interval?: number;
 }
 
 export default function TimePicker({
@@ -26,19 +25,15 @@ export default function TimePicker({
 }: TimePickerProps) {
   const [selectedTime, setSelectedTime] = useState(format(value, "h:mm a"));
 
-  // Generate time options at specified intervals
   const timeOptions = generateTimeOptions(interval, minTime, maxTime);
 
-  // When the value prop changes, update the selected time
   useEffect(() => {
     setSelectedTime(format(value, "h:mm a"));
   }, [value]);
 
-  // When the selected time changes, update the value
   const handleTimeChange = (timeStr: string) => {
     setSelectedTime(timeStr);
 
-    // Parse the time string and create a new date with the same date but updated time
     const timeDate = parse(timeStr, "h:mm a", new Date());
     const newDate = new Date(value);
     newDate.setHours(timeDate.getHours());
@@ -63,7 +58,6 @@ export default function TimePicker({
   );
 }
 
-// Helper function to generate time options
 function generateTimeOptions(
   interval: number = 15,
   minTime?: Date,
@@ -72,7 +66,6 @@ function generateTimeOptions(
   const options: string[] = [];
   const baseDate = new Date();
 
-  // Set min/max hours
   const minHour = minTime ? minTime.getHours() : 0;
   const minMinute = minTime
     ? Math.ceil(minTime.getMinutes() / interval) * interval
@@ -84,7 +77,6 @@ function generateTimeOptions(
 
   for (let hour = 0; hour < 24; hour++) {
     for (let minute = 0; minute < 60; minute += interval) {
-      // Skip times outside the min/max range
       if (
         hour < minHour ||
         (hour === minHour && minute < minMinute) ||

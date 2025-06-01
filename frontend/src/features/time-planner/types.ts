@@ -1,4 +1,3 @@
-// src/features/time-planner/types.ts
 export interface TimeBlock {
   id: string;
   title: string;

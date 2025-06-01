@@ -1,6 +1,3 @@
-// src/features/time-planner/time-planner.tsx
-// Update the existing file
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +13,6 @@ export default function TimePlanner() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  // Load saved time blocks from localStorage on mount
   useEffect(() => {
     const savedBlocks = localStorage.getItem("weeklyTimeBlocks");
     if (savedBlocks) {
@@ -29,12 +25,10 @@ export default function TimePlanner() {
     }
   }, []);
 
-  // Save time blocks to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("weeklyTimeBlocks", JSON.stringify(timeBlocks));
   }, [timeBlocks]);
 
-  // Define days of the week
   const daysOfWeek = [
     { name: "Monday", index: 1 },
     { name: "Tuesday", index: 2 },
@@ -45,7 +39,6 @@ export default function TimePlanner() {
     { name: "Sunday", index: 0 },
   ];
 
-  // Handle adding a new time block
   const handleAddTimeBlock = (block: TimeBlock) => {
     setTimeBlocks((prev) => ({
       ...prev,
@@ -54,24 +47,20 @@ export default function TimePlanner() {
     setAddDialogOpen(false);
   };
 
-  // Handle editing a time block
   const handleEditTimeBlock = (oldBlock: TimeBlock, newBlock: TimeBlock) => {
     setTimeBlocks((prev) => {
       const newBlocks = { ...prev };
 
-      // Remove the old block
       if (newBlocks[oldBlock.dayOfWeek]) {
         newBlocks[oldBlock.dayOfWeek] = newBlocks[oldBlock.dayOfWeek].filter(
           (b) => b.id !== oldBlock.id
         );
 
-        // Clean up empty arrays
         if (newBlocks[oldBlock.dayOfWeek].length === 0) {
           delete newBlocks[oldBlock.dayOfWeek];
         }
       }
 
-      // Add the new block
       if (!newBlocks[newBlock.dayOfWeek]) {
         newBlocks[newBlock.dayOfWeek] = [];
       }
@@ -81,7 +70,6 @@ export default function TimePlanner() {
     });
   };
 
-  // Handle deleting a time block
   const handleDeleteTimeBlock = (block: TimeBlock) => {
     setTimeBlocks((prev) => {
       const newBlocks = { ...prev };
@@ -90,7 +78,6 @@ export default function TimePlanner() {
           (b) => b.id !== block.id
         );
 
-        // Clean up empty arrays
         if (newBlocks[block.dayOfWeek].length === 0) {
           delete newBlocks[block.dayOfWeek];
         }
@@ -99,17 +86,14 @@ export default function TimePlanner() {
     });
   };
 
-  // Get blocks for a specific day
   const getBlocksForDay = (dayIndex: number): TimeBlock[] => {
     return timeBlocks[dayIndex] || [];
   };
 
-  // Get all blocks for the week
   const getAllBlocksForWeek = (): TimeBlock[] => {
     return Object.values(timeBlocks).flat();
   };
 
-  // Handle loading a configuration
   const handleLoadConfig = (blocks: Record<number, TimeBlock[]>) => {
     setTimeBlocks(blocks);
   };

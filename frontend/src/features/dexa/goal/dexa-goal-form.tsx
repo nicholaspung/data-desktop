@@ -1,4 +1,3 @@
-// src/features/dexa/goal/dexa-goal-form.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

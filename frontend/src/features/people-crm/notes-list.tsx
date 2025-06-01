@@ -24,7 +24,6 @@ export default function PersonNotesList({
   const isLoading = useStore(loadingStore, (state) => state.person_notes);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter notes based on search
   const filteredNotes = notes.filter((note) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -35,7 +34,6 @@ export default function PersonNotesList({
     );
   });
 
-  // Sort notes by date (newest first)
   const sortedNotes = filteredNotes.sort(
     (a, b) => new Date(b.note_date).getTime() - new Date(a.note_date).getTime()
   );

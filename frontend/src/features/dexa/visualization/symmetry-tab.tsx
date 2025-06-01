@@ -1,4 +1,3 @@
-// src/features/dexa/visualization/symmetry-tab.tsx
 import { useState } from "react";
 import { ComparisonSelector } from "./comparison-selector";
 import { format } from "date-fns";
@@ -12,11 +11,9 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
 
-  // Find selected scans
   const selectedScan = data.find((scan) => scan.id === selectedDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
-  // Get limb symmetry data (right vs left comparison) for a single scan
   const getLimbSymmetryData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
@@ -60,7 +57,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Calculate symmetry score (0-100) for a scan
   const calculateSymmetryScores = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
@@ -104,7 +100,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
           200
       );
 
-    // Average for overall symmetry
     const overallSymmetry =
       (armsFatSymmetry +
         armsLeanSymmetry +
@@ -141,7 +136,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Generate data for radar comparison between two scans
   const getRadarComparisonData = () => {
     if (!selectedScan || !comparisonScan) return [];
 
@@ -242,7 +236,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     return metrics;
   };
 
-  // Configure bar chart for symmetry data
   const getSymmetryBarConfigs = () => {
     return [
       {
@@ -255,7 +248,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Configure bars for limb symmetry comparison
   const getLimbSymmetryBarConfigs = () => {
     return [
       {
@@ -271,7 +263,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Configure radars for comparison view
   const getRadarConfigs = () => {
     if (!selectedScan || !comparisonScan) return [];
 
@@ -296,7 +287,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
     ];
   };
 
-  // Custom tooltip formatter for symmetry percentage values
   const symmetryTooltipFormatter = (value: any) => {
     return `${Number(value).toFixed(2)}%`;
   };
@@ -314,7 +304,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
       />
 
       {viewMode === "single" ? (
-        // Single view
         <div className="grid gap-6 md:grid-cols-2">
           {/* Left vs Right Comparison */}
           <CustomBarChart
@@ -345,7 +334,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
           />
         </div>
       ) : (
-        // Comparison view
         <div className="space-y-6">
           {/* Symmetry Radar Comparison */}
           <CustomRadarChart

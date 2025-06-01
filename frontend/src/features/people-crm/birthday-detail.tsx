@@ -1,4 +1,3 @@
-// frontend/src/routes/people-crm/birthday-detail.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -39,7 +38,6 @@ export default function BirthdayDetail({
     if (foundPerson) {
       setPerson(foundPerson);
     } else {
-      // Try to load from API if not in store
       ApiService.getRecord(personId).then((data) => {
         if (data) {
           setPerson(data as Person);
@@ -90,7 +88,6 @@ export default function BirthdayDetail({
     );
   }
 
-  // Calculate next birthday
   const birthday = new Date(person.birthday);
   const now = new Date();
   let nextBirthday = new Date(
@@ -99,7 +96,6 @@ export default function BirthdayDetail({
     birthday.getDate()
   );
 
-  // If birthday has passed this year, use next year's date
   if (nextBirthday < now) {
     nextBirthday = addYears(nextBirthday, 1);
   }
@@ -107,10 +103,8 @@ export default function BirthdayDetail({
   const daysUntil = differenceInDays(nextBirthday, now);
   const age = nextBirthday.getFullYear() - birthday.getFullYear();
 
-  // Check for existing reminder
   const reminder = birthdayReminders.find((r) => r.person_id === person.id);
 
-  // Calculate previous birthdays (last 5 years)
   const previousBirthdays = Array.from({ length: 5 }, (_, i) => {
     const year = now.getFullYear() - i - 1;
     return {
@@ -120,7 +114,6 @@ export default function BirthdayDetail({
     };
   });
 
-  // Calculate upcoming milestones
   const milestones = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100]
     .filter((milestone) => milestone > age)
     .slice(0, 3)

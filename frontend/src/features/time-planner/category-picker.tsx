@@ -1,4 +1,3 @@
-// src/features/time-planner/category-picker.tsx
 import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
@@ -33,7 +32,6 @@ export default function CategoryPicker({
   const [newCategoryColor, setNewCategoryColor] = useState("#3b82f6");
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
 
-  // Load categories from localStorage on mount
   useEffect(() => {
     const savedCategories = localStorage.getItem("timeBlockCategories");
     if (savedCategories) {
@@ -44,7 +42,6 @@ export default function CategoryPicker({
         console.error("Failed to parse saved categories:", error);
       }
     } else {
-      // Set default categories if none exist
       const defaultCategories: CategoryWithColor[] = [
         { id: uuidv4(), name: "Work", color: "#ef4444" },
         { id: uuidv4(), name: "Meeting", color: "#3b82f6" },
@@ -59,7 +56,6 @@ export default function CategoryPicker({
     }
   }, []);
 
-  // Save categories to localStorage whenever they change
   useEffect(() => {
     if (categories.length > 0) {
       localStorage.setItem("timeBlockCategories", JSON.stringify(categories));
@@ -80,7 +76,6 @@ export default function CategoryPicker({
     setNewCategoryColor("#3b82f6");
     setIsAddingNewCategory(false);
 
-    // Select the newly created category
     onSelectCategory(newCategory.id, newCategory.name, newCategory.color);
   };
 
@@ -91,11 +86,9 @@ export default function CategoryPicker({
     }
   };
 
-  // Find the selected category ID
   const selectedCategoryId =
     categories.find((cat) => cat.name === selectedCategory)?.id || "";
 
-  // Predefined colors
   const colorOptions = [
     { value: "#ef4444", label: "Red" },
     { value: "#f97316", label: "Orange" },

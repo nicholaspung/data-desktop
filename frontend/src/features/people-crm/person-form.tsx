@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/person-form.tsx
 import DataForm from "@/components/data-form/data-form";
 import { PEOPLE_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 

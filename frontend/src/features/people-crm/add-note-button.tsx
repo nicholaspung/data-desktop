@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/add-note-button.tsx
 import { useState } from "react";
 import { PlusCircle, Pencil } from "lucide-react";
 import PersonNoteForm from "./note-form";

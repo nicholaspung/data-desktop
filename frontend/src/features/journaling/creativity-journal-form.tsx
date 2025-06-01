@@ -1,4 +1,3 @@
-// src/features/journaling/creativity-journal-form.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/reusable/markdown-editor";

@@ -1,4 +1,3 @@
-// src/features/experiments/edit-experiment-dialog.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,10 +25,8 @@ export default function EditExperimentDialog({
   experiment: Experiment;
   onSuccess?: () => void;
 }) {
-  // Dialog state
   const [open, setOpen] = useState(false);
 
-  // Form state
   const [name, setName] = useState(experiment?.name || "");
   const [description, setDescription] = useState(experiment?.description || "");
   const [startState, setStartState] = useState(experiment?.start_state || "");
@@ -43,10 +40,8 @@ export default function EditExperimentDialog({
   );
   const [isPrivate, setIsPrivate] = useState(experiment?.private || false);
 
-  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Update form state when experiment changes
   useEffect(() => {
     if (experiment) {
       setName(experiment.name || "");
@@ -67,7 +62,6 @@ export default function EditExperimentDialog({
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Validate form
     if (!name.trim()) {
       toast.error("Experiment name is required");
       return;
@@ -96,7 +90,6 @@ export default function EditExperimentDialog({
     setIsSubmitting(true);
 
     try {
-      // Prepare updated experiment data
       const updatedExperiment = {
         ...experiment,
         name: name.trim(),
@@ -111,21 +104,17 @@ export default function EditExperimentDialog({
         updatedExperiment.end_state = endState.trim();
       }
 
-      // Update experiment
       const response = await ApiService.updateRecord(
         experiment.id,
         updatedExperiment
       );
 
       if (response) {
-        // Update store
         updateEntry(experiment.id, response, "experiments");
         toast.success("Experiment updated successfully");
 
-        // Close dialog
         setOpen(false);
 
-        // Call success callback
         if (onSuccess) {
           onSuccess();
         }

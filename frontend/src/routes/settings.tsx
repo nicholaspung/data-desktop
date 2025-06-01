@@ -1,4 +1,3 @@
-// src/routes/settings.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useStore } from "@tanstack/react-store";
 import { Switch } from "@/components/ui/switch";
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-// Define routes with friendly names and icons
 const routes = [
   {
     path: "/",
@@ -107,12 +105,10 @@ function SettingsPage() {
     (state) => state.setVisibleRoute
   );
 
-  // Handle route visibility toggle
   const handleRouteToggle = (route: string, checked: boolean) => {
     setVisibleRoute(route, checked);
   };
 
-  // Reset all settings to defaults
   const handleResetSettings = () => {
     if (confirm("Are you sure you want to reset all settings to defaults?")) {
       localStorage.removeItem("app-settings");
@@ -120,7 +116,6 @@ function SettingsPage() {
     }
   };
 
-  // Navigation Settings Content
   const navigationContent = (
     <div className="space-y-4">
       {routes.map((route) => (
@@ -147,7 +142,7 @@ function SettingsPage() {
               route.path === "/settings" ||
               route.path === "/dataset" ||
               route.path === "/"
-            } // Can't disable settings page
+            }
           />
         </div>
       ))}

@@ -1,4 +1,3 @@
-// src/features/experiments/experiment-dashboard-logs.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import CalendarView from "@/features/daily-tracker/calendar-view";
 import { Experiment } from "@/store/experiment-definitions";
@@ -16,7 +15,6 @@ export default function ExperimentDashboardLogs({
     (state) => state.experiment_metrics
   );
 
-  // Filter metrics for this experiment
   const experimentMetricIds = experimentMetrics
     .filter((em: any) => em.experiment_id === experiment.id)
     .map((em: any) => em.metric_id);

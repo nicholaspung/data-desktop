@@ -1,4 +1,3 @@
-// src/features/dashboard/bloodwork-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import {
@@ -32,7 +31,6 @@ export default function BloodworkDashboardSummary() {
     }>
   >([]);
 
-  // Key markers to highlight (customize as needed)
   const keyMarkerCategories = [
     "Lipids",
     "Metabolic",
@@ -46,21 +44,17 @@ export default function BloodworkDashboardSummary() {
       return;
     }
 
-    // Sort tests by date, newest first
     const sortedTests = [...bloodworkTests].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
-    // Set latest and previous test
     setLatestTest(sortedTests[0]);
 
-    // If we have a latest test, find its results
     if (sortedTests[0]) {
       const latestResults = bloodResults.filter(
         (result) => result.blood_test_id === sortedTests[0].id
       );
 
-      // Connect results with their marker definitions
       const resultsWithMarkers = latestResults.map((result) => {
         const marker = bloodMarkers.find(
           (m) => m.id === result.blood_marker_id
@@ -68,7 +62,6 @@ export default function BloodworkDashboardSummary() {
         return { ...result, marker };
       });
 
-      // Find flagged markers (outside optimal range)
       const flagged = resultsWithMarkers
         .filter((result) => result.marker && result.value_number !== undefined)
         .map((result) => {
@@ -80,7 +73,6 @@ export default function BloodworkDashboardSummary() {
 
           let status: "high" | "low" | "optimal" = "optimal";
 
-          // Check against optimal ranges first if available
           if (
             marker.optimal_low !== undefined &&
             marker.optimal_high !== undefined
@@ -90,9 +82,7 @@ export default function BloodworkDashboardSummary() {
             } else if (value_number > marker.optimal_high) {
               status = "high";
             }
-          }
-          // Fall back to reference ranges
-          else if (
+          } else if (
             marker.lower_reference !== undefined &&
             marker.upper_reference !== undefined
           ) {
@@ -113,9 +103,7 @@ export default function BloodworkDashboardSummary() {
         status: "high" | "low" | "optimal";
       }>;
 
-      // Sort by most concerning first
       flagged.sort((a, b) => {
-        // Sort by key categories first
         const aIsKey =
           a.result.marker &&
           keyMarkerCategories.includes(a.result.marker.category);
@@ -129,13 +117,12 @@ export default function BloodworkDashboardSummary() {
         return 0;
       });
 
-      setFlaggedMarkers(flagged.slice(0, 5)); // Show top 5 flagged markers
+      setFlaggedMarkers(flagged.slice(0, 5));
     }
 
     setLoading(false);
   }, [bloodworkTests, bloodMarkers, bloodResults]);
 
-  // Helper to get status badge color
   const getStatusColor = (status: "high" | "low" | "optimal") => {
     switch (status) {
       case "high":

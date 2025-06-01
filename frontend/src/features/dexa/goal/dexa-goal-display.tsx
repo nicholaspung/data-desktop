@@ -1,4 +1,3 @@
-// src/features/dexa/goal/dexa-goal-display.tsx
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -108,27 +107,24 @@ export default function DexaGoalDisplay({
     );
   }
 
-  // Calculate progress
   const calculateProgress = (
     current: number,
     target: number,
     isLowerBetter = true
   ) => {
     if (isLowerBetter) {
-      // For metrics where lower is better (like body fat %, VAT mass)
-      if (current <= target) return 100; // Already at or below target
+      if (current <= target) return 100;
 
-      const startPoint = current * 1.2; // Assume starting point is 20% higher
+      const startPoint = current * 1.2;
       const progress = Math.min(
         100,
         Math.max(0, ((startPoint - current) / (startPoint - target)) * 100)
       );
       return progress;
     } else {
-      // For metrics where higher is better (when gaining weight is the goal)
-      if (current >= target) return 100; // Already at or above target
+      if (current >= target) return 100;
 
-      const startPoint = current * 0.8; // Assume starting point is 20% lower
+      const startPoint = current * 0.8;
       const progress = Math.min(
         100,
         Math.max(0, ((current - startPoint) / (target - startPoint)) * 100)
@@ -137,13 +133,11 @@ export default function DexaGoalDisplay({
     }
   };
 
-  // If we have a latest scan, we can compare against it
   let bodyFatProgress = 0;
   let weightProgress = 0;
   let vatProgress = 0;
 
   if (latestScan) {
-    // Determine if weight goal is to lose or gain
     const isWeightLoss = latestScan.total_mass_lbs > goal.totalWeightLbs;
 
     bodyFatProgress = calculateProgress(

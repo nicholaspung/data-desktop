@@ -1,4 +1,3 @@
-// src/routes/metric-calendar.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import {
   FeatureHeader,
@@ -26,7 +25,6 @@ function MetricCalendarPage() {
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
 
-  // Group metrics by category
   const metricsByCategory = metrics.reduce(
     (grouped: Record<string, Metric[]>, metric) => {
       if (!metric.active) return grouped;
@@ -45,7 +43,6 @@ function MetricCalendarPage() {
     {}
   );
 
-  // Toggle metric selection
   const toggleMetric = (metricId: string) => {
     setSelectedMetrics((prev) =>
       prev.includes(metricId)
@@ -54,7 +51,6 @@ function MetricCalendarPage() {
     );
   };
 
-  // Select all metrics from a category
   const selectCategory = (categoryName: string, selected: boolean) => {
     const categoryMetrics = metricsByCategory[categoryName] || [];
     const categoryMetricIds = categoryMetrics.map((m) => m.id);
@@ -71,7 +67,6 @@ function MetricCalendarPage() {
     }
   };
 
-  // Check if all metrics in a category are selected
   const isCategorySelected = (categoryName: string) => {
     const categoryMetrics = metricsByCategory[categoryName] || [];
     return (
@@ -80,7 +75,6 @@ function MetricCalendarPage() {
     );
   };
 
-  // Define the guide content sections
   const metricCalendarGuideContent = [
     {
       title: "Using the Metric Calendar",

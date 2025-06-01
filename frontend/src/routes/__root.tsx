@@ -1,4 +1,3 @@
-// src/__root.tsx
 import Header from "@/components/layout/header";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { createRootRoute, Outlet } from "@tanstack/react-router";

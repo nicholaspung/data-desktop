@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-entries-summary.tsx
 import { useMemo } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,6 @@ interface TagSummary {
   color: string;
 }
 
-// Format minutes as hours and minutes in a human-readable format
 const formatHoursAndMinutes = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -59,7 +57,6 @@ export default function TimeEntriesSummary({
   const entries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
 
-  // Calculate time totals for today
   const todaySummary = useMemo(() => {
     const today = formatDateString(new Date());
 
@@ -70,13 +67,10 @@ export default function TimeEntriesSummary({
     return calculateCategorySummaries(todayEntries, categories);
   }, [entries, categories]);
 
-  // Calculate time totals for this week
   const weekSummary = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
-    // Get the day of the week (0 = Sunday, 6 = Saturday)
     const day = now.getDay();
-    // Set to the previous Sunday
     startOfWeek.setDate(now.getDate() - day);
     startOfWeek.setHours(0, 0, 0, 0);
 
@@ -92,7 +86,6 @@ export default function TimeEntriesSummary({
     return calculateCategorySummaries(weekEntries, categories);
   }, [entries, categories]);
 
-  // Calculate tag summaries for this week
   const tagSummary = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -112,22 +105,17 @@ export default function TimeEntriesSummary({
     return calculateTagSummaries(weekEntries);
   }, [entries]);
 
-  // Calculate untracked time for today
   const todayUntrackedTime = useMemo(() => {
     const now = new Date();
     const today = new Date(now);
     today.setHours(0, 0, 0, 0);
 
-    // Full 24 hours = 1440 minutes
     const totalMinutesInDay = 24 * 60;
 
-    // If the day isn't over yet, calculate how many minutes have passed
     const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
 
-    // Available minutes is what has elapsed so far today
     const availableMinutes = Math.min(totalMinutesInDay, elapsedMinutesToday);
 
-    // Calculate untracked time
     const untrackedMinutes = Math.max(
       0,
       availableMinutes - todaySummary.totalMinutes
@@ -143,22 +131,17 @@ export default function TimeEntriesSummary({
     };
   }, [todaySummary.totalMinutes]);
 
-  // Calculate untracked time for the week
   const weekUntrackedTime = useMemo(() => {
     const now = new Date();
-    const today = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const today = now.getDay();
 
-    // Minutes in full days since beginning of week
     const fullDaysSinceStartOfWeek = today;
     const minutesInFullDays = fullDaysSinceStartOfWeek * 24 * 60;
 
-    // Minutes in current partial day
     const currentDayMinutes = now.getHours() * 60 + now.getMinutes();
 
-    // Total available minutes = full days + partial day
     const availableMinutes = minutesInFullDays + currentDayMinutes;
 
-    // Calculate untracked time
     const untrackedMinutes = Math.max(
       0,
       availableMinutes - weekSummary.totalMinutes
@@ -174,7 +157,6 @@ export default function TimeEntriesSummary({
     };
   }, [weekSummary.totalMinutes]);
 
-  // Calculate daily totals for the week
   const dailyTotals = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -184,44 +166,35 @@ export default function TimeEntriesSummary({
 
     const dailyData = [];
 
-    // Generate data for each day of the week
     for (let i = 0; i < 7; i++) {
       const currentDay = new Date(startOfWeek);
       currentDay.setDate(startOfWeek.getDate() + i);
       const dateString = formatDateString(currentDay);
 
-      // Get entries for this day
       const dayEntries = entries.filter(
         (entry) => formatDateString(new Date(entry.start_time)) === dateString
       );
 
-      // Calculate total for this day
       let totalMinutes = 0;
       dayEntries.forEach((entry) => {
         totalMinutes += entry.duration_minutes;
       });
 
-      // Calculate available and untracked time
       let availableMinutes = 0;
       let untrackedMinutes = 0;
 
       const minutesInFullDay = 24 * 60;
 
-      // Is this day in the future?
       if (currentDay > now) {
-        // Future day, no available time yet
         availableMinutes = 0;
       } else if (formatDateString(currentDay) === formatDateString(now)) {
-        // Today - calculate minutes elapsed so far
         availableMinutes = now.getHours() * 60 + now.getMinutes();
       } else {
-        // Past day - full 24 hours available
         availableMinutes = minutesInFullDay;
       }
 
       untrackedMinutes = Math.max(0, availableMinutes - totalMinutes);
 
-      // Add data point
       dailyData.push({
         day: currentDay.toLocaleDateString(undefined, { weekday: "short" }),
         totalMinutes,
@@ -331,16 +304,15 @@ export default function TimeEntriesSummary({
                       <Pie
                         data={[
                           ...todaySummary.categories,
-                          // Only include untracked if there's available time
                           ...(todayUntrackedTime.untrackedMinutes > 0
                             ? [
                                 {
                                   id: "untracked",
                                   name: "Untracked",
-                                  color: "#e5e7eb", // gray-200
+                                  color: "#e5e7eb",
                                   totalMinutes:
                                     todayUntrackedTime.untrackedMinutes,
-                                  percentageOfTotal: 0, // This will be calculated by the chart
+                                  percentageOfTotal: 0,
                                 },
                               ]
                             : []),
@@ -465,16 +437,15 @@ export default function TimeEntriesSummary({
                       <Pie
                         data={[
                           ...weekSummary.categories,
-                          // Only include untracked if there's available time
                           ...(weekUntrackedTime.untrackedMinutes > 0
                             ? [
                                 {
                                   id: "untracked",
                                   name: "Untracked",
-                                  color: "#e5e7eb", // gray-200
+                                  color: "#e5e7eb",
                                   totalMinutes:
                                     weekUntrackedTime.untrackedMinutes,
-                                  percentageOfTotal: 0, // This will be calculated by the chart
+                                  percentageOfTotal: 0,
                                 },
                               ]
                             : []),
@@ -689,21 +660,17 @@ export default function TimeEntriesSummary({
   );
 }
 
-// Helper function to calculate category summaries
 function calculateCategorySummaries(
   entries: TimeEntry[],
   categories: TimeCategory[]
 ) {
-  // Calculate total minutes
   let totalMinutes = 0;
   entries.forEach((entry) => {
     totalMinutes += entry.duration_minutes;
   });
 
-  // Calculate per-category totals
   const categoriesMap = new Map<string, CategorySummary>();
 
-  // Initialize with all categories (even those with zero time)
   categories.forEach((cat) => {
     categoriesMap.set(cat.id, {
       id: cat.id,
@@ -714,20 +681,17 @@ function calculateCategorySummaries(
     });
   });
 
-  // Add uncategorized entry if needed
   categoriesMap.set("uncategorized", {
     id: "uncategorized",
     name: "Uncategorized",
-    color: "#94a3b8", // slate-400
+    color: "#94a3b8",
     totalMinutes: 0,
     percentageOfTotal: 0,
   });
 
-  // Calculate totals for each category
   entries.forEach((entry) => {
     const categoryId = entry.category_id || "uncategorized";
 
-    // Skip if category doesn't exist (shouldn't happen with proper initialization)
     if (!categoriesMap.has(categoryId)) return;
 
     const currentTotal = categoriesMap.get(categoryId)!.totalMinutes;
@@ -740,7 +704,6 @@ function calculateCategorySummaries(
     });
   });
 
-  // Convert to array and sort by total time (descending)
   const categoriesArray = Array.from(categoriesMap.values())
     .filter((cat) => cat.totalMinutes > 0)
     .sort((a, b) => b.totalMinutes - a.totalMinutes);
@@ -751,37 +714,32 @@ function calculateCategorySummaries(
   };
 }
 
-// Helper function to calculate tag summaries
 function calculateTagSummaries(entries: TimeEntry[]) {
-  // Get total minutes tracked
   let totalMinutes = 0;
   entries.forEach((entry) => {
     totalMinutes += entry.duration_minutes;
   });
 
-  // Map to store tag totals
   const tagsMap = new Map<string, TagSummary>();
 
-  // Color palette for tags
   const tagColors = [
-    "#3b82f6", // blue
-    "#10b981", // green
-    "#f59e0b", // amber
-    "#ef4444", // red
-    "#8b5cf6", // purple
-    "#ec4899", // pink
-    "#0ea5e9", // sky
-    "#14b8a6", // teal
-    "#f97316", // orange
-    "#6366f1", // indigo
-    "#84cc16", // lime
-    "#9333ea", // violet
-    "#06b6d4", // cyan
-    "#d946ef", // fuchsia
-    "#f43f5e", // rose
+    "#3b82f6",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#0ea5e9",
+    "#14b8a6",
+    "#f97316",
+    "#6366f1",
+    "#84cc16",
+    "#9333ea",
+    "#06b6d4",
+    "#d946ef",
+    "#f43f5e",
   ];
 
-  // Process all entries
   entries.forEach((entry) => {
     if (!entry.tags) return;
 
@@ -790,15 +748,12 @@ function calculateTagSummaries(entries: TimeEntry[]) {
       .map((tag) => tag.trim())
       .filter((tag) => tag.length > 0);
 
-    // If no valid tags, skip
     if (entryTags.length === 0) return;
 
-    // If multiple tags, we'll split the time equally among them
     const minutesPerTag = entry.duration_minutes / entryTags.length;
 
     entryTags.forEach((tagName) => {
       if (tagsMap.has(tagName)) {
-        // Update existing tag
         const tagData = tagsMap.get(tagName)!;
         const newTotal = tagData.totalMinutes + minutesPerTag;
         tagsMap.set(tagName, {
@@ -807,7 +762,6 @@ function calculateTagSummaries(entries: TimeEntry[]) {
           percentageOfTotal: totalMinutes ? (newTotal / totalMinutes) * 100 : 0,
         });
       } else {
-        // Create new tag
         const colorIndex = tagsMap.size % tagColors.length;
         tagsMap.set(tagName, {
           name: tagName,
@@ -821,7 +775,6 @@ function calculateTagSummaries(entries: TimeEntry[]) {
     });
   });
 
-  // Convert to array and sort by total time (descending)
   const tagsArray = Array.from(tagsMap.values()).sort(
     (a, b) => b.totalMinutes - a.totalMinutes
   );
@@ -837,12 +790,10 @@ interface CategoryDailyBreakdownProps {
   categories: TimeCategory[];
 }
 
-// Component for showing category breakdown by day
 function CategoryDailyBreakdown({
   entries,
   categories,
 }: CategoryDailyBreakdownProps) {
-  // Prepare data for stacked bar chart
   const chartData = useMemo(() => {
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -852,70 +803,55 @@ function CategoryDailyBreakdown({
 
     const dailyData = [];
 
-    // Create a map for category colors
     const categoryColorMap = new Map<string, string>();
     categories.forEach((cat) => {
       categoryColorMap.set(cat.id, cat.color || "#3b82f6");
     });
-    // Add uncategorized
     categoryColorMap.set("uncategorized", "#94a3b8");
-    // Add untracked
     categoryColorMap.set("untracked", "#e5e7eb");
 
-    // Generate data for each day of the week
     for (let i = 0; i < 7; i++) {
       const currentDay = new Date(startOfWeek);
       currentDay.setDate(startOfWeek.getDate() + i);
       const dateString = formatDateString(currentDay);
 
-      // Get entries for this day
       const dayEntries = entries.filter(
         (entry) => formatDateString(new Date(entry.start_time)) === dateString
       );
 
-      // Create data point with category breakdowns
       const dataPoint: Record<string, any> = {
         day: currentDay.toLocaleDateString(undefined, { weekday: "short" }),
         date: currentDay,
       };
 
-      // Initialize all categories to 0
       categories.forEach((cat) => {
         dataPoint[cat.id] = 0;
       });
       dataPoint["uncategorized"] = 0;
 
-      // Calculate totals per category
       dayEntries.forEach((entry) => {
         const categoryId = entry.category_id || "uncategorized";
         dataPoint[categoryId] =
           (dataPoint[categoryId] || 0) + entry.duration_minutes;
       });
 
-      // Calculate untracked time
       let availableMinutes = 0;
       const minutesInFullDay = 24 * 60;
 
-      // Is this day in the future?
       if (currentDay > now) {
-        // Future day, no available time yet
         availableMinutes = 0;
       } else if (formatDateString(currentDay) === formatDateString(now)) {
-        // Today - calculate minutes elapsed so far
         availableMinutes = now.getHours() * 60 + now.getMinutes();
       } else {
-        // Past day - full 24 hours available
         availableMinutes = minutesInFullDay;
       }
 
-      // Calculate total tracked time
       let totalTracked = 0;
       categories.forEach((cat) => {
         totalTracked += dataPoint[cat.id] || 0;
       });
       totalTracked += dataPoint["uncategorized"] || 0;
 
-      // Add untracked time
       dataPoint["untracked"] = Math.max(0, availableMinutes - totalTracked);
 
       dailyData.push(dataPoint);

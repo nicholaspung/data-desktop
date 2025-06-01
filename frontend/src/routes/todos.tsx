@@ -1,4 +1,3 @@
-// frontend/src/routes/todos.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import {
   FeatureHeader,
@@ -13,7 +12,6 @@ export const Route = createFileRoute("/todos")({
   component: TodosPage,
 });
 
-// Define the guide content sections
 const todosGuideContent = [
   {
     title: "Getting Started",

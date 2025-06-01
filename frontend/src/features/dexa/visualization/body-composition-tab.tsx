@@ -1,4 +1,3 @@
-// src/features/dexa/visualization/body-composition-tab.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ComparisonSelector } from "./comparison-selector";
@@ -9,13 +8,12 @@ import CustomBarChart from "@/components/charts/bar-chart";
 import CustomRadarChart from "@/components/charts/radar-chart";
 import { DEXAScan } from "@/store/dexa-definitions";
 
-// Mapping percentage values to different semantic colors
 const getColorForPercentage = (value: number) => {
-  if (value < 10) return "#82ca9d"; // Lean - Green
-  if (value < 20) return "#8884d8"; // Athletic - Purple
-  if (value < 25) return "#ffc658"; // Fitness - Yellow
-  if (value < 30) return "#ff8042"; // Average - Orange
-  return "#d32f2f"; // Higher body fat - Red
+  if (value < 10) return "#82ca9d";
+  if (value < 20) return "#8884d8";
+  if (value < 25) return "#ffc658";
+  if (value < 30) return "#ff8042";
+  return "#d32f2f";
 };
 
 const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
@@ -23,18 +21,16 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
 
-  // Find selected scans
   const selectedScan = data.find((scan) => scan.id === selectedDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
-  // Generate the body composition data for the pie chart
   const getBodyCompData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
     const fatMass = scan.fat_tissue_lbs || 0;
     const leanMass = scan.lean_tissue_lbs || 0;
     const boneMass = scan.bone_mineral_content
-      ? scan.bone_mineral_content / 453.59237 // Convert grams to lbs
+      ? scan.bone_mineral_content / 453.59237
       : 0;
 
     const result = [
@@ -43,10 +39,8 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
       { name: "Bone Mass", value: boneMass },
     ];
 
-    // Check if we have any non-zero values
     const hasValidData = result.some((item) => item.value > 0);
 
-    // If all values are zero, add some minimal value to make the chart visible
     if (!hasValidData) {
       return [
         { name: "Fat Mass", value: 1 },
@@ -58,7 +52,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
     return result;
   };
 
-  // Create data for the body fat distribution comparison
   const getBodyFatDistributionData = (scan: DEXAScan | undefined) => {
     if (!scan) return [];
 
@@ -100,7 +93,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
     });
   };
 
-  // Generate data for comparison view
   const getComparisonData = () => {
     if (!selectedScan || !comparisonScan) return [];
 
@@ -140,7 +132,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
     });
   };
 
-  // Generate radar chart data for body fat distribution comparison
   const getRadarComparisonData = () => {
     if (!selectedScan || !comparisonScan) return [];
 
@@ -196,19 +187,16 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
           ? comparisonScanValue * metric.multiplier
           : comparisonScanValue || 0,
         fullMark:
-          Math.max(selectedScanValue || 0, comparisonScanValue || 0) * 1.2, // To leave some space at the edge
+          Math.max(selectedScanValue || 0, comparisonScanValue || 0) * 1.2,
         unit: metric.unit,
       };
     });
   };
 
-  // Custom tooltip formatter for charts
   const tooltipFormatter = (value: any, name: string, props: any) => {
     let displayValue = value?.toFixed(2) || 0;
 
-    // Special handling for body fat percentage
     if (name.includes("Fat") && name.includes("%")) {
-      // If the value is stored as decimal (less than 1), convert to percentage
       if (value < 1 && value > 0) {
         displayValue = (value * 100).toFixed(1);
       }
@@ -230,7 +218,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
       />
 
       {viewMode === "single" ? (
-        // Single view
         <div className="space-y-6">
           {/* Key Metrics */}
           <Card>
@@ -310,7 +297,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
           </div>
         </div>
       ) : (
-        // Comparison view
         <div className="space-y-6">
           {/* Changes Summary */}
           <Card>

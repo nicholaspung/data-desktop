@@ -1,4 +1,3 @@
-// src/features/dashboard/time-tracker-dashboard-summary.tsx
 import { useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -19,7 +18,6 @@ export default function TimeTrackerDashboardSummary() {
     (state) => state.time_categories as TimeCategory[]
   );
 
-  // Calculate time totals for today
   const todaySummary = useMemo(() => {
     if (!timeEntries.length) {
       return {
@@ -28,24 +26,20 @@ export default function TimeTrackerDashboardSummary() {
       };
     }
 
-    // Get today's date (midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Filter entries for today
     const todayEntries = timeEntries.filter((entry) => {
       const entryDate = new Date(entry.start_time);
       entryDate.setHours(0, 0, 0, 0);
       return entryDate.getTime() === today.getTime();
     });
 
-    // Calculate total minutes
     let totalMinutes = 0;
     todayEntries.forEach((entry) => {
       totalMinutes += entry.duration_minutes;
     });
 
-    // Calculate per-category totals
     const categoriesMap = new Map<
       string,
       {
@@ -57,7 +51,6 @@ export default function TimeTrackerDashboardSummary() {
       }
     >();
 
-    // Initialize with all categories (even those with zero time)
     categories.forEach((cat) => {
       categoriesMap.set(cat.id, {
         id: cat.id,
@@ -68,20 +61,17 @@ export default function TimeTrackerDashboardSummary() {
       });
     });
 
-    // Add uncategorized entry if needed
     categoriesMap.set("uncategorized", {
       id: "uncategorized",
       name: "Uncategorized",
-      color: "#94a3b8", // slate-400
+      color: "#94a3b8",
       totalMinutes: 0,
       percentageOfTotal: 0,
     });
 
-    // Calculate totals for each category
     todayEntries.forEach((entry) => {
       const categoryId = entry.category_id || "uncategorized";
 
-      // Skip if category doesn't exist (shouldn't happen with proper initialization)
       if (!categoriesMap.has(categoryId)) return;
 
       const currentTotal = categoriesMap.get(categoryId)!.totalMinutes;
@@ -96,7 +86,6 @@ export default function TimeTrackerDashboardSummary() {
       });
     });
 
-    // Convert to array and sort by total time (descending)
     const categoriesArray = Array.from(categoriesMap.values())
       .filter((cat) => cat.totalMinutes > 0)
       .sort((a, b) => b.totalMinutes - a.totalMinutes);
@@ -107,22 +96,17 @@ export default function TimeTrackerDashboardSummary() {
     };
   }, [timeEntries, categories]);
 
-  // Calculate untracked time for today
   const todayUntrackedTime = useMemo(() => {
     const now = new Date();
     const today = new Date(now);
     today.setHours(0, 0, 0, 0);
 
-    // Full 24 hours = 1440 minutes
     const totalMinutesInDay = 24 * 60;
 
-    // If the day isn't over yet, calculate how many minutes have passed
     const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
 
-    // Available minutes is what has elapsed so far today
     const availableMinutes = Math.min(totalMinutesInDay, elapsedMinutesToday);
 
-    // Calculate untracked time
     const untrackedMinutes = Math.max(
       0,
       availableMinutes - todaySummary.totalMinutes
@@ -138,7 +122,6 @@ export default function TimeTrackerDashboardSummary() {
     };
   }, [todaySummary.totalMinutes]);
 
-  // Create the top categories items
   const topCategoriesItems = todaySummary.categories.slice(0, 3).map((cat) => ({
     label: cat.name,
     value: (
@@ -153,7 +136,6 @@ export default function TimeTrackerDashboardSummary() {
     subText: `${Math.round(cat.percentageOfTotal)}% of tracked time`,
   }));
 
-  // When there's no data
   if (!timeEntries.length) {
     return (
       <ReusableSummary
@@ -172,7 +154,6 @@ export default function TimeTrackerDashboardSummary() {
     );
   }
 
-  // Create the progress indicator for tracked time
   const trackingProgress = (
     <div className="space-y-2 mt-2">
       <div className="flex justify-between text-xs text-muted-foreground">

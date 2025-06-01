@@ -37,7 +37,6 @@ export default function PeopleCRMDashboardSummary() {
       state.person_attributes
   );
 
-  // Calculate birthday information
   const peopleWithBirthdays = people.filter((person) => person.birthday);
   const today = new Date();
 
@@ -67,7 +66,6 @@ export default function PeopleCRMDashboardSummary() {
     .filter((person) => person.daysUntil <= 30)
     .sort((a, b) => a.daysUntil - b.daysUntil);
 
-  // Recent meetings (last 5)
   const recentMeetings = meetings
     .slice()
     .sort(
@@ -76,7 +74,6 @@ export default function PeopleCRMDashboardSummary() {
     )
     .slice(0, 5);
 
-  // Quick stats
   const stats = {
     people: people.length,
     meetings: meetings.length,

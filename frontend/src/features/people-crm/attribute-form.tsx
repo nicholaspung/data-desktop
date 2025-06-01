@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/attribute-form.tsx
 import DataForm from "@/components/data-form/data-form";
 import { PERSON_ATTRIBUTES_FIELD_DEFINITIONS } from "@/features/field-definitions/people-crm-definitions";
 

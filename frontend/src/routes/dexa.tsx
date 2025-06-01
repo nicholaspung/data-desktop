@@ -1,4 +1,3 @@
-// src/routes/dexa.tsx
 import { createFileRoute } from "@tanstack/react-router";
 import DexaVisualization from "@/features/dexa/dexa-visualization";
 import {
@@ -14,7 +13,6 @@ export const Route = createFileRoute("/dexa")({
   component: DexaPage,
 });
 
-// Define the guide content sections
 const dexaGuideContent = [
   {
     title: "Getting Started",

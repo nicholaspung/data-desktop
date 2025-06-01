@@ -1,4 +1,3 @@
-// src/components/journaling/expandable-journal-entries.tsx (updated)
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -34,7 +33,6 @@ export default function ExpandableJournalEntries({
     new Set()
   );
 
-  // Sort entries by date (newest first)
   const sortedEntries = [...entries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );

@@ -1,4 +1,3 @@
-// src/features/dashboard/quick-metric-logger-dashboard-summary.tsx
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
@@ -36,10 +35,8 @@ export default function QuickMetricLoggerDashboardSummary() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Access PIN state
   const { isUnlocked } = usePin();
 
-  // Ref to prevent infinite update loops
   const isDateUpdating = useRef(false);
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
@@ -48,16 +45,13 @@ export default function QuickMetricLoggerDashboardSummary() {
     useStore(dataStore, (state) => state.metric_categories) || [];
 
   useEffect(() => {
-    // Simulate loading
     setTimeout(() => setIsLoading(false), 300);
   }, []);
 
-  // Compare dates by converting to ISO date strings (YYYY-MM-DD)
   const isSameLocalDate = (date1: Date, date2: Date): boolean => {
     return format(date1, "yyyy-MM-dd") === format(date2, "yyyy-MM-dd");
   };
 
-  // Check if a metric has been logged for the current date
   const isMetricLogged = (metricId: string): boolean => {
     return dailyLogs.some((log: DailyLog) => {
       const logDate = new Date(log.date);
@@ -67,7 +61,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     });
   };
 
-  // Handle date string changes from the input
   const handleDateStringChange = (value: string) => {
     if (isDateUpdating.current) return;
 
@@ -75,7 +68,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     setDateString(value);
 
     try {
-      // Parse date string to Date object and normalize to start of day
       const date = startOfDay(parseISO(value));
       if (!isNaN(date.getTime())) {
         setSelectedDate(date);
@@ -90,21 +82,16 @@ export default function QuickMetricLoggerDashboardSummary() {
     }, 0);
   };
 
-  // Handle search input change without losing focus
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setIsCommandOpen(true);
   };
 
-  // Filter metrics based on search term and exclude already logged metrics
   const filteredMetrics = metrics.filter((metric: Metric) => {
-    // Skip inactive metrics
     if (!metric.active) return false;
 
-    // Skip metrics that have already been logged for this date
     if (metric.type === "boolean" && isMetricLogged(metric.id)) return false;
 
-    // Filter by search term - for private metrics, only match on id if it's locked
     const matchesSearch =
       searchTerm.length === 0
         ? true
@@ -119,7 +106,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     return matchesSearch;
   });
 
-  // Group metrics by category
   const groupedMetrics = filteredMetrics.reduce(
     (acc: Record<string, Metric[]>, metric) => {
       const categoryId = metric.category_id;
@@ -136,12 +122,10 @@ export default function QuickMetricLoggerDashboardSummary() {
     {}
   );
 
-  // Handle metric selection with special handling for private metrics
   const handleSelectMetric = (metric: Metric) => {
     setSelectedMetric(metric);
     setIsCommandOpen(false);
 
-    // Set default value based on metric type
     if (metric.type === "boolean") {
       setMetricValue(false);
     } else if (metric.type === "number" || metric.type === "percentage") {
@@ -151,7 +135,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     }
   };
 
-  // Log the metric
   const handleLogMetric = async () => {
     if (!selectedMetric) return;
 
@@ -165,7 +148,6 @@ export default function QuickMetricLoggerDashboardSummary() {
             ? JSON.stringify(metricValue)
             : String(metricValue);
 
-      // Create new log
       const newLog = {
         date: selectedDate,
         metric_id: selectedMetric.id,
@@ -181,7 +163,6 @@ export default function QuickMetricLoggerDashboardSummary() {
         );
       }
 
-      // Reset form
       setSelectedMetric(null);
       setMetricValue("");
       setSearchTerm("");
@@ -193,7 +174,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     }
   };
 
-  // Render metric name and description with optional protection
   const renderMetricNameAndDescription = (metric: Metric) => {
     if (metric.private) {
       return (
@@ -222,7 +202,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     );
   };
 
-  // Outside click handler for dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -239,7 +218,6 @@ export default function QuickMetricLoggerDashboardSummary() {
     };
   }, []);
 
-  // Custom main content that will span the full width
   const fullWidthContent = (
     <>
       {metrics.length === 0 ? (

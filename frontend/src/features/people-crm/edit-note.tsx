@@ -8,7 +8,6 @@ import { useStore } from "@tanstack/react-store";
 import { PersonNote } from "@/store/people-crm-definitions";
 import { Button } from "@/components/ui/button";
 
-// frontend/src/routes/people-crm/edit-note.tsx
 export function EditNote({
   noteId,
   onBack,
@@ -28,7 +27,7 @@ export function EditNote({
   }, [noteId, notes]);
 
   interface HandleSubmitData {
-    [key: string]: any; // Replace with specific fields if known
+    [key: string]: any;
   }
 
   const handleSubmit = async (data: HandleSubmitData): Promise<void> => {

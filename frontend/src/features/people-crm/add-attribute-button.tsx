@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/add-attribute-button.tsx
 import { useState } from "react";
 import { PlusCircle, Pencil } from "lucide-react";
 import PersonAttributeForm from "./attribute-form";

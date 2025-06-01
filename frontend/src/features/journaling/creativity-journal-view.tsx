@@ -1,4 +1,3 @@
-// src/features/journaling/creativity-journal-view.tsx
 import { useState, useEffect } from "react";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
@@ -14,11 +13,9 @@ export default function CreativityJournalView() {
   );
 
   useEffect(() => {
-    // Get today's date (midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find today's entry if it exists
     const entry =
       entries.find((entry) => {
         const entryDate = new Date(entry.date);

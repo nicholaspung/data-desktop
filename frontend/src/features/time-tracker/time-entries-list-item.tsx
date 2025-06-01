@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-entries-list-item.tsx
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +27,6 @@ export default function TimeEntryListItem({
   const startTime = new Date(entry.start_time);
   const endTime = new Date(entry.end_time);
 
-  // Check if this entry is linked to a time metric
   const isTimeMetric = metrics.some(
     (metric) =>
       metric.type === "time" &&

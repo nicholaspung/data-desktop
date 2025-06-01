@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-tracker.tsx (updated with summary tab)
 import { useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import loadingStore from "@/store/loading-store";

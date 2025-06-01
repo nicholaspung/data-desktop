@@ -1,4 +1,3 @@
-// frontend/src/features/todos/todo-stats.tsx
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Todo } from "@/store/todo-definitions";
@@ -9,7 +8,6 @@ import ReusableCard from "@/components/reusable/reusable-card";
 export default function TodoStats() {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
 
-  // Calculate statistics
   const totalTodos = todos.length;
   const completedTodos = todos.filter((todo) => todo.isComplete).length;
   const overdueTodos = todos.filter(

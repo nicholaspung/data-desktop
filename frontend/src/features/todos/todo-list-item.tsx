@@ -1,4 +1,3 @@
-// frontend/src/features/todos/todo-list-item.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions.d";
@@ -38,7 +37,6 @@ export default function TodoListItem({
         updateEntry(todo.id, response, "todos");
         toast.success(`"${todo.title}" marked as completed!`);
 
-        // If todo has a related metric, check if it's in the "Todo" category
         if (
           todoMetrics &&
           todo.relatedMetricId &&
@@ -46,7 +44,6 @@ export default function TodoListItem({
         ) {
           const metric = todoMetrics[todo.relatedMetricId];
 
-          // Check if the metric belongs to the "Todo" category
           let shouldDeactivate = false;
           if (
             metric.category_id_data &&
@@ -122,7 +119,6 @@ export default function TodoListItem({
       );
     }
 
-    // Calculate how many days until deadline
     const daysUntil = Math.ceil(
       (deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );
@@ -255,7 +251,6 @@ export default function TodoListItem({
                     <AddTodoButton
                       existingTodo={todo}
                       onSuccess={() => {
-                        // Refresh metrics data after update
                         const loadMetrics = async () => {
                           const metrics =
                             await ApiService.getRecordsWithRelations<any>(

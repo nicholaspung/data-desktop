@@ -1,4 +1,3 @@
-// src/features/dashboard/experiment-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import { Badge } from "@/components/ui/badge";
@@ -27,11 +26,9 @@ export default function ExperimentDashboardSummary() {
   );
 
   useEffect(() => {
-    // Filter for active experiments only
     const active = experiments
       .filter((exp) => exp.status === "active")
       .map((exp) => {
-        // Calculate progress based on time elapsed
         const startDate = new Date(exp.start_date);
         const endDate = exp.end_date ? new Date(exp.end_date) : null;
         const now = new Date();
@@ -39,13 +36,10 @@ export default function ExperimentDashboardSummary() {
         let progress = 0;
 
         if (endDate) {
-          // Calculate total duration in milliseconds
           const totalDuration = endDate.getTime() - startDate.getTime();
 
-          // Calculate elapsed time in milliseconds
           const elapsedTime = now.getTime() - startDate.getTime();
 
-          // Calculate progress as percentage of time elapsed
           if (totalDuration > 0) {
             progress = Math.min(
               100,
@@ -53,8 +47,7 @@ export default function ExperimentDashboardSummary() {
             );
           }
         } else {
-          // If no end date, calculate progress based on 30 days as default duration
-          const defaultDuration = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+          const defaultDuration = 30 * 24 * 60 * 60 * 1000;
           const elapsedTime = now.getTime() - startDate.getTime();
           progress = Math.min(
             100,
@@ -68,7 +61,6 @@ export default function ExperimentDashboardSummary() {
         };
       })
       .sort((a, b) => {
-        // Sort by start date, newest first
         return (
           new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
         );
@@ -76,7 +68,6 @@ export default function ExperimentDashboardSummary() {
 
     setActiveExperiments(active);
 
-    // Set the first experiment as selected
     if (active.length > 0 && !selectedExperiment) {
       setSelectedExperiment(active[0].id);
     }
@@ -84,7 +75,6 @@ export default function ExperimentDashboardSummary() {
     setLoading(false);
   }, [experiments, experimentMetrics, dailyLogs]);
 
-  // Calculate days remaining for an experiment
   const getDaysRemaining = (experiment: Experiment) => {
     const now = new Date();
     const endDate = experiment.end_date ? new Date(experiment.end_date) : null;

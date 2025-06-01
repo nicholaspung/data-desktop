@@ -219,7 +219,6 @@ export interface ColumnMeta {
   unit?: string;
   description?: string;
   isSearchable?: boolean;
-
   isRelation?: boolean;
   relatedDataset?: string;
   displayField?: string;
@@ -235,7 +234,6 @@ export interface FieldDefinition {
   isSearchable?: boolean;
   isOptional?: boolean;
   isUnique?: boolean;
-
   isRelation?: boolean;
   relatedDataset?: DatasetId;
   relatedField?: string;
@@ -245,7 +243,6 @@ export interface FieldDefinition {
   secondaryDisplayFieldType?: FieldType;
   preventDeleteIfReferenced?: boolean;
   cascadeDeleteIfReferenced?: boolean;
-
   options?: SelectOption[];
   acceptedFileTypes?: string; // e.g. "image/*,application/pdf"
 }

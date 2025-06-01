@@ -1,4 +1,3 @@
-// src/features/journaling/affirmation-form.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/reusable/markdown-editor";
@@ -21,21 +20,18 @@ export default function AffirmationForm({
   const [newAffirmation, setNewAffirmation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize the form with the latest affirmation when editing
   useEffect(() => {
     if (latestAffirmation) {
       setNewAffirmation(latestAffirmation.affirmation);
     }
   }, [latestAffirmation]);
 
-  // Handle saving the affirmation
   const handleSaveAffirmation = async () => {
     if (!newAffirmation.trim()) {
       toast.error("Please enter an affirmation");
       return;
     }
 
-    // Check if user is trying to add a new affirmation today when one already exists
     if (hasTodaysAffirmation && !latestAffirmation) {
       toast.error("You can only create one affirmation per day");
       setIsEditing(false);
@@ -51,9 +47,7 @@ export default function AffirmationForm({
         affirmation: newAffirmation,
       };
 
-      // If we're updating today's affirmation (which is the latest)
       if (latestAffirmation && hasTodaysAffirmation) {
-        // Update existing affirmation
         const result = await ApiService.updateRecord(latestAffirmation.id, {
           ...latestAffirmation,
           affirmation: newAffirmation,
@@ -64,7 +58,6 @@ export default function AffirmationForm({
           toast.success("Affirmation updated!");
         }
       } else {
-        // Create new affirmation
         const result = await ApiService.addRecord("affirmation", newEntry);
 
         if (result) {
@@ -83,7 +76,6 @@ export default function AffirmationForm({
     }
   };
 
-  // If user already has today's affirmation and trying to create a new one (not edit existing)
   if (hasTodaysAffirmation && !latestAffirmation) {
     return (
       <Card>
@@ -102,7 +94,6 @@ export default function AffirmationForm({
     );
   }
 
-  // Display form to create/edit affirmation
   return (
     <Card>
       <CardContent className="pt-6 pb-6">

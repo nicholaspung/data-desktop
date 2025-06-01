@@ -1,4 +1,3 @@
-// src/features/journaling/same-question-answers.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
@@ -15,7 +14,6 @@ export default function PreviousAnswers() {
     (state) => state.question_journal as QuestionJournalEntry[]
   );
 
-  // If no question is available yet
   if (!todayQuestion) {
     return (
       <Card>
@@ -26,7 +24,6 @@ export default function PreviousAnswers() {
     );
   }
 
-  // Find all entries that contain the same question
   const relevantEntries = entries
     .filter((entry) => entry.entry.includes(`## ${todayQuestion}`))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

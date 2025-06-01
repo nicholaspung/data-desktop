@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-tracker-store.ts
 import { Store } from "@tanstack/react-store";
 
 export type TimeTrackerStoreState = {
@@ -10,7 +9,6 @@ export type TimeTrackerStoreState = {
   elapsedSeconds: number;
 };
 
-// Initial state
 const initialState: TimeTrackerStoreState = {
   isTimerActive: false,
   startTime: null,
@@ -20,10 +18,8 @@ const initialState: TimeTrackerStoreState = {
   elapsedSeconds: 0,
 };
 
-// Create the store
 export const timeTrackerStore = new Store<TimeTrackerStoreState>(initialState);
 
-// Helper functions
 export const startTimer = (
   description: string,
   categoryId?: string,
@@ -45,7 +41,6 @@ export const stopTimer = () => {
 
   if (!currentState.isTimerActive) return;
 
-  // Update state in a batch to prevent multiple re-renders
   timeTrackerStore.setState((state) => ({
     ...state,
     isTimerActive: false,

@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 
-// Helper to parse metric values
 export const parseMetricValue = (value: string, type: string): any => {
   if (!value) {
     switch (type) {
@@ -20,7 +19,7 @@ export const parseMetricValue = (value: string, type: string): any => {
     return parsed;
   } catch (e: any) {
     console.error(e);
-    // If parsing fails, return appropriate defaults
+
     switch (type) {
       case "boolean":
         return value === "true";
@@ -34,7 +33,6 @@ export const parseMetricValue = (value: string, type: string): any => {
   }
 };
 
-// Function to get status badge
 export const getStatusBadge = (status: string, text: string) => {
   const statusColor = {
     active: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",

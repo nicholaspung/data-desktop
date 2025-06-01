@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-entries-list.tsx
 import { useMemo, useState } from "react";
 import { TimeEntry } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,14 +57,12 @@ export default function TimeEntriesList({
   );
   const [showConflictResolver, setShowConflictResolver] = useState(false);
 
-  // Get metrics data
   const metricsData = useStore(
     dataStore,
     (state) => state.metrics || []
   ) as Metric[];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
-  // Sort entries by start time, newest first
   const sortedEntries = useMemo(() => {
     return convertToLocalDates([...entries]).sort((a, b) => {
       return (
@@ -74,16 +71,13 @@ export default function TimeEntriesList({
     });
   }, [entries]);
 
-  // Find overlapping entries
   const overlappingEntries = useMemo(() => {
     return findOverlappingEntries(sortedEntries);
   }, [sortedEntries]);
 
-  // Create a filtered entries list based on tag and overlap filter
   const filteredEntries = useMemo(() => {
     let result = sortedEntries;
 
-    // Apply tag filter if set
     if (tagFilter.trim() && tagFilter !== "_none_") {
       result = result.filter((entry) => {
         if (!entry.tags) return false;
@@ -94,7 +88,6 @@ export default function TimeEntriesList({
       });
     }
 
-    // Apply overlap filter if enabled
     if (showOverlaps) {
       result = result.filter((entry) =>
         overlappingEntries.some((e) => e.id === entry.id)
@@ -104,13 +97,11 @@ export default function TimeEntriesList({
     return result;
   }, [sortedEntries, tagFilter, showOverlaps, overlappingEntries]);
 
-  // Get unique tags with the id/label format needed for ReusableSelect
   const tagOptions = useMemo(() => {
     const uniqueTags = getAllUniqueTags(entries);
     return [...uniqueTags.map((tag) => ({ id: tag, label: tag }))];
   }, [entries]);
 
-  // Helper function to get all unique tags from entries
   function getAllUniqueTags(entries: TimeEntry[]): string[] {
     if (!entries || entries.length === 0) return [];
     const tagsSet = new Set<string>();
@@ -129,10 +120,8 @@ export default function TimeEntriesList({
     return Array.from(tagsSet).sort();
   }
 
-  // Updated handleDelete function for time entries
   const handleDelete = async (entry: TimeEntry) => {
     try {
-      // Before deleting, we need to update any metrics this entry was incrementing
       const matchingMetrics = metricsData.filter(
         (metric: Metric) =>
           metric.type === "time" &&
@@ -141,7 +130,6 @@ export default function TimeEntriesList({
       );
 
       if (matchingMetrics.length > 0) {
-        // Create a fake entry with 0 duration to "subtract" this time
         const zeroEntry = {
           ...entry,
           duration_minutes: 0,
@@ -155,7 +143,6 @@ export default function TimeEntriesList({
         );
       }
 
-      // Now delete the entry
       await ApiService.deleteRecord(entry.id);
       deleteEntry(entry.id, "time_entries");
       onDataChange();
@@ -165,22 +152,18 @@ export default function TimeEntriesList({
     }
   };
 
-  // Use filteredEntries for grouping instead of sortedEntries
   const groupedEntries = groupEntriesByDate(filteredEntries);
 
-  // Group entries by date
   const groupDates = Object.keys(groupedEntries).sort((a, b) =>
     b.localeCompare(a)
   );
 
-  // Group entries by description and category within each day
   const groupEntriesByDescriptionAndCategory = (
     entries: TimeEntry[]
   ): GroupedEntry[] => {
     const groups: Record<string, GroupedEntry> = {};
 
     entries.forEach((entry) => {
-      // Create a key combining description and category
       const groupKey = `${entry.description}|${entry.category_id || "none"}`;
 
       if (!groups[groupKey]) {
@@ -196,7 +179,6 @@ export default function TimeEntriesList({
       groups[groupKey].totalDuration += entry.duration_minutes;
     });
 
-    // Sort groups by the start time of the first entry in each group (newest first)
     return Object.values(groups).sort((a, b) => {
       const aTime = new Date(a.entries[0].start_time).getTime();
       const bTime = new Date(b.entries[0].start_time).getTime();
@@ -362,8 +344,7 @@ export default function TimeEntriesList({
             <CardContent>
               <div className="space-y-3">
                 {isGrouped
-                  ? // Grouped view
-                    groupEntriesByDescriptionAndCategory(
+                  ? groupEntriesByDescriptionAndCategory(
                       groupedEntries[dateStr]
                     ).map((group) => {
                       const firstEntry = group.entries[0];
@@ -429,8 +410,7 @@ export default function TimeEntriesList({
                         </div>
                       );
                     })
-                  : // Regular view
-                    groupedEntries[dateStr].map((entry) => (
+                  : groupedEntries[dateStr].map((entry) => (
                       <TimeEntryListItem
                         key={entry.id}
                         entry={entry}

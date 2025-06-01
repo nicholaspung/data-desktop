@@ -28,22 +28,18 @@ export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Get people with birthdays
   const peopleWithBirthdays = people.filter((person) => person.birthday);
 
-  // Calculate next birthday for each person
   const enrichedPeople = peopleWithBirthdays.map((person) => {
     const birthday = new Date(person.birthday!);
     const now = new Date();
 
-    // Get this year's birthday
     let nextBirthday = new Date(
       now.getFullYear(),
       birthday.getMonth(),
       birthday.getDate()
     );
 
-    // If birthday has passed this year, use next year's date
     if (nextBirthday < now) {
       nextBirthday = addYears(nextBirthday, 1);
     }
@@ -51,7 +47,6 @@ export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
     const daysUntil = differenceInDays(nextBirthday, now);
     const age = nextBirthday.getFullYear() - birthday.getFullYear();
 
-    // Check if there's a reminder set for this person
     const reminder = birthdayReminders.find((r) => r.person_id === person.id);
 
     return {
@@ -63,7 +58,6 @@ export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
     };
   });
 
-  // Filter based on search
   const filteredPeople = enrichedPeople.filter((person) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -71,7 +65,6 @@ export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
     );
   });
 
-  // Categorize birthdays
   const today = filteredPeople.filter((p) => p.daysUntil === 0);
   const tomorrow = filteredPeople.filter((p) => p.daysUntil === 1);
   const upcoming7Days = filteredPeople.filter(
@@ -82,7 +75,6 @@ export default function BirthdaysList({ onShowDetail }: BirthdaysListProps) {
   );
   const laterBirthdays = filteredPeople.filter((p) => p.daysUntil > 30);
 
-  // Sort each category by days until birthday
   const sortByDaysUntil = (
     a: (typeof enrichedPeople)[0],
     b: (typeof enrichedPeople)[0]

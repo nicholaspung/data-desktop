@@ -1,4 +1,3 @@
-// src/features/dexa/visualization/comparison-selector.tsx
 import { useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";
@@ -23,7 +22,6 @@ export const ComparisonSelector = ({
   onSelectedDateChange: (date: string) => void;
   onComparisonDateChange: (date: string) => void;
 }) => {
-  // Create date options from the data
   const dateOptions = data
     .filter((item) => item.date)
     .map((scan) => ({
@@ -31,14 +29,12 @@ export const ComparisonSelector = ({
       label: format(new Date(scan.date), "MMM d, yyyy"),
       date: new Date(scan.date),
     }))
-    .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest first
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  // Set defaults when component loads or data changes
   useEffect(() => {
     if (dateOptions.length > 0 && !selectedDate) {
       onSelectedDateChange(dateOptions[0].value ?? "");
 
-      // Set default comparison date to second most recent if available
       if (dateOptions.length > 1 && !comparisonDate) {
         onComparisonDateChange(dateOptions[1].value ?? "");
       }

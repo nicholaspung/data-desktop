@@ -1,4 +1,3 @@
-// src/hooks/useOnboarding.tsx
 import { useState, useCallback } from "react";
 
 const ONBOARDING_KEY = "hasSeenOnboarding";

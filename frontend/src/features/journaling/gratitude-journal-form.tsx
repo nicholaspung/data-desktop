@@ -1,4 +1,3 @@
-// src/features/journaling/gratitude-journal-form.tsx
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,12 +21,10 @@ export default function GratitudeJournalForm() {
     (state) => state.gratitude_journal as GratitudeJournalEntry[]
   );
 
-  // Get entries sorted by date (newest first)
   const sortedEntries = [...entries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Get today's entries
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -61,7 +58,6 @@ export default function GratitudeJournalForm() {
         toast.success("Gratitude journal entry added!");
         setEntry("");
 
-        // Sync metrics after adding a new entry
         setTimeout(() => {
           syncJournalingMetrics();
         }, 500);

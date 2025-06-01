@@ -1,10 +1,8 @@
-// src/hooks/useTodayQuestion.tsx
 import { useState, useEffect } from "react";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { QuestionJournalEntry } from "@/store/journaling-definitions";
 
-// The questions array to share between components
 const questions = [
   "What am I grateful for today?",
   "What's something I learned recently?",
@@ -57,11 +55,9 @@ export function useTodayQuestion() {
   );
 
   useEffect(() => {
-    // Get today's date (midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find today's entry
     const todayEntry = entries.find((entry) => {
       const entryDate = new Date(entry.date);
       entryDate.setHours(0, 0, 0, 0);
@@ -69,13 +65,11 @@ export function useTodayQuestion() {
     });
 
     if (todayEntry) {
-      // If we have today's entry, extract the question
       const match = todayEntry.entry.match(/^##\s+(.+?)(\n|$)/m);
       if (match && match[1]) {
         setTodayQuestion(match[1].trim());
       }
     } else {
-      // Select a question based on the day of year for consistency
       const dayOfYear = Math.floor(
         (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) /
           86400000

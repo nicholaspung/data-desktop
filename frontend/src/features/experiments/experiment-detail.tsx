@@ -1,4 +1,3 @@
-// src/features/experiments/experiment-detail.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
@@ -25,17 +24,14 @@ const ExperimentDetail = ({
   onDelete?: () => void;
   handleBackToList: () => void;
 }) => {
-  // State
   const [experiment, setExperiment] = useState<Experiment | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Access data from store
   const experimentsData =
     useStore(dataStore, (state) => state.experiments) || [];
 
-  // Load experiment data
   useEffect(() => {
     loadExperiment();
   }, [experimentId, experimentsData]);
@@ -58,7 +54,6 @@ const ExperimentDetail = ({
     }
   };
 
-  // Handle experiment deletion
   const handleDelete = async () => {
     try {
       await ApiService.deleteRecord(experimentId);
@@ -70,7 +65,6 @@ const ExperimentDetail = ({
         onDelete();
       }
 
-      // Navigate back after deletion
       if (onClose) {
         onClose();
       }
@@ -80,7 +74,6 @@ const ExperimentDetail = ({
     }
   };
 
-  // Handle status change
   const handleStatusChange = async (
     newStatus: "active" | "completed" | "paused",
     endState?: string

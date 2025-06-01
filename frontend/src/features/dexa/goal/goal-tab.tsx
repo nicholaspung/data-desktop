@@ -1,4 +1,3 @@
-// src/features/dexa/goal/goal-tab.tsx
 import { useEffect, useState } from "react";
 import DexaGoalDisplay from "./dexa-goal-display";
 import { GoalStorageService } from "./goal-storage-service";
@@ -19,7 +18,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     loadGoal();
   }, [refresh]);
 
-  // Get the latest scan
   const latestScan =
     data.length > 0
       ? data.sort(
@@ -27,7 +25,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
         )[0]
       : undefined;
 
-  // Prepare chart data for Body Fat Percentage
   const getBodyFatChartData = () => {
     const chartData = data
       .map((item) => ({
@@ -40,7 +37,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     return chartData;
   };
 
-  // Prepare chart data for Weight
   const getWeightChartData = () => {
     const chartData = data
       .map((item) => ({
@@ -53,7 +49,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     return chartData;
   };
 
-  // Prepare chart data for VAT Mass
   const getVatChartData = () => {
     const chartData = data
       .map((item) => ({
@@ -70,7 +65,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     setRefresh((prev) => prev + 1);
   };
 
-  // Configure line for body fat percentage
   const bodyFatLineConfig = [
     {
       dataKey: "bodyFat",
@@ -82,7 +76,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     },
   ];
 
-  // Configure line for weight
   const weightLineConfig = [
     {
       dataKey: "weight",
@@ -93,7 +86,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     },
   ];
 
-  // Configure line for VAT mass
   const vatLineConfig = [
     {
       dataKey: "vatMass",
@@ -104,7 +96,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     },
   ];
 
-  // Get reference lines based on goal
   const getBodyFatReferenceLines = () => {
     if (!goal) return [];
     return [
@@ -116,7 +107,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     ];
   };
 
-  // Get reference lines based on goal
   const getWeightReferenceLines = () => {
     if (!goal) return [];
     return [
@@ -128,7 +118,6 @@ export default function GoalTab({ data }: { data: DEXAScan[] }) {
     ];
   };
 
-  // Get reference lines based on goal
   const getVatReferenceLines = () => {
     if (!goal) return [];
     return [

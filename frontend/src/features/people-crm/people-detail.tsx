@@ -1,18 +1,11 @@
-// frontend/src/routes/people-crm/person-detail.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Person } from "@/store/people-crm-definitions";
 import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  Edit,
-  Calendar,
-  NotebookPen,
-  Gift,
-} from "lucide-react";
+import { ChevronLeft, Edit, Calendar, NotebookPen, Gift } from "lucide-react";
 import ReusableCard from "@/components/reusable/reusable-card";
-import { Badge } from "@/components/ui/badge";  
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ApiService } from "@/services/api";
 import { deleteEntry } from "@/store/data-store";
@@ -45,7 +38,6 @@ export default function PersonDetail({
     if (foundPerson) {
       setPerson(foundPerson);
     } else {
-      // Try to load from API if not in store
       ApiService.getRecord(personId).then((data) => {
         if (data) {
           setPerson(data as Person);
@@ -78,7 +70,6 @@ export default function PersonDetail({
     );
   }
 
-  // Get person's meetings
   const personMeetings = meetings
     .filter((meeting) => meeting.person_id === personId)
     .sort(
@@ -86,7 +77,6 @@ export default function PersonDetail({
         new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()
     );
 
-  // Get person's notes
   const personNotesList = personNotes
     .filter((note) => note.person_id === personId)
     .sort(
@@ -231,30 +221,36 @@ export default function PersonDetail({
             title="Quick Actions"
             content={
               <div className="grid grid-cols-2 gap-3">
-                <AddMeetingButton defaultPersonId={personId} onSuccess={() => {
-                  // Refresh the page data
-                  ApiService.getRecord(personId).then((data) => {
-                    if (data) {
-                      setPerson(data as Person);
-                    }
-                  });
-                }} />
-                <AddNoteButton defaultPersonId={personId} onSuccess={() => {
-                  // Refresh the page data
-                  ApiService.getRecord(personId).then((data) => {
-                    if (data) {
-                      setPerson(data as Person);
-                    }
-                  });
-                }} />
-                <AddAttributeButton defaultPersonId={personId} onSuccess={() => {
-                  // Refresh the page data
-                  ApiService.getRecord(personId).then((data) => {
-                    if (data) {
-                      setPerson(data as Person);
-                    }
-                  });
-                }} />
+                <AddMeetingButton
+                  defaultPersonId={personId}
+                  onSuccess={() => {
+                    ApiService.getRecord(personId).then((data) => {
+                      if (data) {
+                        setPerson(data as Person);
+                      }
+                    });
+                  }}
+                />
+                <AddNoteButton
+                  defaultPersonId={personId}
+                  onSuccess={() => {
+                    ApiService.getRecord(personId).then((data) => {
+                      if (data) {
+                        setPerson(data as Person);
+                      }
+                    });
+                  }}
+                />
+                <AddAttributeButton
+                  defaultPersonId={personId}
+                  onSuccess={() => {
+                    ApiService.getRecord(personId).then((data) => {
+                      if (data) {
+                        setPerson(data as Person);
+                      }
+                    });
+                  }}
+                />
                 {person.birthday && (
                   <Button variant="outline" className="w-full">
                     <Gift className="h-4 w-4 mr-2" />

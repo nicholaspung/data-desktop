@@ -1,4 +1,3 @@
-// src/features/dexa/edit-dexa-scan-button.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
@@ -23,16 +22,14 @@ export default function EditDexaScanButton() {
 
   const scans = useStore(dataStore, (state) => state.dexa as DEXAScan[]);
 
-  // Create options for the selection dropdown
   const scanOptions = scans
     .map((scan) => ({
       id: scan.id,
       label: format(new Date(scan.date), "MMM d, yyyy"),
-      date: new Date(scan.date), // Add date for sorting
+      date: new Date(scan.date),
     }))
-    .sort((a, b) => b.date.getTime() - a.date.getTime()); // Sort newest to oldest
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  // Get the selected scan data
   const selectedScanData = scans.find((scan) => scan.id === selectedScan);
 
   const handleSuccess = () => {
@@ -133,7 +130,7 @@ export default function EditDexaScanButton() {
           )}
         </div>
       }
-      customFooter={<div />} // Empty div to remove default footer
+      customFooter={<div />}
     />
   );
 }

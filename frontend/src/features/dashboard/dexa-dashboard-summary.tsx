@@ -1,4 +1,3 @@
-// src/features/dashboard/dexa-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -13,7 +12,6 @@ export default function DEXADashboardSummary() {
   const [latestScan, setLatestScan] = useState<DEXAScan | null>(null);
 
   useEffect(() => {
-    // Sort by date, newest first
     const sortedScans = [...dexaData].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );

@@ -1,4 +1,3 @@
-// frontend/src/features/todos/todo-form.tsx
 import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -32,7 +31,6 @@ interface TodoFormProps {
 export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const isEditMode = !!existingTodo;
 
-  // Get metrics and categories from store instead of API call
   const metrics = useStore(dataStore, (state) => state.metrics);
   const metricCategories = useStore(
     dataStore,
@@ -40,10 +38,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   );
   const isLoadingMetrics = useStore(loadingStore, (state) => state.metrics);
 
-  // Get all todos to extract available tags
   const allTodos = useStore(dataStore, (state) => state.todos);
 
-  // Default state for a new todo
   const [title, setTitle] = useState(existingTodo?.title || "");
   const [description, setDescription] = useState(
     existingTodo?.description || ""
@@ -54,7 +50,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const [priority, setPriority] = useState<TodoPriority>(
     (existingTodo?.priority as TodoPriority) || TodoPriority.MEDIUM
   );
-  // Change tags from array to comma-separated string for TagInput
   const [tagsString, setTagsString] = useState<string>(
     existingTodo?.tags || ""
   );
@@ -70,20 +65,16 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const [createMetric, setCreateMetric] = useState(!isEditMode);
   const [isPrivate, setIsPrivate] = useState(false);
 
-  // For validation
   const [errors, setErrors] = useState<{
     title?: string;
     deadline?: string;
     metricType?: string;
   }>({});
 
-  // For overall form validation
   const [formError, setFormError] = useState<string | null>(null);
 
-  // For form submission
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validate the form
   const validateForm = () => {
     const newErrors: {
       title?: string;
@@ -91,7 +82,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
       metricType?: string;
     } = {};
 
-    // Clear form error
     setFormError(null);
 
     if (!title.trim()) {
@@ -116,7 +106,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     return true;
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -125,10 +114,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Create a metric if enabled and not in edit mode
       let metricId = relatedMetricId;
       if (createMetric && !isEditMode && metricType) {
-        // First, check if "Todo" category exists, if not create it
         let todoCategoryId: string;
         const existingCategory = metricCategories.find(
           (cat) => cat.name === "Todo"
@@ -137,7 +124,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         if (existingCategory) {
           todoCategoryId = existingCategory.id;
         } else {
-          // Create "Todo" category
           const newCategory = {
             name: "Todo",
           };
@@ -153,7 +139,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
           }
         }
 
-        // Define the new metric
         const newMetric = {
           name: `${title} Progress`,
           description: `Tracks progress for todo: ${title}`,
@@ -168,7 +153,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
           category_id: todoCategoryId,
         };
 
-        // Save the new metric and get its ID
         const savedMetric = await ApiService.addRecord("metrics", newMetric);
         if (savedMetric) {
           metricId = savedMetric.id;
@@ -177,7 +161,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         }
       }
 
-      // Prepare the todo data
       const todoData: any = {
         title,
         description: description || undefined,
@@ -193,7 +176,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
       };
 
       if (isEditMode && existingTodo) {
-        // Update existing todo
         const response = await ApiService.updateRecord(existingTodo.id, {
           ...existingTodo,
           ...todoData,
@@ -205,7 +187,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
           onSuccess?.();
         }
       } else {
-        // Create new todo
         const response = await ApiService.addRecord("todos", todoData);
 
         if (response) {
@@ -225,10 +206,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     }
   };
 
-  // Filter active metrics only
   const activeMetrics = metrics.filter((metric) => metric.active);
 
-  // Format the metric options for display
   const metricOptions = activeMetrics.map((metric) => ({
     id: metric.id,
     label: metric.name,
@@ -236,7 +215,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     type: metric.type,
   }));
 
-  // Priority options for select
   const priorityOptions = [
     { id: TodoPriority.LOW, label: "Low" },
     { id: TodoPriority.MEDIUM, label: "Medium" },
@@ -244,7 +222,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     { id: TodoPriority.URGENT, label: "Urgent" },
   ];
 
-  // Metric type options for select
   const metricTypeOptions = [
     { id: "completion", label: "Completion (Yes/No)" },
     { id: "time", label: "Time Tracked (Minutes)" },
@@ -390,7 +367,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
                 checked={createMetric}
                 onChange={(e) => {
                   setCreateMetric(e.target.checked);
-                  // Clear any metric-related errors if unchecked
                   if (!e.target.checked) {
                     setErrors((prev) => ({ ...prev, metricType: undefined }));
                     setFormError(null);

@@ -1,4 +1,3 @@
-// src/features/journaling/question-journal-history.tsx
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,6 @@ export default function QuestionJournalHistory() {
     (state) => state.question_journal as QuestionJournalEntry[]
   );
 
-  // Extract unique questions from entries
   useEffect(() => {
     if (entries.length === 0) return;
 
@@ -36,7 +34,6 @@ export default function QuestionJournalHistory() {
       }
     });
 
-    // Format for ReusableSelect
     const options = Array.from(questions)
       .sort()
       .map((question) => ({
@@ -46,19 +43,15 @@ export default function QuestionJournalHistory() {
     setQuestionOptions(options);
   }, [entries]);
 
-  // Sort entries by date, newest first
   const sortedEntries = [...entries].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  // Filter entries based on search term and selected question
   const filteredEntries = sortedEntries.filter((entry) => {
-    // Check search term
     const matchesSearch = searchTerm
       ? entry.entry.toLowerCase().includes(searchTerm.toLowerCase())
       : true;
 
-    // Check selected question
     const matchesQuestion = selectedQuestion
       ? entry.entry.includes(`## ${selectedQuestion}`)
       : true;
@@ -66,24 +59,20 @@ export default function QuestionJournalHistory() {
     return matchesSearch && matchesQuestion;
   });
 
-  // Function to extract question from entry
   const extractQuestion = (entry: string): string => {
     const match = entry.match(/^##\s+(.+?)(\n|$)/m);
     return match && match[1] ? match[1].trim() : "Unknown Question";
   };
 
-  // Function to extract answer (everything after the question header)
   const extractAnswer = (entry: string): string => {
     return entry.replace(/^##.*(\n|$)/m, "").trim();
   };
 
-  // Clear all filters
   const clearFilters = () => {
     setSearchTerm("");
     setSelectedQuestion("");
   };
 
-  // Render entry cards
   const renderEntries = () => {
     if (filteredEntries.length === 0) {
       return (

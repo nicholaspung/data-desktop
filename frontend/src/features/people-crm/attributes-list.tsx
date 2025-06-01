@@ -23,7 +23,6 @@ export default function PersonAttributesList({
   const isLoading = useStore(loadingStore, (state) => state.person_attributes);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter attributes based on search
   const filteredAttributes = attributes.filter((attribute) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -35,7 +34,6 @@ export default function PersonAttributesList({
     );
   });
 
-  // Sort attributes by date (newest first)
   const sortedAttributes = filteredAttributes.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );

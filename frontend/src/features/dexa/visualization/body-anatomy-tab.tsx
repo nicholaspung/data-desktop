@@ -10,7 +10,6 @@ const BodyAnatomyTab = ({ data }: { data: DEXAScan[] }) => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
 
-  // Find selected scans
   const selectedScan = data.find((scan) => scan.id === selectedDate);
   const comparisonScan = data.find((scan) => scan.id === comparisonDate);
 
@@ -27,7 +26,6 @@ const BodyAnatomyTab = ({ data }: { data: DEXAScan[] }) => {
       />
 
       {viewMode === "single" ? (
-        // Single view mode
         <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
           {selectedScan ? (
             <BodyRepresentation
@@ -41,7 +39,6 @@ const BodyAnatomyTab = ({ data }: { data: DEXAScan[] }) => {
           )}
         </div>
       ) : (
-        // Comparison view mode
         <div className="grid gap-6 md:grid-cols-2">
           {selectedScan ? (
             <BodyRepresentation
@@ -81,7 +78,6 @@ const BodyAnatomyTab = ({ data }: { data: DEXAScan[] }) => {
   );
 };
 
-// Helper component to show a summary of changes between two scans
 const ComparisonSummary = ({
   primaryScan,
   compareScan,
@@ -93,7 +89,6 @@ const ComparisonSummary = ({
   primaryDate: string;
   compareDate: string;
 }) => {
-  // Calculate differences between scans
   const calculateDifference = (
     current: number | undefined,
     previous: number | undefined,
@@ -101,7 +96,6 @@ const ComparisonSummary = ({
   ) => {
     if (current === undefined || previous === undefined) return null;
 
-    // If values are stored as decimals for percentages, convert to percentage
     const currentValue = isPercentage && current < 1 ? current * 100 : current;
     const previousValue =
       isPercentage && previous < 1 ? previous * 100 : previous;
@@ -109,25 +103,20 @@ const ComparisonSummary = ({
     return currentValue - previousValue;
   };
 
-  // Function to determine if a change is positive or negative (for styling)
   const isPositiveChange = (diff: number | null, metric: string) => {
     if (diff === null) return false;
 
-    // For fat percentages and masses, negative is good
     if (metric.toLowerCase().includes("fat")) {
       return diff < 0;
     }
 
-    // For lean mass, positive is good
     if (metric.toLowerCase().includes("lean")) {
       return diff > 0;
     }
 
-    // For total mass, depends on goals but we'll assume negative is good
     return diff < 0;
   };
 
-  // Calculate differences for key metrics
   const differences = {
     totalBodyFat: calculateDifference(
       primaryScan.total_body_fat_percentage,
@@ -146,7 +135,6 @@ const ComparisonSummary = ({
       primaryScan.fat_tissue_lbs,
       compareScan.fat_tissue_lbs
     ),
-    // Region-specific differences
     rightArmFat: calculateDifference(
       primaryScan.right_arm_total_region_fat_percentage,
       compareScan.right_arm_total_region_fat_percentage,

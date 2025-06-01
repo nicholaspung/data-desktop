@@ -1,4 +1,3 @@
-// src/features/dexa/add-dexa-scan-button.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -40,7 +39,7 @@ export default function AddDexaScanButton() {
           />
         </div>
       }
-      customFooter={<div />} // Empty div to remove default footer
+      customFooter={<div />}
     />
   );
 }

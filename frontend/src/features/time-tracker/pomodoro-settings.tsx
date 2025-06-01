@@ -1,4 +1,3 @@
-// src/features/time-tracker/pomodoro-settings.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +11,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-// Keys for localStorage
 const POMODORO_MINUTES_KEY = "pomodoro-minutes";
 const BREAK_MINUTES_KEY = "pomodoro-break-minutes";
 
 export default function PomodoroSettings() {
-  // Initialize state from localStorage or use defaults
   const [pomodoroMinutes, setPomodoroMinutes] = useState(() => {
     const saved = localStorage.getItem(POMODORO_MINUTES_KEY);
     return saved ? parseInt(saved) : 25;
@@ -30,16 +27,13 @@ export default function PomodoroSettings() {
 
   const [open, setOpen] = useState(false);
 
-  // Initialize pomodoro store when component mounts
   useEffect(() => {
     setPomodoroSettings(pomodoroMinutes, breakMinutes);
   }, []);
 
   const handleSave = () => {
-    // Save to store
     setPomodoroSettings(pomodoroMinutes, breakMinutes);
 
-    // Save to localStorage
     localStorage.setItem(POMODORO_MINUTES_KEY, pomodoroMinutes.toString());
     localStorage.setItem(BREAK_MINUTES_KEY, breakMinutes.toString());
 

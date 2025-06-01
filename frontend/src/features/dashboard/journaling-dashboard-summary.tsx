@@ -1,4 +1,3 @@
-// src/features/dashboard/journaling-dashboard-summary.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -14,7 +13,6 @@ export default function JournalingDashboardSummary() {
     creativity: false,
   });
 
-  // Get all journal entries
   const gratitudeEntries = useStore(
     dataStore,
     (state) => state.gratitude_journal
@@ -29,7 +27,6 @@ export default function JournalingDashboardSummary() {
   );
 
   useEffect(() => {
-    // Check if we have entries for today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -50,11 +47,9 @@ export default function JournalingDashboardSummary() {
     setIsLoading(false);
   }, [gratitudeEntries, questionEntries, creativityEntries]);
 
-  // Calculate total completed
   const totalCompleted =
     Object.values(hasCompletedToday).filter(Boolean).length;
 
-  // Create grid items for the summary
   const journalItems = [
     {
       content: (

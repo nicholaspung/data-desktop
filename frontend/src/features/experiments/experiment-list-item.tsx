@@ -22,14 +22,12 @@ export default function ExperimentListItem({
   handleSelectExperiment: (experimentId: string) => void;
   status: string;
 }) {
-  // Function to calculate days remaining or elapsed
   const getDaysInfo = (experiment: any) => {
     if (!experiment.start_date) return null;
 
     const startDate = new Date(experiment.start_date);
     const today = new Date();
 
-    // If experiment hasn't started yet
     if (isAfter(startDate, today)) {
       const daysUntilStart = differenceInDays(startDate, today);
       return {
@@ -38,13 +36,11 @@ export default function ExperimentListItem({
       };
     }
 
-    // If experiment has an end date
     if (experiment.end_date) {
       const endDate = new Date(experiment.end_date);
       const totalDays = differenceInDays(endDate, startDate) + 1;
       const daysElapsed = differenceInDays(today, startDate) + 1;
 
-      // If experiment has ended
       if (isAfter(today, endDate)) {
         return {
           text: `Completed`,
@@ -52,7 +48,6 @@ export default function ExperimentListItem({
         };
       }
 
-      // If experiment is ongoing with end date
       const progress = Math.min(
         100,
         Math.round((daysElapsed / totalDays) * 100)
@@ -65,11 +60,10 @@ export default function ExperimentListItem({
       };
     }
 
-    // If experiment is ongoing without end date
     const daysElapsed = differenceInDays(today, startDate) + 1;
     return {
       text: `Day ${daysElapsed}`,
-      progress: 50, // Use 50% for ongoing experiments without end date
+      progress: 50,
     };
   };
 

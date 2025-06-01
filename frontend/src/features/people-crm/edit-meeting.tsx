@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import MeetingForm from "./meeting-form";
 import { Meeting } from "@/store/people-crm-definitions";
 
-// frontend/src/routes/people-crm/edit-meeting.tsx
 export function EditMeeting({
   meetingId,
   onBack,
@@ -28,7 +27,7 @@ export function EditMeeting({
   }, [meetingId, meetings]);
 
   interface HandleSubmitData {
-    [key: string]: any; // Replace with specific fields if known
+    [key: string]: any;
   }
 
   const handleSubmit = async (data: HandleSubmitData): Promise<void> => {

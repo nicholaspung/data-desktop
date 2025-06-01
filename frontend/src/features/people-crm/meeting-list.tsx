@@ -21,7 +21,6 @@ export default function MeetingsList({ onShowDetail }: MeetingsListProps) {
   const isLoading = useStore(loadingStore, (state) => state.meetings);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter meetings based on search
   const filteredMeetings = meetings.filter((meeting) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -32,7 +31,6 @@ export default function MeetingsList({ onShowDetail }: MeetingsListProps) {
     );
   });
 
-  // Sort meetings by date (newest first)
   const sortedMeetings = filteredMeetings.sort(
     (a, b) =>
       new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()

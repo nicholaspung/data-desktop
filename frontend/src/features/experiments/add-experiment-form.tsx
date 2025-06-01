@@ -1,4 +1,3 @@
-// src/features/experiments/add-experiment-form.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +31,6 @@ export default function AddExperimentForm({
   onSuccess?: () => void;
   onCancel?: () => void;
 }) {
-  // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startState, setStartState] = useState("");
@@ -44,14 +42,11 @@ export default function AddExperimentForm({
   );
   const [isPrivate, setIsPrivate] = useState(false);
 
-  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form
     if (!name.trim()) {
       toast.error("Experiment name is required");
       return;
@@ -75,7 +70,6 @@ export default function AddExperimentForm({
     setIsSubmitting(true);
 
     try {
-      // Prepare experiment data
       const experimentData: Partial<Experiment> = {
         name: name.trim(),
         description: description.trim(),
@@ -87,21 +81,17 @@ export default function AddExperimentForm({
         private: isPrivate,
       };
 
-      // Create experiment
       const response = await ApiService.addRecord(
         "experiments",
         experimentData
       );
 
       if (response) {
-        // Add to store
         addEntry(response, "experiments");
         toast.success("Experiment created successfully");
 
-        // Reset form
         resetForm();
 
-        // Call success callback
         if (onSuccess) {
           onSuccess();
         }
@@ -114,7 +104,6 @@ export default function AddExperimentForm({
     }
   };
 
-  // Reset form fields
   const resetForm = () => {
     setName("");
     setDescription("");

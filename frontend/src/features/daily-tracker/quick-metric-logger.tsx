@@ -1,4 +1,3 @@
-// src/features/daily-tracker/quick-metric-logger.tsx
 import { useState, useMemo, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, startOfDay } from "date-fns";
@@ -30,7 +29,6 @@ import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 const QuickMetricLogger = () => {
-  // State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
@@ -70,7 +68,6 @@ const QuickMetricLogger = () => {
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
-      // Check active state first
       if (!showInactive && !metric.active) return false;
       if (showInactive && metric.active) return false;
 
@@ -94,7 +91,6 @@ const QuickMetricLogger = () => {
         (showCalendarTracked === "nottracked" &&
           metric.schedule_days?.includes(-1));
 
-      // Check for goals if filter is enabled
       const matchesGoals =
         !showOnlyWithGoals ||
         (metric.goal_value !== undefined && metric.goal_type !== undefined);
@@ -334,7 +330,6 @@ const QuickMetricLogger = () => {
 
   const displayedMetrics = filterMetricsByTab(groupedMetrics);
 
-  // Create tabs for categories
   const tabItems = [
     {
       id: "all",
@@ -367,7 +362,6 @@ const QuickMetricLogger = () => {
             value={format(selectedDate, "yyyy-MM-dd")}
             onChange={(e) => {
               if (e.target.value) {
-                // Create a date object at midnight local time for the selected date
                 const newDate = new Date(e.target.value + "T00:00:00");
                 newDate.setHours(0, 0, 0, 0);
                 setSelectedDate(newDate);

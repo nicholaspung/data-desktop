@@ -1,4 +1,3 @@
-// src/features/time-tracker/time-tracker-header-button.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,7 +45,6 @@ export default function TimeTrackerHeaderButton({
     (state) => state.elapsedSeconds
   );
 
-  // Pomodoro state
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
   const isPomodoroBreak = useStore(pomodoroStore, (state) => state.isBreak);
   const pomodoroRemainingSeconds = useStore(
@@ -60,7 +58,6 @@ export default function TimeTrackerHeaderButton({
 
   const [isSaving, setIsSaving] = useState(false);
 
-  // Load categories for the form
   const { getDatasetFields } = useFieldDefinitions();
   const timeCategoryFields = getDatasetFields("time_categories");
 
@@ -74,21 +71,18 @@ export default function TimeTrackerHeaderButton({
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
 
-  // Update timer every second
   useEffect(() => {
     if (isTimerActive || isPomodoroActive) {
       const interval = setInterval(() => {
         if (isTimerActive) {
           updateElapsedTime();
         }
-        // The pomodoro timer has its own update mechanism
       }, 1000);
 
       return () => clearInterval(interval);
     }
   }, [isTimerActive, isPomodoroActive]);
 
-  // Close popover when timer starts
   useEffect(() => {
     if (isTimerActive || isPomodoroActive) {
       setOpen(false);
@@ -119,7 +113,6 @@ export default function TimeTrackerHeaderButton({
       if (response) {
         addEntry(response, "time_entries");
 
-        // Add this to sync with time metrics
         await syncTimeEntryWithMetrics(
           response as TimeEntry,
           metricsData,
@@ -129,7 +122,6 @@ export default function TimeTrackerHeaderButton({
         onDataChange();
       }
 
-      // Reset global timer state
       stopTimer();
     } catch (error) {
       console.error("Error saving time entry:", error);

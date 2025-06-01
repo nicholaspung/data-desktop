@@ -1,4 +1,3 @@
-// src/features/time-planner/time-block-dialog.tsx
 import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TimeBlock } from "./types";
@@ -20,21 +19,20 @@ interface TimeBlockDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (block: TimeBlock) => void;
-  timeBlock?: TimeBlock; // If provided, edit mode; if not, add mode
+  timeBlock?: TimeBlock;
   selectedDay?: number | null;
 }
 
-// Create an array of time options in 15-minute increments
 const generateTimeOptions = () => {
   const options = [];
   for (let hour = 0; hour < 24; hour++) {
     for (let minute = 0; minute < 60; minute += 15) {
-      const formattedHour = hour % 12 || 12; // Convert 0 to 12 for 12AM
+      const formattedHour = hour % 12 || 12;
       const period = hour >= 12 ? "PM" : "AM";
       const formattedMinute = minute.toString().padStart(2, "0");
 
       const display = `${formattedHour}:${formattedMinute} ${period}`;
-      const value = `${hour}:${minute}`; // Store as 24-hour format for processing
+      const value = `${hour}:${minute}`;
 
       options.push({ display, value });
     }
@@ -51,32 +49,27 @@ export default function TimeBlockDialog({
   timeBlock,
   selectedDay,
 }: TimeBlockDialogProps) {
-  // Determine if we're in edit mode
   const isEditMode = !!timeBlock;
 
-  // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [dayOfWeek, setDayOfWeek] = useState<number>(1); // Monday as default
-  const [startTime, setStartTime] = useState<string>("9:0"); // Default to 9:00 AM
-  const [endTime, setEndTime] = useState<string>("10:0"); // Default to 10:00 AM
+  const [dayOfWeek, setDayOfWeek] = useState<number>(1);
+  const [startTime, setStartTime] = useState<string>("9:0");
+  const [endTime, setEndTime] = useState<string>("10:0");
   const [category, setCategory] = useState("");
-  const [color, setColor] = useState("#3b82f6"); // Default blue color
+  const [color, setColor] = useState("#3b82f6");
 
-  // Validation states
   const [errors, setErrors] = useState<{
     title?: string;
     category?: string;
     time?: string;
   }>({});
 
-  // Reset form and set default values when dialog opens or when we switch between add/edit
   useEffect(() => {
     if (open) {
       setErrors({});
 
       if (isEditMode && timeBlock) {
-        // Edit mode - populate with existing data
         setTitle(timeBlock.title);
         setDescription(timeBlock.description || "");
         setDayOfWeek(timeBlock.dayOfWeek);
@@ -85,7 +78,6 @@ export default function TimeBlockDialog({
         setCategory(timeBlock.category);
         setColor(timeBlock.color || "#3b82f6");
       } else {
-        // Add mode - set defaults
         setTitle("");
         setDescription("");
         setDayOfWeek(selectedDay || 1);
@@ -108,15 +100,12 @@ export default function TimeBlockDialog({
       newErrors.category = "Category is required";
     }
 
-    // Parse time values
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
 
-    // Calculate total minutes for comparison
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
 
-    // Check if end time is before start time (without crossing midnight)
     if (endTotalMinutes <= startTotalMinutes && !(endHour < startHour)) {
       newErrors.time = "End time must be after start time";
     }
@@ -128,7 +117,6 @@ export default function TimeBlockDialog({
   const handleSubmit = () => {
     if (!validateForm()) return;
 
-    // Parse time values
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
 
@@ -152,11 +140,9 @@ export default function TimeBlockDialog({
   const handleSelectCategory = (catName: string, catColor: string) => {
     setCategory(catName);
     setColor(catColor);
-    // Clear category error when selected
     setErrors((prev) => ({ ...prev, category: undefined }));
   };
 
-  // Helper function to check if end time is after start time
   const isEndTimeValid = (start: string, end: string) => {
     const [startHour, startMinute] = start.split(":").map(Number);
     const [endHour, endMinute] = end.split(":").map(Number);
@@ -164,7 +150,6 @@ export default function TimeBlockDialog({
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
 
-    // Allow crossing midnight (e.g., 11 PM to 1 AM)
     if (endHour < startHour) return true;
 
     return endTotalMinutes > startTotalMinutes;
@@ -249,7 +234,6 @@ export default function TimeBlockDialog({
                   value={startTime}
                   onValueChange={(value) => {
                     setStartTime(value);
-                    // Clear time error if the new selection is valid
                     if (isEndTimeValid(value, endTime)) {
                       setErrors((prev) => ({ ...prev, time: undefined }));
                     } else {
@@ -291,7 +275,6 @@ export default function TimeBlockDialog({
                   value={endTime}
                   onValueChange={(value) => {
                     setEndTime(value);
-                    // Clear time error if the new selection is valid
                     if (isEndTimeValid(startTime, value)) {
                       setErrors((prev) => ({ ...prev, time: undefined }));
                     } else {

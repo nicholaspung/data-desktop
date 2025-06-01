@@ -12,39 +12,33 @@ export default function BodyRepresentation({
   title?: string;
   className?: string;
 }) {
-  // Function to format percentages properly
   const formatPercentage = (value: number | undefined) => {
     if (value === undefined) return "N/A";
-    // If value is less than 1, assume it's already in decimal form and multiply by 100
     return value < 1 ? (value * 100).toFixed(1) : value.toFixed(1);
   };
 
-  // Function to format weight values
   const formatWeight = (value: number | undefined) => {
     return value !== undefined ? value.toFixed(1) : "N/A";
   };
 
-  // Helper function to get color based on body fat percentage
   const getColorForBodyFat = (value: number | undefined) => {
-    if (value === undefined) return "#8884d8"; // Default color
+    if (value === undefined) return "#8884d8";
 
-    // Convert to percentage if in decimal form
     const percentage = value < 1 ? value * 100 : value;
 
-    if (percentage < 10) return "#82ca9d"; // Very lean - Green
-    if (percentage < 20) return "#8884d8"; // Athletic - Purple
-    if (percentage < 25) return "#ffc658"; // Fitness - Yellow
-    if (percentage < 30) return "#ff8042"; // Average - Orange
-    return "#d32f2f"; // Higher body fat - Red
+    if (percentage < 10) return "#82ca9d";
+    if (percentage < 20) return "#8884d8";
+    if (percentage < 25) return "#ffc658";
+    if (percentage < 30) return "#ff8042";
+    return "#d32f2f";
   };
 
-  // Define the body regions with their data points
   const bodyParts: BodyPart[] = [
     {
       id: "right-arm",
       name: "Right Arm",
       x: 120,
-      y: 150, // Shifted up
+      y: 150,
       dataPoints: [
         {
           label: "Fat %",
@@ -67,8 +61,8 @@ export default function BodyRepresentation({
     {
       id: "left-arm",
       name: "Left Arm",
-      x: 280, // Moved slightly outward
-      y: 150, // Shifted up
+      x: 280,
+      y: 150,
       dataPoints: [
         {
           label: "Fat %",
@@ -92,7 +86,7 @@ export default function BodyRepresentation({
       id: "trunk",
       name: "Trunk",
       x: 200,
-      y: 150, // Shifted up
+      y: 150,
       dataPoints: [
         {
           label: "Fat %",
@@ -116,7 +110,7 @@ export default function BodyRepresentation({
       id: "android",
       name: "Android (Abdominal)",
       x: 200,
-      y: 190, // Shifted up
+      y: 190,
       dataPoints: [
         {
           label: "Fat %",
@@ -140,7 +134,7 @@ export default function BodyRepresentation({
       id: "gynoid",
       name: "Gynoid (Hip)",
       x: 200,
-      y: 230, // Shifted up
+      y: 230,
       dataPoints: [
         {
           label: "Fat %",
@@ -163,8 +157,8 @@ export default function BodyRepresentation({
     {
       id: "right-leg",
       name: "Right Leg",
-      x: 160, // Slight adjustment
-      y: 320, // Shifted up
+      x: 160,
+      y: 320,
       dataPoints: [
         {
           label: "Fat %",
@@ -187,8 +181,8 @@ export default function BodyRepresentation({
     {
       id: "left-leg",
       name: "Left Leg",
-      x: 240, // Slight adjustment
-      y: 320, // Shifted up
+      x: 240,
+      y: 320,
       dataPoints: [
         {
           label: "Fat %",

@@ -1,4 +1,3 @@
-// frontend/src/features/people-crm/add-person-button.tsx
 import { useState } from "react";
 import { PlusCircle, Pencil } from "lucide-react";
 import PersonForm from "./person-form";

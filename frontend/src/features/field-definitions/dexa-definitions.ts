@@ -5,7 +5,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
   name: "DEXA Scan",
   description: "Body composition measurements from DEXA scans",
   fields: [
-    // General scan information
     {
       key: "date",
       type: "date",
@@ -19,8 +18,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Fasted",
       description: "Whether the scan was taken in a fasted state",
     },
-
-    // Total body measurements
     {
       key: "total_body_fat_percentage",
       type: "percentage",
@@ -57,8 +54,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Bone Mineral Content",
     },
-
-    // Arms region measurements
     {
       key: "arms_total_region_fat_percentage",
       type: "percentage",
@@ -93,8 +88,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Arms bone mineral content",
     },
-
-    // Legs region measurements
     {
       key: "legs_total_region_fat_percentage",
       type: "percentage",
@@ -129,8 +122,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Legs bone mineral content",
     },
-
-    // Trunk region measurements
     {
       key: "trunk_total_region_fat_percentage",
       type: "percentage",
@@ -165,8 +156,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Trunk bone mineral content",
     },
-
-    // Android region measurements
     {
       key: "android_total_region_fat_percentage",
       type: "percentage",
@@ -201,8 +190,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Android region bone mineral content",
     },
-
-    // Gynoid region measurements
     {
       key: "gynoid_total_region_fat_percentage",
       type: "percentage",
@@ -237,8 +224,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Gynoid region bone mineral content",
     },
-
-    // Additional measurements
     {
       key: "resting_metabolic_rate",
       type: "number",
@@ -280,8 +265,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "in³",
       description: "Visceral adipose tissue volume",
     },
-
-    // Bone density measurements
     {
       key: "bone_density_g_cm2_head",
       type: "number",
@@ -339,8 +322,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Total bone mineral density",
       isSearchable: true,
     },
-
-    // Right arm measurements
     {
       key: "right_arm_total_region_fat_percentage",
       type: "percentage",
@@ -375,8 +356,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Right arm bone mineral content",
     },
-
-    // Left arm measurements
     {
       key: "left_arm_total_region_fat_percentage",
       type: "percentage",
@@ -411,8 +390,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Left arm bone mineral content",
     },
-
-    // Right leg measurements
     {
       key: "right_leg_total_region_fat_percentage",
       type: "percentage",
@@ -447,8 +424,6 @@ export const DEXA_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "g",
       description: "Right leg bone mineral content",
     },
-
-    // Left leg measurements
     {
       key: "left_leg_total_region_fat_percentage",
       type: "percentage",

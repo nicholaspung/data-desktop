@@ -1,12 +1,6 @@
-// src/features/dexa/goal/goal-storage-service.ts
-
 import { DexaGoal } from "../dexa";
 
 export const GoalStorageService = {
-  /**
-   * Get the stored DEXA goal
-   * @returns The goal object or null if no goal is set
-   */
   getGoal(): DexaGoal | null {
     try {
       const goalJson = localStorage.getItem("dexaGoal");
@@ -16,18 +10,12 @@ export const GoalStorageService = {
       return null;
     }
   },
-
-  /**
-   * Save a DEXA goal to localStorage
-   * @param goal The goal to save (without id, createdAt, lastModified)
-   * @returns The complete goal object including generated fields
-   */
   setGoal(goal: Omit<DexaGoal, "id" | "createdAt" | "lastModified">): DexaGoal {
     try {
       const now = new Date().toISOString();
       const completeGoal: DexaGoal = {
         ...goal,
-        id: crypto.randomUUID(), // Generate a unique ID
+        id: crypto.randomUUID(),
         createdAt: now,
         lastModified: now,
       };
@@ -39,12 +27,6 @@ export const GoalStorageService = {
       throw new Error("Failed to save goal");
     }
   },
-
-  /**
-   * Update an existing DEXA goal
-   * @param goal The goal with updated values
-   * @returns The updated goal object
-   */
   updateGoal(goal: DexaGoal): DexaGoal {
     try {
       const existingGoal = this.getGoal();
@@ -55,7 +37,7 @@ export const GoalStorageService = {
       const updatedGoal: DexaGoal = {
         ...goal,
         lastModified: new Date().toISOString(),
-        createdAt: existingGoal.createdAt, // Preserve the original creation date
+        createdAt: existingGoal.createdAt,
       };
 
       localStorage.setItem("dexaGoal", JSON.stringify(updatedGoal));
@@ -65,10 +47,6 @@ export const GoalStorageService = {
       throw new Error("Failed to update goal");
     }
   },
-
-  /**
-   * Delete the stored DEXA goal
-   */
   deleteGoal(): void {
     try {
       localStorage.removeItem("dexaGoal");

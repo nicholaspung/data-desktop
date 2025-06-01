@@ -1,4 +1,3 @@
-// src/features/experiments/change-status-dialog.tsx
 import { useState } from "react";
 import { CheckCircle, XCircle, Edit } from "lucide-react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";

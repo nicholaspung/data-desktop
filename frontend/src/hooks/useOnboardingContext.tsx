@@ -1,4 +1,3 @@
-// src/hooks/useOnboardingContext.tsx
 import { useContext } from "react";
 import { OnboardingContext } from "@/contexts/onboarding-context";
 
