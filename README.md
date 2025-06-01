@@ -27,9 +27,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ## How to use
 
-- For development, use `wails dev -appargs dev
+- For development, use `wails dev -appargs dev`
   - It will generate a `DataDesktop-dev.db` to use for development mode
   - WARNING: If you do not use `-appargs dev`, it will use the production database
+  - If developing on Linux, use `npm run dev` at the root directory instead
 
 ## Project management
 
