@@ -1,4 +1,3 @@
-// src/features/bloodwork/blood-marker-input.tsx
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +24,8 @@ export default function BloodMarkerInput({
   isExisting?: boolean;
   lastResult?: BloodResult;
 }) {
-  // Keep track of the selected input type
   const [activeType, setActiveType] = useState<"number" | "text">(valueType);
 
-  // Helper to format range display
   const formatRange = (low?: number, high?: number, general?: string) => {
     if (general) return general;
     if (low !== undefined && high !== undefined) return `${low} - ${high}`;
@@ -37,7 +34,6 @@ export default function BloodMarkerInput({
     return "No range set";
   };
 
-  // Display reference and optimal ranges
   const referenceRange = formatRange(
     marker.lower_reference,
     marker.upper_reference,
@@ -50,7 +46,6 @@ export default function BloodMarkerInput({
     marker.optimal_general
   );
 
-  // Format last result value
   const formatLastResult = (result: BloodResult | undefined) => {
     if (!result) return null;
 
@@ -75,7 +70,6 @@ export default function BloodMarkerInput({
 
   const lastResultFormatted = formatLastResult(lastResult);
 
-  // Handle type change
   const handleTypeChange = (newType: string) => {
     if (disabled) return;
     setActiveType(newType as "number" | "text");

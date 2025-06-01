@@ -1,4 +1,3 @@
-// src/components/onboarding/help-dialog.tsx
 import { useState } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";

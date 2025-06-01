@@ -1,10 +1,8 @@
-// src/features/journaling/default-metrics.ts
 import { ApiService } from "@/services/api";
 import { addEntry } from "@/store/data-store";
 import { Metric } from "@/store/experiment-definitions";
 import { toast } from "sonner";
 
-// Define the default journaling metrics
 export const defaultJournalingMetrics: Partial<Metric>[] = [
   {
     name: "Completed Daily Question",
@@ -15,7 +13,7 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
-    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
+    schedule_days: [0, 1, 2, 3, 4, 5, 6],
     goal_type: "boolean",
     goal_value: "true",
   },
@@ -28,7 +26,7 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
-    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
+    schedule_days: [0, 1, 2, 3, 4, 5, 6],
     goal_type: "minimum",
     goal_value: "3",
   },
@@ -41,7 +39,7 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
-    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
+    schedule_days: [0, 1, 2, 3, 4, 5, 6],
     goal_type: "boolean",
     goal_value: "true",
   },
@@ -54,18 +52,16 @@ export const defaultJournalingMetrics: Partial<Metric>[] = [
     active: true,
     private: false,
     schedule_frequency: "daily",
-    schedule_days: [0, 1, 2, 3, 4, 5, 6], // Every day
+    schedule_days: [0, 1, 2, 3, 4, 5, 6],
     goal_type: "boolean",
     goal_value: "true",
   },
 ];
 
-// Helper function to get or create the journaling category
 export async function getOrCreateJournalingCategory(): Promise<string | null> {
   try {
     const categories = await ApiService.getRecords("metric_categories");
 
-    // Check if journaling category exists
     const journalingCategory = categories.find(
       (c) => c.name?.toLowerCase() === "journaling"
     );
@@ -74,7 +70,6 @@ export async function getOrCreateJournalingCategory(): Promise<string | null> {
       return journalingCategory.id;
     }
 
-    // Create the category if it doesn't exist
     const newCategory = await ApiService.addRecord("metric_categories", {
       name: "Journaling",
     });
@@ -89,12 +84,10 @@ export async function getOrCreateJournalingCategory(): Promise<string | null> {
   }
 }
 
-// Function to create default metrics
 export async function createDefaultMetrics(
   metrics: Metric[]
 ): Promise<boolean> {
   try {
-    // Get or create the journaling category
     const journalingCategoryId = await getOrCreateJournalingCategory();
     if (!journalingCategoryId) {
       throw new Error("Failed to create journaling category");
@@ -102,21 +95,17 @@ export async function createDefaultMetrics(
 
     let createdCount = 0;
 
-    // Check each default metric
     for (const defaultMetric of defaultJournalingMetrics) {
-      // Check if this metric already exists (by name)
       const metricExists = metrics.some(
         (m: Metric) =>
           m.name?.toLowerCase() === defaultMetric.name?.toLowerCase()
       );
 
-      // Skip if metric already exists
       if (metricExists) {
         console.log(`Metric "${defaultMetric.name}" already exists, skipping.`);
         continue;
       }
 
-      // Create the metric
       const newMetric = {
         ...defaultMetric,
         category_id: journalingCategoryId,
@@ -144,23 +133,18 @@ export async function createDefaultMetrics(
   }
 }
 
-// Function to check if default metrics already exist
 export async function checkDefaultMetricsExist(): Promise<boolean> {
   try {
-    // Get all existing metrics
     const metrics = await ApiService.getRecordsWithRelations<Metric>("metrics");
 
-    // Check if all default metrics exist
     const defaultMetricNames = defaultJournalingMetrics.map((m) =>
       m.name?.toLowerCase()
     );
 
-    // Count how many default metrics already exist
     const existingCount = metrics.filter(
       (m) => m.name && defaultMetricNames.includes(m.name.toLowerCase())
     ).length;
 
-    // Return true if all default metrics exist
     return existingCount === defaultJournalingMetrics.length;
   } catch (error) {
     console.error("Error checking default metrics:", error);

@@ -1,4 +1,3 @@
-// Define types for our data
 export interface BloodMarker {
   id: string;
   name: string;

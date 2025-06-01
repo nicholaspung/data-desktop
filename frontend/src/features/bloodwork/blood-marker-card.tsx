@@ -19,7 +19,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Create a component for each blood marker with its chart
 export default function BloodMarkerCard({
   marker,
   results,
@@ -27,7 +26,6 @@ export default function BloodMarkerCard({
   marker: BloodMarker;
   results: BloodResult[];
 }) {
-  // Sort results by date (newest first for display)
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
       return (
@@ -37,7 +35,6 @@ export default function BloodMarkerCard({
     });
   }, [results]);
 
-  // Sort results by date (oldest first for chart)
   const chronologicalResults = useMemo(() => {
     return [...results].sort((a, b) => {
       return (
@@ -47,10 +44,8 @@ export default function BloodMarkerCard({
     });
   }, [results]);
 
-  // Get the latest result
   const latestResult = sortedResults.length > 0 ? sortedResults[0] : null;
 
-  // Format data for chart
   const chartData: ChartDataPoint[] = useMemo(() => {
     return chronologicalResults.map((result) => {
       const testDate = result.blood_test_id_data?.date;
@@ -70,17 +65,14 @@ export default function BloodMarkerCard({
     });
   }, [chronologicalResults, marker]);
 
-  // Calculate whether latest result is in range
   const latestValue = getLatestValue(latestResult);
   const badgeInfo = getBadgeInfo(latestValue, marker);
 
-  // Determine if this marker has any range defined
   const hasAnyRangeDefined = useMemo(
     () => hasAnyRangeDefinedFunc(marker),
     [marker]
   );
 
-  // Determine range string to display
   const getRangeString = (): string => {
     if (marker.general_reference) {
       return marker.general_reference;
@@ -96,7 +88,6 @@ export default function BloodMarkerCard({
     return "No range specified";
   };
 
-  // Determine optimal range string to display
   const getOptimalRangeString = (): string => {
     if (marker.optimal_general) {
       return marker.optimal_general;
@@ -109,14 +100,10 @@ export default function BloodMarkerCard({
     return "No optimal range specified";
   };
 
-  // Check if we should show a chart (require numeric values and more than one point)
   const shouldShowChart = useMemo(() => {
-    // Always show a chart if we have more than one data point,
-    // regardless of whether the marker has ranges defined
     return chartData.length > 1;
   }, [chartData]);
 
-  // Determine if it has text-based ranges or text values
   const hasTextBasedRanges = marker.optimal_general || marker.general_reference;
   const hasTextValues = useMemo(() => {
     return results.some(
@@ -231,14 +218,12 @@ export default function BloodMarkerCard({
               optimalHigh={marker.optimal_high}
               unit={marker.unit}
               height={120}
-              // Don't show shaded area for optimal range if no range is defined
               showOptimalRange={Boolean(
                 marker.optimal_low || marker.optimal_high
               )}
             />
           </div>
         ) : chartData.length === 1 ? (
-          // Show a simple table for single data point
           <div className="overflow-hidden rounded-md border">
             <Table>
               <TableHeader>

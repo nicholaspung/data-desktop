@@ -1,4 +1,3 @@
-// src/features/daily-tracker/metric-management.tsx
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import AddMetricModal from "./add-metric-modal";
@@ -15,7 +14,6 @@ export default function MetricManagement() {
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
 
-  // Delete a metric
   const handleDeleteMetric = async (metric: Metric) => {
     try {
       await ApiService.deleteRecord(metric.id);
@@ -27,7 +25,6 @@ export default function MetricManagement() {
     }
   };
 
-  // Get category name from ID
   const getCategoryName = (categoryId: string) => {
     const category = categories.find((cat: any) => cat.id === categoryId);
     return category ? category.name : "Uncategorized";

@@ -1,4 +1,3 @@
-// frontend/src/features/daily-tracker/daily-tracker-view-card.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +31,6 @@ export default function DailyTrackerViewCard({
 }) {
   const [notes, setNotes] = useState(metric.notes || "");
 
-  // Format start and end dates for display
   const startDateText = metric.schedule_start_date
     ? format(new Date(metric.schedule_start_date), "MMM d")
     : null;
@@ -41,14 +39,11 @@ export default function DailyTrackerViewCard({
     ? format(new Date(metric.schedule_end_date), "MMM d")
     : null;
 
-  // Check if metric has a goal
   const hasGoal = metric.goal_value !== undefined && metric.goal_type;
 
-  // Calculate goal progress for visualization
   const getGoalProgress = () => {
     if (!hasGoal) return null;
 
-    // Handle different types of goals
     switch (metric.goal_type) {
       case "minimum":
         if (
@@ -72,7 +67,7 @@ export default function DailyTrackerViewCard({
         ) {
           const current = parseFloat(metric.value) || 0;
           const goal = parseFloat(metric.goal_value) || 0;
-          // For maximum, lower is better
+
           return {
             progress:
               goal === 0 ? 100 : Math.max(0, 100 - (current / goal) * 100),
@@ -88,9 +83,8 @@ export default function DailyTrackerViewCard({
         ) {
           const current = parseFloat(metric.value) || 0;
           const goal = parseFloat(metric.goal_value) || 0;
-          // For exact goals, calculate how close we are
           const diff = Math.abs(current - goal);
-          const maxDiff = goal * 0.5; // 50% tolerance
+          const maxDiff = goal * 0.5;
           return {
             progress: Math.max(0, 100 - (diff / maxDiff) * 100),
             text: `${current}${metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.unit ? ` ${metric.unit}` : ""} (exact)`,

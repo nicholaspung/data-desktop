@@ -1,4 +1,3 @@
-// frontend/src/features/daily-tracker/quick-metric-logger-list-item.tsx
 import ReusableCard from "@/components/reusable/reusable-card";
 import { ProtectedContent } from "@/components/security/protected-content";
 import { Badge } from "@/components/ui/badge";
@@ -52,17 +51,14 @@ export default function QuickMetricLoggerListItem({
   selectedDate?: Date;
   dailyLogs?: DailyLog[];
 }) {
-  // State for editing values of number/percentage/time metrics
   const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // State for notes
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteValue, setNoteValue] = useState<string>("");
   const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
 
-  // Function to get the current value of a metric
   const getMetricValue = (metric: Metric): string => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
@@ -77,7 +73,6 @@ export default function QuickMetricLoggerListItem({
     if (!todayLog) return metric.default_value || "0";
 
     try {
-      // For non-boolean types, return the raw value
       return JSON.parse(todayLog.value).toString();
     } catch (e) {
       console.error("Error parsing metric value:", e);
@@ -85,7 +80,6 @@ export default function QuickMetricLoggerListItem({
     }
   };
 
-  // Function to get the current note of a metric
   const getMetricNote = (metric: Metric): string => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
@@ -100,7 +94,6 @@ export default function QuickMetricLoggerListItem({
     return todayLog?.notes || "";
   };
 
-  // Function to get log for a metric on the selected date
   const getMetricLog = (metric: Metric): DailyLog | null => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
@@ -115,19 +108,16 @@ export default function QuickMetricLoggerListItem({
     return todayLog || null;
   };
 
-  // Function to start editing a metric
   const startEditing = (metric: Metric) => {
     setEditingMetricId(metric.id);
     setEditValue(getMetricValue(metric));
   };
 
-  // Function to start editing a note
   const startEditingNote = (metric: Metric) => {
     setEditingNoteId(metric.id);
     setNoteValue(getMetricNote(metric));
   };
 
-  // Function to save edited value
   const saveEditedValue = async (metric: Metric) => {
     if (editingMetricId !== metric.id) return;
 
@@ -136,7 +126,6 @@ export default function QuickMetricLoggerListItem({
     const todayLog = getMetricLog(metric);
 
     try {
-      // Parse the value according to the metric type
       let parsedValue: any;
       if (
         metric.type === "number" ||
@@ -149,7 +138,6 @@ export default function QuickMetricLoggerListItem({
       }
 
       if (todayLog) {
-        // Update existing log
         const response = await ApiService.updateRecord(todayLog.id, {
           ...todayLog,
           value: JSON.stringify(parsedValue),
@@ -160,7 +148,6 @@ export default function QuickMetricLoggerListItem({
           toast.success(`${metric.name} updated successfully`);
         }
       } else {
-        // Create new log
         const newLog = {
           date: selectedDate,
           metric_id: metric.id,
@@ -183,7 +170,6 @@ export default function QuickMetricLoggerListItem({
     }
   };
 
-  // Function to save edited note
   const saveEditedNote = async (metric: Metric) => {
     if (editingNoteId !== metric.id) return;
 
@@ -193,7 +179,6 @@ export default function QuickMetricLoggerListItem({
 
     try {
       if (todayLog) {
-        // Update existing log with new note
         const response = await ApiService.updateRecord(todayLog.id, {
           ...todayLog,
           notes: noteValue,
@@ -204,7 +189,6 @@ export default function QuickMetricLoggerListItem({
           toast.success(`Note updated for ${metric.name}`);
         }
       } else {
-        // Create new log with note and default value
         let defaultValue;
         if (metric.type === "boolean") {
           defaultValue = false;
@@ -240,13 +224,11 @@ export default function QuickMetricLoggerListItem({
     }
   };
 
-  // Function to cancel editing
   const cancelEditing = () => {
     setEditingMetricId(null);
     setEditValue("");
   };
 
-  // Function to cancel editing note
   const cancelEditingNote = () => {
     setEditingNoteId(null);
     setNoteValue("");

@@ -13,7 +13,7 @@ const BloodworkSummary = ({
     optimal: number;
     outOfRange: number;
     textValues: number;
-    noRange: number; // New property for markers with no range defined
+    noRange: number;
     noData: number;
     total: number;
   };

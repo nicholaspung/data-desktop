@@ -1,4 +1,3 @@
-// src/components/security/security-provider.tsx
 import { ReactNode } from "react";
 import { PinProvider } from "@/contexts/pin-context";
 import { SecurityDialogs } from "./security-dialogs";

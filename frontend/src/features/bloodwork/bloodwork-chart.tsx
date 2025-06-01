@@ -29,7 +29,7 @@ const BloodMarkerChart = ({
   optimalHigh,
   unit,
   height = 120,
-  showOptimalRange = true, // Default to showing the optimal range if it exists
+  showOptimalRange = true,
 }: {
   data: {
     date: string;
@@ -40,17 +40,15 @@ const BloodMarkerChart = ({
   optimalHigh?: number;
   unit?: string;
   height?: number;
-  showOptimalRange?: boolean; // New prop to control whether to show the optimal range
+  showOptimalRange?: boolean;
 }) => {
   const hasOptimalRange =
     showOptimalRange && optimalLow !== undefined && optimalHigh !== undefined;
 
-  // Calculate min and max values to set a good Y domain
   const values = data.map((point) => point.value);
   const min = Math.min(...values);
   const max = Math.max(...values);
 
-  // Add 10% padding to the domain
   const yMin = hasOptimalRange ? Math.min(optimalLow!, min) * 0.9 : min * 0.9;
   const yMax = hasOptimalRange ? Math.max(optimalHigh!, max) * 1.1 : max * 1.1;
 

@@ -1,25 +1,20 @@
-// src/features/daily-tracker/components/add-metric-modal.tsx
 import { useState } from "react";
 import { Plus, Pencil } from "lucide-react";
 import AddMetricForm from "./add-metric-form";
 import { Metric } from "@/store/experiment-definitions";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 
-/**
- * A self-contained component that provides a button to open a modal with the add/edit metric form
- * and handles all the form submission logic.
- */
 export default function AddMetricModal({
   buttonLabel,
-  metric, // Add metric data prop for editing
-  onSuccess, // Callback for when form is submitted successfully
+  metric,
+  onSuccess,
 }: {
   buttonLabel?: string;
   buttonVariant?: "default" | "outline" | "ghost" | "link" | "destructive";
   buttonSize?: "default" | "sm" | "lg" | "icon";
   buttonClassName?: string;
   showIcon?: boolean;
-  metric?: Metric; // Metric data to edit (optional)
+  metric?: Metric;
   onSuccess?: () => void;
 }) {
   const [open, setOpen] = useState(false);

@@ -1,4 +1,3 @@
-// src/features/daily-tracker/number-value-input.tsx
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -28,14 +27,12 @@ export default function NumberValueInput({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const saveInProgress = useRef(false);
 
-  // Only update input value from props when not saving
   useEffect(() => {
     if (!saveInProgress.current) {
       setInputValue(value.toString());
     }
   }, [value]);
 
-  // Debounced save function
   const debouncedSave = useRef(
     debounce(async (newValue: number) => {
       try {
@@ -44,7 +41,6 @@ export default function NumberValueInput({
         await onChange(newValue);
       } finally {
         setIsSaving(false);
-        // Keep saveInProgress true for a brief moment to prevent flicker
         setTimeout(() => {
           saveInProgress.current = false;
         }, 1000);
@@ -74,7 +70,6 @@ export default function NumberValueInput({
       await onChange(newValue);
     } finally {
       setIsSaving(false);
-      // Keep saveInProgress true for a brief moment to prevent flicker
       setTimeout(() => {
         saveInProgress.current = false;
       }, 1000);
@@ -93,7 +88,6 @@ export default function NumberValueInput({
       await onChange(newValue);
     } finally {
       setIsSaving(false);
-      // Keep saveInProgress true for a brief moment to prevent flicker
       setTimeout(() => {
         saveInProgress.current = false;
       }, 1000);

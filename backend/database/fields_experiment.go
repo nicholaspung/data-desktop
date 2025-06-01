@@ -153,7 +153,6 @@ func GetMetricFields() []FieldDefinition {
 			Description: "How often to show this metric (daily, weekly, interval, custom)",
 			IsOptional:  true,
 		},
-		// New interval scheduling fields
 		{
 			Key:         "schedule_interval_value",
 			Type:        FieldTypeNumber,

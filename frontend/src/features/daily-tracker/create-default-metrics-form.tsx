@@ -1,4 +1,3 @@
-// src/features/journaling/create-default-metrics-button.tsx
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Loader2 } from "lucide-react";
@@ -17,7 +16,6 @@ export default function CreateDefaultMetricsButton() {
 
   const metrics = useStore(dataStore, (state) => state.metrics);
 
-  // Check if we need to show the button
   useEffect(() => {
     const checkMetrics = async () => {
       setIsLoading(true);
@@ -29,19 +27,17 @@ export default function CreateDefaultMetricsButton() {
     checkMetrics();
   }, []);
 
-  // Handle button click
   const handleCreateMetrics = async () => {
     setIsLoading(true);
     const success = await createDefaultMetrics(metrics);
     if (success) {
       setShowButton(false);
-      // Sync metrics after creating them
+
       await syncJournalingMetrics();
     }
     setIsLoading(false);
   };
 
-  // Only render if needed and not loading
   if (isLoading) {
     return (
       <Button variant="outline" disabled>

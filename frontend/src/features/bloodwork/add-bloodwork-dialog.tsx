@@ -1,4 +1,3 @@
-// src/features/bloodwork/add-bloodwork-dialog.tsx
 import { useState, useEffect } from "react";
 import { PlusCircle, Search, CalendarIcon } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
@@ -47,10 +46,8 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     null
   );
 
-  // Reference for the virtualized list container
   const parentRef = useRef<HTMLDivElement>(null);
 
-  // Get blood markers from store
   const bloodMarkers = useStore(
     dataStore,
     (state) => state.blood_markers || []
@@ -64,7 +61,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     (state) => state.blood_results || []
   );
 
-  // Reset form data function
   const resetFormData = () => {
     setFasted(false);
     setLabName("");
@@ -73,13 +69,12 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     setExistingBloodworkId(null);
   };
 
-  // Get existing dates for dropdown
   const existingDates = [
     ...new Set(
       existingBloodwork.map((test) => {
         const testDate =
           test.date instanceof Date ? test.date : new Date(test.date);
-        // Use UTC methods to avoid timezone issues
+
         return new Date(
           Date.UTC(
             testDate.getFullYear(),
@@ -95,7 +90,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     .sort()
     .reverse();
 
-  // Check if the current date is in existing dates
   useEffect(() => {
     const currentDateStr = new Date(
       Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
@@ -106,7 +100,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     const exists = existingDates.includes(currentDateStr);
     setIsExistingDate(exists);
 
-    // If selecting an existing date, find and pre-fill the bloodwork details
     if (exists) {
       const existingRecord = existingBloodwork.find((record) => {
         const recordDate =
@@ -129,16 +122,13 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         setNotes(existingRecord.notes || "");
         setExistingBloodworkId(existingRecord.id || null);
 
-        // Populate marker values for this bloodwork record
         if (existingRecord.id) {
           const resultsForTest = bloodResults.filter(
             (result) => result.blood_test_id === existingRecord.id
           );
 
-          // Clear existing marker values first
           setMarkerValues({});
 
-          // Create a new marker values object with existing results
           const newMarkerValues: Record<
             string,
             { value: string | number; valueType: "number" | "text" }
@@ -164,24 +154,18 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         }
       }
     } else {
-      // Reset form data when selecting a non-existing date
       resetFormData();
     }
   }, [date]);
 
-  // Reset form when dialog opens
   useEffect(() => {
     if (showAddDialog) {
-      // Set to today's date
       setDate(new Date());
-      // Reset form data
       resetFormData();
-      // Reset search term
       setSearchTerm("");
     }
   }, [showAddDialog]);
 
-  // Filter markers based on search term
   const filteredMarkers = bloodMarkers.filter(
     (marker) =>
       marker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -189,15 +173,13 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         marker.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Create a virtualizer
   const rowVirtualizer = useVirtualizer({
     count: filteredMarkers.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 60, // Estimated height of each row in pixels
-    overscan: 5, // Number of items to render before/after the visible area
+    estimateSize: () => 60,
+    overscan: 5,
   });
 
-  // Handle marker input change
   const handleMarkerChange = (
     markerId: string,
     value: string | number,
@@ -209,12 +191,10 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     }));
   };
 
-  // Check if form is valid
   const isFormValid = () => {
     return date && Object.keys(markerValues).length > 0;
   };
 
-  // Helper function to check if a result already exists for this marker
   const resultExistsForMarker = (markerId: string) => {
     if (!existingBloodworkId) return false;
     return bloodResults.some(
@@ -224,7 +204,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     );
   };
 
-  // Handle form submission
   const handleSubmit = async () => {
     if (!isFormValid()) {
       toast.error("Please select a date and add at least one marker value");
@@ -234,8 +213,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     setIsSubmitting(true);
 
     try {
-      // 1. Create or get bloodwork record for the date
-      // Check if we already have a bloodwork record for this date
       const existingRecord = existingBloodwork.find((record) => {
         const recordDate =
           record.date instanceof Date ? record.date : new Date(record.date);
@@ -248,10 +225,8 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       let bloodworkId;
 
       if (existingRecord) {
-        // Use existing bloodwork record
         bloodworkId = existingRecord.id;
       } else {
-        // Create new bloodwork record
         const bloodworkData = {
           date,
           fasted,
@@ -267,18 +242,17 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         bloodworkId = response.id;
       }
 
-      // 2. Create blood result records for each filled marker
       const filteredMarkerValues = Object.keys(markerValues)
         .filter((key) => {
           const data = markerValues[key];
-          // Skip empty values
+
           if (typeof data.value === "string") return data.value.trim() !== "";
           return data.value !== null && data.value !== undefined;
         })
-        // Skip existing results if it's an existing date
+
         .filter((markerId) => {
           if (!existingBloodworkId) return true;
-          // Only add results for markers that don't have results yet
+
           return !resultExistsForMarker(markerId);
         });
       for (let i = 0; i < filteredMarkerValues.length; i += 1) {
@@ -291,14 +265,12 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           value_text: data.valueType === "text" ? String(data.value) : "",
         };
 
-        // Use await to wait for the response
         await ApiService.addRecord("blood_results", resultData);
       }
 
       toast.success("Bloodwork results added successfully");
       loadData();
 
-      // Reset form and close dialog
       resetFormData();
       setSearchTerm("");
 
@@ -316,7 +288,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   };
 
   const getLastResultForMarker = (markerId: string) => {
-    // Sort all results for this marker by date (newest first)
     const resultsForMarker = bloodResults
       .filter((result) => result.blood_marker_id === markerId)
       .sort((a, b) => {
@@ -329,7 +300,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         return dateB - dateA;
       });
 
-    // Return the most recent result, or null if none exists
     return resultsForMarker.length > 0 ? resultsForMarker[0] : undefined;
   };
 
@@ -488,7 +458,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                 >
                   {rowVirtualizer.getVirtualItems().map((virtualItem) => {
                     const marker = filteredMarkers[virtualItem.index];
-                    // Check if this marker already has results for the selected date
                     const hasExistingResult = resultExistsForMarker(marker.id);
                     const lastResult = getLastResultForMarker(marker.id);
 

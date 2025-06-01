@@ -1,4 +1,3 @@
-// src/components/security/pin-entry-dialog.tsx
 import { useState, useRef, useEffect } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";

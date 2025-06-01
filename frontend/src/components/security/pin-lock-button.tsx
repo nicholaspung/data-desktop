@@ -1,4 +1,3 @@
-// src/components/security/pin-lock-button.tsx
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +12,6 @@ import { cn } from "@/lib/utils";
 import { usePin } from "@/hooks/usePin";
 import { useState } from "react";
 
-/**
- * Props for the PinLockButton component
- */
 interface PinLockButtonProps {
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
@@ -23,10 +19,6 @@ interface PinLockButtonProps {
   className?: string;
 }
 
-/**
- * A button that shows the current lock state and allows interactions
- * with the PIN security system
- */
 export function PinLockButton({
   variant = "outline",
   size = "icon",
@@ -45,7 +37,6 @@ export function PinLockButton({
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Handle unlock/lock button click
   const handleLockToggle = () => {
     if (isUnlocked) {
       lock();
@@ -53,11 +44,9 @@ export function PinLockButton({
       openPinEntryDialog();
     }
 
-    // Close menu after action
     setIsMenuOpen(false);
   };
 
-  // Handle menu item clicks
   const handlePinSetup = () => {
     openPinSetupDialog();
     setIsMenuOpen(false);
@@ -68,7 +57,6 @@ export function PinLockButton({
     setIsMenuOpen(false);
   };
 
-  // If security is not configured, show setup button
   if (!isConfigured) {
     return (
       <Button

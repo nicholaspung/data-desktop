@@ -1,9 +1,7 @@
-// src/contexts/pin-context.tsx
 import React, { createContext, useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { compareHash, hashValue } from "@/lib/crypto-utils";
 
-// Define the context type
 interface PinContextType {
   isConfigured: boolean;
   isUnlocked: boolean;
@@ -13,7 +11,6 @@ interface PinContextType {
   resetPin: (password: string, newPin: string) => Promise<boolean>;
   lock: () => void;
   clearSettings: () => void;
-  // Dialog control
   showPinEntry: boolean;
   showPinSetup: boolean;
   showPinReset: boolean;
@@ -22,7 +19,6 @@ interface PinContextType {
   setShowPinReset: (show: boolean) => void;
 }
 
-// Create the context with default values
 const PinContext = createContext<PinContextType>({
   isConfigured: false,
   isUnlocked: false,
@@ -32,7 +28,6 @@ const PinContext = createContext<PinContextType>({
   resetPin: async () => false,
   lock: () => {},
   clearSettings: () => {},
-  // Dialog default values
   showPinEntry: false,
   showPinSetup: false,
   showPinReset: false,
@@ -41,26 +36,21 @@ const PinContext = createContext<PinContextType>({
   setShowPinReset: () => {},
 });
 
-// Create the provider component
 export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  // State for PIN and unlock status
   const [pinHash, setPinHash] = useState<string | null>(null);
   const [passwordHash, setPasswordHash] = useState<string | null>(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [unlockTime, setUnlockTime] = useState<number>(0);
   const [unlockTimeRemaining, setUnlockTimeRemaining] = useState<number>(0);
 
-  // Dialog state
   const [showPinEntry, setShowPinEntry] = useState(false);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [showPinReset, setShowPinReset] = useState(false);
 
-  // Auto-lock timer constants
-  const AUTO_LOCK_DURATION = 1 * 60; // 5 minutes in seconds
+  const AUTO_LOCK_DURATION = 1 * 60;
 
-  // Load PIN and password hashes from localStorage on mount
   useEffect(() => {
     const storedPinHash = localStorage.getItem("pin_hash");
     const storedPasswordHash = localStorage.getItem("password_hash");
@@ -74,14 +64,12 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // Set up auto-lock countdown timer without activity monitoring
   useEffect(() => {
     if (!isUnlocked) {
       setUnlockTimeRemaining(0);
       return;
     }
 
-    // Set up fixed timer countdown
     const interval = setInterval(() => {
       const now = Math.floor(Date.now() / 1000);
       const remaining = Math.max(0, unlockTime + AUTO_LOCK_DURATION - now);
@@ -98,22 +86,18 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => clearInterval(interval);
   }, [isUnlocked, unlockTime]);
 
-  // Setup PIN and password with secure hashing
   const setupPin = useCallback(
     async (pin: string, password: string): Promise<boolean> => {
       try {
         const newPinHash = await hashValue(pin);
         const newPasswordHash = await hashValue(password);
 
-        // Store hashes in localStorage
         localStorage.setItem("pin_hash", newPinHash);
         localStorage.setItem("password_hash", newPasswordHash);
 
-        // Update state
         setPinHash(newPinHash);
         setPasswordHash(newPasswordHash);
 
-        // Auto unlock after setup
         setIsUnlocked(true);
         setUnlockTime(Math.floor(Date.now() / 1000));
 
@@ -128,7 +112,6 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // Unlock with PIN
   const unlock = useCallback(
     async (pin: string): Promise<boolean> => {
       if (!pinHash) return false;
@@ -153,7 +136,6 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     [pinHash]
   );
 
-  // Reset PIN with password
   const resetPin = useCallback(
     async (password: string, newPin: string): Promise<boolean> => {
       if (!passwordHash) return false;
@@ -166,7 +148,6 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
           localStorage.setItem("pin_hash", newPinHash);
           setPinHash(newPinHash);
 
-          // Auto unlock after reset
           setIsUnlocked(true);
           setUnlockTime(Math.floor(Date.now() / 1000));
 
@@ -185,13 +166,11 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     [passwordHash]
   );
 
-  // Lock the application
   const lock = useCallback(() => {
     setIsUnlocked(false);
     toast.success("Application locked");
   }, []);
 
-  // Clear all security settings
   const clearSettings = useCallback(() => {
     localStorage.removeItem("pin_hash");
     localStorage.removeItem("password_hash");
@@ -201,10 +180,8 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     toast.success("Security settings cleared");
   }, []);
 
-  // Check if security is configured
   const isConfigured = pinHash !== null && passwordHash !== null;
 
-  // Context value
   const contextValue: PinContextType = {
     isConfigured,
     isUnlocked,
@@ -214,7 +191,6 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     resetPin,
     lock,
     clearSettings,
-    // Dialog state and setters
     showPinEntry,
     showPinSetup,
     showPinReset,

@@ -1,4 +1,3 @@
-// src/features/daily-tracker/add-metric-form.tsx
 import React, { useState, useEffect } from "react";
 import { Experiment, GoalType, Metric } from "@/store/experiment-definitions.d";
 import { Button } from "@/components/ui/button";
@@ -17,25 +16,22 @@ import { ProtectedField } from "@/components/security/protected-content";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 export default function AddMetricForm({
-  metric, // Add metric prop for editing
+  metric,
   onSuccess,
   onCancel,
   className,
 }: {
-  metric?: Metric; // Metric data to edit (optional)
+  metric?: Metric;
   onSuccess?: () => void;
   onCancel?: () => void;
   className?: string;
 }) {
-  // Get available categories from the store
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
   const experiments = useStore(dataStore, (state) => state.experiments) || [];
 
-  // Determine if we're in edit mode
   const isEditMode = !!metric;
 
-  // Form state - initialize with metric data if in edit mode
   const [name, setName] = useState(metric?.name || "");
   const [description, setDescription] = useState(metric?.description || "");
   const [type, setType] = useState<
@@ -46,7 +42,6 @@ export default function AddMetricForm({
     metric?.default_value?.toString() || "0"
   );
 
-  // Category state
   const [categoryId, setCategoryId] = useState(metric?.category_id || "");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -57,18 +52,17 @@ export default function AddMetricForm({
   const [isPrivate, setIsPrivate] = useState(metric?.private ?? false);
   const [experimentId, setExperimentId] = useState<string>("");
 
-  // Schedule fields
   const [scheduleFrequency, setScheduleFrequency] = useState<
     "daily" | "weekly" | "interval" | "custom"
   >((metric?.schedule_frequency as any) || "daily");
   const [scheduleStartDate, setScheduleStartDate] = useState<string>(
     metric?.schedule_start_date
-      ? new Date(metric.schedule_start_date).toLocaleDateString("en-CA") // YYYY-MM-DD format
+      ? new Date(metric.schedule_start_date).toLocaleDateString("en-CA")
       : ""
   );
   const [scheduleEndDate, setScheduleEndDate] = useState<string>(
     metric?.schedule_end_date
-      ? new Date(metric.schedule_end_date).toLocaleDateString("en-CA") // YYYY-MM-DD format
+      ? new Date(metric.schedule_end_date).toLocaleDateString("en-CA")
       : ""
   );
   const [scheduleDays, setScheduleDays] = useState<string[]>(
@@ -98,7 +92,6 @@ export default function AddMetricForm({
       : []
   );
 
-  // Goal fields
   const [hasDefaultGoal, setHasDefaultGoal] = useState<boolean>(
     Boolean(metric?.goal_value && metric?.goal_type)
   );
@@ -113,7 +106,6 @@ export default function AddMetricForm({
     metric?.goal_type || GoalType.MINIMUM
   );
 
-  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(
     isEditMode || false
@@ -134,13 +126,11 @@ export default function AddMetricForm({
     metric?.schedule_interval_unit || "days"
   );
 
-  // Format category options for autocomplete
   const categoryOptions = categories.map((cat: any) => ({
     id: cat.id,
     label: cat.name,
   }));
 
-  // Check for duplicate category
   useEffect(() => {
     if (showAddCategory && newCategoryName.trim()) {
       const duplicate = categories.some(
@@ -153,21 +143,20 @@ export default function AddMetricForm({
     }
   }, [newCategoryName, categories, showAddCategory]);
 
-  // Update default value when type changes
   useEffect(() => {
     if (!isEditMode) {
       if (type === "boolean") {
         setDefaultValue("false");
-        setGoalValue("true"); // Set default goal value for boolean to true
+        setGoalValue("true");
       } else if (type === "number" || type === "percentage") {
         setDefaultValue("0");
-        // Keep existing goal value if it's appropriate for the new type
+
         if (goalValue === "true" || goalValue === "false") {
           setGoalValue("0");
         }
       } else if (type === "time") {
         setDefaultValue("0");
-        // Keep existing goal value if it's appropriate for the new type
+
         if (goalValue === "true" || goalValue === "false") {
           setGoalValue("0");
         }
@@ -175,7 +164,6 @@ export default function AddMetricForm({
     }
   }, [type, isEditMode]);
 
-  // Handle creating a new category
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast.error("Category name is required");
@@ -214,26 +202,22 @@ export default function AddMetricForm({
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Validate required fields
       if (!name) {
         toast.error("Metric name is required");
         setIsSubmitting(false);
         return;
       }
 
-      // Ensure default value is properly formatted based on type
       let processedDefaultValue = defaultValue;
       if (type === "boolean") {
         processedDefaultValue = defaultValue === "true" ? "true" : "false";
       }
 
-      // Process goal value based on type if hasDefaultGoal is true
       let processedGoalValue = null;
       if (hasDefaultGoal && goalValue) {
         if (type === "boolean") {
@@ -243,7 +227,6 @@ export default function AddMetricForm({
         }
       }
 
-      // Convert schedule days from string labels to numbers
       const numericScheduleDays = scheduleDays
         .map((day) => {
           switch (day) {
@@ -273,7 +256,6 @@ export default function AddMetricForm({
       const startDate = scheduleStartDate.split("-").map(Number);
       const endDate = scheduleEndDate.split("-").map(Number);
 
-      // Prepare the metric data
       const metricData = {
         name,
         description,
@@ -307,7 +289,7 @@ export default function AddMetricForm({
             ? new Date(endDate[0], endDate[1] - 1, endDate[2], hour, minute)
             : null,
         schedule_days: showSchedulingOptions ? numericScheduleDays : null,
-        // Add goal fields if hasDefaultGoal is true
+
         goal_value: hasDefaultGoal ? processedGoalValue : null,
         goal_type: hasDefaultGoal
           ? type === "boolean"
@@ -319,7 +301,6 @@ export default function AddMetricForm({
       let response;
 
       if (isEditMode && metric) {
-        // Update existing metric
         response = await ApiService.updateRecord(metric.id, {
           ...metric,
           ...metricData,
@@ -331,22 +312,18 @@ export default function AddMetricForm({
           toast.success("Metric updated successfully");
         }
       } else {
-        // Add new metric
         response = await ApiService.addRecord("metrics", metricData);
 
         if (response) {
-          // Add to store
           addEntry(response, "metrics");
           toast.success("Metric created successfully");
         }
       }
 
-      // Call success callback
       if (onSuccess) {
         onSuccess();
       }
 
-      // If not editing, reset the form
       if (!isEditMode) {
         resetForm();
       }
@@ -358,7 +335,6 @@ export default function AddMetricForm({
     }
   };
 
-  // Reset form fields
   const resetForm = () => {
     setName("");
     setDescription("");
@@ -417,7 +393,7 @@ export default function AddMetricForm({
               value={type}
               onChange={(value) => setType(value as any)}
               title="metric type"
-              disabled={isEditMode} // Disable type change in edit mode
+              disabled={isEditMode}
               options={[
                 { id: "number", label: "Number (e.g., 10, 25.5)" },
                 { id: "boolean", label: "Yes/No (e.g., Completed)" },
@@ -828,9 +804,7 @@ export default function AddMetricForm({
           )}
           <Button
             type="submit"
-            disabled={
-              isSubmitting || !name || (hasDefaultGoal && !goalValue) // Add validation for goal value
-            }
+            disabled={isSubmitting || !name || (hasDefaultGoal && !goalValue)}
           >
             {isSubmitting ? (
               <>

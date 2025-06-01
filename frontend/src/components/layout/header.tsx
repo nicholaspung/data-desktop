@@ -1,4 +1,3 @@
-// src/components/layout/header.tsx - Updated with time tracker in the middle
 import { Link } from "@tanstack/react-router";
 import ThemeToggle from "../reusable/theme-toggle";
 import { Badge } from "../ui/badge";
@@ -15,9 +14,7 @@ import settingsStore from "@/store/settings-store";
 export default function Header() {
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
 
-  const handleDataChange = () => {
-    // This will trigger when timer data is saved
-  };
+  const handleDataChange = () => {};
 
   return (
     <header className="sticky top-0 z-10 bg-background border-b p-4 flex justify-between items-center">

@@ -1,4 +1,3 @@
-// src/features/daily-tracker/metric-streak-display.tsx
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { calculateStreaks } from "./streak-utils";
@@ -29,29 +28,24 @@ export default function MetricStreakDisplay({
   className,
   style = "badge",
 }: MetricStreakDisplayProps) {
-  // Get logs from store
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
 
-  // Calculate streaks
   const { currentStreak, longestStreak } = calculateStreaks(
     dailyLogs,
     metricId,
     metricType
   );
 
-  // No streaks to display
   if (currentStreak === 0 && longestStreak === 0) {
     return null;
   }
 
-  // Size classes
   const sizeClasses = {
     sm: "text-xs",
     md: "text-sm",
     lg: "text-base",
   };
 
-  // Icon size
   const iconSize = {
     sm: "h-3 w-3",
     md: "h-4 w-4",
@@ -124,7 +118,6 @@ export default function MetricStreakDisplay({
     );
   }
 
-  // Text style
   return (
     <div className={cn("flex items-center gap-3", className)}>
       {currentStreak > 0 && (

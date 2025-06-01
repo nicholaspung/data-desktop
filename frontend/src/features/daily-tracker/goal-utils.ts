@@ -1,9 +1,5 @@
-// frontend/src/features/daily-tracker/goal-utils.ts
 import { MetricWithLog } from "@/store/experiment-definitions";
 
-/**
- * Calculate the progress of a metric value against its goal
- */
 export function calculateGoalProgress(metric: MetricWithLog): {
   progress: number;
   text: string;
@@ -11,7 +7,6 @@ export function calculateGoalProgress(metric: MetricWithLog): {
 } | null {
   if (!metric.goal_value || !metric.goal_type) return null;
 
-  // Handle different types of goals
   switch (metric.goal_type) {
     case "minimum":
       if (
@@ -37,7 +32,6 @@ export function calculateGoalProgress(metric: MetricWithLog): {
       ) {
         const current = parseFloat(metric.value) || 0;
         const goal = parseFloat(metric.goal_value) || 0;
-        // For maximum, lower is better
         const progress =
           goal === 0 ? 0 : Math.max(0, 100 - (current / goal) * 100);
         return {
@@ -55,9 +49,8 @@ export function calculateGoalProgress(metric: MetricWithLog): {
       ) {
         const current = parseFloat(metric.value) || 0;
         const goal = parseFloat(metric.goal_value) || 0;
-        // For exact goals, calculate how close we are
         const diff = Math.abs(current - goal);
-        const tolerance = goal * 0.05; // 5% tolerance
+        const tolerance = goal * 0.05;
         const progress = Math.max(0, 100 - (diff / tolerance) * 100);
         return {
           progress: Math.min(progress, 100),

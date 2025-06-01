@@ -1,4 +1,3 @@
-// frontend/src/features/daily-tracker/daily-tracker-calendar-grid.tsx
 import ReusableTooltip from "@/components/reusable/reusable-tooltip";
 import {
   eachDayOfInterval,
@@ -31,26 +30,22 @@ export default function DailyTrackerCalendarGrid({
   selectedDate: Date;
   setSelectedDate: React.Dispatch<React.SetStateAction<Date>>;
 }) {
-  // Access data from the store
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const experimentsData =
     useStore(dataStore, (state) => state.experiments) || [];
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const { isUnlocked } = usePin();
 
-  // Calculate metrics stats for a day
   const getDayMetricsStats = (day: Date) => {
     const logsForDay = dailyLogsData.filter((log: any) => {
       const logDate = new Date(log.date);
       return isSameDay(logDate, day);
     });
 
-    // Calculate logged metrics count vs total metrics
     const loggedMetricsCount = new Set(
       logsForDay.map((log: any) => log.metric_id)
     ).size;
 
-    // Calculate metrics scheduled for this day
     const scheduledMetrics = metricsData.filter((metric: Metric) => {
       if (!metric.active) return false;
 
@@ -58,36 +53,28 @@ export default function DailyTrackerCalendarGrid({
         ? Boolean(metric.schedule_days.find((el) => el === -1))
         : false;
 
-      // Parse schedule days if needed
       const scheduleDays = parseScheduleDays(metric.schedule_days);
 
-      // Create a metric object with parsed schedule days
       const metricWithParsedSchedule = {
         ...metric,
         schedule_days: scheduleDays,
       };
 
-      // Check if metric is scheduled for this day
       return doNotShow
         ? false
         : isMetricScheduledForDate(metricWithParsedSchedule, day);
     });
 
-    // Calculate metrics with goals
     const metricsWithGoals = scheduledMetrics.filter((metric: Metric) => {
-      // Check if the metric itself has goals
       return metric.goal_value !== undefined && metric.goal_type !== undefined;
     });
 
     const goalMetricsCount = metricsWithGoals.length;
 
-    // Count goal completion
     const completedGoals = logsForDay.filter((log: any) => {
-      // Find if this log is for a metric with a goal
       const metric = metricsData.find((m: any) => m.id === log.metric_id);
       if (!metric || !metric.goal_value || !metric.goal_type) return false;
 
-      // Check if goal is complete based on the goal type
       try {
         const logValue = JSON.parse(log.value);
         const goalValue = JSON.parse(metric.goal_value);
@@ -113,14 +100,12 @@ export default function DailyTrackerCalendarGrid({
     const scheduledMetricsCount = scheduledMetrics.length;
     const totalMetricsCount = metricsData.filter((m: any) => m.active).length;
 
-    // Get active experiments for this day
     const activeExperiments = experimentsData.filter((exp: any) => {
       const startDate = new Date(exp.start_date);
       const endDate = exp.end_date ? new Date(exp.end_date) : new Date();
       return startDate <= day && endDate >= day && exp.status === "active";
     });
 
-    // Calculate completion percentage for boolean metrics
     const booleanMetrics = scheduledMetrics.filter(
       (m: any) => m.type === "boolean"
     );
@@ -129,7 +114,6 @@ export default function DailyTrackerCalendarGrid({
       return metric && metric.type === "boolean";
     });
 
-    // For boolean metrics, check how many are marked as true
     const completedBooleanCount = loggedBooleanMetrics.filter((log: any) => {
       try {
         return JSON.parse(log.value) === true;
@@ -138,13 +122,11 @@ export default function DailyTrackerCalendarGrid({
       }
     }).length;
 
-    // Calculate completion percentage
     const completionPercentage =
       booleanMetrics.length > 0
         ? (completedBooleanCount / booleanMetrics.length) * 100
         : 0;
 
-    // Calculate goal completion percentage
     const goalCompletionPercentage =
       goalMetricsCount > 0 ? (completedGoals / goalMetricsCount) * 100 : 0;
 
@@ -161,35 +143,29 @@ export default function DailyTrackerCalendarGrid({
     };
   };
 
-  // Determine class for each day cell
   const getDayClass = (day: Date) => {
     const stats = getDayMetricsStats(day);
     let className =
       "h-14 w-full rounded-md flex flex-col items-center justify-start p-1 relative border ";
 
-    // Base styling depending on whether the day is in the current month
     if (!isSameMonth(day, currentMonth)) {
       className += "text-muted-foreground opacity-50 ";
     }
 
-    // Today styling
     if (isToday(day)) {
       className += "bg-primary/10 font-bold ";
     }
 
-    // Selected day styling
     if (isSameDay(day, selectedDate)) {
       className += "border-primary border-2 ";
     } else {
       className += "hover:bg-accent/50 cursor-pointer ";
     }
 
-    // Styling based on logs
     if (stats.logsExist) {
       className += "border-primary/50 ";
     }
 
-    // Special styling for days with scheduled metrics
     if (stats.scheduledMetricsCount > 0) {
       className += "bg-blue-50/30 dark:bg-blue-950/30 ";
     }
@@ -197,7 +173,6 @@ export default function DailyTrackerCalendarGrid({
     return className;
   };
 
-  // Generate days for the current month with proper week alignment
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const startDate = startOfWeek(monthStart);

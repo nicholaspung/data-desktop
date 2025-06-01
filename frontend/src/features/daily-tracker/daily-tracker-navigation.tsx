@@ -18,7 +18,6 @@ export default function DailyTrackerNavigation({
   currentMonth: Date;
   setCurrentMonth: React.Dispatch<React.SetStateAction<Date>>;
 }) {
-  // Navigation functions
   const goToPreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
     setSelectedDate(subMonths(selectedDate, 1));
@@ -31,11 +30,11 @@ export default function DailyTrackerNavigation({
     setCurrentMonth(new Date());
     setSelectedDate(new Date());
   };
-  // Navigate to previous day
+
   const goToPreviousDay = () => {
     setSelectedDate(subDays(selectedDate, 1));
   };
-  // Navigate to next day
+
   const goToNextDay = () => {
     setSelectedDate(addDays(selectedDate, 1));
   };

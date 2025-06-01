@@ -1,4 +1,3 @@
-// src/components/security/security-dialogs.tsx
 import { usePin } from "@/hooks/usePin";
 import { PinEntryDialog } from "./pin-entry-dialog";
 import { PinSetupDialog } from "./pin-setup-dialog";

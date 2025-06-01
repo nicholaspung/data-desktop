@@ -1,4 +1,3 @@
-// src/features/daily-tracker/calendar-view.tsx
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -124,7 +123,6 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
         );
       });
 
-      // Count completed metrics (true boolean values)
       const completedCount = metricsForDay.filter((log) => {
         try {
           const value = JSON.parse(log.value);

@@ -1,4 +1,3 @@
-// src/components/help/help-button.tsx
 import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";

@@ -1,4 +1,3 @@
-// src/features/bloodwork/advanced-csv-import.tsx
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileUp, Download, Info, AlertTriangle, Check } from "lucide-react";
@@ -39,7 +38,7 @@ interface ValidationResult {
     recordCount: number;
     existingTest: boolean;
   }[];
-  hasValidRows: boolean; // New property to check if at least one valid row exists
+  hasValidRows: boolean;
 }
 
 export default function BloodworkCSVImport() {
@@ -56,11 +55,10 @@ export default function BloodworkCSVImport() {
   const [validationResult, setValidationResult] =
     useState<ValidationResult | null>(null);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
-  const [skipInvalidRows, setSkipInvalidRows] = useState(true); // New state for skipping invalid rows
+  const [skipInvalidRows, setSkipInvalidRows] = useState(true);
   const [activeTab, setActiveTab] = useState("upload");
   const [parsedData, setParsedData] = useState<CSVRow[]>([]);
 
-  // Get blood markers from store for the template
   const bloodMarkers = useStore(
     dataStore,
     (state) => state.blood_markers || []
@@ -72,20 +70,16 @@ export default function BloodworkCSVImport() {
   );
 
   const generateCSVTemplate = () => {
-    // Sort markers alphabetically for the template
     const sortedMarkers = [...bloodMarkers].sort((a, b) =>
       a.name.localeCompare(b.name)
     );
 
-    // Create CSV header
     let csv = "blood_marker_name,date,value_number,value_text,notes\n";
 
-    // Add rows for each marker
     sortedMarkers.forEach((marker) => {
       csv += `"${marker.name}",,,,\n`;
     });
 
-    // Create and download the file
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -106,7 +100,6 @@ export default function BloodworkCSVImport() {
       const selectedFile = event.target.files[0];
       setFile(selectedFile);
 
-      // Automatically validate the file when selected
       await validateCSV(selectedFile);
     }
   };
@@ -115,7 +108,6 @@ export default function BloodworkCSVImport() {
     try {
       const text = await csvFile.text();
 
-      // Parse CSV
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
@@ -134,11 +126,9 @@ export default function BloodworkCSVImport() {
             }
           > = new Map();
 
-          // Validate each row
           data.forEach((row, index) => {
             const errors: string[] = [];
 
-            // Check required fields
             if (!row.blood_marker_name) errors.push("Missing marker name");
             if (!row.date) errors.push("Missing date");
             if (
@@ -149,7 +139,6 @@ export default function BloodworkCSVImport() {
                 "Missing value (either value_number or value_text is required)"
               );
 
-            // Validate marker exists
             const markerExists = bloodMarkers.some(
               (m) =>
                 m.name.toLowerCase() === row.blood_marker_name?.toLowerCase()
@@ -158,10 +147,8 @@ export default function BloodworkCSVImport() {
               errors.push(`Marker "${row.blood_marker_name}" does not exist`);
             }
 
-            // Validate date format
             let formattedDate: Date | null = null;
             if (row.date) {
-              // Try different date formats
               const dateFormats = [
                 "yyyy-MM-dd",
                 "MM/dd/yyyy",
@@ -180,10 +167,8 @@ export default function BloodworkCSVImport() {
               if (!formattedDate) {
                 errors.push("Invalid date format. Use YYYY-MM-DD");
               } else {
-                // Group by date
                 const dateKey = format(formattedDate, "yyyy-MM-dd");
 
-                // Check if test exists for this date
                 const existingTest = existingTests.some((test) => {
                   const testDate =
                     test.date instanceof Date ? test.date : new Date(test.date);
@@ -203,7 +188,6 @@ export default function BloodworkCSVImport() {
               }
             }
 
-            // Validate value based on type
             if (row.value_number && row.value_number.trim() !== "") {
               const numValue = parseFloat(row.value_number);
               if (isNaN(numValue)) {
@@ -211,24 +195,21 @@ export default function BloodworkCSVImport() {
               }
             }
 
-            // Add to invalid rows if errors exist
             if (errors.length > 0) {
               invalidRows.push({ row, rowIndex: index + 2, errors });
             }
           });
 
-          // Set validation result
           const result = {
             valid: invalidRows.length === 0,
             invalidRows,
             validRowCount: data.length - invalidRows.length,
             dateGroups: Array.from(dateGroups.values()),
-            hasValidRows: data.length - invalidRows.length > 0, // Check if we have at least one valid row
+            hasValidRows: data.length - invalidRows.length > 0,
           };
 
           setValidationResult(result);
 
-          // Switch to the validation tab if there are errors
           if (invalidRows.length > 0) {
             setActiveTab("validation");
             if (result.hasValidRows) {
@@ -280,7 +261,6 @@ export default function BloodworkCSVImport() {
     });
 
     try {
-      // Filter out invalid rows if skip is enabled
       const dataToProcess = skipInvalidRows
         ? parsedData.filter(
             (_, index) =>
@@ -290,15 +270,13 @@ export default function BloodworkCSVImport() {
           )
         : parsedData;
 
-      // Group records by date
       const recordsByDate: Record<string, CSVRow[]> = {};
 
       dataToProcess.forEach((row) => {
         if (!row.blood_marker_name || !row.date) {
-          return; // Skip rows with missing required data
+          return;
         }
 
-        // Skip if both value_number and value_text are empty
         if (
           (row.value_number === undefined ||
             row.value_number === null ||
@@ -307,10 +285,9 @@ export default function BloodworkCSVImport() {
             row.value_text === null ||
             row.value_text.trim() === "")
         ) {
-          return; // Skip entries with no values
+          return;
         }
 
-        // Try different date formats
         let validDate: Date | null = null;
         const dateFormats = [
           "yyyy-MM-dd",
@@ -327,7 +304,7 @@ export default function BloodworkCSVImport() {
           }
         }
 
-        if (!validDate) return; // Skip invalid dates
+        if (!validDate) return;
 
         const dateKey = format(validDate, "yyyy-MM-dd");
         if (!recordsByDate[dateKey]) {
@@ -337,7 +314,6 @@ export default function BloodworkCSVImport() {
         recordsByDate[dateKey].push(row);
       });
 
-      // Process each date group
       const dateKeys = Object.keys(recordsByDate);
       setProgress({ ...progress, total: dateKeys.length });
 
@@ -345,11 +321,9 @@ export default function BloodworkCSVImport() {
         const dateKey = dateKeys[i];
         const records = recordsByDate[dateKey];
 
-        // Check if test exists for this date
         let testId = null;
         let createNew = true;
 
-        // Find existing test for this date
         const existingTest = existingTests.find((test) => {
           const testDate =
             test.date instanceof Date ? test.date : new Date(test.date);
@@ -360,7 +334,6 @@ export default function BloodworkCSVImport() {
           testId = existingTest.id;
           createNew = false;
 
-          // Skip if we're not overwriting existing tests
           if (!overwriteExisting) {
             setProgress((prev) => ({
               ...prev,
@@ -377,12 +350,11 @@ export default function BloodworkCSVImport() {
         }
 
         if (createNew) {
-          // Create new test
           try {
             const parsedDate = parse(dateKey, "yyyy-MM-dd", new Date());
             const newTest = await ApiService.addRecord("bloodwork", {
               date: parsedDate,
-              fasted: false, // Default value
+              fasted: false,
               lab_name: "",
               notes: `Imported from CSV on ${format(new Date(), "MMM d, yyyy")}`,
             });
@@ -397,19 +369,17 @@ export default function BloodworkCSVImport() {
               ...prev,
               errors: [...prev.errors, `Failed to create test for ${dateKey}`],
             }));
-            continue; // Skip to next date
+            continue;
           }
         }
 
         if (!testId) continue;
 
-        // Process records for this date
         let successCount = 0;
         let failCount = 0;
 
         for (const record of records) {
           try {
-            // Find marker ID by name
             const marker = bloodMarkers.find(
               (m) =>
                 m.name.toLowerCase() === record.blood_marker_name.toLowerCase()
@@ -420,7 +390,6 @@ export default function BloodworkCSVImport() {
               continue;
             }
 
-            // Check if result already exists
             if (!overwriteExisting) {
               const existingResult = bloodResults.some(
                 (result) =>
@@ -434,12 +403,10 @@ export default function BloodworkCSVImport() {
               }
             }
 
-            // Determine value type (text or number)
             let valueType = "number";
             let valueNumber = 0;
             let valueText = "";
 
-            // Skip if both value_number and value_text are empty
             if (
               (record.value_number === undefined ||
                 record.value_number === null ||
@@ -448,7 +415,6 @@ export default function BloodworkCSVImport() {
                 record.value_text === null ||
                 record.value_text.trim() === "")
             ) {
-              // Skip this entry if no values are provided
               failCount++;
               console.warn(
                 `Skipping empty value for ${record.blood_marker_name}`
@@ -456,7 +422,6 @@ export default function BloodworkCSVImport() {
               continue;
             }
 
-            // Handle value based on what fields are present in the CSV
             if (record.value_number && record.value_number.trim() !== "") {
               valueType = "number";
               valueNumber = parseFloat(record.value_number) || 0;
@@ -464,7 +429,6 @@ export default function BloodworkCSVImport() {
               valueType = "text";
               valueText = record.value_text;
             } else {
-              // Skip this entry if no values are provided - this is a safeguard
               failCount++;
               continue;
             }
@@ -477,7 +441,6 @@ export default function BloodworkCSVImport() {
               notes: record.notes || "",
             };
 
-            // Add blood result
             const response = await ApiService.addRecord(
               "blood_results",
               resultData
@@ -497,7 +460,6 @@ export default function BloodworkCSVImport() {
           }
         }
 
-        // Update progress
         setProgress((prev) => ({
           ...prev,
           processed: i + 1,

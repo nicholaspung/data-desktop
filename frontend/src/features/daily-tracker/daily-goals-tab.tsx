@@ -1,4 +1,3 @@
-// frontend/src/features/daily-tracker/daily-goals-tab.tsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { MetricWithLog } from "@/store/experiment-definitions";
@@ -22,13 +21,10 @@ export default function DailyGoalsTab({
   showNotes,
   saveChanges,
 }: DailyGoalsTabProps) {
-  // Filter to get only metrics with goals
   const metricsWithGoals = getMetricsWithGoals(metricsWithLogs);
 
-  // Count completed goals
   const completedGoalsCount = getCompletedGoalsCount(metricsWithLogs);
 
-  // Calculate overall progress
   const totalGoals = metricsWithGoals.length;
   const overallProgress =
     totalGoals > 0 ? Math.round((completedGoalsCount / totalGoals) * 100) : 0;

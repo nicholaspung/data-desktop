@@ -1,19 +1,9 @@
-// src/components/security/protected-content.tsx
 import { ReactNode, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Lock, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePin } from "@/hooks/usePin";
 
-/**
- * A component that protects content behind a PIN lock.
- * The content will be hidden or blurred until the user unlocks it.
- *
- * @param children The content to protect
- * @param placeholder Optional content to show when locked (defaults to blur effect)
- * @param className Optional CSS class to apply to the container
- * @param blur Whether to blur the content or hide it completely when locked (default: true)
- */
 export function ProtectedContent({
   children,
   placeholder,
@@ -29,33 +19,26 @@ export function ProtectedContent({
   const [wasEverUnlocked, setWasEverUnlocked] = useState(false);
   const [childrenContent, setChildrenContent] = useState<ReactNode>(children);
 
-  // Update tracking when content is unlocked and keep content updated
   useEffect(() => {
     if (isUnlocked) {
       setWasEverUnlocked(true);
     }
 
-    // Keep the children content updated with the latest props
-    // This is important to ensure new content is displayed after the component re-renders
     setChildrenContent(children);
   }, [isUnlocked, children]);
 
-  // If PIN protection is not configured, simply render the content
   if (!isConfigured) {
     return <div className={className}>{children}</div>;
   }
 
-  // If content is unlocked, show it
   if (isUnlocked) {
     return <div className={className}>{childrenContent}</div>;
   }
 
-  // Handle unlock button click
   const handleUnlock = () => {
     openPinEntryDialog();
   };
 
-  // Create a default placeholder with blur effect or a lock message
   const defaultPlaceholder = blur ? (
     <div className="relative">
       {/* Overlay with unlock button */}
@@ -120,22 +103,18 @@ export function ProtectedField({
   const [locallyVisible, setLocallyVisible] = useState(false);
   const [fieldContent, setFieldContent] = useState<ReactNode>(children);
 
-  // Reset visibility when locked and keep content updated
   useEffect(() => {
     if (!isUnlocked) {
       setLocallyVisible(false);
     }
 
-    // Keep the field content updated with the latest props
     setFieldContent(children);
   }, [isUnlocked, children]);
 
-  // If PIN protection is not configured, simply render the content
   if (!isConfigured) {
     return <div className={className}>{children}</div>;
   }
 
-  // Handle toggle visibility
   const toggleVisibility = () => {
     if (isUnlocked) {
       setLocallyVisible(!locallyVisible);

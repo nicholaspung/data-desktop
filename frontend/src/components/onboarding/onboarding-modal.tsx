@@ -1,4 +1,3 @@
-// src/components/onboarding/onboarding-modal.tsx
 import { useState } from "react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Button } from "@/components/ui/button";

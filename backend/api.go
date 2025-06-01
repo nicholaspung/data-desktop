@@ -43,26 +43,29 @@ func (a *App) Startup(ctx context.Context) {
 	}
 
 	var dbPath string
+	var isDev bool
 
 	executable, err := os.Executable()
 	if err == nil {
 		executableName := filepath.Base(executable)
-		isDev := strings.Contains(executableName, "wails-") || strings.Contains(executableName, "__debug_bin") || os.Getenv("BUILD_MODE") == "dev"
+		isDev = strings.Contains(executableName, "wails-") || strings.Contains(executableName, "__debug_bin") || os.Getenv("BUILD_MODE") == "dev"
 
 		if isDev {
 			log.Println("Running in development mode (detected via executable name):", executableName)
-			dbPath = filepath.Join(appDir, "DatingDesktop-dev.db")
+			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
 		} else {
 			log.Println("Running in production mode with executable:", executableName)
-			dbPath = filepath.Join(appDir, "DatingDesktop.db")
+			dbPath = filepath.Join(appDir, "DataDesktop.db")
 		}
 	} else {
 		if os.Getenv("BUILD_MODE") == "dev" {
 			log.Println("Running in development mode (detected via environment variable)")
-			dbPath = filepath.Join(appDir, "DatingDesktop-dev.db")
+			isDev = true
+			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
 		} else {
 			log.Println("Running in production mode (fallback)")
-			dbPath = filepath.Join(appDir, "DatingDesktop.db")
+			isDev = false
+			dbPath = filepath.Join(appDir, "DataDesktop.db")
 		}
 	}
 
@@ -83,6 +86,15 @@ func (a *App) Startup(ctx context.Context) {
 	if err != nil {
 		log.Println("Error cleaning up unused tables:", err.Error())
 	}
+
+	if isDev {
+		err = database.LoadSampleDataOnce()
+		if err != nil {
+			log.Println("Error loading sample data:", err.Error())
+		} else {
+			log.Println("Sample data loaded successfully")
+		}
+	}
 }
 
 func getAppDataDir() (string, error) {
@@ -93,15 +105,15 @@ func getAppDataDir() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		appDir = filepath.Join(homeDir, "Library", "Application Support", "DatingDesktop")
+		appDir = filepath.Join(homeDir, "Library", "Application Support", "DataDesktop")
 	} else if runtime.GOOS == "windows" {
-		appDir = filepath.Join(os.Getenv("APPDATA"), "DatingDesktop")
+		appDir = filepath.Join(os.Getenv("APPDATA"), "DataDesktop")
 	} else {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
-		appDir = filepath.Join(homeDir, ".config", "DatingDesktop")
+		appDir = filepath.Join(homeDir, ".config", "DataDesktop")
 	}
 
 	if err := os.MkdirAll(appDir, 0755); err != nil {

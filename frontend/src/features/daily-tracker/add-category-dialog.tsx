@@ -1,4 +1,3 @@
-// src/features/experiments/add-category-dialog.tsx
 import { useState, useEffect } from "react";
 import { Save, FolderPlus } from "lucide-react";
 import { ApiService } from "@/services/api";
@@ -19,11 +18,9 @@ export default function AddCategoryDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
 
-  // Get existing categories from store
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
 
-  // Check for duplicates whenever category name changes
   useEffect(() => {
     const duplicate = categories.some(
       (cat: any) => cat.name.toLowerCase() === categoryName.trim().toLowerCase()
@@ -45,29 +42,24 @@ export default function AddCategoryDialog({
     setIsSubmitting(true);
 
     try {
-      // Prepare category data
       const categoryData = {
         name: categoryName.trim(),
       };
 
-      // Add category to database
       const response = await ApiService.addRecord(
         "metric_categories",
         categoryData
       );
 
       if (response) {
-        // Add to store
         addEntry(response, "metric_categories");
 
         toast.success("Category created successfully");
 
-        // Call onSuccess with new category info
         if (onSuccess) {
           onSuccess(response.id, response.name);
         }
 
-        // Reset form and close dialog
         setCategoryName("");
         setOpen(false);
       }
@@ -79,7 +71,6 @@ export default function AddCategoryDialog({
     }
   };
 
-  // Format categories for autocomplete
   const categoryOptions = categories.map((cat: any) => ({
     id: cat.id,
     label: cat.name,

@@ -1,4 +1,3 @@
-// src/components/layout/dashboard-layout.tsx (modified)
 import React, { useState, useEffect } from "react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
@@ -66,7 +65,6 @@ const defaultSidebarItems: SidebarItem[] = [
     icon: <FEATURE_ICONS.TIME_PLANNER className="h-5 w-5" />,
     href: "/time-planner",
   },
-  // People CRM section
   {
     title: "People CRM",
     icon: <FEATURE_ICONS.PEOPLE_CRM className="h-5 w-5" />,
@@ -103,13 +101,10 @@ export default function DashboardLayout({
   const currentPath =
     matches.length > 0 ? matches[matches.length - 1].pathname : "";
 
-  // State to track whether sidebar is expanded or collapsed
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // Get visible routes from settings store
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
 
-  // Get the saved preference from localStorage on initial load
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarExpanded");
     if (savedState !== null) {
@@ -117,14 +112,12 @@ export default function DashboardLayout({
     }
   }, []);
 
-  // Toggle sidebar state
   const toggleSidebar = () => {
     const newState = !isExpanded;
     setIsExpanded(newState);
     localStorage.setItem("sidebarExpanded", String(newState));
   };
 
-  // Filter sidebar items based on settings
   const filteredSidebarItems = defaultSidebarItems.filter(
     (item) => visibleRoutes[item.href] !== false
   );
@@ -261,7 +254,7 @@ export default function DashboardLayout({
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50 hover:text-accent-foreground"
                 )}
-                onClick={() => setIsExpanded(false)} // Close sidebar when an item is clicked on mobile
+                onClick={() => setIsExpanded(false)}
               >
                 {item.icon}
                 <span>{item.title}</span>
@@ -284,7 +277,6 @@ export default function DashboardLayout({
         <div
           className={cn(
             "w-full px-4 py-6",
-            // Add padding transition when sidebar state changes
             "transition-all duration-300 ease-in-out"
           )}
         >

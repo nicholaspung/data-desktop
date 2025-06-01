@@ -91,17 +91,14 @@ export default function DailyTrackerCalendarView() {
 
         const log = logsForDate.find((log) => log.metric_id === metric.id);
 
-        // Only use metric goals and log goals, not experiment metrics
         let goal_value;
         let goal_type;
 
-        // Check if metric has goal values
         if (metric.goal_value !== undefined && metric.goal_type !== undefined) {
           goal_value = parseMetricValue(metric.goal_value, metric.type);
           goal_type = metric.goal_type;
         }
 
-        // If log has goal values, they take precedence
         if (log && log.goal_value && log.goal_type) {
           goal_value = parseMetricValue(log.goal_value, metric.type);
           goal_type = log.goal_type;
@@ -122,7 +119,6 @@ export default function DailyTrackerCalendarView() {
         };
       })
       .filter((metric) => {
-        // Apply filters
         const scheduledFilter = showUnscheduled || metric.isScheduledForToday;
         const goalFilter =
           !showOnlyWithGoals ||
@@ -186,7 +182,6 @@ export default function DailyTrackerCalendarView() {
                   : metricWithLogs.log.value,
               notes: key === "notes" ? value : metricWithLogs.log.notes,
               experiment_id: experimentId,
-              // Keep existing goal values if already set
               goal_value: metricWithLogs.log.goal_value || null,
               goal_type: metricWithLogs.log.goal_type || null,
             }
@@ -198,7 +193,6 @@ export default function DailyTrackerCalendarView() {
             toast.success("Log updated successfully");
           }
         } else {
-          // Get the metric to use its goals
           const metric = metricsData.find((m) => m.id === metricId);
 
           const newLog = {
@@ -210,7 +204,6 @@ export default function DailyTrackerCalendarView() {
                 ? JSON.stringify(value)
                 : JSON.stringify(metricWithLogs.value),
             notes: key === "notes" ? value : metricWithLogs.notes,
-            // Use metric's goal if available
             goal_value: metric?.goal_value
               ? JSON.stringify(metric.goal_value)
               : null,

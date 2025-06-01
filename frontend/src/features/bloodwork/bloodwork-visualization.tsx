@@ -1,4 +1,3 @@
-// src/components/bloodwork/bloodwork-visualizations.tsx
 import React, { useState, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -15,9 +14,7 @@ import ReusableSelect from "@/components/reusable/reusable-select";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import BloodMarkerManager from "./blood-marker-manager";
 
-// Create the main visualization component
 const BloodworkVisualizations: React.FC = () => {
-  // Get data from store
   const bloodMarkers = useStore(
     dataStore,
     (state) => state.blood_markers || []
@@ -33,23 +30,20 @@ const BloodworkVisualizations: React.FC = () => {
     "optimal" | "outOfRange" | "textValues" | "noRange" | null
   >(null);
 
-  // Toggle status filter
   const toggleStatusFilter = (
     status: "optimal" | "outOfRange" | "textValues" | "noRange"
   ) => {
     if (statusFilter === status) {
-      setStatusFilter(null); // Clear filter if already selected
+      setStatusFilter(null);
     } else {
-      setStatusFilter(status); // Set new filter
+      setStatusFilter(status);
     }
   };
 
-  // Associate results with markers
   const markerResults: Record<string, BloodResult[]> = useMemo(() => {
     const results: Record<string, BloodResult[]> = {};
 
     bloodMarkers.forEach((marker) => {
-      // Find all results for this marker
       const markerResults = bloodResults.filter(
         (result) => result.blood_marker_id === marker.id
       );
@@ -60,12 +54,11 @@ const BloodworkVisualizations: React.FC = () => {
     return results;
   }, [bloodMarkers, bloodResults]);
 
-  // Get summary stats for markers
   const markerSummary = useMemo(() => {
     let optimal = 0;
     let outOfRange = 0;
     let textValues = 0;
-    let noRange = 0; // New counter for markers with no range defined
+    let noRange = 0;
     let noData = 0;
 
     bloodMarkers.forEach((marker) => {
@@ -76,13 +69,11 @@ const BloodworkVisualizations: React.FC = () => {
         return;
       }
 
-      // Check if marker has any range defined
       if (!hasAnyRangeDefined(marker)) {
         noRange++;
         return;
       }
 
-      // Get the latest result
       const sortedResults = [...results].sort((a, b) => {
         return (
           new Date(b.blood_test_id_data?.date || 0).getTime() -
@@ -93,21 +84,16 @@ const BloodworkVisualizations: React.FC = () => {
       const latestResult = sortedResults[0];
       const value = parseFloat(latestResult.value_number.toString()) || 0;
 
-      // Check if it's a text-based range
       if (marker.optimal_general || marker.general_reference) {
         textValues++;
-      }
-      // Check if in optimal range
-      else if (
+      } else if (
         marker.optimal_low !== undefined &&
         marker.optimal_high !== undefined &&
         value >= marker.optimal_low &&
         value <= marker.optimal_high
       ) {
         optimal++;
-      }
-      // Otherwise out of range
-      else {
+      } else {
         outOfRange++;
       }
     });
@@ -122,7 +108,6 @@ const BloodworkVisualizations: React.FC = () => {
     };
   }, [bloodMarkers, markerResults]);
 
-  // Get unique categories from markers
   const categories: string[] = useMemo(() => {
     const uniqueCategories = new Set<string>();
     bloodMarkers.forEach((marker) => {
@@ -133,9 +118,7 @@ const BloodworkVisualizations: React.FC = () => {
     return Array.from(uniqueCategories).sort();
   }, [bloodMarkers]);
 
-  // Filter and group markers by category
   const groupedMarkers: Record<string, BloodMarker[]> = useMemo(() => {
-    // Filter by search term and category
     const filteredMarkers = bloodMarkers.filter((marker) => {
       const matchesSearch =
         searchTerm === "" ||
@@ -146,12 +129,10 @@ const BloodworkVisualizations: React.FC = () => {
       const matchesCategory =
         selectedCategory === "all" || marker.category === selectedCategory;
 
-      // Apply status filter if active
       let matchesStatus = true;
       if (statusFilter) {
         const results = markerResults[marker.id] || [];
 
-        // For "noRange" filter, check if the marker has any range defined
         if (statusFilter === "noRange") {
           return (
             matchesSearch &&
@@ -161,12 +142,10 @@ const BloodworkVisualizations: React.FC = () => {
           );
         }
 
-        // Skip markers with no results when filtering for other statuses
         if (results.length === 0) {
           return false;
         }
 
-        // Skip markers with no range defined when filtering for "optimal" or "outOfRange"
         if (
           (statusFilter === "optimal" || statusFilter === "outOfRange") &&
           !hasAnyRangeDefined(marker)
@@ -174,7 +153,6 @@ const BloodworkVisualizations: React.FC = () => {
           return false;
         }
 
-        // Get the latest result
         const sortedResults = [...results].sort((a, b) => {
           return (
             new Date(b.blood_test_id_data?.date || 0).getTime() -
@@ -196,13 +174,10 @@ const BloodworkVisualizations: React.FC = () => {
             value >= marker.optimal_low &&
             value <= marker.optimal_high;
         } else if (statusFilter === "outOfRange") {
-          // First check if we have a text-based value
           if (
             latestResult.value_text &&
             latestResult.value_text.trim() !== ""
           ) {
-            // For text-based values, we should only consider "out of range" if it's explicitly
-            // different from the reference/optimal and not "Unsure" or similar ambiguous values
             const valueText = latestResult.value_text.toLowerCase();
             const isUnsureValue =
               valueText.includes("unsure") ||
@@ -210,11 +185,9 @@ const BloodworkVisualizations: React.FC = () => {
               valueText.includes("unknown") ||
               valueText === "n/a";
 
-            // Don't count "unsure" values as out of range
             if (isUnsureValue) {
               matchesStatus = false;
             } else {
-              // Check if the text value doesn't match either optimal or reference range
               const referenceText =
                 marker.general_reference?.toLowerCase() || "";
               const optimalText = marker.optimal_general?.toLowerCase() || "";
@@ -226,7 +199,6 @@ const BloodworkVisualizations: React.FC = () => {
                 !optimalText.includes(valueText);
             }
           } else {
-            // For numeric values, check if they're outside the defined ranges
             matchesStatus =
               hasAnyRangeDefined(marker) &&
               marker.optimal_low !== undefined &&
@@ -239,7 +211,6 @@ const BloodworkVisualizations: React.FC = () => {
       return matchesSearch && matchesCategory && matchesStatus;
     });
 
-    // Group by category
     const grouped: Record<string, BloodMarker[]> = {};
     filteredMarkers.forEach((marker) => {
       const category = marker.category || "Uncategorized";
@@ -249,7 +220,6 @@ const BloodworkVisualizations: React.FC = () => {
       grouped[category].push(marker);
     });
 
-    // Sort each category by marker name
     Object.keys(grouped).forEach((category) => {
       grouped[category].sort((a, b) => a.name.localeCompare(b.name));
     });

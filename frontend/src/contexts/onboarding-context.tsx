@@ -1,4 +1,3 @@
-// src/contexts/onboarding-context.tsx
 import { createContext } from "react";
 
 export type OnboardingContextType = {
