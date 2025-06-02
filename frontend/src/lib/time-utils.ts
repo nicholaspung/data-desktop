@@ -29,13 +29,14 @@ export function formatDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function groupEntriesByDate<T extends { start_time: Date }>(
+export function groupEntriesByDate<T extends { start_time: Date | string }>(
   entries: T[]
 ): Record<string, T[]> {
   const groupedEntries: Record<string, T[]> = {};
 
   entries.forEach((entry) => {
-    const dateStr = formatDateString(new Date(entry.start_time));
+    const date = new Date(entry.start_time);
+    const dateStr = formatDateString(date);
 
     if (!groupedEntries[dateStr]) {
       groupedEntries[dateStr] = [];

@@ -278,6 +278,7 @@ export default function DataForm({
           break;
         case "text":
         case "markdown":
+        case "tags":
           schemaObj[field.key] = isOptional
             ? z.string().optional()
             : z.string().min(1, `${field.displayName} is required`);
@@ -506,6 +507,7 @@ export default function DataForm({
       (field) => field.type === "number" || field.type === "percentage"
     ),
     text: fields.filter((field) => field.type === "text"),
+    tags: fields.filter((field) => field.type === "tags"),
     markdown: fields.filter((field) => field.type === "markdown"),
     selectSingle: fields.filter((field) => field.type === "select-single"),
     selectMultiple: fields.filter((field) => field.type === "select-multiple"),

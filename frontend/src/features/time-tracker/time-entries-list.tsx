@@ -333,7 +333,7 @@ export default function TimeEntriesList({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                {new Date(dateStr).toLocaleDateString(undefined, {
+                {new Date(dateStr + "T12:00:00").toLocaleDateString(undefined, {
                   weekday: "long",
                   year: "numeric",
                   month: "long",

@@ -13,6 +13,7 @@ import TimeEntriesSummary from "./time-entries-summary";
 import { Calendar, LayoutList, Tags, PieChart } from "lucide-react";
 import { useState } from "react";
 import EditTimeEntryDialog from "./edit-time-entry-dialog";
+import TimeFilterToggle from "@/components/reusable/time-filter-toggle";
 
 export default function TimeTracker() {
   const { getDatasetFields } = useFieldDefinitions();
@@ -102,6 +103,8 @@ export default function TimeTracker() {
   return (
     <div className="space-y-6">
       <TimeTrackerForm onDataChange={refreshData} />
+
+      <TimeFilterToggle />
 
       {editingEntry && (
         <EditTimeEntryDialog

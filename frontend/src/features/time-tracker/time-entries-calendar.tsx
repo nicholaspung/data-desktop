@@ -8,6 +8,7 @@ import { formatDateString } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import { timeFilterStore, filterTimeEntries } from "@/store/time-filter-store";
 
 interface TimeEntriesCalendarProps {
   isLoading: boolean;
@@ -25,8 +26,19 @@ export default function TimeEntriesCalendar({
   isLoading,
   onEditEntry,
 }: TimeEntriesCalendarProps) {
-  const entries = useStore(dataStore, (state) => state.time_entries);
+  const rawEntries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
+  const hiddenHours = useStore(timeFilterStore, (state) => state.hiddenHours);
+
+  const entries = useMemo(() => {
+    return filterTimeEntries(rawEntries, hiddenHours);
+  }, [rawEntries, hiddenHours]);
+
+  const visibleHours = useMemo(() => {
+    return Array.from({ length: 24 }, (_, i) => i).filter(
+      (hour) => !hiddenHours.includes(hour)
+    );
+  }, [hiddenHours]);
 
   const [viewMode, setViewMode] = useState<ViewMode>("day");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -114,9 +126,11 @@ export default function TimeEntriesCalendar({
     );
   }
 
-  const timeLabels = Array.from({ length: 19 }, (_, i) => {
-    const hour = i + 5;
-    return hour > 12 ? `${hour - 12}pm` : hour === 12 ? "12pm" : `${hour}am`;
+  const timeLabels = visibleHours.map((hour) => {
+    if (hour === 0) return "12am";
+    if (hour < 12) return `${hour}am`;
+    if (hour === 12) return "12pm";
+    return `${hour - 12}pm`;
   });
 
   return (
@@ -184,9 +198,9 @@ export default function TimeEntriesCalendar({
           )}
 
           {/* Calendar grid */}
-          <div className="flex h-[600px] border-t border-l">
+          <div className="flex h-[600px] border-l">
             {/* Time labels */}
-            <div className="w-16 border-r flex flex-col">
+            <div className="w-16 border-r flex flex-col border-t">
               {timeLabels.map((label, index) => (
                 <div
                   key={index}
@@ -200,7 +214,7 @@ export default function TimeEntriesCalendar({
             {/* Calendar columns */}
             <div
               className={cn(
-                "flex-1 flex",
+                "flex-1 flex border-b",
                 viewMode === "day" ? "" : "divide-x"
               )}
             >
@@ -210,6 +224,7 @@ export default function TimeEntriesCalendar({
                   entries={filteredEntries}
                   categories={categories}
                   onEditEntry={onEditEntry}
+                  visibleHours={visibleHours}
                 />
               ) : (
                 days.map((day, index) => {
@@ -227,6 +242,7 @@ export default function TimeEntriesCalendar({
                       entries={dayEntries}
                       categories={categories}
                       onEditEntry={onEditEntry}
+                      visibleHours={visibleHours}
                     />
                   );
                 })
@@ -244,9 +260,16 @@ interface DayColumnProps {
   entries: TimeEntry[];
   categories: TimeCategory[];
   onEditEntry: (entry: TimeEntry) => void;
+  visibleHours: number[];
 }
 
-function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
+function DayColumn({
+  day,
+  entries,
+  categories,
+  onEditEntry,
+  visibleHours,
+}: DayColumnProps) {
   const isToday = formatDateString(day) === formatDateString(new Date());
 
   const processedEntries = useMemo(() => {
@@ -318,14 +341,39 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
       const startTime = new Date(entry.start_time);
       const endTime = new Date(entry.end_time);
 
-      const startHour = startTime.getHours() + startTime.getMinutes() / 60;
-      const endHour = endTime.getHours() + endTime.getMinutes() / 60;
+      const startHourWithMinutes =
+        startTime.getHours() + startTime.getMinutes() / 60;
+      const endHourWithMinutes = endTime.getHours() + endTime.getMinutes() / 60;
 
-      const visibleStartHour = Math.max(5, Math.min(23, startHour));
-      const visibleEndHour = Math.max(5, Math.min(23, endHour));
+      const hasVisibleOverlap = visibleHours.some(
+        (hour) => startHourWithMinutes <= hour + 1 && endHourWithMinutes >= hour
+      );
 
-      const top = ((visibleStartHour - 5) / 18) * 100;
-      const height = ((visibleEndHour - visibleStartHour) / 18) * 100;
+      if (!hasVisibleOverlap) {
+        return null;
+      }
+
+      const getHourPosition = (hourWithMinutes: number) => {
+        let position = 0;
+        for (let i = 0; i < visibleHours.length; i++) {
+          const visibleHour = visibleHours[i];
+          if (hourWithMinutes <= visibleHour) {
+            return i + (hourWithMinutes - visibleHour);
+          }
+          if (hourWithMinutes <= visibleHour + 1) {
+            return i + (hourWithMinutes - visibleHour);
+          }
+          position = i + 1;
+        }
+        return position;
+      };
+
+      const startPosition = getHourPosition(startHourWithMinutes);
+      const endPosition = getHourPosition(endHourWithMinutes);
+
+      const top = (startPosition / visibleHours.length) * 100;
+      const height =
+        ((endPosition - startPosition) / visibleHours.length) * 100;
 
       const minHeight = 1.5;
       const adjustedHeight = Math.max(height, minHeight);
@@ -373,11 +421,14 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
   return (
     <div className={cn("flex-1 relative", isToday && "bg-accent/10")}>
       {/* Horizontal hour guidelines */}
-      {Array.from({ length: 18 }).map((_, index) => (
+      {visibleHours.map((_, index) => (
         <div
           key={index}
           className="absolute w-full border-b border-border/50 pointer-events-none"
-          style={{ top: `${(index / 18) * 100}%`, height: "1px" }}
+          style={{
+            top: `${(index / visibleHours.length) * 100}%`,
+            height: "1px",
+          }}
         />
       ))}
 
@@ -391,14 +442,35 @@ function DayColumn({ day, entries, categories, onEditEntry }: DayColumnProps) {
 }
 
 function CurrentTimeIndicator() {
-  const now = new Date();
-  const currentHour = now.getHours() + now.getMinutes() / 60;
+  const hiddenHours = useStore(timeFilterStore, (state) => state.hiddenHours);
+  const visibleHours = useMemo(() => {
+    return Array.from({ length: 24 }, (_, i) => i).filter(
+      (hour) => !hiddenHours.includes(hour)
+    );
+  }, [hiddenHours]);
 
-  if (currentHour < 5 || currentHour > 23) {
+  const now = new Date();
+  const currentHourWithMinutes = now.getHours() + now.getMinutes() / 60;
+
+  const currentHour = Math.floor(currentHourWithMinutes);
+  if (hiddenHours.includes(currentHour)) {
     return null;
   }
 
-  const top = ((currentHour - 5) / 18) * 100;
+  const getHourPosition = (hourWithMinutes: number) => {
+    let position = 0;
+    for (let i = 0; i < visibleHours.length; i++) {
+      const visibleHour = visibleHours[i];
+      if (hourWithMinutes <= visibleHour + 1) {
+        return i + (hourWithMinutes - visibleHour);
+      }
+      position = i + 1;
+    }
+    return position;
+  };
+
+  const position = getHourPosition(currentHourWithMinutes);
+  const top = (position / visibleHours.length) * 100;
 
   return (
     <div

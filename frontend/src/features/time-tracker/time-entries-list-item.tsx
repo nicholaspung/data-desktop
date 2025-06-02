@@ -1,11 +1,12 @@
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, AlertTriangle, Clock as ClockIcon } from "lucide-react";
+import { Edit, AlertTriangle, Clock as ClockIcon, Play } from "lucide-react";
 import { formatTimeString } from "@/lib/time-utils";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { cn } from "@/lib/utils";
 import { Metric } from "@/store/experiment-definitions";
+import { startTimer } from "./time-tracker-store";
 
 interface TimeEntryListItemProps {
   entry: TimeEntry;
@@ -33,6 +34,14 @@ export default function TimeEntryListItem({
       metric.active &&
       metric.name.toLowerCase() === entry.description.toLowerCase()
   );
+
+  const handleStartTimer = () => {
+    startTimer(
+      entry.description,
+      entry.category_id,
+      entry.tags || ""
+    );
+  };
 
   return (
     <div
@@ -93,6 +102,10 @@ export default function TimeEntryListItem({
         </div>
 
         <div className="flex gap-1">
+          <Button variant="ghost" size="sm" onClick={handleStartTimer}>
+            <Play className="h-4 w-4" />
+          </Button>
+          
           <Button variant="ghost" size="sm" onClick={onEdit}>
             <Edit className="h-4 w-4" />
           </Button>

@@ -218,7 +218,7 @@ export default function AutocompleteInput({
         {showSuggestions && finalOptions.length > 0 && (
           <div
             ref={suggestionsRef}
-            className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto"
+            className="absolute top-full left-0 z-50 mt-1 bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto min-w-full w-max max-w-[500px]"
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
               {value.length > 0 ? "Search results" : "Recent entries"}
@@ -254,7 +254,7 @@ export default function AutocompleteInput({
         )}
 
         {showSuggestions && finalOptions.length === 0 && value.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground">
+          <div className="absolute top-full left-0 z-50 mt-1 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground min-w-full w-max max-w-[500px]">
             {emptyMessage}
           </div>
         )}

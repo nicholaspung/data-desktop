@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -25,9 +25,24 @@ import {
 } from "recharts";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import { timeFilterStore, filterTimeEntries } from "@/store/time-filter-store";
+import { Button } from "@/components/ui/button";
+import { Calendar, CalendarDays as CalendarIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 interface TimeEntriesSummaryProps {
   isLoading: boolean;
+}
+
+interface DateRange {
+  from: Date;
+  to: Date;
 }
 
 interface CategorySummary {
@@ -54,8 +69,31 @@ const formatHoursAndMinutes = (minutes: number) => {
 export default function TimeEntriesSummary({
   isLoading,
 }: TimeEntriesSummaryProps) {
-  const entries = useStore(dataStore, (state) => state.time_entries);
+  const rawEntries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
+  const hiddenHours = useStore(timeFilterStore, (state) => state.hiddenHours);
+
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = now.getDay();
+    startOfWeek.setDate(now.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return { from: startOfWeek, to: endOfWeek };
+  });
+
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  const entries = useMemo(() => {
+    const filtered = filterTimeEntries(rawEntries, hiddenHours);
+
+    return filtered;
+  }, [rawEntries, hiddenHours]);
 
   const todaySummary = useMemo(() => {
     const today = formatDateString(new Date());
@@ -67,43 +105,23 @@ export default function TimeEntriesSummary({
     return calculateCategorySummaries(todayEntries, categories);
   }, [entries, categories]);
 
-  const weekSummary = useMemo(() => {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    const day = now.getDay();
-    startOfWeek.setDate(now.getDate() - day);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const weekEntries = entries.filter((entry) => {
+  const dateRangeSummary = useMemo(() => {
+    const rangeEntries = entries.filter((entry) => {
       const entryDate = new Date(entry.start_time);
-      return entryDate >= startOfWeek && entryDate <= endOfWeek;
+      return entryDate >= dateRange.from && entryDate <= dateRange.to;
     });
 
-    return calculateCategorySummaries(weekEntries, categories);
-  }, [entries, categories]);
+    return calculateCategorySummaries(rangeEntries, categories);
+  }, [entries, categories, dateRange]);
 
   const tagSummary = useMemo(() => {
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    const day = now.getDay();
-    startOfWeek.setDate(now.getDate() - day);
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    const weekEntries = entries.filter((entry) => {
+    const rangeEntries = entries.filter((entry) => {
       const entryDate = new Date(entry.start_time);
-      return entryDate >= startOfWeek && entryDate <= endOfWeek;
+      return entryDate >= dateRange.from && entryDate <= dateRange.to;
     });
 
-    return calculateTagSummaries(weekEntries);
-  }, [entries]);
+    return calculateTagSummaries(rangeEntries);
+  }, [entries, dateRange]);
 
   const todayUntrackedTime = useMemo(() => {
     const now = new Date();
@@ -111,10 +129,27 @@ export default function TimeEntriesSummary({
     today.setHours(0, 0, 0, 0);
 
     const totalMinutesInDay = 24 * 60;
-
     const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
+    const baseAvailableMinutes = Math.min(
+      totalMinutesInDay,
+      elapsedMinutesToday
+    );
 
-    const availableMinutes = Math.min(totalMinutesInDay, elapsedMinutesToday);
+    const hiddenMinutesToday = hiddenHours.reduce((total, hour) => {
+      if (
+        hour < now.getHours() ||
+        (hour === now.getHours() && now.getMinutes() > 0)
+      ) {
+        const hiddenHourStart = hour * 60;
+        const hiddenHourEnd = Math.min((hour + 1) * 60, elapsedMinutesToday);
+        if (hiddenHourEnd > hiddenHourStart) {
+          total += hiddenHourEnd - hiddenHourStart;
+        }
+      }
+      return total;
+    }, 0);
+
+    const availableMinutes = baseAvailableMinutes - hiddenMinutesToday;
 
     const untrackedMinutes = Math.max(
       0,
@@ -129,22 +164,53 @@ export default function TimeEntriesSummary({
           ? (todaySummary.totalMinutes / availableMinutes) * 100
           : 0,
     };
-  }, [todaySummary.totalMinutes]);
+  }, [todaySummary.totalMinutes, hiddenHours]);
 
-  const weekUntrackedTime = useMemo(() => {
+  const dateRangeUntrackedTime = useMemo(() => {
     const now = new Date();
-    const today = now.getDay();
+    let totalAvailableMinutes = 0;
+    let totalHiddenMinutes = 0;
 
-    const fullDaysSinceStartOfWeek = today;
-    const minutesInFullDays = fullDaysSinceStartOfWeek * 24 * 60;
+    const currentDate = new Date(dateRange.from);
+    while (currentDate <= dateRange.to) {
+      const isToday = formatDateString(currentDate) === formatDateString(now);
+      const isFuture = currentDate > now;
 
-    const currentDayMinutes = now.getHours() * 60 + now.getMinutes();
+      if (isFuture) {
+        // Do nothing
+      } else if (isToday) {
+        const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
+        totalAvailableMinutes += elapsedMinutesToday;
 
-    const availableMinutes = minutesInFullDays + currentDayMinutes;
+        const hiddenMinutesToday = hiddenHours.reduce((total, hour) => {
+          if (
+            hour < now.getHours() ||
+            (hour === now.getHours() && now.getMinutes() > 0)
+          ) {
+            const hiddenHourStart = hour * 60;
+            const hiddenHourEnd = Math.min(
+              (hour + 1) * 60,
+              elapsedMinutesToday
+            );
+            if (hiddenHourEnd > hiddenHourStart) {
+              total += hiddenHourEnd - hiddenHourStart;
+            }
+          }
+          return total;
+        }, 0);
+        totalHiddenMinutes += hiddenMinutesToday;
+      } else {
+        totalAvailableMinutes += 24 * 60;
+        totalHiddenMinutes += hiddenHours.length * 60;
+      }
 
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    const availableMinutes = totalAvailableMinutes - totalHiddenMinutes;
     const untrackedMinutes = Math.max(
       0,
-      availableMinutes - weekSummary.totalMinutes
+      availableMinutes - dateRangeSummary.totalMinutes
     );
 
     return {
@@ -152,23 +218,21 @@ export default function TimeEntriesSummary({
       availableMinutes,
       percentageTracked:
         availableMinutes > 0
-          ? (weekSummary.totalMinutes / availableMinutes) * 100
+          ? (dateRangeSummary.totalMinutes / availableMinutes) * 100
           : 0,
     };
-  }, [weekSummary.totalMinutes]);
+  }, [dateRangeSummary.totalMinutes, hiddenHours, dateRange]);
 
   const dailyTotals = useMemo(() => {
     const now = new Date();
-    const startOfWeek = new Date(now);
-    const day = now.getDay();
-    startOfWeek.setDate(now.getDate() - day);
-    startOfWeek.setHours(0, 0, 0, 0);
-
     const dailyData = [];
 
-    for (let i = 0; i < 7; i++) {
-      const currentDay = new Date(startOfWeek);
-      currentDay.setDate(startOfWeek.getDate() + i);
+    const timeDiff = dateRange.to.getTime() - dateRange.from.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    for (let i = 0; i <= daysDiff; i++) {
+      const currentDay = new Date(dateRange.from);
+      currentDay.setDate(dateRange.from.getDate() + i);
       const dateString = formatDateString(currentDay);
 
       const dayEntries = entries.filter(
@@ -188,9 +252,28 @@ export default function TimeEntriesSummary({
       if (currentDay > now) {
         availableMinutes = 0;
       } else if (formatDateString(currentDay) === formatDateString(now)) {
-        availableMinutes = now.getHours() * 60 + now.getMinutes();
+        const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
+
+        const hiddenMinutesToday = hiddenHours.reduce((total, hour) => {
+          if (
+            hour < now.getHours() ||
+            (hour === now.getHours() && now.getMinutes() > 0)
+          ) {
+            const hiddenHourStart = hour * 60;
+            const hiddenHourEnd = Math.min(
+              (hour + 1) * 60,
+              elapsedMinutesToday
+            );
+            if (hiddenHourEnd > hiddenHourStart) {
+              total += hiddenHourEnd - hiddenHourStart;
+            }
+          }
+          return total;
+        }, 0);
+        availableMinutes = elapsedMinutesToday - hiddenMinutesToday;
       } else {
-        availableMinutes = minutesInFullDay;
+        const hiddenMinutesInDay = hiddenHours.length * 60;
+        availableMinutes = minutesInFullDay - hiddenMinutesInDay;
       }
 
       untrackedMinutes = Math.max(0, availableMinutes - totalMinutes);
@@ -205,7 +288,7 @@ export default function TimeEntriesSummary({
     }
 
     return dailyData;
-  }, [entries]);
+  }, [entries, hiddenHours, dateRange]);
 
   if (isLoading) {
     return (
@@ -360,7 +443,7 @@ export default function TimeEntriesSummary({
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              This Week's Summary
+              Date Range Summary
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -369,17 +452,17 @@ export default function TimeEntriesSummary({
                 <div className="flex justify-between items-center mb-2">
                   <div>
                     <div className="text-3xl font-bold">
-                      {formatHoursAndMinutes(weekSummary.totalMinutes)}
+                      {formatHoursAndMinutes(dateRangeSummary.totalMinutes)}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Total time tracked this week
+                      Total time tracked in range
                     </div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-xl font-semibold text-muted-foreground">
                       {formatHoursAndMinutes(
-                        weekUntrackedTime.untrackedMinutes
+                        dateRangeUntrackedTime.untrackedMinutes
                       )}
                     </div>
                     <div className="text-sm text-muted-foreground flex items-center justify-end gap-1">
@@ -394,14 +477,14 @@ export default function TimeEntriesSummary({
                   <div
                     className="h-full bg-green-500 rounded-full"
                     style={{
-                      width: `${Math.min(100, weekUntrackedTime.percentageTracked)}%`,
+                      width: `${Math.min(100, dateRangeUntrackedTime.percentageTracked)}%`,
                     }}
                   ></div>
                 </div>
 
                 <div className="mt-4 space-y-4">
-                  {weekSummary.categories.length > 0 ? (
-                    weekSummary.categories.map((cat) => (
+                  {dateRangeSummary.categories.length > 0 ? (
+                    dateRangeSummary.categories.map((cat) => (
                       <div
                         key={cat.id}
                         className="flex justify-between items-center"
@@ -423,28 +506,28 @@ export default function TimeEntriesSummary({
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      No time entries for this week
+                      No time entries for selected range
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="h-40">
-                {weekSummary.categories.length > 0 ||
-                weekUntrackedTime.untrackedMinutes > 0 ? (
+                {dateRangeSummary.categories.length > 0 ||
+                dateRangeUntrackedTime.untrackedMinutes > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPreChart>
                       <Pie
                         data={[
-                          ...weekSummary.categories,
-                          ...(weekUntrackedTime.untrackedMinutes > 0
+                          ...dateRangeSummary.categories,
+                          ...(dateRangeUntrackedTime.untrackedMinutes > 0
                             ? [
                                 {
                                   id: "untracked",
                                   name: "Untracked",
                                   color: "#e5e7eb",
                                   totalMinutes:
-                                    weekUntrackedTime.untrackedMinutes,
+                                    dateRangeUntrackedTime.untrackedMinutes,
                                   percentageOfTotal: 0,
                                 },
                               ]
@@ -459,8 +542,8 @@ export default function TimeEntriesSummary({
                         paddingAngle={2}
                       >
                         {[
-                          ...weekSummary.categories,
-                          ...(weekUntrackedTime.untrackedMinutes > 0
+                          ...dateRangeSummary.categories,
+                          ...(dateRangeUntrackedTime.untrackedMinutes > 0
                             ? [
                                 {
                                   id: "untracked",
@@ -489,6 +572,65 @@ export default function TimeEntriesSummary({
           </CardContent>
         </Card>
       </div>
+
+      {/* Date Range Selector */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span className="text-sm font-medium">Date Range:</span>
+            </div>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-[300px] justify-start text-left font-normal",
+                    !dateRange && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {dateRange.from.toLocaleDateString()} -{" "}
+                        {dateRange.to.toLocaleDateString()}
+                      </>
+                    ) : (
+                      dateRange.from.toLocaleDateString()
+                    )
+                  ) : (
+                    "Pick a date range"
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={{
+                    from: dateRange.from,
+                    to: dateRange.to,
+                  }}
+                  onSelect={(range) => {
+                    if (range?.from && range?.to) {
+                      const from = new Date(range.from);
+                      from.setHours(0, 0, 0, 0);
+                      const to = new Date(range.to);
+                      to.setHours(23, 59, 59, 999);
+                      setDateRange({ from, to });
+                      setIsCalendarOpen(false);
+                    }
+                  }}
+                  numberOfMonths={2}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Daily activity chart */}
       <Card>
@@ -551,7 +693,7 @@ export default function TimeEntriesSummary({
                 <div className="text-center">
                   <BarChart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    No time entries for this week
+                    No time entries for selected range
                   </p>
                 </div>
               </div>
@@ -561,8 +703,12 @@ export default function TimeEntriesSummary({
       </Card>
 
       {/* Category breakdown by day - advanced chart for detailed analysis */}
-      {weekSummary.totalMinutes > 0 && (
-        <CategoryDailyBreakdown entries={entries} categories={categories} />
+      {dateRangeSummary.totalMinutes > 0 && (
+        <CategoryDailyBreakdown
+          entries={entries}
+          categories={categories}
+          dateRange={dateRange}
+        />
       )}
 
       {/* Tag summary for the week */}
@@ -570,7 +716,7 @@ export default function TimeEntriesSummary({
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
             <Tag className="h-5 w-5" />
-            Weekly Tags Summary
+            Tags Summary
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -582,11 +728,11 @@ export default function TimeEntriesSummary({
                     {tagSummary.tags.length}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    Tags used this week
+                    Tags used in range
                   </div>
                 </div>
                 <div className="text-xl font-semibold">
-                  {formatHoursAndMinutes(weekSummary.totalMinutes)}
+                  {formatHoursAndMinutes(dateRangeSummary.totalMinutes)}
                 </div>
               </div>
 
@@ -612,7 +758,7 @@ export default function TimeEntriesSummary({
                   ))
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    No tags used this week
+                    No tags used in selected range
                   </div>
                 )}
               </div>
@@ -715,11 +861,6 @@ function calculateCategorySummaries(
 }
 
 function calculateTagSummaries(entries: TimeEntry[]) {
-  let totalMinutes = 0;
-  entries.forEach((entry) => {
-    totalMinutes += entry.duration_minutes;
-  });
-
   const tagsMap = new Map<string, TagSummary>();
 
   const tagColors = [
@@ -753,25 +894,43 @@ function calculateTagSummaries(entries: TimeEntry[]) {
     const minutesPerTag = entry.duration_minutes / entryTags.length;
 
     entryTags.forEach((tagName) => {
+      if (
+        tagName === "pomodoro" ||
+        tagName === "overlap-fix" ||
+        tagName === "pomodoro-break"
+      ) {
+        return;
+      }
+
       if (tagsMap.has(tagName)) {
         const tagData = tagsMap.get(tagName)!;
-        const newTotal = tagData.totalMinutes + minutesPerTag;
         tagsMap.set(tagName, {
           ...tagData,
-          totalMinutes: newTotal,
-          percentageOfTotal: totalMinutes ? (newTotal / totalMinutes) * 100 : 0,
+          totalMinutes: tagData.totalMinutes + minutesPerTag,
         });
       } else {
         const colorIndex = tagsMap.size % tagColors.length;
         tagsMap.set(tagName, {
           name: tagName,
           totalMinutes: minutesPerTag,
-          percentageOfTotal: totalMinutes
-            ? (minutesPerTag / totalMinutes) * 100
-            : 0,
+          percentageOfTotal: 0,
           color: tagColors[colorIndex],
         });
       }
+    });
+  });
+
+  const totalTagMinutes = Array.from(tagsMap.values()).reduce(
+    (total, tag) => total + tag.totalMinutes,
+    0
+  );
+
+  tagsMap.forEach((tag, tagName) => {
+    tagsMap.set(tagName, {
+      ...tag,
+      percentageOfTotal: totalTagMinutes
+        ? (tag.totalMinutes / totalTagMinutes) * 100
+        : 0,
     });
   });
 
@@ -780,7 +939,7 @@ function calculateTagSummaries(entries: TimeEntry[]) {
   );
 
   return {
-    totalMinutes,
+    totalMinutes: totalTagMinutes,
     tags: tagsArray,
   };
 }
@@ -788,20 +947,22 @@ function calculateTagSummaries(entries: TimeEntry[]) {
 interface CategoryDailyBreakdownProps {
   entries: TimeEntry[];
   categories: TimeCategory[];
+  dateRange: DateRange;
 }
 
 function CategoryDailyBreakdown({
   entries,
   categories,
+  dateRange,
 }: CategoryDailyBreakdownProps) {
+  const hiddenHours = useStore(timeFilterStore, (state) => state.hiddenHours);
+
   const chartData = useMemo(() => {
     const now = new Date();
-    const startOfWeek = new Date(now);
-    const day = now.getDay();
-    startOfWeek.setDate(now.getDate() - day);
-    startOfWeek.setHours(0, 0, 0, 0);
-
     const dailyData = [];
+
+    const timeDiff = dateRange.to.getTime() - dateRange.from.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
     const categoryColorMap = new Map<string, string>();
     categories.forEach((cat) => {
@@ -810,9 +971,9 @@ function CategoryDailyBreakdown({
     categoryColorMap.set("uncategorized", "#94a3b8");
     categoryColorMap.set("untracked", "#e5e7eb");
 
-    for (let i = 0; i < 7; i++) {
-      const currentDay = new Date(startOfWeek);
-      currentDay.setDate(startOfWeek.getDate() + i);
+    for (let i = 0; i <= daysDiff; i++) {
+      const currentDay = new Date(dateRange.from);
+      currentDay.setDate(dateRange.from.getDate() + i);
       const dateString = formatDateString(currentDay);
 
       const dayEntries = entries.filter(
@@ -841,9 +1002,28 @@ function CategoryDailyBreakdown({
       if (currentDay > now) {
         availableMinutes = 0;
       } else if (formatDateString(currentDay) === formatDateString(now)) {
-        availableMinutes = now.getHours() * 60 + now.getMinutes();
+        const elapsedMinutesToday = now.getHours() * 60 + now.getMinutes();
+
+        const hiddenMinutesToday = hiddenHours.reduce((total, hour) => {
+          if (
+            hour < now.getHours() ||
+            (hour === now.getHours() && now.getMinutes() > 0)
+          ) {
+            const hiddenHourStart = hour * 60;
+            const hiddenHourEnd = Math.min(
+              (hour + 1) * 60,
+              elapsedMinutesToday
+            );
+            if (hiddenHourEnd > hiddenHourStart) {
+              total += hiddenHourEnd - hiddenHourStart;
+            }
+          }
+          return total;
+        }, 0);
+        availableMinutes = elapsedMinutesToday - hiddenMinutesToday;
       } else {
-        availableMinutes = minutesInFullDay;
+        const hiddenMinutesInDay = hiddenHours.length * 60;
+        availableMinutes = minutesInFullDay - hiddenMinutesInDay;
       }
 
       let totalTracked = 0;
@@ -865,7 +1045,7 @@ function CategoryDailyBreakdown({
         { id: "untracked", name: "Untracked", color: "#e5e7eb" },
       ],
     };
-  }, [entries, categories]);
+  }, [entries, categories, hiddenHours, dateRange]);
 
   return (
     <Card>

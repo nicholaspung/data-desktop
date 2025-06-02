@@ -40,21 +40,31 @@ export default function TagInput({
       });
     }
 
-    const selectedTags = value
+    const allTags = value
       .split(",")
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    const availableTags = Array.from(tagsSet)
-      .filter((tag) => !selectedTags.includes(tag))
-      .sort()
-      .map((tag) => ({
-        id: tag,
-        label: tag,
-      }));
+    const isTypingNewTag = !value.trim().endsWith(",") && value.trim() !== "";
+    const selectedTags = isTypingNewTag ? allTags.slice(0, -1) : allTags;
 
-    return availableTags;
-  }, [generalData, value]);
+    const currentTypingTag = isTypingNewTag ? allTags[allTags.length - 1] : "";
+
+    let availableTags = Array.from(tagsSet)
+      .filter((tag) => !selectedTags.includes(tag))
+      .sort();
+
+    if (currentTypingTag) {
+      availableTags = availableTags.filter((tag) =>
+        tag.toLowerCase().includes(currentTypingTag.toLowerCase())
+      );
+    }
+
+    return availableTags.map((tag) => ({
+      id: tag,
+      label: tag,
+    }));
+  }, [generalData, value, generalDataTagField]);
 
   const handleTagsChange = (tagInput: string) => {
     onChange(tagInput);

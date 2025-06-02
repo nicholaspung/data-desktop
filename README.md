@@ -42,10 +42,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 
-- add a way in the backend to make a field unique
-- add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations?
-- add a way to save files (maybe for sure make it into a different table in SQLite?)
-
 - low priority bug: in daily tracker view, if a user modifies a number input metric, it visually showsthe old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
 - low priority bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
@@ -66,8 +62,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- bug: time tracking time entries list shows the date before for the added time entries
-- bug: in time tracking summary for tags, if there's multiple tags for a time entry, i.e. 3, it gets split as if it were 3 time entries, make it so that the time entry summary tag percentage is split by the number of tags 
 - bug: when creating a new metric without a schedule, it toggles on the "scheduled" for some reason
 - bug: when creating a new metric without a goal, it creates the metric with a goal for some reason
 - feature: for metric calendar, only show logs that were completed/modified
@@ -77,6 +71,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- bug: time tracking time entries list shows the date before for the added time entries [DONE 2025-06-01]
+- bug: in time tracking summary for tags, if there's multiple tags for a time entry, i.e. 3, it gets split as if it were 3 time entries, make it so that the time entry summary tag percentage is split by the number of tags [DONE 2025-06-01]
+- add a way in the backend to make a field unique [DONE]
+- add a way to cascade the deleting of a relation, i.e. if a bottom level relation is going to be deleted, do you also want to delete the lower level relations? [DONE]
+- add a way to save files (maybe for sure make it into a different table in SQLite?) [DONE]
 - Fix form component [DONE 2025-03-31]
 - Add edit/delete buttons to view data component [DONE 2025-03-31]
 - When you add an item, have it open up the view data tab [DONE 2025-03-31]

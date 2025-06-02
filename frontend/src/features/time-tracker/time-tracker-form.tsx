@@ -49,6 +49,12 @@ function TimeTrackerForm({
   onDataChange,
   inPopover = false,
 }: TimeTrackerFormProps) {
+  const formatDateForInput = (date: Date): string => {
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+  };
+
   const timeEntries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
@@ -75,7 +81,11 @@ function TimeTrackerForm({
   const [tags, setTags] = useState(
     globalTimerData.isActive ? globalTimerData.tags : ""
   );
-  const [startTime, setStartTime] = useState("");
+  const [startTime, setStartTime] = useState(
+    globalTimerData.isActive && globalTimerData.startTime
+      ? formatDateForInput(globalTimerData.startTime)
+      : formatDateForInput(new Date())
+  );
   const [endTime, setEndTime] = useState("");
 
   const [timerStartTime, setTimerStartTime] = useState<Date | null>(
@@ -136,7 +146,7 @@ function TimeTrackerForm({
     setDescription("");
     setCategoryId(undefined);
     setTags("");
-    setStartTime("");
+    setStartTime(formatDateForInput(new Date()));
     setEndTime("");
     setTimerStartTime(null);
     setElapsedSeconds(0);
@@ -147,8 +157,19 @@ function TimeTrackerForm({
   }, [globalTimerData.isActive]);
 
   useEffect(() => {
-    if (addState === "manual" && !startTime) {
-      setCurrentTimeAsStartTime();
+    if (addState === "manual") {
+      if (!startTime) {
+        setCurrentTimeAsStartTime();
+      }
+      if (!endTime) {
+        const now = new Date();
+        const formattedNow = formatDateForInput(now);
+        setEndTime(formattedNow);
+      }
+    } else if (addState === "timer") {
+      if (!startTime) {
+        setCurrentTimeAsStartTime();
+      }
     }
   }, [addState]);
 
@@ -202,7 +223,7 @@ function TimeTrackerForm({
         const secondsDiff = Math.floor(
           (now.getTime() - timerStartTime.getTime()) / 1000
         );
-        setElapsedSeconds(secondsDiff);
+        setElapsedSeconds(Math.max(0, secondsDiff));
       }, 1000);
 
       return () => {
@@ -213,24 +234,40 @@ function TimeTrackerForm({
     }
   }, [isTimerActive, timerStartTime]);
 
-  const handleStartTimer = () => {
-    const now = new Date();
-    const formattedNow = formatDateForInput(now);
-    setStartTime(formattedNow);
+  const handleStartTimeChange = (newStartTime: string) => {
+    setStartTime(newStartTime);
 
-    startGlobalTimer(description, categoryId, tags);
+    if (isTimerActive && newStartTime) {
+      const newStartDate = new Date(newStartTime);
+      setTimerStartTime(newStartDate);
+
+      const now = new Date();
+      const secondsDiff = Math.floor(
+        (now.getTime() - newStartDate.getTime()) / 1000
+      );
+      setElapsedSeconds(Math.max(0, secondsDiff));
+    }
   };
 
-  const formatDateForInput = (date: Date): string => {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16);
+  const handleStartTimer = () => {
+    let actualStartTime: Date;
+
+    if (startTime) {
+      actualStartTime = new Date(startTime);
+    } else {
+      actualStartTime = new Date();
+      const formattedNow = formatDateForInput(actualStartTime);
+      setStartTime(formattedNow);
+    }
+
+    setTimerStartTime(actualStartTime);
+    startGlobalTimer(description, categoryId, tags, actualStartTime);
   };
 
   const setCurrentTimeAsStartTime = () => {
     const now = new Date();
     const formattedNow = formatDateForInput(now);
-    setStartTime(formattedNow);
+    handleStartTimeChange(formattedNow);
   };
 
   const setLastEntryEndTimeAsStartTime = () => {
@@ -246,8 +283,13 @@ function TimeTrackerForm({
     const lastEntry = sortedEntries[0];
     if (lastEntry && lastEntry.end_time) {
       const lastEndTime = new Date(lastEntry.end_time);
-      const formattedTime = formatDateForInput(lastEndTime);
-      setStartTime(formattedTime);
+
+      const bufferSeconds = Math.floor(Math.random() * 31) + 30;
+      const bufferedStartTime = new Date(
+        lastEndTime.getTime() + bufferSeconds * 1000
+      );
+      const formattedTime = formatDateForInput(bufferedStartTime);
+      handleStartTimeChange(formattedTime);
     }
   };
 
@@ -676,7 +718,7 @@ function TimeTrackerForm({
                   id="start-time"
                   type="datetime-local"
                   value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  onChange={(e) => handleStartTimeChange(e.target.value)}
                   className="h-10 focus:ring-2 focus:ring-primary/50"
                 />
               </div>

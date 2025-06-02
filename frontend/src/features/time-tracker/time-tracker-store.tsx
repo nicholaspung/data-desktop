@@ -23,12 +23,13 @@ export const timeTrackerStore = new Store<TimeTrackerStoreState>(initialState);
 export const startTimer = (
   description: string,
   categoryId?: string,
-  tags: string = ""
+  tags: string = "",
+  startTime?: Date
 ) => {
   timeTrackerStore.setState((prevState) => ({
     ...prevState,
     isTimerActive: true,
-    startTime: new Date(),
+    startTime: startTime || new Date(),
     description,
     categoryId,
     tags,
