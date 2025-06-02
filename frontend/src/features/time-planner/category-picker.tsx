@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { CategoryWithColor } from "./types";
 
 interface CategoryPickerProps {
-  onSelectCategory: (id: string, name: string, color: string) => void;
+  onSelectCategory: (name: string, color: string) => void;
   selectedCategory: string;
 }
 
@@ -76,13 +76,13 @@ export default function CategoryPicker({
     setNewCategoryColor("#3b82f6");
     setIsAddingNewCategory(false);
 
-    onSelectCategory(newCategory.id, newCategory.name, newCategory.color);
+    onSelectCategory(newCategory.name, newCategory.color);
   };
 
   const handleSelectCategory = (categoryId: string) => {
     const category = categories.find((cat) => cat.id === categoryId);
     if (category) {
-      onSelectCategory(category.id, category.name, category.color);
+      onSelectCategory(category.name, category.color);
     }
   };
 

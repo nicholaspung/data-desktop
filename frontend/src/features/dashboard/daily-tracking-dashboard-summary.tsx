@@ -22,7 +22,11 @@ import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
 
-export default function DailyTrackingDashboardSummary() {
+export default function DailyTrackingDashboardSummary({
+  showPrivateMetrics = true,
+}: {
+  showPrivateMetrics?: boolean;
+}) {
   const [todayLogs, setTodayLogs] = useState<Record<string, DailyLog>>({});
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -59,7 +63,10 @@ export default function DailyTrackingDashboardSummary() {
     setIsLoading(true);
 
     const activeMetrics = allMetrics.filter(
-      (metric) => metric.active && !(metric.schedule_days || []).includes(-1)
+      (metric) => 
+        metric.active && 
+        !(metric.schedule_days || []).includes(-1) &&
+        (!metric.private || showPrivateMetrics)
     );
 
     setMetrics(activeMetrics);
@@ -78,7 +85,7 @@ export default function DailyTrackingDashboardSummary() {
 
     setTodayLogs(logsMap);
     setIsLoading(false);
-  }, [allMetrics, dailyLogs]);
+  }, [allMetrics, dailyLogs, showPrivateMetrics]);
 
   const toggleMetric = async (metric: Metric) => {
     if (metric.type !== "boolean") {

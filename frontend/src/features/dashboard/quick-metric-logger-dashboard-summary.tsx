@@ -19,7 +19,11 @@ import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
 
-export default function QuickMetricLoggerDashboardSummary() {
+export default function QuickMetricLoggerDashboardSummary({
+  showPrivateMetrics = true,
+}: {
+  showPrivateMetrics?: boolean;
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(
     startOfDay(new Date())
@@ -89,6 +93,8 @@ export default function QuickMetricLoggerDashboardSummary() {
 
   const filteredMetrics = metrics.filter((metric: Metric) => {
     if (!metric.active) return false;
+
+    if (metric.private && !showPrivateMetrics) return false;
 
     if (metric.type === "boolean" && isMetricLogged(metric.id)) return false;
 

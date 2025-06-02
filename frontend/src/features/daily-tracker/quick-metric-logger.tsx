@@ -1,7 +1,15 @@
 import { useState, useMemo, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
-import { format, startOfDay } from "date-fns";
-import { Search, Filter, EyeOff } from "lucide-react";
+import { format, startOfDay, addDays, subDays } from "date-fns";
+import {
+  Search,
+  Filter,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +35,7 @@ import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
+import { usePin } from "@/hooks/usePin";
 
 const QuickMetricLogger = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,11 +52,14 @@ const QuickMetricLogger = () => {
     return today;
   });
   const [selectedTab, setSelectedTab] = useState("all");
+  const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
+
+  const { isUnlocked, openPinEntryDialog } = usePin();
 
   useEffect(() => {
     setSelectedDate(startOfDay(selectedDate));
@@ -66,10 +78,18 @@ const QuickMetricLogger = () => {
     return Array.from(categorySet).sort();
   }, [metrics, categories]);
 
+  const filteredDailyLogs = useMemo(() => {
+    return dailyLogs.filter((log: DailyLog) => {
+      return metrics.some((metric: Metric) => metric.id === log.metric_id);
+    });
+  }, [dailyLogs, metrics]);
+
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
       if (!showInactive && !metric.active) return false;
       if (showInactive && metric.active) return false;
+
+      if (metric.private && (!isUnlocked || !showPrivateMetrics)) return false;
 
       const matchesSearch =
         !searchTerm ||
@@ -93,12 +113,16 @@ const QuickMetricLogger = () => {
 
       const matchesGoals =
         !showOnlyWithGoals ||
-        (metric.goal_value !== undefined && metric.goal_type !== undefined);
+        (metric.goal_value !== undefined &&
+          metric.goal_value !== null &&
+          metric.goal_type !== undefined &&
+          metric.goal_type !== null &&
+          !(metric.goal_value === "" || metric.goal_value === "0"));
 
       if (showOnlyIncomplete) {
         const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
-        const todayLog = dailyLogs.find((log: DailyLog) => {
+        const todayLog = filteredDailyLogs.find((log: DailyLog) => {
           const logDate = new Date(log.date);
           const logDateString = format(logDate, "yyyy-MM-dd");
           return (
@@ -157,10 +181,12 @@ const QuickMetricLogger = () => {
     showOnlyIncomplete,
     showOnlyWithGoals,
     showInactive,
-    dailyLogs,
+    filteredDailyLogs,
     selectedDate,
     showCalendarTracked,
     categories,
+    isUnlocked,
+    showPrivateMetrics,
   ]);
 
   const groupedMetrics = useMemo(() => {
@@ -188,7 +214,7 @@ const QuickMetricLogger = () => {
   const isMetricCompleted = (metric: Metric) => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
-    const todayLog = dailyLogs.find((log: DailyLog) => {
+    const todayLog = filteredDailyLogs.find((log: DailyLog) => {
       let logDate;
       if (typeof log.date === "string") {
         logDate = new Date(log.date);
@@ -223,7 +249,7 @@ const QuickMetricLogger = () => {
 
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
-    const todayLog = dailyLogs.find((log: DailyLog) => {
+    const todayLog = filteredDailyLogs.find((log: DailyLog) => {
       const logDate = new Date(log.date);
       const logDateString = format(logDate, "yyyy-MM-dd");
       return (
@@ -316,6 +342,14 @@ const QuickMetricLogger = () => {
 
   const hasNoMetrics = metrics.length === 0;
 
+  const navigateDate = (direction: "prev" | "next") => {
+    if (direction === "prev") {
+      setSelectedDate(subDays(selectedDate, 1));
+    } else {
+      setSelectedDate(addDays(selectedDate, 1));
+    }
+  };
+
   const filterMetricsByTab = (metrics: Record<string, Metric[]>) => {
     if (selectedTab === "all") {
       return metrics;
@@ -357,18 +391,36 @@ const QuickMetricLogger = () => {
           />
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <Input
-            type="date"
-            value={format(selectedDate, "yyyy-MM-dd")}
-            onChange={(e) => {
-              if (e.target.value) {
-                const newDate = new Date(e.target.value + "T00:00:00");
-                newDate.setHours(0, 0, 0, 0);
-                setSelectedDate(newDate);
-              }
-            }}
-            className="w-40"
-          />
+          <div className="flex items-center gap-1">
+            <Button
+              onClick={() => navigateDate("prev")}
+              size="sm"
+              variant="outline"
+              className="px-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Input
+              type="date"
+              value={format(selectedDate, "yyyy-MM-dd")}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const newDate = new Date(e.target.value + "T00:00:00");
+                  newDate.setHours(0, 0, 0, 0);
+                  setSelectedDate(newDate);
+                }
+              }}
+              className="w-40"
+            />
+            <Button
+              onClick={() => navigateDate("next")}
+              size="sm"
+              variant="outline"
+              className="px-2"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             onClick={() => {
               const newDate = new Date();
@@ -455,13 +507,36 @@ const QuickMetricLogger = () => {
                     { id: "nottracked", label: "Not Tracked", content: null },
                   ]}
                   defaultTabId={showCalendarTracked}
-                  onChange={(v) => setShowCalendarTracked(v as any)}
+                  onChange={(v) =>
+                    setShowCalendarTracked(
+                      v as "all" | "tracked" | "nottracked"
+                    )
+                  }
                   className="w-full"
                   tabsListClassName="w-full grid grid-cols-3"
                 />
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button
+            onClick={() => {
+              if (!isUnlocked) {
+                openPinEntryDialog();
+              } else {
+                setShowPrivateMetrics(!showPrivateMetrics);
+              }
+            }}
+            size="sm"
+            variant={showPrivateMetrics ? "default" : "outline"}
+            className={!isUnlocked ? "opacity-75" : ""}
+          >
+            {isUnlocked && showPrivateMetrics ? (
+              <Unlock className="h-4 w-4 mr-2" />
+            ) : (
+              <Lock className="h-4 w-4 mr-2" />
+            )}
+            Private
+          </Button>
         </div>
       </div>
 
@@ -510,6 +585,8 @@ const QuickMetricLogger = () => {
             toggleMetricCompletion={toggleMetricCompletion}
             toggleCalendarTracking={toggleCalendarTracking}
             handleDeleteMetric={handleDeleteMetric}
+            selectedDate={selectedDate}
+            dailyLogs={filteredDailyLogs}
           />
         </div>
       )}

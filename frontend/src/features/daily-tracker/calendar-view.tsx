@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { DailyLog, Metric } from "@/store/experiment-definitions";
@@ -27,6 +27,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Calendar, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+function isDefaultValue(metric: Metric, logValue: string): boolean {
+  try {
+    const parsedValue = JSON.parse(logValue);
+    const defaultValue = JSON.parse(metric.default_value);
+    return parsedValue === defaultValue;
+  } catch {
+    return logValue === metric.default_value;
+  }
+}
+
 interface CalendarViewProps {
   selectedMetrics: string[];
 }
@@ -40,21 +50,30 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
   const [showDialog, setShowDialog] = useState(false);
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
-  const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
+  const allDailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
+  
+  const dailyLogs = useMemo(() => {
+    return allDailyLogs.filter((log: DailyLog) => {
+      return metrics.some((metric: Metric) => metric.id === log.metric_id);
+    });
+  }, [allDailyLogs, metrics]);
 
   useEffect(() => {
     if (selectedDate) {
       const logs = dailyLogs.filter((log: DailyLog) => {
         const logDate = new Date(log.date);
+        const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
           isSameDay(logDate, selectedDate) &&
-          selectedMetrics.includes(log.metric_id)
+          selectedMetrics.includes(log.metric_id) &&
+          metric &&
+          !isDefaultValue(metric, log.value)
         );
       });
       setSelectedDateMetrics(logs);
       setShowDialog(true);
     }
-  }, [selectedDate, selectedMetrics, dailyLogs]);
+  }, [selectedDate, selectedMetrics, dailyLogs, metrics]);
 
   const prevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -111,15 +130,23 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
       const dateString = format(day, "yyyy-MM-dd");
       const hasLogs = dailyLogs.some((log) => {
         const logDate = new Date(log.date);
+        const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
-          isSameDay(logDate, day) && selectedMetrics.includes(log.metric_id)
+          isSameDay(logDate, day) && 
+          selectedMetrics.includes(log.metric_id) &&
+          metric &&
+          !isDefaultValue(metric, log.value)
         );
       });
 
       const metricsForDay = dailyLogs.filter((log) => {
         const logDate = new Date(log.date);
+        const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
-          isSameDay(logDate, day) && selectedMetrics.includes(log.metric_id)
+          isSameDay(logDate, day) && 
+          selectedMetrics.includes(log.metric_id) &&
+          metric &&
+          !isDefaultValue(metric, log.value)
         );
       });
 

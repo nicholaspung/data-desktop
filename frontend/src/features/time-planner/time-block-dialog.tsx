@@ -21,6 +21,7 @@ interface TimeBlockDialogProps {
   onSave: (block: TimeBlock) => void;
   timeBlock?: TimeBlock;
   selectedDay?: number | null;
+  existingBlocks?: TimeBlock[];
 }
 
 const generateTimeOptions = () => {
@@ -48,6 +49,7 @@ export default function TimeBlockDialog({
   onSave,
   timeBlock,
   selectedDay,
+  existingBlocks = [],
 }: TimeBlockDialogProps) {
   const isEditMode = !!timeBlock;
 
@@ -63,7 +65,10 @@ export default function TimeBlockDialog({
     title?: string;
     category?: string;
     time?: string;
+    overlap?: string;
   }>({});
+
+  const [showOverlapWarning, setShowOverlapWarning] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -89,8 +94,33 @@ export default function TimeBlockDialog({
     }
   }, [open, timeBlock, isEditMode, selectedDay]);
 
+  const checkForOverlaps = (newBlock: TimeBlock) => {
+    const blocksOverlap = (block1: TimeBlock, block2: TimeBlock): boolean => {
+      const start1 = block1.startHour * 60 + block1.startMinute;
+      const end1 = block1.endHour * 60 + block1.endMinute;
+      const start2 = block2.startHour * 60 + block2.startMinute;
+      const end2 = block2.endHour * 60 + block2.endMinute;
+
+      return start1 < end2 && start2 < end1;
+    };
+
+    const conflictingBlocks = existingBlocks.filter(
+      (block) =>
+        block.id !== newBlock.id &&
+        block.dayOfWeek === newBlock.dayOfWeek &&
+        blocksOverlap(block, newBlock)
+    );
+
+    return conflictingBlocks;
+  };
+
   const validateForm = () => {
-    const newErrors: { title?: string; category?: string; time?: string } = {};
+    const newErrors: {
+      title?: string;
+      category?: string;
+      time?: string;
+      overlap?: string;
+    } = {};
 
     if (!title.trim()) {
       newErrors.title = "Title is required";
@@ -110,8 +140,39 @@ export default function TimeBlockDialog({
       newErrors.time = "End time must be after start time";
     }
 
+    const tempBlock: TimeBlock = {
+      id: isEditMode && timeBlock ? timeBlock.id : "temp",
+      title,
+      description,
+      dayOfWeek,
+      startHour,
+      startMinute,
+      endHour,
+      endMinute,
+      category,
+      color,
+    };
+
+    const conflictingBlocks = checkForOverlaps(tempBlock);
+    if (conflictingBlocks.length > 0) {
+      const conflictTitles = conflictingBlocks
+        .map((block) => block.title)
+        .join(", ");
+      newErrors.overlap = `This time block overlaps with: ${conflictTitles}`;
+      setShowOverlapWarning(true);
+    } else {
+      setShowOverlapWarning(false);
+    }
+
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    return (
+      Object.keys({ ...newErrors, overlap: undefined }).filter(
+        (key) =>
+          key !== "overlap" &&
+          newErrors[key as keyof typeof newErrors] !== undefined
+      ).length === 0
+    );
   };
 
   const handleSubmit = () => {
@@ -332,6 +393,34 @@ export default function TimeBlockDialog({
                 rows={3}
               />
             </div>
+
+            {showOverlapWarning && errors.overlap && (
+              <div className="p-3 border border-yellow-200 bg-yellow-50 rounded-md">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="h-5 w-5 text-yellow-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Overlap Warning
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>{errors.overlap}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </ScrollArea>
       }

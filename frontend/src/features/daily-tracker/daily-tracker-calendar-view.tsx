@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Beaker, Calendar, Target, Loader2 } from "lucide-react";
+import { Beaker, Calendar, Target, Loader2, Lock, Unlock } from "lucide-react";
 import { isSameDay } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
@@ -23,6 +23,8 @@ import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import DailyGoalsTab from "./daily-goals-tab";
+import { usePin } from "@/hooks/usePin";
+import { Button } from "@/components/ui/button";
 
 interface MetricWithLogWithChange extends MetricWithLog {
   isScheduledForToday: boolean;
@@ -38,6 +40,7 @@ export default function DailyTrackerCalendarView() {
   const [showNotes, setShowNotes] = useState(false);
   const [showUnscheduled, setShowUnscheduled] = useState(false);
   const [showOnlyWithGoals, setShowOnlyWithGoals] = useState(false);
+  const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
 
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
   const experimentMetricsData =
@@ -50,6 +53,8 @@ export default function DailyTrackerCalendarView() {
   const dailyLogsLoading =
     useStore(loadingStore, (state) => state.daily_logs) || false;
 
+  const { isUnlocked, openPinEntryDialog } = usePin();
+
   useEffect(() => {
     if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
@@ -60,6 +65,8 @@ export default function DailyTrackerCalendarView() {
     metricsData,
     showUnscheduled,
     showOnlyWithGoals,
+    isUnlocked,
+    showPrivateMetrics,
   ]);
 
   const processLogsForSelectedDate = (
@@ -72,7 +79,12 @@ export default function DailyTrackerCalendarView() {
     });
 
     const metricsWithLogsArray = metricsData
-      .filter((metric) => metric.active)
+      .filter((metric) => {
+        if (!metric.active) return false;
+        if (metric.private && (!isUnlocked || !showPrivateMetrics))
+          return false;
+        return true;
+      })
       .map((metric) => {
         const scheduleDays = parseScheduleDays(metric.schedule_days);
         const doNotShow = metric.schedule_days
@@ -122,7 +134,11 @@ export default function DailyTrackerCalendarView() {
         const scheduledFilter = showUnscheduled || metric.isScheduledForToday;
         const goalFilter =
           !showOnlyWithGoals ||
-          (metric.goal_value !== undefined && metric.goal_type !== undefined);
+          (metric.goal_value !== undefined &&
+            metric.goal_value !== null &&
+            metric.goal_type !== undefined &&
+            metric.goal_type !== null &&
+            !(metric.goal_value === "" || metric.goal_value === "0"));
 
         return scheduledFilter && goalFilter;
       });
@@ -290,7 +306,7 @@ export default function DailyTrackerCalendarView() {
                   <span>Has Goals</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 flex-wrap">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     checked={showNotes}
@@ -314,6 +330,25 @@ export default function DailyTrackerCalendarView() {
                   />
                   <Label>Show only metrics with goals</Label>
                 </div>
+                <Button
+                  onClick={() => {
+                    if (!isUnlocked) {
+                      openPinEntryDialog();
+                    } else {
+                      setShowPrivateMetrics(!showPrivateMetrics);
+                    }
+                  }}
+                  size="sm"
+                  variant={showPrivateMetrics ? "default" : "outline"}
+                  className={!isUnlocked ? "opacity-75" : ""}
+                >
+                  {isUnlocked && showPrivateMetrics ? (
+                    <Unlock className="h-4 w-4 mr-2" />
+                  ) : (
+                    <Lock className="h-4 w-4 mr-2" />
+                  )}
+                  Private
+                </Button>
               </div>
             </div>
             <Separator />

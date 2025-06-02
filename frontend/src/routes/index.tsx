@@ -6,6 +6,8 @@ import {
   PieChart,
   RefreshCcw,
   Power,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
@@ -27,6 +29,7 @@ import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashb
 import settingsStore from "@/store/settings-store";
 import TodoDashboardSummary from "@/features/todos/todo-dashboard-summary";
 import PeopleCRMDashboardSummary from "@/features/dashboard/people-crm-dashboard-summary";
+import { usePin } from "@/hooks/usePin";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -35,6 +38,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const [summaries, setSummaries] = useState<DatasetSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
 
   const dashboardDataLoaded = useStore(
     appStateStore,
@@ -42,6 +46,7 @@ function Home() {
   );
   const setDashboardDataLoaded = appStateStore.state.setDashboardDataLoaded;
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const { isUnlocked, openPinEntryDialog } = usePin();
 
   useEffect(() => {
     if (!dashboardDataLoaded) {
@@ -140,22 +145,55 @@ function Home() {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={isLoading}
-          onClick={handleRefresh}
-        >
-          <RefreshCcw className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              if (!isUnlocked) {
+                openPinEntryDialog();
+              } else {
+                setShowPrivateMetrics(!showPrivateMetrics);
+              }
+            }}
+            size="sm"
+            variant={showPrivateMetrics ? "default" : "outline"}
+            className={!isUnlocked ? "opacity-75" : ""}
+          >
+            {isUnlocked && showPrivateMetrics ? (
+              <Unlock className="h-4 w-4 mr-2" />
+            ) : (
+              <Lock className="h-4 w-4 mr-2" />
+            )}
+            Private
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+            onClick={handleRefresh}
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2">
-        {visibleRoutes["/calendar"] && <DailyTrackingDashboardSummary />}
-        {visibleRoutes["/todos"] && <TodoDashboardSummary />}
+        {visibleRoutes["/calendar"] && (
+          <DailyTrackingDashboardSummary
+            showPrivateMetrics={isUnlocked && showPrivateMetrics}
+          />
+        )}
+        {visibleRoutes["/todos"] && (
+          <TodoDashboardSummary
+            showPrivateMetrics={isUnlocked && showPrivateMetrics}
+          />
+        )}
         {visibleRoutes["/time-tracker"] && <TimeTrackerDashboardSummary />}
         {visibleRoutes["/experiments"] && <ExperimentDashboardSummary />}
-        {visibleRoutes["/metric"] && <QuickMetricLoggerDashboardSummary />}
+        {visibleRoutes["/metric"] && (
+          <QuickMetricLoggerDashboardSummary
+            showPrivateMetrics={isUnlocked && showPrivateMetrics}
+          />
+        )}
         {visibleRoutes["/journaling"] && <JournalingDashboardSummary />}
         {visibleRoutes["/people-crm"] && <PeopleCRMDashboardSummary />}
         {visibleRoutes["/dexa"] && <DEXADashboardSummary />}

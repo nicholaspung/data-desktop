@@ -42,7 +42,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 
-- low priority bug: in daily tracker view, if a user modifies a number input metric, it visually showsthe old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value
+- find a better solution when using wails to do dev/prod for the databases
+- if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store
+
 - low priority bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 - low priority bug: make the markdown CSS better looking
@@ -50,27 +52,27 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
 - fixed the <div> cannot be a child of <p> error from React
 - refactor out icons used in application into lib.ts
+- refactor application to use reusable components
 
 - add a "taking current supplements" section
+- add a finance tracking section
+- add a bodyweight tracking section
 - add a body measurement section following the FitNotes application import
 
 - add a "version history note" to the application
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
-- find a better solution when using wails to do dev/prod for the databases
-- if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store
-
 ### IN PROGRESS
-
-- bug: when creating a new metric without a schedule, it toggles on the "scheduled" for some reason
-- bug: when creating a new metric without a goal, it creates the metric with a goal for some reason
-- feature: for metric calendar, only show logs that were completed/modified
 
 - add a people crm feature
 - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
 
 ### DONE
 
+- low priority bug: in daily tracker view, if a user modifies a number input metric, it visually showsthe old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value [DONE 2025-06-01]
+- bug: when creating a new metric without a goal, it creates the metric with a goal for some reason [DONE 2025-06-01]
+- feature: for metric calendar, only show logs that were completed/modified [DONE 2025-06-01]
+- bug: in daily metrics, if a metric is a number, when you edit the number it will edit, but it will still say 0 - if you edit it again, it will create a new daily log [DONE 2025-06-01]
 - bug: time tracking time entries list shows the date before for the added time entries [DONE 2025-06-01]
 - bug: in time tracking summary for tags, if there's multiple tags for a time entry, i.e. 3, it gets split as if it were 3 time entries, make it so that the time entry summary tag percentage is split by the number of tags [DONE 2025-06-01]
 - add a way in the backend to make a field unique [DONE]

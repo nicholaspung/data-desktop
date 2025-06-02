@@ -8,7 +8,11 @@ import { isPast, isToday, differenceInDays } from "date-fns";
 import { getSortedTodos } from "./todo-utils";
 import TodoListItem from "./todo-list-item";
 
-export default function TodoDashboardSummary() {
+export default function TodoDashboardSummary({
+  showPrivateMetrics = true,
+}: {
+  showPrivateMetrics?: boolean;
+}) {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
   const [todayTodos, setTodayTodos] = useState<Todo[]>([]);
   const [upcomingTodos, setUpcomingTodos] = useState<Todo[]>([]);
@@ -22,7 +26,11 @@ export default function TodoDashboardSummary() {
       return;
     }
 
-    const sortedTodos = getSortedTodos(todos);
+    const filteredTodos = todos.filter(
+      (todo) => !todo.private || showPrivateMetrics
+    );
+
+    const sortedTodos = getSortedTodos(filteredTodos);
 
     const today = sortedTodos.filter(
       (todo) => !todo.isComplete && isToday(new Date(todo.deadline))
@@ -43,7 +51,7 @@ export default function TodoDashboardSummary() {
         !isToday(new Date(todo.deadline))
     );
     setOverdueTodos(overdue);
-  }, [todos]);
+  }, [todos, showPrivateMetrics]);
 
   return (
     <ReusableSummary

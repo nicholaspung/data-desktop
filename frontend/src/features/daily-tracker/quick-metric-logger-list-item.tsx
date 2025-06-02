@@ -20,7 +20,7 @@ import {
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import MetricStreakDisplay from "./metric-streak-display";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
@@ -58,6 +58,26 @@ export default function QuickMetricLoggerListItem({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteValue, setNoteValue] = useState<string>("");
   const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
+
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const debouncedSave = (metric: Metric, value: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      saveEditedValue(metric, value);
+    }, 1000);
+  };
 
   const getMetricValue = (metric: Metric): string => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -118,9 +138,10 @@ export default function QuickMetricLoggerListItem({
     setNoteValue(getMetricNote(metric));
   };
 
-  const saveEditedValue = async (metric: Metric) => {
+  const saveEditedValue = async (metric: Metric, valueToSave?: string) => {
     if (editingMetricId !== metric.id) return;
 
+    const valueToUse = valueToSave ?? editValue;
     setIsSubmitting(true);
 
     const todayLog = getMetricLog(metric);
@@ -132,9 +153,9 @@ export default function QuickMetricLoggerListItem({
         metric.type === "percentage" ||
         metric.type === "time"
       ) {
-        parsedValue = parseFloat(editValue) || 0;
+        parsedValue = parseFloat(valueToUse) || 0;
       } else {
-        parsedValue = editValue;
+        parsedValue = valueToUse;
       }
 
       if (todayLog) {
@@ -225,6 +246,9 @@ export default function QuickMetricLoggerListItem({
   };
 
   const cancelEditing = () => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
     setEditingMetricId(null);
     setEditValue("");
   };
@@ -251,7 +275,11 @@ export default function QuickMetricLoggerListItem({
               -1
             );
             const hasGoal =
-              metric.goal_value !== undefined && metric.goal_type !== undefined;
+              metric.goal_value !== undefined && 
+              metric.goal_value !== null && 
+              metric.goal_type !== undefined && 
+              metric.goal_type !== null &&
+              !(metric.goal_value === "" || metric.goal_value === "0");
             const isEditing = editingMetricId === metric.id;
             const isEditingNote = editingNoteId === metric.id;
             const hasNote = getMetricNote(metric).length > 0;
@@ -324,61 +352,109 @@ export default function QuickMetricLoggerListItem({
                     {metric.type !== "boolean" && (
                       <div className="mt-2">
                         {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type={
-                                metric.type === "number" ||
-                                metric.type === "percentage" ||
-                                metric.type === "time"
-                                  ? "number"
-                                  : "text"
-                              }
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              className="h-8 max-w-[150px]"
-                              disabled={isSubmitting}
-                              autoFocus
-                            />
-                            <div className="flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => saveEditedValue(metric)}
-                                disabled={isSubmitting}
-                                className="h-8 w-8"
-                              >
-                                {isSubmitting ? (
-                                  <div className="animate-spin">
-                                    <Save className="h-4 w-4" />
-                                  </div>
-                                ) : (
-                                  <Save className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={cancelEditing}
-                                disabled={isSubmitting}
-                                className="h-8 w-8"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
+                          <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-xs font-medium text-primary">
+                                    Editing Value
+                                  </span>
+                                  {metric.unit && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ({metric.unit})
+                                    </span>
+                                  )}
+                                </div>
+                                <Input
+                                  type={
+                                    metric.type === "number" ||
+                                    metric.type === "percentage" ||
+                                    metric.type === "time"
+                                      ? "number"
+                                      : "text"
+                                  }
+                                  value={editValue}
+                                  onChange={(e) => {
+                                    setEditValue(e.target.value);
+                                    if (metric.type === "text") {
+                                      debouncedSave(metric, e.target.value);
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    if (metric.type === "text" && debounceTimeoutRef.current) {
+                                      clearTimeout(debounceTimeoutRef.current);
+                                      saveEditedValue(metric);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      if (debounceTimeoutRef.current) {
+                                        clearTimeout(debounceTimeoutRef.current);
+                                      }
+                                      saveEditedValue(metric);
+                                    } else if (e.key === "Escape") {
+                                      cancelEditing();
+                                    }
+                                  }}
+                                  className="h-10 text-lg font-semibold text-center"
+                                  disabled={isSubmitting}
+                                  autoFocus
+                                  placeholder="Enter value..."
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => saveEditedValue(metric)}
+                                  disabled={isSubmitting}
+                                  className="h-8 px-3"
+                                >
+                                  {isSubmitting ? (
+                                    <div className="animate-spin mr-1">
+                                      <Save className="h-3 w-3" />
+                                    </div>
+                                  ) : (
+                                    <Save className="h-3 w-3 mr-1" />
+                                  )}
+                                  Save
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={cancelEditing}
+                                  disabled={isSubmitting}
+                                  className="h-8 px-3"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <span>
-                              Current Value:{" "}
-                              <strong>{getMetricValue(metric)}</strong>
-                              {metric.unit ? ` ${metric.unit}` : ""}
-                            </span>
+                          <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
+                            <div className="flex items-center gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground mb-1">Current Value</span>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-2xl font-bold text-primary">
+                                    {getMetricValue(metric)}
+                                  </span>
+                                  {(metric.unit || metric.type === "percentage") && (
+                                    <span className="text-sm font-medium text-muted-foreground">
+                                      {metric.type === "percentage" ? "%" : metric.unit}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
                               onClick={() => startEditing(metric)}
                               disabled={!metric.active}
-                              className="h-6 px-2"
+                              className="h-8 px-3 hover:bg-primary hover:text-primary-foreground transition-colors"
                             >
                               <Edit className="h-3 w-3 mr-1" />
                               Edit

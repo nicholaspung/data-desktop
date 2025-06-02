@@ -95,13 +95,13 @@ export default function NumberValueInput({
   };
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center bg-background border rounded-lg p-1 shadow-sm hover:shadow-md transition-shadow">
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleDecrement}
         disabled={disabled || isSaving || parseFloat(inputValue) <= min}
-        className="px-2"
+        className="px-2 h-8 hover:bg-muted rounded-md transition-colors"
       >
         <Minus className="h-3 w-3" />
       </Button>
@@ -115,27 +115,29 @@ export default function NumberValueInput({
           max={max}
           step={step}
           disabled={disabled || isSaving}
-          className="h-8 text-center"
+          className="h-10 text-center border-0 focus:ring-0 focus:border-0 text-lg font-semibold bg-transparent"
         />
         {isSaving && (
-          <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
-            <div className="h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
+          <div className="absolute inset-0 bg-background/70 flex items-center justify-center rounded">
+            <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
           </div>
         )}
       </div>
 
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleIncrement}
         disabled={disabled || isSaving || parseFloat(inputValue) >= max}
-        className="px-2"
+        className="px-2 h-8 hover:bg-muted rounded-md transition-colors"
       >
         <Plus className="h-3 w-3" />
       </Button>
 
       {unit && (
-        <span className="ml-2 text-sm text-muted-foreground">{unit}</span>
+        <div className="ml-2 px-2 py-1 bg-muted/50 rounded text-xs font-medium text-muted-foreground">
+          {unit}
+        </div>
       )}
     </div>
   );

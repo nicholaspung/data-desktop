@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MoreHorizontal, PlusCircle, AlertTriangle } from "lucide-react";
 import { TimeBlock } from "./types";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ interface TimePlannerDayProps {
   onEdit: (oldBlock: TimeBlock, newBlock: TimeBlock) => void;
   onDelete: (block: TimeBlock) => void;
   onAddBlock?: (dayIndex: number) => void;
+  allTimeBlocks?: TimeBlock[];
 }
 
 export default function TimePlannerDay({
@@ -24,6 +25,7 @@ export default function TimePlannerDay({
   onEdit,
   onDelete,
   onAddBlock,
+  allTimeBlocks = [],
 }: TimePlannerDayProps) {
   const [editingBlock, setEditingBlock] = useState<TimeBlock | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -35,6 +37,30 @@ export default function TimePlannerDay({
 
     return a.startMinute - b.startMinute;
   });
+
+  const blocksOverlap = (block1: TimeBlock, block2: TimeBlock): boolean => {
+    const start1 = block1.startHour * 60 + block1.startMinute;
+    const end1 = block1.endHour * 60 + block1.endMinute;
+    const start2 = block2.startHour * 60 + block2.startMinute;
+    const end2 = block2.endHour * 60 + block2.endMinute;
+
+    return start1 < end2 && start2 < end1;
+  };
+
+  const overlappingBlocks = useMemo(() => {
+    const overlaps = new Set<string>();
+
+    for (let i = 0; i < sortedBlocks.length; i++) {
+      for (let j = i + 1; j < sortedBlocks.length; j++) {
+        if (blocksOverlap(sortedBlocks[i], sortedBlocks[j])) {
+          overlaps.add(sortedBlocks[i].id);
+          overlaps.add(sortedBlocks[j].id);
+        }
+      }
+    }
+
+    return overlaps;
+  }, [sortedBlocks]);
 
   const handleOpenEdit = (block: TimeBlock) => {
     setEditingBlock(block);
@@ -101,19 +127,37 @@ export default function TimePlannerDay({
         {sortedBlocks.map((block) => (
           <div
             key={block.id}
-            className="p-3 hover:bg-accent/50 transition-colors relative"
+            className={`p-3 hover:bg-accent/50 transition-colors relative ${
+              overlappingBlocks.has(block.id)
+                ? "bg-red-50 ring-1 ring-red-200"
+                : ""
+            }`}
             style={{
-              borderLeft: `4px solid ${block.color || "#888888"}`,
+              borderLeft: `4px solid ${
+                overlappingBlocks.has(block.id)
+                  ? "#ef4444"
+                  : block.color || "#888888"
+              }`,
             }}
           >
             <div className="flex justify-between items-start">
               <div className="space-y-1 pr-8">
-                <h4 className="font-medium text-sm">{block.title}</h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-medium text-sm">{block.title}</h4>
+                  {overlappingBlocks.has(block.id) && (
+                    <AlertTriangle className="h-3 w-3 text-red-500" />
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {formatTime(block.startHour, block.startMinute)} -{" "}
                   {formatTime(block.endHour, block.endMinute)}
                   <span className="mx-1">•</span>
                   {getDurationText(block)}
+                  {overlappingBlocks.has(block.id) && (
+                    <span className="text-red-600 font-medium ml-2">
+                      • Overlap detected
+                    </span>
+                  )}
                 </div>
                 {block.description && (
                   <p className="text-xs mt-1">{block.description}</p>
@@ -155,6 +199,7 @@ export default function TimePlannerDay({
         onOpenChange={setEditDialogOpen}
         onSave={handleUpdateBlock}
         timeBlock={editingBlock || undefined}
+        existingBlocks={allTimeBlocks}
       />
     </>
   );

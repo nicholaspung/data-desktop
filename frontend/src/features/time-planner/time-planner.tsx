@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus } from "lucide-react";
 import TimePlannerDay from "./time-planner-day";
 import TimePlannerSummary from "./time-planner-summary";
-import { TimeBlock } from "./types";
+import { TimeBlock, TimeBlockConfig } from "./types";
 import TimePlannerConfigManager from "./time-planner-config-manager";
 import TimeBlockDialog from "./time-block-dialog";
 
@@ -12,22 +12,25 @@ export default function TimePlanner() {
   const [timeBlocks, setTimeBlocks] = useState<Record<number, TimeBlock[]>>({});
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-
-  useEffect(() => {
-    const savedBlocks = localStorage.getItem("weeklyTimeBlocks");
-    if (savedBlocks) {
-      try {
-        const parsed = JSON.parse(savedBlocks);
-        setTimeBlocks(parsed);
-      } catch (error) {
-        console.error("Failed to parse saved time blocks:", error);
-      }
-    }
-  }, []);
+  const [currentConfig, setCurrentConfig] = useState<TimeBlockConfig | null>(
+    null
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const savedConfigBlocks = useRef<Record<number, TimeBlock[]>>({});
 
   useEffect(() => {
     localStorage.setItem("weeklyTimeBlocks", JSON.stringify(timeBlocks));
   }, [timeBlocks]);
+
+  useEffect(() => {
+    if (currentConfig) {
+      const currentBlocksJson = JSON.stringify(timeBlocks);
+      const savedBlocksJson = JSON.stringify(savedConfigBlocks.current);
+      setHasUnsavedChanges(currentBlocksJson !== savedBlocksJson);
+    } else {
+      setHasUnsavedChanges(Object.keys(timeBlocks).length > 0);
+    }
+  }, [timeBlocks, currentConfig]);
 
   const daysOfWeek = [
     { name: "Monday", index: 1 },
@@ -96,27 +99,53 @@ export default function TimePlanner() {
 
   const handleLoadConfig = (blocks: Record<number, TimeBlock[]>) => {
     setTimeBlocks(blocks);
+    savedConfigBlocks.current = JSON.parse(JSON.stringify(blocks));
+  };
+
+  const handleConfigLoaded = (config: TimeBlockConfig | null) => {
+    setCurrentConfig(config);
+    if (config) {
+      savedConfigBlocks.current = JSON.parse(JSON.stringify(timeBlocks));
+    } else {
+      savedConfigBlocks.current = {};
+    }
+    setHasUnsavedChanges(false);
+  };
+
+  const handleWipeConfig = () => {
+    setTimeBlocks({});
+    setCurrentConfig(null);
+    savedConfigBlocks.current = {};
+    setHasUnsavedChanges(false);
   };
 
   return (
     <div className="space-y-4 mt-4">
-      <div className="flex justify-between items-center">
+      {/* Header - responsive layout */}
+      <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0">
         <h2 className="text-xl font-bold">Weekly Schedule</h2>
-        <TimePlannerConfigManager
-          currentTimeBlocks={timeBlocks}
-          onLoadConfig={handleLoadConfig}
-        />
+        <div className="w-full lg:w-auto">
+          <TimePlannerConfigManager
+            currentTimeBlocks={timeBlocks}
+            onLoadConfig={handleLoadConfig}
+            onWipeConfig={handleWipeConfig}
+            hasUnsavedChanges={hasUnsavedChanges}
+            currentConfig={currentConfig}
+            onConfigLoaded={handleConfigLoaded}
+          />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+      {/* Days grid - responsive breakpoints */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
         {daysOfWeek.map((day) => (
           <Card key={day.index} className="border">
             <CardHeader className="p-3">
               <CardTitle className="text-sm font-medium">
                 <div className="flex justify-between items-center">
-                  <span>{day.name}</span>
+                  <span className="truncate">{day.name}</span>
                   <button
-                    className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-accent"
+                    className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-accent flex-shrink-0 ml-2"
                     onClick={() => {
                       setSelectedDay(day.index);
                       setAddDialogOpen(true);
@@ -128,7 +157,7 @@ export default function TimePlanner() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[300px]">
+              <ScrollArea className="h-[250px] sm:h-[300px] lg:h-[350px]">
                 <TimePlannerDay
                   dayIndex={day.index}
                   timeBlocks={getBlocksForDay(day.index)}
@@ -138,6 +167,7 @@ export default function TimePlanner() {
                     setSelectedDay(dayIndex);
                     setAddDialogOpen(true);
                   }}
+                  allTimeBlocks={getAllBlocksForWeek()}
                 />
               </ScrollArea>
             </CardContent>
@@ -152,6 +182,7 @@ export default function TimePlanner() {
         onOpenChange={setAddDialogOpen}
         onSave={handleAddTimeBlock}
         selectedDay={selectedDay}
+        existingBlocks={getAllBlocksForWeek()}
       />
     </div>
   );

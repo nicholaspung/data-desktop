@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Save, FolderOpen } from "lucide-react";
+import { Save, FolderOpen, Plus } from "lucide-react";
 import { TimeBlock, TimeBlockConfig } from "./types";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Input } from "@/components/ui/input";
@@ -8,25 +8,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { ConfirmChangesDialog } from "@/components/reusable/confirm-changes-dialog";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 
 interface TimePlannerConfigManagerProps {
   currentTimeBlocks: Record<number, TimeBlock[]>;
   onLoadConfig: (blocks: Record<number, TimeBlock[]>) => void;
+  onWipeConfig: () => void;
+  hasUnsavedChanges: boolean;
+  currentConfig: TimeBlockConfig | null;
+  onConfigLoaded: (config: TimeBlockConfig | null) => void;
 }
 
 export default function TimePlannerConfigManager({
   currentTimeBlocks,
   onLoadConfig,
+  onWipeConfig,
+  hasUnsavedChanges,
+  currentConfig,
+  onConfigLoaded,
 }: TimePlannerConfigManagerProps) {
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveNewDialogOpen, setSaveNewDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [configToLoad, setConfigToLoad] = useState<TimeBlockConfig | null>(
@@ -41,6 +43,38 @@ export default function TimePlannerConfigManager({
     loadSavedConfigs();
   }, []);
 
+  useEffect(() => {
+    const autoLoadLastConfig = async () => {
+      if (
+        savedConfigs.length > 0 &&
+        !currentConfig &&
+        Object.keys(currentTimeBlocks).length === 0
+      ) {
+        const lastConfigId = localStorage.getItem("lastLoadedConfigId");
+        if (lastConfigId) {
+          const lastConfig = savedConfigs.find(
+            (config) => config.id === lastConfigId
+          );
+          if (lastConfig) {
+            await processConfigLoad(lastConfig, false);
+            return;
+          }
+        }
+
+        const mostRecent = [...savedConfigs].sort(
+          (a, b) =>
+            new Date(b.lastModified).getTime() -
+            new Date(a.lastModified).getTime()
+        )[0];
+        if (mostRecent) {
+          await processConfigLoad(mostRecent, false);
+        }
+      }
+    };
+
+    autoLoadLastConfig();
+  }, [savedConfigs, currentConfig, currentTimeBlocks]);
+
   const loadSavedConfigs = async () => {
     setLoading(true);
     try {
@@ -54,7 +88,33 @@ export default function TimePlannerConfigManager({
     }
   };
 
-  const handleSaveConfig = async () => {
+  const handleUpdateConfig = async () => {
+    if (!currentConfig) return;
+
+    setLoading(true);
+    try {
+      const blocksArray = Object.values(currentTimeBlocks).flat();
+
+      const updatedConfig = {
+        ...currentConfig,
+        blocks: blocksArray,
+        lastModified: new Date(),
+      };
+
+      await ApiService.updateRecord(currentConfig.id, updatedConfig);
+      toast.success(`Updated "${currentConfig.name}" configuration`);
+
+      onConfigLoaded(updatedConfig as TimeBlockConfig);
+      await loadSavedConfigs();
+    } catch (error) {
+      console.error("Failed to update configuration:", error);
+      toast.error("Failed to update configuration");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveNewConfig = async () => {
     if (!newConfigName.trim()) {
       toast.error("Please enter a name for your configuration");
       return;
@@ -73,12 +133,20 @@ export default function TimePlannerConfigManager({
         blocks: blocksArray,
       };
 
-      await ApiService.addRecord("time_planner_configs", newConfig);
+      const savedConfig = await ApiService.addRecord(
+        "time_planner_configs",
+        newConfig
+      );
       toast.success("Configuration saved successfully");
-      setSaveDialogOpen(false);
+      setSaveNewDialogOpen(false);
 
       setNewConfigName("");
       setNewConfigDescription("");
+
+      if (savedConfig) {
+        onConfigLoaded(savedConfig as TimeBlockConfig);
+        localStorage.setItem("lastLoadedConfigId", savedConfig.id);
+      }
 
       await loadSavedConfigs();
     } catch (error) {
@@ -101,7 +169,10 @@ export default function TimePlannerConfigManager({
     setLoadDialogOpen(false);
   };
 
-  const processConfigLoad = (config: TimeBlockConfig) => {
+  const processConfigLoad = (
+    config: TimeBlockConfig,
+    showToast: boolean = true
+  ) => {
     loadCategories(config.blocks);
 
     const blocksByDay: Record<number, TimeBlock[]> = {};
@@ -114,7 +185,19 @@ export default function TimePlannerConfigManager({
     });
 
     onLoadConfig(blocksByDay);
-    toast.success(`Loaded configuration: ${config.name}`);
+    onConfigLoaded(config);
+    localStorage.setItem("lastLoadedConfigId", config.id);
+
+    if (showToast) {
+      toast.success(`Loaded configuration: ${config.name}`);
+    }
+  };
+
+  const handleWipeConfig = () => {
+    onWipeConfig();
+    onConfigLoaded(null);
+    localStorage.removeItem("lastLoadedConfigId");
+    toast.success("Configuration cleared");
   };
 
   const loadCategories = (blocks: TimeBlock[]) => {
@@ -182,31 +265,84 @@ export default function TimePlannerConfigManager({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            Configurations
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setSaveDialogOpen(true)}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Current Configuration
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setLoadDialogOpen(true)}>
-            <FolderOpen className="mr-2 h-4 w-4" />
-            Load Configuration
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="space-y-2">
+        {/* Configuration Status */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {currentConfig ? (
+            <span>
+              Configuration:{" "}
+              <span className="font-medium">{currentConfig.name}</span>
+              {hasUnsavedChanges && (
+                <span className="text-orange-600 ml-1">(edited)</span>
+              )}
+            </span>
+          ) : (
+            <span>No configuration loaded</span>
+          )}
+        </div>
 
-      {/* Save Dialog */}
+        {/* Buttons */}
+        <div className="flex gap-2 flex-wrap items-center">
+          {/* Update current config button - primary when there are changes */}
+          {currentConfig && (
+            <Button
+              variant={hasUnsavedChanges ? "default" : "outline"}
+              size="sm"
+              onClick={handleUpdateConfig}
+              disabled={loading || !hasUnsavedChanges}
+              className="flex-shrink-0"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">
+                Update "{currentConfig.name}"
+              </span>
+              <span className="sm:hidden">Update</span>
+            </Button>
+          )}
+
+          {/* Save as new configuration */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSaveNewDialogOpen(true)}
+            disabled={loading || Object.keys(currentTimeBlocks).length === 0}
+            className="flex-shrink-0"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Save as New</span>
+            <span className="sm:hidden">New</span>
+          </Button>
+
+          {/* Load configuration */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLoadDialogOpen(true)}
+            disabled={loading}
+            className="flex-shrink-0"
+          >
+            <FolderOpen className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Load</span>
+            <span className="sm:hidden">Load</span>
+          </Button>
+
+          {/* Wipe configuration */}
+          <ConfirmDeleteDialog
+            onConfirm={handleWipeConfig}
+            title="Clear Configuration"
+            description="This will remove all time blocks. This action cannot be undone."
+            size="sm"
+          />
+        </div>
+      </div>
+
+      {/* Save New Configuration Dialog */}
       <ReusableDialog
-        title="Save Configuration"
-        description="Save your current time blocks as a named configuration."
-        open={saveDialogOpen}
-        onOpenChange={setSaveDialogOpen}
-        onConfirm={handleSaveConfig}
+        title="Save New Configuration"
+        description="Save your current time blocks as a new named configuration."
+        open={saveNewDialogOpen}
+        onOpenChange={setSaveNewDialogOpen}
+        onConfirm={handleSaveNewConfig}
         confirmText="Save"
         showTrigger={false}
         loading={loading}

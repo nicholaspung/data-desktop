@@ -36,14 +36,58 @@ export default function DailyTrackerCalendarGrid({
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const { isUnlocked } = usePin();
 
+  const isLogMeaningful = (log: any, metric: Metric) => {
+    if (!log || !metric) return false;
+
+    try {
+      const logValue = JSON.parse(log.value);
+      const defaultValue = metric.default_value
+        ? JSON.parse(metric.default_value)
+        : null;
+
+      if (metric.type === "boolean") {
+        const hasNotes = log.notes && log.notes.trim().length > 0;
+        return logValue === true || hasNotes || logValue !== defaultValue;
+      }
+
+      if (
+        metric.type === "number" ||
+        metric.type === "percentage" ||
+        metric.type === "time"
+      ) {
+        const hasNotes = log.notes && log.notes.trim().length > 0;
+        return (
+          logValue !== defaultValue ||
+          hasNotes ||
+          (logValue !== 0 && defaultValue === 0)
+        );
+      }
+
+      return logValue !== defaultValue && logValue !== "" && logValue !== null;
+    } catch (e) {
+      console.error("Error parsing log value:", e);
+      const defaultValue = metric.default_value || "";
+      const hasNotes = log.notes && log.notes.trim().length > 0;
+      return (
+        hasNotes ||
+        (log.value !== defaultValue && log.value !== "" && log.value !== "0")
+      );
+    }
+  };
+
   const getDayMetricsStats = (day: Date) => {
     const logsForDay = dailyLogsData.filter((log: any) => {
       const logDate = new Date(log.date);
       return isSameDay(logDate, day);
     });
 
+    const meaningfulLogs = logsForDay.filter((log: any) => {
+      const metric = metricsData.find((m: any) => m.id === log.metric_id);
+      return metric && isLogMeaningful(log, metric);
+    });
+
     const loggedMetricsCount = new Set(
-      logsForDay.map((log: any) => log.metric_id)
+      meaningfulLogs.map((log: any) => log.metric_id)
     ).size;
 
     const scheduledMetrics = metricsData.filter((metric: Metric) => {
@@ -66,14 +110,27 @@ export default function DailyTrackerCalendarGrid({
     });
 
     const metricsWithGoals = scheduledMetrics.filter((metric: Metric) => {
-      return metric.goal_value !== undefined && metric.goal_type !== undefined;
+      return (
+        metric.goal_value !== undefined &&
+        metric.goal_value !== null &&
+        metric.goal_type !== undefined &&
+        metric.goal_type !== null &&
+        !(metric.goal_value === "" || metric.goal_value === "0")
+      );
     });
 
     const goalMetricsCount = metricsWithGoals.length;
 
-    const completedGoals = logsForDay.filter((log: any) => {
+    const completedGoals = meaningfulLogs.filter((log: any) => {
       const metric = metricsData.find((m: any) => m.id === log.metric_id);
-      if (!metric || !metric.goal_value || !metric.goal_type) return false;
+      if (
+        !metric ||
+        !metric.goal_value ||
+        metric.goal_value === "" ||
+        metric.goal_value === "0" ||
+        !metric.goal_type
+      )
+        return false;
 
       try {
         const logValue = JSON.parse(log.value);
@@ -109,7 +166,7 @@ export default function DailyTrackerCalendarGrid({
     const booleanMetrics = scheduledMetrics.filter(
       (m: any) => m.type === "boolean"
     );
-    const loggedBooleanMetrics = logsForDay.filter((log: any) => {
+    const loggedBooleanMetrics = meaningfulLogs.filter((log: any) => {
       const metric = scheduledMetrics.find((m: any) => m.id === log.metric_id);
       return metric && metric.type === "boolean";
     });
@@ -136,7 +193,7 @@ export default function DailyTrackerCalendarGrid({
       scheduledMetricsCount,
       activeExperiments,
       completionPercentage,
-      logsExist: logsForDay.length > 0,
+      logsExist: meaningfulLogs.length > 0,
       goalMetricsCount,
       completedGoals,
       goalCompletionPercentage,
