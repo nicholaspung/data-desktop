@@ -318,10 +318,9 @@ export default function DataForm({
           break;
         case "number":
           schemaObj[field.key] = isOptional
-            ? z.coerce.number().min(0, "Must be at least 0").optional()
+            ? z.coerce.number().optional()
             : z.coerce
-                .number({ required_error: `${field.displayName} is required` })
-                .min(0, "Must be at least 0");
+                .number({ required_error: `${field.displayName} is required` });
           break;
         case "percentage":
           schemaObj[field.key] = isOptional
@@ -804,7 +803,6 @@ export default function DataForm({
                     type="number"
                     inputMode="decimal"
                     step="any"
-                    min="0"
                     max={field.type === "percentage" ? "100" : undefined}
                     value={formField.value}
                     onChange={(e) => {
