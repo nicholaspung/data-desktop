@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Check } from "lucide-react";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { FieldDefinition } from "@/types/types";
@@ -85,6 +85,40 @@ export default function DataForm({
 
   const getAutocompleteOptions = (field: FieldDefinition) => {
     if (field.type !== "autocomplete") return [];
+
+    if (field.secondaryDisplayField) {
+      const groupedValues = new Map<string, Set<string>>();
+
+      storeData.forEach((record: any) => {
+        const primaryValue = record[field.key];
+        const secondaryValue = record[field.secondaryDisplayField!];
+
+        if (
+          primaryValue &&
+          typeof primaryValue === "string" &&
+          primaryValue.trim() !== ""
+        ) {
+          if (!groupedValues.has(primaryValue)) {
+            groupedValues.set(primaryValue, new Set());
+          }
+          if (
+            secondaryValue &&
+            typeof secondaryValue === "string" &&
+            secondaryValue.trim() !== ""
+          ) {
+            groupedValues.get(primaryValue)!.add(secondaryValue);
+          }
+        }
+      });
+
+      return Array.from(groupedValues.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([primaryValue, secondaryValues]) => ({
+          id: primaryValue,
+          label: primaryValue,
+          secondaryValue: Array.from(secondaryValues).join(", "), // Join multiple units if they exist
+        }));
+    }
 
     const existingValues = Array.from(
       new Set(
@@ -847,6 +881,24 @@ export default function DataForm({
                       id={field.key}
                       showRecentOptions={false}
                       emptyMessage="Type to add new option"
+                      renderItem={
+                        field.secondaryDisplayField
+                          ? (option) => (
+                              <div className="flex flex-row items-center gap-2">
+                                <span>{option.label}</span>
+                                {option.secondaryValue && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {option.secondaryValue}
+                                  </span>
+                                )}
+                                {option.label.toLowerCase() ===
+                                  formField.value?.toLowerCase() && (
+                                  <Check className="h-4 w-4 text-primary" />
+                                )}
+                              </div>
+                            )
+                          : undefined
+                      }
                     />
                   </FormControl>
                   {field.description && (

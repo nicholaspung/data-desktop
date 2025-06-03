@@ -31,8 +31,20 @@ export default function BloodMarkerManager() {
     )
   ).sort();
 
+  const hasUncategorizedMarkers = markers.some(
+    (marker) => !marker.category || marker.category.trim() === ""
+  );
+  if (hasUncategorizedMarkers) {
+    categories.push("Uncategorized");
+  }
+
   const filteredMarkers = selectedCategory
-    ? markers.filter((marker) => marker.category === selectedCategory)
+    ? markers.filter((marker) => {
+        if (selectedCategory === "Uncategorized") {
+          return !marker.category || marker.category.trim() === "";
+        }
+        return marker.category === selectedCategory;
+      })
     : markers;
 
   const markerOptions = filteredMarkers

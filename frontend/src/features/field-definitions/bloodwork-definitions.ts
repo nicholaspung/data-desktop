@@ -93,6 +93,8 @@ export const BLOOD_MARKERS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Category",
       description: "Category of marker (e.g., Lipids, Metabolic, etc.)",
       isSearchable: true,
+      secondaryDisplayField: "unit",
+      secondaryDisplayFieldType: "text",
     },
     {
       key: "optimal_low",

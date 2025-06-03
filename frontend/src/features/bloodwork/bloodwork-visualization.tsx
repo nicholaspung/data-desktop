@@ -115,6 +115,14 @@ const BloodworkVisualizations: React.FC = () => {
         uniqueCategories.add(marker.category);
       }
     });
+
+    const hasUncategorizedMarkers = bloodMarkers.some(
+      (marker) => !marker.category || marker.category.trim() === ""
+    );
+    if (hasUncategorizedMarkers) {
+      uniqueCategories.add("Uncategorized");
+    }
+
     return Array.from(uniqueCategories).sort();
   }, [bloodMarkers]);
 
@@ -127,7 +135,10 @@ const BloodworkVisualizations: React.FC = () => {
           marker.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesCategory =
-        selectedCategory === "all" || marker.category === selectedCategory;
+        selectedCategory === "all" ||
+        (selectedCategory === "Uncategorized"
+          ? !marker.category || marker.category.trim() === ""
+          : marker.category === selectedCategory);
 
       let matchesStatus = true;
       if (statusFilter) {
