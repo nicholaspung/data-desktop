@@ -39,6 +39,9 @@ import TagInput from "@/components/reusable/tag-input";
 import { FormJsonField } from "./json-field";
 import FileUploadField from "./file-upload-field";
 import MultipleFileUploadField from "./multiple-file-upload-field";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
+import dataStore from "@/store/data-store";
+import { useStore } from "@tanstack/react-store";
 
 export default function DataForm({
   datasetId,
@@ -77,6 +80,28 @@ export default function DataForm({
   const hasCheckedLocal = useRef(false);
 
   const storageKey = persistKey || `form_${datasetId}_data`;
+
+  const storeData = useStore(dataStore, (state) => state[datasetId] || []);
+
+  const getAutocompleteOptions = (field: FieldDefinition) => {
+    if (field.type !== "autocomplete") return [];
+
+    const existingValues = Array.from(
+      new Set(
+        storeData
+          .map((record: any) => record[field.key])
+          .filter(
+            (value: any) =>
+              value && typeof value === "string" && value.trim() !== ""
+          )
+      )
+    ).sort();
+
+    return existingValues.map((value: string) => ({
+      id: value,
+      label: value,
+    }));
+  };
 
   const loadSavedData = useCallback(() => {
     if (mode !== "add" || hasCheckedLocal.current) return null;
@@ -279,6 +304,7 @@ export default function DataForm({
         case "text":
         case "markdown":
         case "tags":
+        case "autocomplete":
           schemaObj[field.key] = isOptional
             ? z.string().optional()
             : z.string().min(1, `${field.displayName} is required`);
@@ -507,6 +533,7 @@ export default function DataForm({
       (field) => field.type === "number" || field.type === "percentage"
     ),
     text: fields.filter((field) => field.type === "text"),
+    autocomplete: fields.filter((field) => field.type === "autocomplete"),
     tags: fields.filter((field) => field.type === "tags"),
     markdown: fields.filter((field) => field.type === "markdown"),
     selectSingle: fields.filter((field) => field.type === "select-single"),
@@ -793,6 +820,42 @@ export default function DataForm({
                 <FormMessage />
               </FormItem>
             )}
+          />
+        );
+
+      case "autocomplete":
+        return (
+          <FormField
+            key={field.key}
+            control={form.control}
+            name={field.key}
+            render={({ field: formField }) => {
+              const autocompleteOptions = getAutocompleteOptions(field);
+              return (
+                <FormItem>
+                  {renderFieldLabel(field)}
+                  <FormControl>
+                    <AutocompleteInput
+                      label=""
+                      value={formField.value || ""}
+                      onChange={(value) => {
+                        formField.onChange(value);
+                        form.trigger(field.key);
+                      }}
+                      options={autocompleteOptions}
+                      placeholder={`Enter ${field.displayName.toLowerCase()}...`}
+                      id={field.key}
+                      showRecentOptions={false}
+                      emptyMessage="Type to add new option"
+                    />
+                  </FormControl>
+                  {field.description && (
+                    <FormDescription>{field.description}</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         );
 

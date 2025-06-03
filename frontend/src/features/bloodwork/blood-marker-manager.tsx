@@ -16,13 +16,26 @@ export default function BloodMarkerManager() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("add");
   const [selectedMarker, setSelectedMarker] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
   const { getDatasetFields } = useFieldDefinitions();
   const bloodMarkerFields = getDatasetFields("blood_markers");
 
   const markers = useStore(dataStore, (state) => state.blood_markers);
 
-  const markerOptions = markers
+  const categories = Array.from(
+    new Set(
+      markers
+        .map((marker) => marker.category)
+        .filter((category) => category && category.trim() !== "")
+    )
+  ).sort();
+
+  const filteredMarkers = selectedCategory
+    ? markers.filter((marker) => marker.category === selectedCategory)
+    : markers;
+
+  const markerOptions = filteredMarkers
     .map((marker) => ({
       id: marker.id,
       label: marker.name,
@@ -64,6 +77,7 @@ export default function BloodMarkerManager() {
     setOpen(newOpen);
     if (!newOpen) {
       setSelectedMarker("");
+      setSelectedCategory("");
       setTimeout(() => setActiveTab("add"), 300);
     }
   };
@@ -75,6 +89,7 @@ export default function BloodMarkerManager() {
       open={open}
       onOpenChange={handleOpenChange}
       showTrigger={true}
+      contentClassName="sm:max-w-[800px]"
       trigger={
         <Button variant="outline" className="gap-2">
           <Edit className="h-4 w-4" />
@@ -123,19 +138,41 @@ export default function BloodMarkerManager() {
                       </div>
                     ) : (
                       <>
-                        <div className="mb-6">
-                          <h3 className="text-sm font-medium mb-2">
-                            Select Blood Marker to Edit:
-                          </h3>
-                          <ReusableSelect
-                            options={markerOptions}
-                            value={selectedMarker}
-                            onChange={setSelectedMarker}
-                            title="Blood Marker"
-                            placeholder="Select a blood marker..."
-                          />
+                        <div className="mb-6 space-y-4">
+                          {categories.length > 0 && (
+                            <div>
+                              <h3 className="text-sm font-medium mb-2">
+                                Filter by Category:
+                              </h3>
+                              <ReusableSelect
+                                options={categories.map((category) => ({
+                                  id: category,
+                                  label: category,
+                                }))}
+                                value={selectedCategory}
+                                onChange={(value) => {
+                                  setSelectedCategory(value);
+                                  setSelectedMarker("");
+                                }}
+                                title="Category"
+                                placeholder="All Categories"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="text-sm font-medium mb-2">
+                              Select Blood Marker to Edit:
+                            </h3>
+                            <ReusableSelect
+                              options={markerOptions}
+                              value={selectedMarker}
+                              onChange={setSelectedMarker}
+                              title="Blood Marker"
+                              placeholder="Select a blood marker..."
+                            />
+                          </div>
                           {selectedMarker && (
-                            <div className="mt-3">
+                            <div>
                               <ConfirmDeleteDialog
                                 title="Delete Blood Marker"
                                 description="Are you sure you want to delete this blood marker? This will also delete all results associated with this marker. This action cannot be undone."

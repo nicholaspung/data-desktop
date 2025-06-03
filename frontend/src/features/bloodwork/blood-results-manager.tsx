@@ -105,6 +105,7 @@ export default function BloodResultsManager() {
       open={open}
       onOpenChange={handleOpenChange}
       showTrigger={true}
+      contentClassName="sm:max-w-[800px]"
       trigger={
         <Button variant="outline" className="gap-2">
           <Edit className="h-4 w-4" />

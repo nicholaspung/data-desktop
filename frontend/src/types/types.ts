@@ -138,7 +138,8 @@ export type FieldType =
   | "tags"
   | "json"
   | "file"
-  | "file-multiple";
+  | "file-multiple"
+  | "autocomplete";
 
 export type RelationshipDeleteBehavior =
   | "preventDeleteIfReferenced"

@@ -79,6 +79,7 @@ export default function BloodworkManager() {
       description="Add new bloodwork tests or update existing ones."
       open={open}
       onOpenChange={handleOpenChange}
+      contentClassName="sm:max-w-[800px]"
       showTrigger={true}
       trigger={
         <Button variant="outline" className="gap-2">

@@ -37,6 +37,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### TODOS
 
 - PDF reports from data
+- in bloodwork, for reports, provide a table where a user can copy/paste their "out of range" markers to be used in a LLM
+
 - create end to end test to make sure the inputs are all working correctly
 - when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
 
@@ -44,6 +46,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - find a better solution when using wails to do dev/prod for the databases
 - if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store
+
+- add a "version history note" to the application
+- create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
 - low priority bug: in daily tracker view, when you hover over a day, it still shows the incorrect data
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
@@ -53,14 +58,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - fixed the <div> cannot be a child of <p> error from React
 - refactor out icons used in application into lib.ts
 - refactor application to use reusable components
+- be able to use settings store to also load the appropriate datasets into the application
+- when a user clicks in the `index.tsx` dataset summaries, it should push them to the dataset page with that selection open
+- also update the dataset icons to the appropriate icon
 
 - add a "taking current supplements" section
 - add a finance tracking section
 - add a bodyweight tracking section
 - add a body measurement section following the FitNotes application import
-
-- add a "version history note" to the application
-- create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
 
 ### IN PROGRESS
 
@@ -69,6 +74,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in bloodwork, when adding bloodwork results, make the scrolling in blood markers the height of the scroll area + search markers input [DONE 2025-06-02]
+- in edit blood marker manager, add a way to filter selection by category [DONE 2025-06-02]
+- when editing blood marker manager, in categories, make it autocomplete from other records [DONE 2025-06-02]
+- in bloodwork test, in lab name, make it autocomplete from other records [DONE 2025-06-02]
 - low priority bug: in daily tracker view, if a user modifies a number input metric, it visually showsthe old value, replaces it with the new value, and switches back to the old value before finally going to the new updated value [DONE 2025-06-01]
 - bug: when creating a new metric without a goal, it creates the metric with a goal for some reason [DONE 2025-06-01]
 - feature: for metric calendar, only show logs that were completed/modified [DONE 2025-06-01]

@@ -29,6 +29,7 @@ import {
   getTimerData,
   startTimer as startGlobalTimer,
   stopTimer as stopGlobalTimer,
+  updateStartTime,
 } from "./time-tracker-store";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import { SelectOption } from "@/types/types";
@@ -88,9 +89,6 @@ function TimeTrackerForm({
   );
   const [endTime, setEndTime] = useState("");
 
-  const [timerStartTime, setTimerStartTime] = useState<Date | null>(
-    globalTimerData.isActive ? globalTimerData.startTime : null
-  );
   const [elapsedSeconds, setElapsedSeconds] = useState(
     globalTimerData.isActive ? globalTimerData.elapsedSeconds : 0
   );
@@ -148,7 +146,6 @@ function TimeTrackerForm({
     setTags("");
     setStartTime(formatDateForInput(new Date()));
     setEndTime("");
-    setTimerStartTime(null);
     setElapsedSeconds(0);
 
     if (globalTimerData.isActive) {
@@ -197,7 +194,6 @@ function TimeTrackerForm({
           setTags(currentState.tags);
         }
         if (currentState.startTime !== prevStateVal.startTime) {
-          setTimerStartTime(currentState.startTime);
           if (currentState.startTime) {
             const formattedTime = formatDateForInput(currentState.startTime);
             setStartTime(formattedTime);
@@ -217,13 +213,16 @@ function TimeTrackerForm({
   }, [isPomodoroActive, resetForm]);
 
   useEffect(() => {
-    if (isTimerActive && timerStartTime) {
+    if (isTimerActive) {
       const interval = setInterval(() => {
-        const now = new Date();
-        const secondsDiff = Math.floor(
-          (now.getTime() - timerStartTime.getTime()) / 1000
-        );
-        setElapsedSeconds(Math.max(0, secondsDiff));
+        const globalTimerData = getTimerData();
+        if (globalTimerData.isActive && globalTimerData.startTime) {
+          const now = new Date();
+          const secondsDiff = Math.floor(
+            (now.getTime() - globalTimerData.startTime.getTime()) / 1000
+          );
+          setElapsedSeconds(Math.max(0, secondsDiff));
+        }
       }, 1000);
 
       return () => {
@@ -232,20 +231,15 @@ function TimeTrackerForm({
     } else if (!isTimerActive) {
       setElapsedSeconds(0);
     }
-  }, [isTimerActive, timerStartTime]);
+  }, [isTimerActive]);
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
 
     if (isTimerActive && newStartTime) {
       const newStartDate = new Date(newStartTime);
-      setTimerStartTime(newStartDate);
 
-      const now = new Date();
-      const secondsDiff = Math.floor(
-        (now.getTime() - newStartDate.getTime()) / 1000
-      );
-      setElapsedSeconds(Math.max(0, secondsDiff));
+      updateStartTime(newStartDate);
     }
   };
 
@@ -260,7 +254,6 @@ function TimeTrackerForm({
       setStartTime(formattedNow);
     }
 
-    setTimerStartTime(actualStartTime);
     startGlobalTimer(description, categoryId, tags, actualStartTime);
   };
 
@@ -294,7 +287,8 @@ function TimeTrackerForm({
   };
 
   const handleSaveTimer = async () => {
-    if (!timerStartTime) return;
+    const globalTimerData = getTimerData();
+    if (!globalTimerData.startTime) return;
 
     try {
       setIsSaving(true);
@@ -305,7 +299,7 @@ function TimeTrackerForm({
 
       const newEntry = {
         description,
-        start_time: timerStartTime.toISOString(),
+        start_time: globalTimerData.startTime.toISOString(),
         end_time: endTime.toISOString(),
         duration_minutes: durationMinutes,
         category_id: categoryId,

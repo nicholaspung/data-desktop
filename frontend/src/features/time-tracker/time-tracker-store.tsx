@@ -67,6 +67,13 @@ export const updateElapsedTime = () => {
   }
 };
 
+export const updateStartTime = (newStartTime: Date) => {
+  timeTrackerStore.setState((prevState) => ({
+    ...prevState,
+    startTime: newStartTime,
+  }));
+};
+
 export const getTimerData = () => {
   return {
     isActive: timeTrackerStore.state.isTimerActive,

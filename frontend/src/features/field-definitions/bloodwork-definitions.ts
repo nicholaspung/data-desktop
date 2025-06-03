@@ -24,7 +24,7 @@ export const BLOODWORK_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "lab_name",
-      type: "text",
+      type: "autocomplete",
       displayName: "Lab Name",
       description: "Name of the laboratory or facility",
       isSearchable: true,
@@ -89,7 +89,7 @@ export const BLOOD_MARKERS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "category",
-      type: "text",
+      type: "autocomplete",
       displayName: "Category",
       description: "Category of marker (e.g., Lipids, Metabolic, etc.)",
       isSearchable: true,

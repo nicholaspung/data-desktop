@@ -21,6 +21,7 @@ import { useFieldDefinitions } from "../field-definitions/field-definitions-stor
 import { dateStrToLocalDate } from "@/lib/date-utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef } from "react";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
   const { getDatasetFields } = useFieldDefinitions();
@@ -60,6 +61,22 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     dataStore,
     (state) => state.blood_results || []
   );
+
+  const labNameOptions = Array.from(
+    new Set(
+      existingBloodwork
+        .map((record) => record.lab_name)
+        .filter(
+          (labName): labName is string =>
+            labName !== undefined && labName !== null && labName.trim() !== ""
+        )
+    )
+  )
+    .sort()
+    .map((labName, index) => ({
+      id: `lab-${index}`,
+      label: labName,
+    }));
 
   const resetFormData = () => {
     setFasted(false);
@@ -156,7 +173,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     } else {
       resetFormData();
     }
-  }, [date]);
+  }, [date, existingDates, existingBloodwork, bloodResults]);
 
   useEffect(() => {
     if (showAddDialog) {
@@ -394,11 +411,15 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Lab Name</label>
-                  <Input
+                  <AutocompleteInput
+                    label="Lab Name"
                     value={labName}
-                    onChange={(e) => setLabName(e.target.value)}
+                    onChange={setLabName}
+                    options={labNameOptions}
                     placeholder="Lab or facility name"
+                    emptyMessage="No lab names found. Start typing to add a new one."
+                    showRecentOptions={true}
+                    maxRecentOptions={5}
                   />
                 </div>
               </div>
@@ -414,85 +435,93 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             </>
           )}
 
-          {/* Search and filter */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search markers..."
-              className="pl-8 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Markers list */}
-          <div className="border rounded-md overflow-hidden">
-            <div className="bg-muted p-2 text-sm font-medium">
-              Blood Markers
+          {/* Search and markers container with equal heights */}
+          <div className="grid grid-cols-1 h-[400px]">
+            {/* Search and filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Search Markers</label>
+              <div className="relative h-full">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search markers..."
+                  className="pl-8 w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
 
-            {filteredMarkers.length === 0 ? (
-              <div className="p-4 text-center text-muted-foreground">
-                {bloodMarkers.length === 0
-                  ? "No blood markers found. Please add markers first."
-                  : "No markers match your search criteria."}
+            {/* Markers list */}
+            <div className="border rounded-md overflow-hidden h-full">
+              <div className="bg-muted p-2 text-sm font-medium">
+                Blood Markers
               </div>
-            ) : (
-              <div
-                ref={parentRef}
-                className="max-h-[400px] overflow-y-auto"
-                style={{
-                  height: "400px",
-                  width: "100%",
-                  overflow: "auto",
-                }}
-              >
-                {/* Virtual list container */}
+
+              {filteredMarkers.length === 0 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  {bloodMarkers.length === 0
+                    ? "No blood markers found. Please add markers first."
+                    : "No markers match your search criteria."}
+                </div>
+              ) : (
                 <div
+                  ref={parentRef}
+                  className="overflow-y-auto"
                   style={{
-                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    height: "calc(100% - 40px)",
                     width: "100%",
-                    position: "relative",
+                    overflow: "auto",
                   }}
                 >
-                  {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-                    const marker = filteredMarkers[virtualItem.index];
-                    const hasExistingResult = resultExistsForMarker(marker.id);
-                    const lastResult = getLastResultForMarker(marker.id);
+                  {/* Virtual list container */}
+                  <div
+                    style={{
+                      height: `${rowVirtualizer.getTotalSize()}px`,
+                      width: "100%",
+                      position: "relative",
+                    }}
+                  >
+                    {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+                      const marker = filteredMarkers[virtualItem.index];
+                      const hasExistingResult = resultExistsForMarker(
+                        marker.id
+                      );
+                      const lastResult = getLastResultForMarker(marker.id);
 
-                    return (
-                      <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        ref={rowVirtualizer.measureElement}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          transform: `translateY(${virtualItem.start}px)`,
-                        }}
-                      >
-                        <BloodMarkerInput
-                          marker={marker}
-                          value={markerValues[marker.id]?.value || ""}
-                          valueType={
-                            markerValues[marker.id]?.valueType || "number"
-                          }
-                          onChange={(value, valueType) =>
-                            handleMarkerChange(marker.id, value, valueType)
-                          }
-                          disabled={isExistingDate && hasExistingResult}
-                          isExisting={hasExistingResult}
-                          lastResult={lastResult}
-                        />
-                      </div>
-                    );
-                  })}
+                      return (
+                        <div
+                          key={virtualItem.key}
+                          data-index={virtualItem.index}
+                          ref={rowVirtualizer.measureElement}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualItem.start}px)`,
+                          }}
+                        >
+                          <BloodMarkerInput
+                            marker={marker}
+                            value={markerValues[marker.id]?.value || ""}
+                            valueType={
+                              markerValues[marker.id]?.valueType || "number"
+                            }
+                            onChange={(value, valueType) =>
+                              handleMarkerChange(marker.id, value, valueType)
+                            }
+                            disabled={isExistingDate && hasExistingResult}
+                            isExisting={hasExistingResult}
+                            lastResult={lastResult}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {isExistingDate && (

@@ -240,12 +240,12 @@ export default function AutocompleteInput({
                   {renderItem ? (
                     renderItem(option, activeIndex === index)
                   ) : (
-                    <>
+                    <div className="flex flex-row items-center gap-2">
                       <span>{option.label}</span>
                       {option.label.toLowerCase() === value.toLowerCase() && (
                         <Check className="h-4 w-4 text-primary" />
                       )}
-                    </>
+                    </div>
                   )}
                 </li>
               ))}
