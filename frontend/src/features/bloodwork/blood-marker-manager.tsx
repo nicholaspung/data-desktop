@@ -51,6 +51,7 @@ export default function BloodMarkerManager() {
     .map((marker) => ({
       id: marker.id,
       label: marker.name,
+      unit: marker.unit || "",
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
@@ -181,6 +182,16 @@ export default function BloodMarkerManager() {
                               onChange={setSelectedMarker}
                               title="Blood Marker"
                               placeholder="Select a blood marker..."
+                              renderItem={(option) => (
+                                <div className="flex flex-row items-center gap-2">
+                                  <span>{option.label}</span>
+                                  {option.unit && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {option.unit}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             />
                           </div>
                           {selectedMarker && (
