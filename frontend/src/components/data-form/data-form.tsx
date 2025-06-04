@@ -131,6 +131,28 @@ export default function DataForm({
       )
     ).sort();
 
+    // Add default measurement options for body measurements
+    if (datasetId === "body_measurements" && field.key === "measurement") {
+      const defaultMeasurements = [
+        "Bodyweight",
+        "Neck", 
+        "Waist",
+        "Upper Arm (Right)",
+        "Upper Arm (Left)",
+        "Thigh (Right)",
+        "Thigh (Left)",
+        "Body Fat"
+      ];
+      
+      // Merge defaults with existing values, remove duplicates, and sort
+      const allValues = Array.from(new Set([...defaultMeasurements, ...existingValues])).sort();
+      
+      return allValues.map((value: string) => ({
+        id: value,
+        label: value,
+      }));
+    }
+
     return existingValues.map((value: string) => ({
       id: value,
       label: value,

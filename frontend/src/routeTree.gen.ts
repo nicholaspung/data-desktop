@@ -16,6 +16,7 @@ import { Route as TimeTrackerImport } from './routes/time-tracker'
 import { Route as TimePlannerImport } from './routes/time-planner'
 import { Route as SettingsImport } from './routes/settings'
 import { Route as PeopleCrmImport } from './routes/people-crm'
+import { Route as MultiMeasurementsImport } from './routes/multi-measurements'
 import { Route as MetricCalendarImport } from './routes/metric-calendar'
 import { Route as MetricImport } from './routes/metric'
 import { Route as JournalingImport } from './routes/journaling'
@@ -57,6 +58,12 @@ const SettingsRoute = SettingsImport.update({
 const PeopleCrmRoute = PeopleCrmImport.update({
   id: '/people-crm',
   path: '/people-crm',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const MultiMeasurementsRoute = MultiMeasurementsImport.update({
+  id: '/multi-measurements',
+  path: '/multi-measurements',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -207,6 +214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MetricCalendarImport
       parentRoute: typeof rootRoute
     }
+    '/multi-measurements': {
+      id: '/multi-measurements'
+      path: '/multi-measurements'
+      fullPath: '/multi-measurements'
+      preLoaderRoute: typeof MultiMeasurementsImport
+      parentRoute: typeof rootRoute
+    }
     '/people-crm': {
       id: '/people-crm'
       path: '/people-crm'
@@ -259,6 +273,7 @@ export interface FileRoutesByFullPath {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
@@ -278,6 +293,7 @@ export interface FileRoutesByTo {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
@@ -298,6 +314,7 @@ export interface FileRoutesById {
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
+  '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
@@ -319,6 +336,7 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/multi-measurements'
     | '/people-crm'
     | '/settings'
     | '/time-planner'
@@ -337,6 +355,7 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/multi-measurements'
     | '/people-crm'
     | '/settings'
     | '/time-planner'
@@ -355,6 +374,7 @@ export interface FileRouteTypes {
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
+    | '/multi-measurements'
     | '/people-crm'
     | '/settings'
     | '/time-planner'
@@ -375,6 +395,7 @@ export interface RootRouteChildren {
   JournalingRoute: typeof JournalingRoute
   MetricRoute: typeof MetricRoute
   MetricCalendarRoute: typeof MetricCalendarRoute
+  MultiMeasurementsRoute: typeof MultiMeasurementsRoute
   PeopleCrmRoute: typeof PeopleCrmRoute
   SettingsRoute: typeof SettingsRoute
   TimePlannerRoute: typeof TimePlannerRoute
@@ -394,6 +415,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalingRoute: JournalingRoute,
   MetricRoute: MetricRoute,
   MetricCalendarRoute: MetricCalendarRoute,
+  MultiMeasurementsRoute: MultiMeasurementsRoute,
   PeopleCrmRoute: PeopleCrmRoute,
   SettingsRoute: SettingsRoute,
   TimePlannerRoute: TimePlannerRoute,
@@ -422,6 +444,7 @@ export const routeTree = rootRoute
         "/journaling",
         "/metric",
         "/metric-calendar",
+        "/multi-measurements",
         "/people-crm",
         "/settings",
         "/time-planner",
@@ -461,6 +484,9 @@ export const routeTree = rootRoute
     },
     "/metric-calendar": {
       "filePath": "metric-calendar.tsx"
+    },
+    "/multi-measurements": {
+      "filePath": "multi-measurements.tsx"
     },
     "/people-crm": {
       "filePath": "people-crm.tsx"

@@ -22,7 +22,7 @@ export const BODY_MEASUREMENTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "measurement",
-      type: "text",
+      type: "autocomplete",
       displayName: "Measurement",
       description: "Type of measurement (e.g., weight, waist, chest, etc.)",
       isSearchable: true,
