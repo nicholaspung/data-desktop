@@ -35,7 +35,7 @@ export const BODY_MEASUREMENTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
     {
       key: "unit",
-      type: "text",
+      type: "autocomplete",
       displayName: "Unit",
       description: "Unit of measurement (e.g., lbs, kg, inches, cm)",
       isSearchable: true,

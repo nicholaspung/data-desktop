@@ -550,7 +550,9 @@ export default function AddMetricForm({
               noDefault={false}
               renderItem={(option) =>
                 option.private ? (
-                  <ProtectedField>{option.name}</ProtectedField>
+                  <ProtectedField>
+                    <span>{option.name}</span>
+                  </ProtectedField>
                 ) : (
                   option.name
                 )

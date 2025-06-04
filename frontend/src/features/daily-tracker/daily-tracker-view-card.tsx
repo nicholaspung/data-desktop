@@ -127,7 +127,7 @@ export default function DailyTrackerViewCard({
               </Badge>
             )}
           </h4>
-          <p className="text-sm text-muted-foreground">{metric.description}</p>
+          <div className="text-sm text-muted-foreground">{metric.description}</div>
         </div>
 
         {/* Show scheduling badge if schedule is defined */}

@@ -135,17 +135,46 @@ export default function DataForm({
     if (datasetId === "body_measurements" && field.key === "measurement") {
       const defaultMeasurements = [
         "Bodyweight",
+        "Body Fat Percentage",
         "Neck", 
+        "Chest",
         "Waist",
+        "Hips",
         "Upper Arm (Right)",
         "Upper Arm (Left)",
+        "Forearm (Right)",
+        "Forearm (Left)",
         "Thigh (Right)",
         "Thigh (Left)",
-        "Body Fat"
+        "Calf (Right)",
+        "Calf (Left)",
+        "Wrist",
+        "Ankle",
+        "Height"
       ];
       
       // Merge defaults with existing values, remove duplicates, and sort
       const allValues = Array.from(new Set([...defaultMeasurements, ...existingValues])).sort();
+      
+      return allValues.map((value: string) => ({
+        id: value,
+        label: value,
+      }));
+    }
+
+    // Add default unit options for body measurements
+    if (datasetId === "body_measurements" && field.key === "unit") {
+      const defaultUnits = [
+        "kg",
+        "lbs",
+        "cm",
+        "inches",
+        "mm",
+        "%"
+      ];
+      
+      // Merge defaults with existing values, remove duplicates, and sort
+      const allValues = Array.from(new Set([...defaultUnits, ...existingValues])).sort();
       
       return allValues.map((value: string) => ({
         id: value,

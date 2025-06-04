@@ -175,7 +175,7 @@ export default function ReusableSummary({
                 {mainSection.title}
               </p>
               <div className="flex items-center justify-between">
-                <p className="text-xl font-semibold">{mainSection.value}</p>
+                <div className="text-xl font-semibold">{mainSection.value}</div>
                 {mainSection.badge && (
                   <StatusBadge {...mainSection.badge}>
                     {mainSection.badge.children}
@@ -215,7 +215,7 @@ export default function ReusableSummary({
                     <p className="text-sm text-muted-foreground">
                       {item.label}
                     </p>
-                    <p className="font-semibold">{item.value}</p>
+                    <div className="font-semibold">{item.value}</div>
                     {item.subText && (
                       <p className="text-sm text-muted-foreground">
                         {item.subText}

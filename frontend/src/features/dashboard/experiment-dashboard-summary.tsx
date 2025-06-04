@@ -115,24 +115,36 @@ export default function ExperimentDashboardSummary() {
                     label: "",
                     value: (
                       <div className="flex flex-wrap gap-2">
-                        {activeExperiments.map((exp) => (
-                          <Badge
-                            key={exp.id}
-                            variant={
-                              selectedExperiment === exp.id
-                                ? "default"
-                                : "outline"
-                            }
-                            className="cursor-pointer"
-                            onClick={() => setSelectedExperiment(exp.id)}
-                          >
-                            {exp.private ? (
-                              <ProtectedField>{exp.name}</ProtectedField>
-                            ) : (
-                              exp.name
-                            )}
-                          </Badge>
-                        ))}
+                        {activeExperiments.map((exp) => 
+                          exp.private ? (
+                            <ProtectedField key={exp.id}>
+                              <Badge
+                                variant={
+                                  selectedExperiment === exp.id
+                                    ? "default"
+                                    : "outline"
+                                }
+                                className="cursor-pointer"
+                                onClick={() => setSelectedExperiment(exp.id)}
+                              >
+                                {exp.name}
+                              </Badge>
+                            </ProtectedField>
+                          ) : (
+                            <Badge
+                              key={exp.id}
+                              variant={
+                                selectedExperiment === exp.id
+                                  ? "default"
+                                  : "outline"
+                              }
+                              className="cursor-pointer"
+                              onClick={() => setSelectedExperiment(exp.id)}
+                            >
+                              {exp.name}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     ),
                   },
@@ -150,11 +162,11 @@ export default function ExperimentDashboardSummary() {
                     value: (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <h3 className="font-medium">
-                            <ProtectedField>
+                          <ProtectedField>
+                            <h3 className="font-medium">
                               {currentExperiment.name}
-                            </ProtectedField>
-                          </h3>
+                            </h3>
+                          </ProtectedField>
                           <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                             {getDaysRemaining(currentExperiment)}
                           </Badge>
@@ -192,16 +204,16 @@ export default function ExperimentDashboardSummary() {
 
                         {!currentExperiment.private &&
                           currentExperiment.description && (
-                            <p className="text-sm text-muted-foreground">
+                            <div className="text-sm text-muted-foreground">
                               {currentExperiment.description}
-                            </p>
+                            </div>
                           )}
                         {currentExperiment.private &&
                           currentExperiment.description && (
                             <ProtectedField>
-                              <p className="text-sm text-muted-foreground">
+                              <div className="text-sm text-muted-foreground">
                                 {currentExperiment.description}
-                              </p>
+                              </div>
                             </ProtectedField>
                           )}
 

@@ -54,7 +54,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 - low priority bug: make the markdown CSS better looking
 
-- fixed the <div> cannot be a child of <p> error from React
 - refactor out icons used in application into lib.ts
 - refactor application to use reusable components
 
@@ -76,6 +75,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- fixed the <div> cannot be a child of <p> error from React [DONE 2025-06-04]
 - for the todo summary section, need to look at it more in depth to fix how it looks, it visually breaks when it's too little width [DONE 2025-06-04]
 - for the bloodwork summary section, can you add the summary of optimal range, out of range, etc, and list out the categories with the out of range, descending by # of out of range markers?, last date of blood test from which lab, and how many months it is currently since last blood test [DONE 2025-06-04]
 - in settings, add the people crm route there [DONE 2025-06-03]

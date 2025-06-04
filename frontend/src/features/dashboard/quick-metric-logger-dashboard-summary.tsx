@@ -321,9 +321,9 @@ export default function QuickMetricLoggerDashboardSummary({
                     <div>
                       <h4 className="font-medium">{selectedMetric.name}</h4>
                       {selectedMetric.description && (
-                        <p className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground">
                           {selectedMetric.description}
-                        </p>
+                        </div>
                       )}
                     </div>
                   </ProtectedContent>

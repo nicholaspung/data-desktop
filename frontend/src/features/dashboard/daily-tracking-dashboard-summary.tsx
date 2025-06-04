@@ -292,13 +292,17 @@ export default function DailyTrackingDashboardSummary({
                 )}
               </div>
             )}
-            <span className="text-sm">
-              {metric.private ? (
-                <ProtectedField>{metric.name}</ProtectedField>
-              ) : (
-                metric.name
-              )}
-            </span>
+            {metric.private ? (
+              <ProtectedField>
+                <span className="text-sm">
+                  {metric.name}
+                </span>
+              </ProtectedField>
+            ) : (
+              <span className="text-sm">
+                {metric.name}
+              </span>
+            )}
           </div>
           <div className="flex items-center">
             {metric.type === "boolean" ? (

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import ReusableSelect from "@/components/reusable/reusable-select";
 import CustomLineChart from "@/components/charts/line-chart";
 import { formatChartDate } from "@/components/charts/chart-utils";
 import { BodyMeasurementRecord } from "./types";
@@ -26,6 +27,7 @@ export default function BodyweightChart() {
   const [averagingPeriod, setAveragingPeriod] = useState<AveragingPeriod>("daily");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [averagingStartDate, setAveragingStartDate] = useState<Date | undefined>();
 
   const typedData = data as BodyMeasurementRecord[];
 
@@ -91,7 +93,17 @@ export default function BodyweightChart() {
     return filtered;
   }, [allWeightData, timeRange, customDateRange]);
 
-  // Calculate averaged data based on selected period
+  // Set default averaging start date to the middle of the data range
+  const defaultAveragingStartDate = useMemo(() => {
+    if (weightData.length === 0) return undefined;
+    const middleIndex = Math.floor(weightData.length / 2);
+    return weightData[middleIndex]?.dateObj;
+  }, [weightData]);
+
+  // Use the user-selected start date or default to middle of data
+  const effectiveStartDate = averagingStartDate || defaultAveragingStartDate;
+
+  // Calculate averaged data based on selected period and start date
   const chartData = useMemo(() => {
     if (weightData.length === 0) return [];
 
@@ -116,7 +128,9 @@ export default function BodyweightChart() {
       }).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
     }
 
-    // For averaging periods, calculate rolling averages
+    // For averaging periods, calculate rolling averages from the selected start date
+    if (!effectiveStartDate) return [];
+
     const result: ChartDataPoint[] = [];
     const periodDays = {
       weekly: 7,
@@ -139,39 +153,76 @@ export default function BodyweightChart() {
       dailyAverages[a].dateObj.getTime() - dailyAverages[b].dateObj.getTime()
     );
 
-    // Calculate rolling averages
-    for (let i = 0; i < sortedDates.length; i++) {
-      const currentDate = sortedDates[i];
-      const currentDateObj = dailyAverages[currentDate].dateObj;
+    // Calculate averages in discrete periods starting from the center date
+    const startDate = new Date(effectiveStartDate);
+    
+    // Generate periods both forward and backward from the start date
+    const periods: { start: Date; end: Date; displayDate: Date }[] = [];
+    
+    // Forward periods from start date
+    let currentPeriodStart = new Date(startDate);
+    const firstDataDate = new Date(Math.min(...sortedDates.map(d => dailyAverages[d].dateObj.getTime())));
+    const lastDataDate = new Date(Math.max(...sortedDates.map(d => dailyAverages[d].dateObj.getTime())));
+    
+    // Forward periods
+    while (currentPeriodStart <= lastDataDate) {
+      const periodEnd = new Date(currentPeriodStart);
+      periodEnd.setDate(periodEnd.getDate() + periodDays - 1);
       
-      // Get measurements within the period window
-      const periodStart = new Date(currentDateObj);
-      periodStart.setDate(periodStart.getDate() - periodDays + 1);
+      periods.push({
+        start: new Date(currentPeriodStart),
+        end: periodEnd,
+        displayDate: periodEnd, // Show the end date of the period
+      });
       
-      const relevantDates = sortedDates.filter(date => {
+      currentPeriodStart.setDate(currentPeriodStart.getDate() + periodDays);
+    }
+    
+    // Backward periods from start date
+    currentPeriodStart = new Date(startDate);
+    currentPeriodStart.setDate(currentPeriodStart.getDate() - periodDays);
+    
+    while (currentPeriodStart >= firstDataDate) {
+      const periodEnd = new Date(currentPeriodStart);
+      periodEnd.setDate(periodEnd.getDate() + periodDays - 1);
+      
+      periods.push({
+        start: new Date(currentPeriodStart),
+        end: periodEnd,
+        displayDate: periodEnd, // Show the end date of the period
+      });
+      
+      currentPeriodStart.setDate(currentPeriodStart.getDate() - periodDays);
+    }
+
+    // Calculate averages for each period
+    for (const period of periods) {
+      // Get all dates within this period
+      const datesInPeriod = sortedDates.filter(date => {
         const dateObj = dailyAverages[date].dateObj;
-        return dateObj >= periodStart && dateObj <= currentDateObj;
+        return dateObj >= period.start && dateObj <= period.end;
       });
 
-      if (relevantDates.length > 0) {
-        const totalWeight = relevantDates.reduce((sum, date) => {
+      // Calculate average using all available data in the period
+      if (datesInPeriod.length > 0) {
+        const totalWeight = datesInPeriod.reduce((sum, date) => {
           const dayData = dailyAverages[date];
           return sum + (dayData.total / dayData.count);
         }, 0);
         
-        const avgWeight = totalWeight / relevantDates.length;
+        const avgWeight = totalWeight / datesInPeriod.length;
         
         result.push({
-          date: currentDate,
+          date: formatChartDate(period.displayDate.toISOString()),
           weight: Number(avgWeight.toFixed(1)),
-          dateObj: currentDateObj,
+          dateObj: period.displayDate,
         });
       }
     }
 
     console.log("Chart data sample:", result.slice(0, 3));
-    return result;
-  }, [weightData, averagingPeriod]);
+    return result.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+  }, [weightData, averagingPeriod, effectiveStartDate]);
 
   const unit = allWeightData.length > 0 ? allWeightData[0].unit : "lbs";
 
@@ -181,6 +232,13 @@ export default function BodyweightChart() {
     biweekly: "14-Day Average",
     monthly: "30-Day Average",
   };
+
+  const averagingPeriodOptions = [
+    { id: "daily", label: "Daily" },
+    { id: "weekly", label: "7-Day Average" },
+    { id: "biweekly", label: "14-Day Average" },
+    { id: "monthly", label: "30-Day Average" },
+  ];
 
   const timeRangeOptions = [
     { value: "all", label: "All Time" },
@@ -274,19 +332,58 @@ export default function BodyweightChart() {
               )}
             </div>
             
-            {/* Averaging Period Buttons */}
-            <div className="flex gap-1">
-              {(Object.keys(periodLabels) as AveragingPeriod[]).map((period) => (
-                <Button
-                  key={period}
-                  variant={averagingPeriod === period ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setAveragingPeriod(period)}
-                >
-                  {periodLabels[period]}
-                </Button>
-              ))}
+            {/* Averaging Period Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Period:</span>
+              <ReusableSelect
+                options={averagingPeriodOptions}
+                value={averagingPeriod}
+                onChange={(value: string) => setAveragingPeriod(value as AveragingPeriod)}
+                title="averaging period"
+                triggerClassName="w-40"
+              />
             </div>
+            
+            {/* Averaging Start Date Picker - only show for non-daily periods */}
+            {averagingPeriod !== "daily" && allWeightData.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Start date:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-36">
+                      <CalendarIcon className="h-4 w-4 mr-2" />
+                      {effectiveStartDate 
+                        ? effectiveStartDate.toLocaleDateString()
+                        : "Select date"
+                      }
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="single"
+                      selected={averagingStartDate}
+                      onSelect={(date) => setAveragingStartDate(date)}
+                      initialFocus
+                      disabled={(date) => {
+                        // Disable dates outside the range of available data
+                        const firstDate = allWeightData[0]?.dateObj;
+                        const lastDate = allWeightData[allWeightData.length - 1]?.dateObj;
+                        return !firstDate || !lastDate || date < firstDate || date > lastDate;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {averagingStartDate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAveragingStartDate(undefined)}
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -294,6 +391,11 @@ export default function BodyweightChart() {
         <div className="mb-4">
           <p className="text-sm text-muted-foreground">
             Showing {periodLabels[averagingPeriod].toLowerCase()} weight measurements
+            {averagingPeriod !== "daily" && effectiveStartDate && (
+              <span className="ml-1">
+                (periods starting from {effectiveStartDate.toLocaleDateString()})
+              </span>
+            )}
             {timeRange !== "all" && (
               <span className="ml-1">
                 for {timeRangeOptions.find(opt => opt.value === timeRange)?.label.toLowerCase()}

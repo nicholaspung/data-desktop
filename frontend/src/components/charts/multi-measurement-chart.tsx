@@ -214,23 +214,42 @@ export default function MultiMeasurementChart() {
       }
     });
 
-    // Create data points for each date
-    const data: ChartDataPoint[] = Array.from(allDates).map(dateStr => {
-      const dataPoint: ChartDataPoint = {
-        date: dateStr,
-        dateObj: new Date(dateStr), // This will be used for filtering
-      };
+    // Create data points for each unique date
+    const dateMap = new Map<string, ChartDataPoint>();
+    
+    // First, create unique data points for each date
+    Array.from(allDates).forEach(dateStr => {
+      if (!dateMap.has(dateStr)) {
+        dateMap.set(dateStr, {
+          date: dateStr,
+          dateObj: new Date(dateStr), // This will be used for filtering
+        });
+      }
+    });
 
-      enabledConfigs.forEach(config => {
-        const measurementData = processedData[config.id];
-        if (measurementData) {
-          const matchingItem = measurementData.find(item => item.dateFormatted === dateStr);
-          dataPoint[config.field] = matchingItem?.value || null;
-        }
-      });
+    // Then populate measurement values for each date
+    enabledConfigs.forEach(config => {
+      const measurementData = processedData[config.id];
+      if (measurementData) {
+        measurementData.forEach(item => {
+          const dataPoint = dateMap.get(item.dateFormatted);
+          if (dataPoint) {
+            // If multiple measurements exist for the same date and measurement type,
+            // use the most recent one (or average them)
+            if (dataPoint[config.field] === undefined) {
+              dataPoint[config.field] = item.value;
+            } else {
+              // Average multiple values for the same measurement type on the same date
+              dataPoint[config.field] = ((dataPoint[config.field] as number) + item.value) / 2;
+            }
+          }
+        });
+      }
+    });
 
-      return dataPoint;
-    }).sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+    // Convert map to array and sort
+    const data: ChartDataPoint[] = Array.from(dateMap.values())
+      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
 
     // Apply time range filtering
     if (timeRange !== "all") {

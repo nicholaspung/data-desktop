@@ -266,9 +266,9 @@ const ExperimentMetrics = ({
               <h3 className="font-medium">
                 {metric.metric_id_data?.name || "Unknown Metric"}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {metric.metric_id_data?.description}
-              </p>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">

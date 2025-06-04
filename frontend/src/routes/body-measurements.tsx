@@ -8,12 +8,19 @@ import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import BodyMeasurementsDashboardSummary from "@/features/dashboard/body-measurements-dashboard-summary";
 import BodyweightChart from "@/features/body-measurements/bodyweight-chart";
 import MultiMeasurementChart from "@/components/charts/multi-measurement-chart";
+import BodyMeasurementsVisualization from "@/features/body-measurements/body-measurements-visualization";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
+import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 
 export const Route = createFileRoute("/body-measurements")({
   component: BodyMeasurementsPage,
 });
 
 function BodyMeasurementsPage() {
+  const data = useStore(dataStore, (state) => state.body_measurements) || [];
+  const typedData = data as BodyMeasurementRecord[];
+
   const guideContent = [
     {
       title: "Getting Started",
@@ -92,6 +99,7 @@ function BodyMeasurementsPage() {
     >
       <div className="space-y-6">
         <BodyMeasurementsDashboardSummary />
+        <BodyMeasurementsVisualization data={typedData} />
         <MultiMeasurementChart />
         <BodyweightChart />
       </div>

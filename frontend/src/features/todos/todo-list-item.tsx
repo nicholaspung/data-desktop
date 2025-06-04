@@ -197,17 +197,25 @@ export default function TodoListItem({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Left section - Title and info */}
             <div className="flex-1 min-w-0 space-y-2">
-              <h3
-                className={`font-medium break-words ${
-                  todo.isComplete ? "line-through text-muted-foreground" : ""
-                }`}
-              >
-                {todo.private ? (
-                  <ProtectedField>{todo.title}</ProtectedField>
-                ) : (
-                  todo.title
-                )}
-              </h3>
+              {todo.private ? (
+                <ProtectedField>
+                  <h3
+                    className={`font-medium break-words ${
+                      todo.isComplete ? "line-through text-muted-foreground" : ""
+                    }`}
+                  >
+                    {todo.title}
+                  </h3>
+                </ProtectedField>
+              ) : (
+                <h3
+                  className={`font-medium break-words ${
+                    todo.isComplete ? "line-through text-muted-foreground" : ""
+                  }`}
+                >
+                  {todo.title}
+                </h3>
+              )}
               <div className="flex flex-wrap gap-2 items-center">
                 {getPriorityBadge(todo.priority as TodoPriority)}
                 {getDeadlineStatus(
@@ -221,13 +229,18 @@ export default function TodoListItem({
                   renderTags()
                 )}
               </div>
-              {!todo.private && !isCompact && todo.description && (
-                <p className="text-sm text-muted-foreground break-words">
-                  {todo.description}
-                </p>
-              )}
-              {todo.private && !isCompact && todo.description && (
-                <ProtectedField>{todo.description}</ProtectedField>
+              {!isCompact && todo.description && (
+                todo.private ? (
+                  <ProtectedField>
+                    <p className="text-sm text-muted-foreground break-words">
+                      {todo.description}
+                    </p>
+                  </ProtectedField>
+                ) : (
+                  <p className="text-sm text-muted-foreground break-words">
+                    {todo.description}
+                  </p>
+                )
               )}
             </div>
 

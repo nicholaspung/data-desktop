@@ -113,16 +113,16 @@ export default function ExperimentListItem({
 
           <CollapsibleContent>
             <div className="mt-4 pt-4 border-t">
-              <p className="text-sm text-muted-foreground mb-4">
+              <div className="text-sm text-muted-foreground mb-4">
                 {experiment.description || "No description provided."}
-              </p>
+              </div>
 
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm font-medium">Goal:</p>
-                  <p className="text-sm">
+                  <div className="text-sm font-medium">Goal:</div>
+                  <div className="text-sm">
                     {experiment.goal || "No goal specified."}
-                  </p>
+                  </div>
                 </div>
 
                 <Button
