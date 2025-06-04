@@ -61,7 +61,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add inventory management system
 - add a "taking current supplements" section
   - allow user to select supplements based on what's in inventory
-- add a body measurement section following the FitNotes application import
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
@@ -73,6 +72,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a finance tracking section
   - add a paycheck part in this section, along with the logs and balances
 - add a bodyweight tracking section
+- add a body measurement section following the FitNotes application import
 - for the todo summary section, need to look at it more in depth to fix how it looks, it visually breaks when it's too little width
 
 ### DONE

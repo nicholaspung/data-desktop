@@ -163,5 +163,22 @@ func GetAllDatasetDefinitions() []DatasetConfig {
 			Type:        DatasetTypePeopleCRM,
 			Fields:      GetPersonRelationshipsFields(),
 		},
+		{
+			ID:          DatasetIDBodyMeasurements,
+			Name:        "Body Measurements",
+			Description: "Body measurements tracking for physical progress monitoring",
+			Type:        DatasetTypeMetric,
+			Fields:      getBodyMeasurementsFieldsInline(),
+		},
+	}
+}
+
+func getBodyMeasurementsFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date", IsSearchable: true},
+		{Key: "time", Type: FieldTypeText, DisplayName: "Time", IsOptional: true},
+		{Key: "measurement", Type: FieldTypeText, DisplayName: "Measurement", IsSearchable: true},
+		{Key: "value", Type: FieldTypeNumber, DisplayName: "Value"},
+		{Key: "unit", Type: FieldTypeText, DisplayName: "Unit", IsSearchable: true},
 	}
 }

@@ -47,6 +47,7 @@ const defaultRoutes = {
   "/todos": true,
   "/people": true,
   "/people-crm": true,
+  "/body-measurements": true,
 };
 
 const defaultDatasets = {
@@ -74,6 +75,7 @@ const defaultDatasets = {
   person_chats: true,
   birthday_reminders: true,
   person_relationships: true,
+  body_measurements: true,
 };
 
 const getInitialState = (): Partial<SettingsState> => {

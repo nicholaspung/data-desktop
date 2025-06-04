@@ -39,6 +39,7 @@ import {
   TIME_PLANNER_CONFIGS_FIELD_DEFINITIONS,
 } from "./time-tracking-definitions";
 import { TODO_FIELD_DEFINITIONS } from "./todo-definitions";
+import { BODY_MEASUREMENTS_FIELD_DEFINITIONS } from "./body-measurements-definitions";
 import { DataStoreName } from "@/store/data-store";
 
 const ALL_DEFINITIONS = [
@@ -65,6 +66,7 @@ const ALL_DEFINITIONS = [
   TIME_CATEGORIES_FIELD_DEFINITIONS,
   TIME_PLANNER_CONFIGS_FIELD_DEFINITIONS,
   TODO_FIELD_DEFINITIONS,
+  BODY_MEASUREMENTS_FIELD_DEFINITIONS,
 ];
 
 const initialState: FieldDefinitionsState = {

@@ -91,6 +91,12 @@ const routes = [
     icon: <FEATURE_ICONS.PEOPLE_CRM className="h-4 w-4 mr-2" />,
   },
   {
+    path: "/body-measurements",
+    name: "Body Measurements",
+    description: "Track body measurements and physical progress",
+    icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-4 w-4 mr-2" />,
+  },
+  {
     path: "/dataset",
     name: "Dataset Manager",
     description: "Manage application datasets",

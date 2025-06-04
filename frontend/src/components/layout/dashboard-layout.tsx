@@ -71,6 +71,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/people-crm",
   },
   {
+    title: "Body Measurements",
+    icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-5 w-5" />,
+    href: "/body-measurements",
+  },
+  {
     title: "DEXA Scans",
     icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,
     href: "/dexa",

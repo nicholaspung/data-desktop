@@ -20,6 +20,7 @@ import {
   Gift,
   Network,
   UserRound,
+  Ruler,
 } from "lucide-react";
 
 export const FEATURE_ICONS = {
@@ -45,6 +46,7 @@ export const FEATURE_ICONS = {
   RELATIONSHIPS: Network,
   CHATS: MessageCircle,
   ATTRIBUTES: Heart,
+  BODY_MEASUREMENTS: Ruler,
 };
 
 export const getFeatureIcon = (iconName: string) => {

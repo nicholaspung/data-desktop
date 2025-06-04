@@ -24,4 +24,5 @@ const (
 	DatasetIDPersonNotes         = "person_notes"
 	DatasetIDBirthdayReminders   = "birthday_reminders"
 	DatasetIDPersonRelationships = "person_relationships"
+	DatasetIDBodyMeasurements    = "body_measurements"
 )

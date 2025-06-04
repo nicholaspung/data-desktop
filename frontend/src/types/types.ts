@@ -28,6 +28,7 @@ import {
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { TimeBlockConfig } from "@/features/time-planner/types";
 import { Todo } from "@/store/todo-definitions";
+import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 
 export type DatasetId =
   | "bloodwork"
@@ -52,7 +53,8 @@ export type DatasetId =
   | "time_entries"
   | "time_categories"
   | "time_planner_configs"
-  | "todos";
+  | "todos"
+  | "body_measurements";
 
 export const DATASET_REFERENCES = {
   BLOODWORK: { dataset: "bloodwork" as DatasetId, field: "id" },
@@ -90,6 +92,7 @@ export const DATASET_REFERENCES = {
   TIME_CATEGORIES: { dataset: "time_categories" as DatasetId, field: "id" },
   TIME_PLANNER_CONFIGS: { dataset: "time_planner_configs" as DatasetId, field: "id" },
   TODOS: { dataset: "todos" as DatasetId, field: "id" },
+  BODY_MEASUREMENTS: { dataset: "body_measurements" as DatasetId, field: "id" },
 } as const;
 
 export type DatasetTypeMap = {
@@ -116,6 +119,7 @@ export type DatasetTypeMap = {
   time_categories: TimeCategory;
   time_planner_configs: TimeBlockConfig;
   todos: Todo;
+  body_measurements: BodyMeasurementRecord;
 };
 
 export interface DatasetSummary {

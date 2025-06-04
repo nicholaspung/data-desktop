@@ -173,6 +173,24 @@ const routes = [
 ];
 ```
 
+### 6a. Add Route to Dashboard Layout (Optional)
+
+**File:** `frontend/src/components/layout/dashboard-layout.tsx`
+
+If your dataset has a dedicated route, add it to the sidebar navigation:
+
+```typescript
+const defaultSidebarItems: SidebarItem[] = [
+  // ... existing items
+  {
+    title: "My Feature",
+    icon: <FEATURE_ICONS.MY_FEATURE className="h-5 w-5" />,
+    href: "/my-feature",
+  },
+  // ... rest of items
+];
+```
+
 ### 7. Update Dashboard Route Mapping (Optional)
 
 **File:** `frontend/src/routes/index.tsx`
@@ -328,8 +346,9 @@ Here's a complete list of files that may need updates when adding a new dataset:
 ### Optional Files (based on requirements):
 5. `frontend/src/features/*/types.ts` - Custom data types
 6. `frontend/src/routes/settings.tsx` - Add route to settings page
-7. `frontend/src/routes/index.tsx` - Route mapping & dashboard integration
-8. `frontend/src/features/dashboard/*-dashboard-summary.tsx` - Custom dashboard widget
+7. `frontend/src/components/layout/dashboard-layout.tsx` - Add route to sidebar navigation
+8. `frontend/src/routes/index.tsx` - Route mapping & dashboard integration
+9. `frontend/src/features/dashboard/*-dashboard-summary.tsx` - Custom dashboard widget
 
 ### Automatically Updated Files:
 - `frontend/src/store/data-store.ts` - Auto-includes all datasets
