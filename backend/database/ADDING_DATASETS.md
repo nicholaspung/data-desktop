@@ -40,6 +40,15 @@ func getMyNewDatasetFieldsInline() []FieldDefinition {
 },
 ```
 
+### Step 3: Add to Cleanup Function
+In `backend/database/cleanup_unused_tables.go`, add your new dataset ID to the `coreDatasetIDs` slice:
+```go
+coreDatasetIDs := []string{
+    // ... existing dataset IDs
+    DatasetIDMyNewDataset,
+}
+```
+
 ## 🎉 That's it!
 Your dataset will automatically be:
 - ✅ Created in the database on app startup

@@ -29,6 +29,7 @@ func CleanupUnusedTables() error {
 		DatasetIDPersonNotes,
 		DatasetIDBirthdayReminders,
 		DatasetIDPersonRelationships,
+		DatasetIDBodyMeasurements,
 	}
 
 	rows, err := DB.Query("SELECT id FROM datasets")
