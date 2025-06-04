@@ -109,6 +109,7 @@ export default function DashboardLayout({
   const [isExpanded, setIsExpanded] = useState(true);
 
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const routeConfigs = useStore(settingsStore, (state) => state.routeConfigs);
 
   useEffect(() => {
     const savedState = localStorage.getItem("sidebarExpanded");
@@ -123,9 +124,31 @@ export default function DashboardLayout({
     localStorage.setItem("sidebarExpanded", String(newState));
   };
 
-  const filteredSidebarItems = defaultSidebarItems.filter(
-    (item) => visibleRoutes[item.href] !== false
-  );
+  const filteredSidebarItems = defaultSidebarItems
+    .filter((item) => {
+      // Always show core routes
+      if (item.href === "/" || item.href === "/dataset" || item.href === "/settings") {
+        return true;
+      }
+      
+      const routeConfig = routeConfigs[item.href];
+      return routeConfig ? routeConfig.visible && visibleRoutes[item.href] !== false : visibleRoutes[item.href] !== false;
+    })
+    .sort((a, b) => {
+      // Core routes have fixed positions
+      if (a.href === "/") return -1;
+      if (b.href === "/") return 1;
+      if (a.href === "/settings") return 1;
+      if (b.href === "/settings") return -1;
+      if (a.href === "/dataset") return 1;
+      if (b.href === "/dataset") return -1;
+      
+      const aConfig = routeConfigs[a.href];
+      const bConfig = routeConfigs[b.href];
+      const aOrder = aConfig ? aConfig.order : 999;
+      const bOrder = bConfig ? bConfig.order : 999;
+      return aOrder - bOrder;
+    });
 
   const getFinalSidebarItems = () => {
     const sidebarItemsCopy = [...filteredSidebarItems];

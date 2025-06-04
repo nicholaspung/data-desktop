@@ -243,6 +243,10 @@ function TimeTrackerForm({
     }
   };
 
+  const handleEndTimeChange = (newEndTime: string) => {
+    setEndTime(newEndTime);
+  };
+
   const handleStartTimer = () => {
     let actualStartTime: Date;
 
@@ -731,7 +735,7 @@ function TimeTrackerForm({
                     onClick={() => {
                       const now = new Date();
                       const formattedNow = formatDateForInput(now);
-                      setEndTime(formattedNow);
+                      handleEndTimeChange(formattedNow);
                     }}
                     title="Set to current time"
                   >
@@ -742,7 +746,7 @@ function TimeTrackerForm({
                   id="end-time"
                   type="datetime-local"
                   value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={(e) => handleEndTimeChange(e.target.value)}
                   className="h-10 focus:ring-2 focus:ring-primary/50"
                 />
               </div>

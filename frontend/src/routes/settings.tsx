@@ -6,12 +6,13 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, ChevronUp, ChevronDown } from "lucide-react";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import settingsStore from "@/store/settings-store";
 import { Button } from "@/components/ui/button";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -112,13 +113,100 @@ const routes = [
 
 function SettingsPage() {
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const routeConfigs = useStore(settingsStore, (state) => state.routeConfigs);
   const setVisibleRoute = useStore(
     settingsStore,
     (state) => state.setVisibleRoute
   );
 
+  const orderedRoutes = useMemo(() => {
+    return routes
+      .filter(route => 
+        route.path !== "/" && 
+        route.path !== "/dataset" && 
+        route.path !== "/settings"
+      )
+      .map(route => ({
+        ...route,
+        config: routeConfigs[route.path] || { href: route.path, order: 999, visible: true }
+      }))
+      .sort((a, b) => a.config.order - b.config.order);
+  }, [routeConfigs]);
+
   const handleRouteToggle = (route: string, checked: boolean) => {
     setVisibleRoute(route, checked);
+  };
+
+  const handleMoveUp = (currentIndex: number) => {
+    if (currentIndex > 0) {
+      // Get the routes we're working with
+      const currentRoute = orderedRoutes[currentIndex];
+      const targetRoute = orderedRoutes[currentIndex - 1];
+      
+      // Swap their order values
+      settingsStore.setState((state) => {
+        const newConfigs = { ...state.routeConfigs };
+        const currentOrder = currentRoute.config.order;
+        const targetOrder = targetRoute.config.order;
+        
+        newConfigs[currentRoute.path] = { ...currentRoute.config, order: targetOrder };
+        newConfigs[targetRoute.path] = { ...targetRoute.config, order: currentOrder };
+        
+        const newState = { ...state, routeConfigs: newConfigs };
+        // Save to localStorage
+        try {
+          localStorage.setItem(
+            "app-settings",
+            JSON.stringify({
+              visibleRoutes: newState.visibleRoutes,
+              routeConfigs: newState.routeConfigs,
+              defaultDatasetView: newState.defaultDatasetView,
+              enabledDatasets: newState.enabledDatasets,
+              dashboardSummaryConfigs: newState.dashboardSummaryConfigs,
+            })
+          );
+        } catch (error) {
+          console.error("Failed to save settings to localStorage:", error);
+        }
+        return newState;
+      });
+    }
+  };
+
+  const handleMoveDown = (currentIndex: number) => {
+    if (currentIndex < orderedRoutes.length - 1) {
+      // Get the routes we're working with
+      const currentRoute = orderedRoutes[currentIndex];
+      const targetRoute = orderedRoutes[currentIndex + 1];
+      
+      // Swap their order values
+      settingsStore.setState((state) => {
+        const newConfigs = { ...state.routeConfigs };
+        const currentOrder = currentRoute.config.order;
+        const targetOrder = targetRoute.config.order;
+        
+        newConfigs[currentRoute.path] = { ...currentRoute.config, order: targetOrder };
+        newConfigs[targetRoute.path] = { ...targetRoute.config, order: currentOrder };
+        
+        const newState = { ...state, routeConfigs: newConfigs };
+        // Save to localStorage
+        try {
+          localStorage.setItem(
+            "app-settings",
+            JSON.stringify({
+              visibleRoutes: newState.visibleRoutes,
+              routeConfigs: newState.routeConfigs,
+              defaultDatasetView: newState.defaultDatasetView,
+              enabledDatasets: newState.enabledDatasets,
+              dashboardSummaryConfigs: newState.dashboardSummaryConfigs,
+            })
+          );
+        } catch (error) {
+          console.error("Failed to save settings to localStorage:", error);
+        }
+        return newState;
+      });
+    }
   };
 
   const handleResetSettings = () => {
@@ -130,12 +218,12 @@ function SettingsPage() {
 
   const navigationContent = (
     <div className="space-y-4">
-      {routes.map((route) => (
-        <div key={route.path} className="flex items-center justify-between">
+      {orderedRoutes.map((route, index) => (
+        <div key={route.path} className="flex items-center justify-between gap-4 p-2 border rounded-lg">
           <div className="flex flex-col">
             <Label
               htmlFor={`route-${route.path}`}
-              className="flex items-center"
+              className="flex items-center cursor-pointer"
             >
               {route.icon}
               {route.name}
@@ -144,18 +232,37 @@ function SettingsPage() {
               {route.description}
             </p>
           </div>
-          <Switch
-            id={`route-${route.path}`}
-            checked={visibleRoutes[route.path] ?? true}
-            onCheckedChange={(checked) =>
-              handleRouteToggle(route.path, checked)
-            }
-            disabled={
-              route.path === "/settings" ||
-              route.path === "/dataset" ||
-              route.path === "/"
-            }
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => handleMoveUp(index)}
+                disabled={index === 0}
+                title="Move up"
+              >
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => handleMoveDown(index)}
+                disabled={index === orderedRoutes.length - 1}
+                title="Move down"
+              >
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </div>
+            <Switch
+              id={`route-${route.path}`}
+              checked={visibleRoutes[route.path] ?? true}
+              onCheckedChange={(checked) =>
+                handleRouteToggle(route.path, checked)
+              }
+            />
+          </div>
         </div>
       ))}
     </div>
@@ -189,7 +296,9 @@ function SettingsPage() {
             Use this page to customize your application experience:
           </p>
           <ul className="list-disc pl-6 space-y-1">
+            <li>Reorder navigation items using the up/down arrows</li>
             <li>Enable or disable navigation items in the sidebar</li>
+            <li>Dashboard, Datasets, and Settings are always available</li>
             <li>Manage which datasets are loaded in the application</li>
             <li>Configure default view preferences</li>
             <li>All settings are stored locally in your browser</li>
@@ -200,10 +309,10 @@ function SettingsPage() {
           title={
             <div className="flex items-center gap-2">
               <LayoutDashboard className="h-5 w-5" />
-              Navigation Visibility
+              Navigation Settings
             </div>
           }
-          description="Enable or disable navigation items in the sidebar"
+          description="Reorder and manage visibility of navigation items in the sidebar"
           content={navigationContent}
         />
       </div>

@@ -73,11 +73,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
   - add a paycheck part in this section, along with the logs and balances
 - add a bodyweight tracking section
 - add a body measurement section following the FitNotes application import
-- for the todo summary section, need to look at it more in depth to fix how it looks, it visually breaks when it's too little width
 
 ### DONE
 
-- for the bloodwork summary section, can you add the summary of optimal range, out of range, etc, and list out the categories with the out of range, descending by # of out of range markers?, last date of blood test from which lab, and how many months it is currently since last blood test [DONE 2025-06-03]
+- for the todo summary section, need to look at it more in depth to fix how it looks, it visually breaks when it's too little width [DONE 2025-06-04]
+- for the bloodwork summary section, can you add the summary of optimal range, out of range, etc, and list out the categories with the out of range, descending by # of out of range markers?, last date of blood test from which lab, and how many months it is currently since last blood test [DONE 2025-06-04]
 - in settings, add the people crm route there [DONE 2025-06-03]
 - create some Claude instructions on how to add a new dataset on the frontend [DONE 2025-06-03]
 - make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in [DONE 2025-06-03]
