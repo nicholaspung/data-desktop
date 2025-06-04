@@ -30,6 +30,15 @@ export default function BloodworkDashboardSummary() {
       status: "high" | "low" | "optimal";
     }>
   >([]);
+  const [markerCounts, setMarkerCounts] = useState({
+    optimal: 0,
+    outOfRange: 0,
+    textValues: 0,
+    noRange: 0,
+  });
+  const [monthsSinceLastTest, setMonthsSinceLastTest] = useState<number | null>(
+    null
+  );
 
   const keyMarkerCategories = [
     "Lipids",
@@ -50,6 +59,14 @@ export default function BloodworkDashboardSummary() {
 
     setLatestTest(sortedTests[0]);
 
+    // Calculate months since last test
+    const now = new Date();
+    const lastTestDate = new Date(sortedTests[0].date);
+    const diffInMonths =
+      (now.getFullYear() - lastTestDate.getFullYear()) * 12 +
+      (now.getMonth() - lastTestDate.getMonth());
+    setMonthsSinceLastTest(diffInMonths);
+
     if (sortedTests[0]) {
       const latestResults = bloodResults.filter(
         (result) => result.blood_test_id === sortedTests[0].id
@@ -62,35 +79,65 @@ export default function BloodworkDashboardSummary() {
         return { ...result, marker };
       });
 
-      const flagged = resultsWithMarkers
-        .filter((result) => result.marker && result.value_number !== undefined)
-        .map((result) => {
-          const { marker, value_number } = result;
+      // Calculate marker counts
+      let optimal = 0;
+      let outOfRange = 0;
+      let textValues = 0;
+      let noRange = 0;
 
-          if (!marker || value_number === undefined) {
+      const flagged = resultsWithMarkers
+        .map((result) => {
+          const { marker, value_number, value_text } = result;
+
+          if (!marker) {
+            return null;
+          }
+
+          // Count text values
+          if (value_text && !value_number) {
+            textValues++;
+            return null;
+          }
+
+          if (value_number === undefined) {
             return null;
           }
 
           let status: "high" | "low" | "optimal" = "optimal";
+          let hasRange = false;
 
           if (
             marker.optimal_low !== undefined &&
             marker.optimal_high !== undefined
           ) {
+            hasRange = true;
             if (value_number < marker.optimal_low) {
               status = "low";
+              outOfRange++;
             } else if (value_number > marker.optimal_high) {
               status = "high";
+              outOfRange++;
+            } else {
+              optimal++;
             }
           } else if (
             marker.lower_reference !== undefined &&
             marker.upper_reference !== undefined
           ) {
+            hasRange = true;
             if (value_number < marker.lower_reference) {
               status = "low";
+              outOfRange++;
             } else if (value_number > marker.upper_reference) {
               status = "high";
+              outOfRange++;
+            } else {
+              optimal++;
             }
+          }
+
+          if (!hasRange) {
+            noRange++;
           }
 
           if (status !== "optimal") {
@@ -102,6 +149,8 @@ export default function BloodworkDashboardSummary() {
         result: BloodResult & { marker?: BloodMarker };
         status: "high" | "low" | "optimal";
       }>;
+
+      setMarkerCounts({ optimal, outOfRange, textValues, noRange });
 
       flagged.sort((a, b) => {
         const aIsKey =
@@ -156,7 +205,13 @@ export default function BloodworkDashboardSummary() {
           ? {
               title: "Latest Test",
               value: formatDate(latestTest.date),
-              subText: latestTest.lab_name,
+              subText: `${latestTest.lab_name || "Unknown Lab"}${
+                monthsSinceLastTest !== null
+                  ? ` • ${monthsSinceLastTest} month${
+                      monthsSinceLastTest !== 1 ? "s" : ""
+                    } ago`
+                  : ""
+              }`,
               badge: {
                 variant: latestTest.fasted ? "success" : "outline",
                 children: latestTest.fasted ? "Fasted" : "Non-fasted",
@@ -220,14 +275,20 @@ export default function BloodworkDashboardSummary() {
                 className: "pt-3 border-t",
                 items: [
                   {
-                    label: "Total Markers",
-                    value: bloodResults.filter(
-                      (r) => r.blood_test_id === latestTest.id
-                    ).length,
+                    label: "Optimal Range",
+                    value: markerCounts.optimal,
                   },
                   {
                     label: "Out of Range",
-                    value: flaggedMarkers.length,
+                    value: markerCounts.outOfRange,
+                  },
+                  {
+                    label: "Text Values",
+                    value: markerCounts.textValues,
+                  },
+                  {
+                    label: "No Range",
+                    value: markerCounts.noRange,
                   },
                 ],
               },

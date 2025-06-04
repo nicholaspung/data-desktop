@@ -53,8 +53,8 @@ import CustomizableDashboardSummary from "@/components/reusable/customizable-das
 
 const sizeClasses = {
   small: "col-span-1",
-  medium: "col-span-1 md:col-span-2",
-  large: "col-span-1 md:col-span-3",
+  medium: "col-span-1 sm:col-span-2 lg:col-span-2",
+  large: "col-span-1 sm:col-span-2 lg:col-span-3",
 };
 
 export const Route = createFileRoute("/")({
@@ -351,7 +351,7 @@ function Home() {
             strategy={verticalListSortingStrategy}
           >
             <div
-              className="grid gap-4 grid-cols-1 md:grid-cols-3"
+              className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
               style={{ minHeight: "200px", padding: "8px" }}
             >
               {getOrderedDashboardSummaries().map((item) => {

@@ -154,7 +154,26 @@ const defaultDashboardSummaries = {
 };
 ```
 
-### 6. Update Dashboard Route Mapping (Optional)
+### 6. Add Route to Settings Page (Optional)
+
+**File:** `frontend/src/routes/settings.tsx`
+
+If your dataset has a dedicated route, add it to the settings page routes array:
+
+```typescript
+const routes = [
+  // ... existing routes
+  {
+    path: "/my-feature",
+    name: "My Feature",
+    description: "Description of what this feature does",
+    icon: <FEATURE_ICONS.MY_FEATURE className="h-4 w-4 mr-2" />,
+  },
+  // ... rest of routes
+];
+```
+
+### 7. Update Dashboard Route Mapping (Optional)
 
 **File:** `frontend/src/routes/index.tsx`
 
@@ -180,7 +199,7 @@ const getOrderedDashboardSummaries = () => {
 };
 ```
 
-### 7. Create Dashboard Summary Component (Optional)
+### 8. Create Dashboard Summary Component (Optional)
 
 **File:** `frontend/src/features/dashboard/my-feature-dashboard-summary.tsx`
 
@@ -233,7 +252,7 @@ export default function MyFeatureDashboardSummary({
 }
 ```
 
-### 8. Update Dashboard Index (Optional)
+### 9. Update Dashboard Index (Optional)
 
 **File:** `frontend/src/routes/index.tsx`
 
@@ -308,8 +327,9 @@ Here's a complete list of files that may need updates when adding a new dataset:
 
 ### Optional Files (based on requirements):
 5. `frontend/src/features/*/types.ts` - Custom data types
-6. `frontend/src/routes/index.tsx` - Route mapping & dashboard integration
-7. `frontend/src/features/dashboard/*-dashboard-summary.tsx` - Custom dashboard widget
+6. `frontend/src/routes/settings.tsx` - Add route to settings page
+7. `frontend/src/routes/index.tsx` - Route mapping & dashboard integration
+8. `frontend/src/features/dashboard/*-dashboard-summary.tsx` - Custom dashboard widget
 
 ### Automatically Updated Files:
 - `frontend/src/store/data-store.ts` - Auto-includes all datasets

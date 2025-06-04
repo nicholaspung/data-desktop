@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
-import { Users, Calendar, NotebookPen, Tag, Gift } from "lucide-react";
+import {
+  Users,
+  Calendar,
+  NotebookPen,
+  Tag,
+  Gift,
+  AlertTriangle,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import EditPerson from "@/features/people-crm/edit-person";
 import { EditMeeting } from "@/features/people-crm/edit-meeting";
 import { EditNote } from "@/features/people-crm/edit-note";
@@ -191,6 +199,15 @@ function PeopleCRM() {
               Manage your contacts and relationships
             </p>
           </div>
+
+          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription className="text-orange-800 dark:text-orange-200">
+              <strong>Alpha Feature:</strong> People CRM is currently in alpha.
+              You may experience bugs or unexpected behavior. Data integrity is
+              maintained, but the user experience may not be polished.
+            </AlertDescription>
+          </Alert>
 
           <ReusableTabs
             tabs={tabs}

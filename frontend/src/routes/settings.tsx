@@ -85,6 +85,12 @@ const routes = [
     icon: <FEATURE_ICONS.TODOS className="h-4 w-4 mr-2" />,
   },
   {
+    path: "/people-crm",
+    name: "People CRM",
+    description: "Manage your contacts and relationships",
+    icon: <FEATURE_ICONS.PEOPLE_CRM className="h-4 w-4 mr-2" />,
+  },
+  {
     path: "/dataset",
     name: "Dataset Manager",
     description: "Manage application datasets",

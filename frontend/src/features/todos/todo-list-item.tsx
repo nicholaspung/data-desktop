@@ -194,48 +194,46 @@ export default function TodoListItem({
       contentClassName="py-3 px-4"
       content={
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Left section - Title and info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3">
-                <h3
-                  className={`font-medium truncate ${
-                    todo.isComplete ? "line-through text-muted-foreground" : ""
-                  }`}
-                >
-                  {todo.private ? (
-                    <ProtectedField>{todo.title}</ProtectedField>
-                  ) : (
-                    todo.title
-                  )}
-                </h3>
-                <div className="flex flex-wrap gap-2 items-center">
-                  {getPriorityBadge(todo.priority as TodoPriority)}
-                  {getDeadlineStatus(
-                    todo.deadline.toISOString(),
-                    todo.isComplete
-                  )}
-
-                  {todo.private ? (
-                    <ProtectedField>{renderTags()}</ProtectedField>
-                  ) : (
-                    renderTags()
-                  )}
-                </div>
-                {!todo.private && !isCompact && todo.description && (
-                  <p className="text-sm text-muted-foreground truncate max-w-xs">
-                    {todo.description}
-                  </p>
+            <div className="flex-1 min-w-0 space-y-2">
+              <h3
+                className={`font-medium break-words ${
+                  todo.isComplete ? "line-through text-muted-foreground" : ""
+                }`}
+              >
+                {todo.private ? (
+                  <ProtectedField>{todo.title}</ProtectedField>
+                ) : (
+                  todo.title
                 )}
-                {todo.private && !isCompact && todo.description && (
-                  <ProtectedField>{todo.description}</ProtectedField>
+              </h3>
+              <div className="flex flex-wrap gap-2 items-center">
+                {getPriorityBadge(todo.priority as TodoPriority)}
+                {getDeadlineStatus(
+                  todo.deadline.toISOString(),
+                  todo.isComplete
+                )}
+
+                {todo.private ? (
+                  <ProtectedField>{renderTags()}</ProtectedField>
+                ) : (
+                  renderTags()
                 )}
               </div>
+              {!todo.private && !isCompact && todo.description && (
+                <p className="text-sm text-muted-foreground break-words">
+                  {todo.description}
+                </p>
+              )}
+              {todo.private && !isCompact && todo.description && (
+                <ProtectedField>{todo.description}</ProtectedField>
+              )}
             </div>
 
             {/* Right section - Actions */}
             {!isCompact && (
-              <div className="flex gap-1 ml-4">
+              <div className="flex gap-1 sm:ml-4 self-start sm:self-center flex-shrink-0">
                 {!todo.isComplete && (
                   <Button
                     variant="ghost"
@@ -281,8 +279,8 @@ export default function TodoListItem({
           </div>
 
           {/* Footer info */}
-          <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex justify-between items-center">
-            <div>
+          <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
+            <div className="break-words">
               Deadline: {new Date(todo.deadline).toLocaleDateString()}
               {!todo.isComplete && (
                 <span>
@@ -298,7 +296,7 @@ export default function TodoListItem({
             </div>
 
             {todo.failedDeadlines && todo.failedDeadlines.length > 0 && (
-              <div>
+              <div className="flex-shrink-0">
                 {todo.failedDeadlines.length} failed deadline
                 {todo.failedDeadlines.length > 1 ? "s" : ""}
               </div>

@@ -8,6 +8,7 @@ import {
   Tag,
   Gift,
   ChevronRight,
+  AlertTriangle,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReusableSummary from "@/components/reusable/reusable-summary";
@@ -93,7 +94,15 @@ export default function PeopleCRMDashboardSummary() {
   return (
     <ReusableSummary
       title="People CRM"
-      titleIcon={<Users className="h-5 w-5" />}
+      titleIcon={
+        <div className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50">
+            <AlertTriangle className="h-3 w-3 mr-1" />
+            Alpha
+          </Badge>
+        </div>
+      }
       linkText="Open People CRM"
       linkTo="/people-crm"
       loading={isLoading}
