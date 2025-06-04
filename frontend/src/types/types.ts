@@ -26,6 +26,7 @@ import {
   PersonRelationship,
 } from "@/store/people-crm-definitions";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
+import { TimeBlockConfig } from "@/features/time-planner/types";
 import { Todo } from "@/store/todo-definitions";
 
 export type DatasetId =
@@ -50,6 +51,7 @@ export type DatasetId =
   | "person_relationships"
   | "time_entries"
   | "time_categories"
+  | "time_planner_configs"
   | "todos";
 
 export const DATASET_REFERENCES = {
@@ -86,6 +88,7 @@ export const DATASET_REFERENCES = {
   },
   TIME_ENTRIES: { dataset: "time_entries" as DatasetId, field: "id" },
   TIME_CATEGORIES: { dataset: "time_categories" as DatasetId, field: "id" },
+  TIME_PLANNER_CONFIGS: { dataset: "time_planner_configs" as DatasetId, field: "id" },
   TODOS: { dataset: "todos" as DatasetId, field: "id" },
 } as const;
 
@@ -111,6 +114,7 @@ export type DatasetTypeMap = {
   person_relationships: PersonRelationship;
   time_entries: TimeEntry;
   time_categories: TimeCategory;
+  time_planner_configs: TimeBlockConfig;
   todos: Todo;
 };
 

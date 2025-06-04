@@ -83,3 +83,33 @@ export const TIME_CATEGORIES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
   ],
 };
+
+export const TIME_PLANNER_CONFIGS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "time_planner_configs",
+  name: "Time Planner Configs",
+  description: "Time planner configuration templates",
+  fields: [
+    {
+      key: "name",
+      type: "text",
+      displayName: "Name",
+      description: "Name of the time planner configuration",
+      isSearchable: true,
+    },
+    {
+      key: "description",
+      type: "text",
+      displayName: "Description",
+      description: "Description of the time planner configuration",
+      isSearchable: false,
+      isOptional: true,
+    },
+    {
+      key: "blocks",
+      type: "json",
+      displayName: "Time Blocks",
+      description: "Time blocks for this configuration (JSON data)",
+      isSearchable: false,
+    },
+  ],
+};

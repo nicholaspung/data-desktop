@@ -54,13 +54,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 - low priority bug: make the markdown CSS better looking
 
-- make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in
 - fixed the <div> cannot be a child of <p> error from React
 - refactor out icons used in application into lib.ts
 - refactor application to use reusable components
-- be able to use settings store to also load the appropriate datasets into the application
-- when a user clicks in the `index.tsx` dataset summaries, it should push them to the dataset page with that selection open
-- also update the dataset icons to the appropriate icon
 
 - add inventory management system
 - add a "taking current supplements" section
@@ -78,6 +74,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- create some Claude instructions on how to add a new dataset on the frontend [DONE 2025-06-03]
+- make the dashboard able to be in like "specific card heights and card widths" or just hardcode it in [DONE 2025-06-03]
+- be able to use settings store to also load the appropriate datasets into the application [DONE 2025-06-03]
+- when a user clicks in the `index.tsx` dataset summaries, it should push them to the dataset page with that selection open [DONE 2025-06-03]
+- also update the dataset icons to the appropriate icon [DONE 2025-06-03]
 - in bloodwork, when adding bloodwork results, make the scrolling in blood markers the height of the scroll area + search markers input [DONE 2025-06-02]
 - in edit blood marker manager, add a way to filter selection by category [DONE 2025-06-02]
 - when editing blood marker manager, in categories, make it autocomplete from other records [DONE 2025-06-02]
