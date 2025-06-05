@@ -5,6 +5,7 @@ export interface BodyMeasurementRecord {
   measurement: string;
   value: number;
   unit: string;
+  private?: boolean;
   createdAt: Date;
   lastModified: Date;
 }

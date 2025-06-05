@@ -70,11 +70,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add a finance tracking section
   - add a paycheck part in this section, along with the logs and balances
-- add a bodyweight tracking section
-- add a body measurement section following the FitNotes application import
+- in time tracker form, if I modify the time entry while it's running, it doesn't update the header text if the description is changed
 
 ### DONE
 
+- add a bodyweight tracking section [DONE 2025-06-04]
+- add a body measurement section following the FitNotes application import [DONE 2025-06-04]
 - fixed the <div> cannot be a child of <p> error from React [DONE 2025-06-04]
 - for the todo summary section, need to look at it more in depth to fix how it looks, it visually breaks when it's too little width [DONE 2025-06-04]
 - for the bloodwork summary section, can you add the summary of optimal range, out of range, etc, and list out the categories with the out of range, descending by # of out of range markers?, last date of blood test from which lab, and how many months it is currently since last blood test [DONE 2025-06-04]

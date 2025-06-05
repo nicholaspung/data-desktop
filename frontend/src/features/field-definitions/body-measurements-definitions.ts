@@ -40,5 +40,12 @@ export const BODY_MEASUREMENTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description: "Unit of measurement (e.g., lbs, kg, inches, cm)",
       isSearchable: true,
     },
+    {
+      key: "private",
+      type: "boolean",
+      displayName: "Private",
+      description: "Mark this measurement as private (requires PIN to view)",
+      isOptional: true,
+    },
   ],
 };

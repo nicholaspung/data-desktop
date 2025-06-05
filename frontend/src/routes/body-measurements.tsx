@@ -9,9 +9,15 @@ import BodyMeasurementsDashboardSummary from "@/features/dashboard/body-measurem
 import BodyweightChart from "@/features/body-measurements/bodyweight-chart";
 import MultiMeasurementChart from "@/components/charts/multi-measurement-chart";
 import BodyMeasurementsVisualization from "@/features/body-measurements/body-measurements-visualization";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
+import ReusableCard from "@/components/reusable/reusable-card";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
+import { Scale, TrendingUp, BarChart3, User } from "lucide-react";
+import AddBodyMeasurementButton from "@/features/body-measurements/add-body-measurement-button";
+import PrivateToggleButton from "@/features/body-measurements/private-toggle-button";
+import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/body-measurements")({
   component: BodyMeasurementsPage,
@@ -20,27 +26,90 @@ export const Route = createFileRoute("/body-measurements")({
 function BodyMeasurementsPage() {
   const data = useStore(dataStore, (state) => state.body_measurements) || [];
   const typedData = data as BodyMeasurementRecord[];
+  const [showPrivate, setShowPrivate] = useState(false);
+
+  // Filter data based on privacy settings
+  const filteredData = useMemo(() => {
+    if (showPrivate) {
+      // Show all data when private mode is enabled
+      return typedData;
+    } else {
+      // Only show public data (non-private records)
+      return typedData.filter(record => !record.private);
+    }
+  }, [typedData, showPrivate]);
 
   const guideContent = [
     {
       title: "Getting Started",
       content:
-        "Begin by recording your first measurement. Choose a measurement type (like 'weight', 'waist', 'chest', etc.), enter the value and unit, and save. Your measurements will be tracked over time.",
+        "Click 'Add Measurement' to record your first body measurement. Choose a measurement type (weight, waist, chest, etc.), enter the value and unit, and optionally mark it as private. Your measurements will be visualized on an interactive body diagram and tracked over time with comprehensive charts.",
     },
     {
-      title: "Measurement Types",
+      title: "Privacy & Data Control",
       content:
-        "You can track any type of body measurement: weight, waist circumference, chest, arm circumference, body fat percentage, muscle mass, and more. Each type is tracked separately with its own history.",
+        "Mark sensitive measurements as private to keep them secure. Use the 'Show Private' toggle to view all data when needed (requires PIN if configured). Private measurements are completely hidden unless explicitly unlocked, giving you full control over your data visibility.",
+    },
+    {
+      title: "Interactive Visualization",
+      content:
+        "The body diagram shows measurement locations with interactive dots. Hover over any body part to see latest measurements and trends. The visualization supports both single-date view and date comparison mode with change indicators using green (increase) and red (decrease) arrows.",
+    },
+    {
+      title: "Advanced Analysis",
+      content:
+        "Compare measurements between dates, filter which measurements to include in sum calculations, and view comprehensive trends. The multi-measurement chart lets you overlay different body metrics over time with customizable date ranges and scrollable measurement filters.",
     },
     {
       title: "Best Practices",
       content:
-        "For accurate tracking: measure at the same time of day, use consistent measurement techniques, record measurements regularly (daily for weight, weekly/monthly for other measurements), and use the same units consistently.",
+        "For accurate tracking: measure at the same time of day, use consistent measurement techniques, record measurements regularly (daily for weight, weekly/monthly for others), and use the same units consistently. Take advantage of the date comparison feature to track progress over specific time periods.",
+    },
+  ];
+
+  const tabs = [
+    {
+      id: "overview",
+      label: "Overview",
+      icon: <BarChart3 className="h-4 w-4" />,
+      content: (
+        <ReusableCard
+          title="Body Measurements Overview"
+          description="Summary of your recent measurements and tracking progress"
+          useSeparator={true}
+          content={<BodyMeasurementsDashboardSummary data={filteredData} />}
+        />
+      ),
     },
     {
-      title: "Viewing Progress",
-      content:
-        "The dashboard shows your latest measurements and tracks how long since each type was last updated. Use this to maintain consistent tracking habits and monitor your progress over time.",
+      id: "body-visualization",
+      label: "Body Measurements",
+      icon: <User className="h-4 w-4" />,
+      content: (
+        <div className="space-y-6">
+          <BodyMeasurementsVisualization data={filteredData} />
+        </div>
+      ),
+    },
+    {
+      id: "trends",
+      label: "Trends & Charts",
+      icon: <TrendingUp className="h-4 w-4" />,
+      content: (
+        <div className="space-y-6">
+          <MultiMeasurementChart bodyMeasurementsData={filteredData} />
+        </div>
+      ),
+    },
+    {
+      id: "weight-trends",
+      label: "Weight Trends",
+      icon: <Scale className="h-4 w-4" />,
+      content: (
+        <div className="space-y-6">
+          <BodyweightChart data={filteredData} />
+        </div>
+      ),
     },
   ];
 
@@ -53,7 +122,15 @@ function BodyMeasurementsPage() {
           helpText="Start by adding your first measurement. You can track weight, body dimensions, body composition, and any other numeric measurements you want to monitor."
           guideContent={guideContent}
           storageKey="body-measurements-feature"
-        ></FeatureHeader>
+        >
+          <div className="flex items-center gap-2">
+            <PrivateToggleButton
+              showPrivate={showPrivate}
+              onToggle={setShowPrivate}
+            />
+            <AddBodyMeasurementButton />
+          </div>
+        </FeatureHeader>
       }
       sidebar={
         <HelpSidebar>
@@ -97,12 +174,12 @@ function BodyMeasurementsPage() {
         </HelpSidebar>
       }
     >
-      <div className="space-y-6">
-        <BodyMeasurementsDashboardSummary />
-        <BodyMeasurementsVisualization data={typedData} />
-        <MultiMeasurementChart />
-        <BodyweightChart />
-      </div>
+      <ReusableTabs
+        tabs={tabs}
+        defaultTabId="overview"
+        className="space-y-6"
+        tabsContentClassName="mt-6"
+      />
     </FeatureLayout>
   );
 }

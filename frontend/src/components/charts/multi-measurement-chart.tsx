@@ -4,9 +4,20 @@ import dataStore from "@/store/data-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import CustomLineChart from "./line-chart";
 import { formatChartDate, CHART_COLORS } from "./chart-utils";
 import { LineConfig } from "./charts";
@@ -23,7 +34,9 @@ interface MeasurementConfig {
   unit: string;
   color: string;
   enabled: boolean;
-  processor?: (data: any[]) => Array<{ date: Date; value: number; dateFormatted: string }>;
+  processor?: (
+    data: any[]
+  ) => Array<{ date: Date; value: number; dateFormatted: string }>;
 }
 
 interface ChartDataPoint {
@@ -32,58 +45,80 @@ interface ChartDataPoint {
   [key: string]: any;
 }
 
-export default function MultiMeasurementChart() {
+interface MultiMeasurementChartProps {
+  bodyMeasurementsData?: any[];
+}
+
+export default function MultiMeasurementChart({
+  bodyMeasurementsData,
+}: MultiMeasurementChartProps = {}) {
   // Get data from store
-  const bodyMeasurementsRaw = useStore(dataStore, (state) => state.body_measurements);
+  const bodyMeasurementsRaw = useStore(
+    dataStore,
+    (state) => state.body_measurements
+  );
   const dexaDataRaw = useStore(dataStore, (state) => state.dexa);
 
-  // Memoize data to prevent dependency issues
-  const bodyMeasurements = useMemo(() => bodyMeasurementsRaw || [], [bodyMeasurementsRaw]);
+  // Memoize data to prevent dependency issues - use prop data if provided, otherwise use store data
+  const bodyMeasurements = useMemo(
+    () => bodyMeasurementsData || bodyMeasurementsRaw || [],
+    [bodyMeasurementsData, bodyMeasurementsRaw]
+  );
   const dexaData = useMemo(() => dexaDataRaw || [], [dexaDataRaw]);
 
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
+  const [customDateRange, setCustomDateRange] = useState<
+    DateRange | undefined
+  >();
 
   // Dynamically generate measurement configs based on actual data
   const measurementConfigs = useMemo(() => {
     const configs: MeasurementConfig[] = [];
     let colorIndex = 0;
 
-
     // Get unique measurement types from body measurements, excluding bodyweight/weight
-    const uniqueMeasurements = Array.from(new Set(
-      bodyMeasurements
-        .map((record: any) => record.measurement)
-        .filter((measurement: string) => {
-          if (!measurement || typeof measurement !== 'string') return false;
-          const lowerMeasurement = measurement.toLowerCase().trim();
-          return lowerMeasurement !== "weight" && 
-                 lowerMeasurement !== "bodyweight" && 
-                 lowerMeasurement !== "body weight" &&
-                 lowerMeasurement !== "percentage"; // Filter out mysterious "percentage" entry
-        })
-    ));
+    const uniqueMeasurements = Array.from(
+      new Set(
+        bodyMeasurements
+          .map((record: any) => record.measurement)
+          .filter((measurement: string) => {
+            if (!measurement || typeof measurement !== "string") return false;
+            const lowerMeasurement = measurement.toLowerCase().trim();
+            return (
+              lowerMeasurement !== "weight" &&
+              lowerMeasurement !== "bodyweight" &&
+              lowerMeasurement !== "body weight" &&
+              lowerMeasurement !== "percentage"
+            ); // Filter out mysterious "percentage" entry
+          })
+      )
+    );
 
     // Add body measurement types
     uniqueMeasurements.forEach((measurement: string) => {
-      const measurementData = bodyMeasurements.filter((record: any) => 
-        record.measurement === measurement
+      const measurementData = bodyMeasurements.filter(
+        (record: any) => record.measurement === measurement
       );
-      
+
       if (measurementData.length > 0) {
         // Get the most common unit for this measurement type
         const units = measurementData.map((record: any) => record.unit);
-        const mostCommonUnit = units.sort((a: string, b: string) =>
-          units.filter((v: string) => v === a).length - units.filter((v: string) => v === b).length
-        ).pop() || "";
+        const mostCommonUnit =
+          units
+            .sort(
+              (a: string, b: string) =>
+                units.filter((v: string) => v === a).length -
+                units.filter((v: string) => v === b).length
+            )
+            .pop() || "";
 
         // Create a safe field name by removing special characters and normalizing
         const safeFieldName = measurement
           .toLowerCase()
-          .replace(/[%]/g, '_percent')
-          .replace(/[^a-z0-9_]/g, '_')
-          .replace(/_+/g, '_')
-          .replace(/^_|_$/g, '');
+          .replace(/[%]/g, "_percent")
+          .replace(/[^a-z0-9_]/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_|_$/g, "");
 
         configs.push({
           id: `body_${safeFieldName}`,
@@ -101,17 +136,17 @@ export default function MultiMeasurementChart() {
                 value: record.value,
                 dateFormatted: formatChartDate(record.date),
               }));
-          }
+          },
         });
         colorIndex++;
       }
     });
 
     // Only add DEXA measurements if available and no body fat measurement exists in body measurements
-    const hasBodyFatInBodyMeasurements = uniqueMeasurements.some(m => 
-      m.toLowerCase().includes('body') && m.toLowerCase().includes('fat')
+    const hasBodyFatInBodyMeasurements = uniqueMeasurements.some(
+      (m) => m.toLowerCase().includes("body") && m.toLowerCase().includes("fat")
     );
-    
+
     if (dexaData.length > 0 && !hasBodyFatInBodyMeasurements) {
       const dexaMeasurements = [
         {
@@ -127,7 +162,7 @@ export default function MultiMeasurementChart() {
                 value: record.total_body_fat_percentage,
                 dateFormatted: formatChartDate(record.date),
               }));
-          }
+          },
         },
         {
           id: "dexa_lean_mass",
@@ -142,11 +177,11 @@ export default function MultiMeasurementChart() {
                 value: record.lean_tissue_lbs,
                 dateFormatted: formatChartDate(record.date),
               }));
-          }
-        }
+          },
+        },
       ];
 
-      dexaMeasurements.forEach(dexaMeasurement => {
+      dexaMeasurements.forEach((dexaMeasurement) => {
         const testData = dexaMeasurement.processor(dexaData);
         if (testData.length > 0) {
           configs.push({
@@ -157,7 +192,7 @@ export default function MultiMeasurementChart() {
             unit: dexaMeasurement.unit,
             color: CHART_COLORS[colorIndex % CHART_COLORS.length],
             enabled: false,
-            processor: dexaMeasurement.processor
+            processor: dexaMeasurement.processor,
           });
           colorIndex++;
         }
@@ -167,12 +202,16 @@ export default function MultiMeasurementChart() {
     return configs;
   }, [bodyMeasurements, dexaData]);
 
-  const [enabledMeasurements, setEnabledMeasurements] = useState<Set<string>>(new Set());
+  const [enabledMeasurements, setEnabledMeasurements] = useState<Set<string>>(
+    new Set()
+  );
 
   // Initialize enabled measurements based on default enabled configs
   React.useEffect(() => {
     const defaultEnabled = new Set(
-      measurementConfigs.filter(config => config.enabled).map(config => config.id)
+      measurementConfigs
+        .filter((config) => config.enabled)
+        .map((config) => config.id)
     );
     setEnabledMeasurements(defaultEnabled);
   }, [measurementConfigs]);
@@ -184,11 +223,15 @@ export default function MultiMeasurementChart() {
       dexa: dexaData,
     };
 
-    const results: Record<string, Array<{ date: Date; value: number; dateFormatted: string }>> = {};
-    
-    measurementConfigs.forEach(config => {
+    const results: Record<
+      string,
+      Array<{ date: Date; value: number; dateFormatted: string }>
+    > = {};
+
+    measurementConfigs.forEach((config) => {
       if (enabledMeasurements.has(config.id) && config.processor) {
-        const dataset = allDatasets[config.datasetKey as keyof typeof allDatasets];
+        const dataset =
+          allDatasets[config.datasetKey as keyof typeof allDatasets];
         if (dataset) {
           results[config.id] = config.processor(dataset);
         }
@@ -200,15 +243,17 @@ export default function MultiMeasurementChart() {
 
   // Create unified chart data with date filtering
   const chartData = useMemo(() => {
-    const enabledConfigs = measurementConfigs.filter(config => enabledMeasurements.has(config.id));
-    
+    const enabledConfigs = measurementConfigs.filter((config) =>
+      enabledMeasurements.has(config.id)
+    );
+
     if (enabledConfigs.length === 0) return [];
 
     // Get all unique dates from enabled measurements
     const allDates = new Set<string>();
-    enabledConfigs.forEach(config => {
+    enabledConfigs.forEach((config) => {
       if (processedData[config.id]) {
-        processedData[config.id].forEach(item => {
+        processedData[config.id].forEach((item) => {
           allDates.add(item.dateFormatted);
         });
       }
@@ -216,9 +261,9 @@ export default function MultiMeasurementChart() {
 
     // Create data points for each unique date
     const dateMap = new Map<string, ChartDataPoint>();
-    
+
     // First, create unique data points for each date
-    Array.from(allDates).forEach(dateStr => {
+    Array.from(allDates).forEach((dateStr) => {
       if (!dateMap.has(dateStr)) {
         dateMap.set(dateStr, {
           date: dateStr,
@@ -228,10 +273,10 @@ export default function MultiMeasurementChart() {
     });
 
     // Then populate measurement values for each date
-    enabledConfigs.forEach(config => {
+    enabledConfigs.forEach((config) => {
       const measurementData = processedData[config.id];
       if (measurementData) {
-        measurementData.forEach(item => {
+        measurementData.forEach((item) => {
           const dataPoint = dateMap.get(item.dateFormatted);
           if (dataPoint) {
             // If multiple measurements exist for the same date and measurement type,
@@ -240,7 +285,8 @@ export default function MultiMeasurementChart() {
               dataPoint[config.field] = item.value;
             } else {
               // Average multiple values for the same measurement type on the same date
-              dataPoint[config.field] = ((dataPoint[config.field] as number) + item.value) / 2;
+              dataPoint[config.field] =
+                ((dataPoint[config.field] as number) + item.value) / 2;
             }
           }
         });
@@ -248,8 +294,9 @@ export default function MultiMeasurementChart() {
     });
 
     // Convert map to array and sort
-    const data: ChartDataPoint[] = Array.from(dateMap.values())
-      .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+    const data: ChartDataPoint[] = Array.from(dateMap.values()).sort(
+      (a, b) => a.dateObj.getTime() - b.dateObj.getTime()
+    );
 
     // Apply time range filtering
     if (timeRange !== "all") {
@@ -259,8 +306,8 @@ export default function MultiMeasurementChart() {
       if (timeRange === "custom" && customDateRange?.from) {
         startDate = customDateRange.from;
         const endDate = customDateRange.to || now;
-        return data.filter(item => 
-          item.dateObj >= startDate && item.dateObj <= endDate
+        return data.filter(
+          (item) => item.dateObj >= startDate && item.dateObj <= endDate
         );
       } else {
         switch (timeRange) {
@@ -277,18 +324,28 @@ export default function MultiMeasurementChart() {
             startDate.setFullYear(now.getFullYear() - 2);
             break;
         }
-        return data.filter(item => item.dateObj >= startDate);
+        return data.filter((item) => item.dateObj >= startDate);
       }
     }
 
     return data;
-  }, [processedData, measurementConfigs, enabledMeasurements, timeRange, customDateRange]);
+  }, [
+    processedData,
+    measurementConfigs,
+    enabledMeasurements,
+    timeRange,
+    customDateRange,
+  ]);
 
   // Create line configurations for chart
   const lineConfigs: LineConfig[] = useMemo(() => {
     return measurementConfigs
-      .filter(config => enabledMeasurements.has(config.id) && processedData[config.id]?.length > 0)
-      .map(config => ({
+      .filter(
+        (config) =>
+          enabledMeasurements.has(config.id) &&
+          processedData[config.id]?.length > 0
+      )
+      .map((config) => ({
         dataKey: config.field,
         name: config.label,
         color: config.color,
@@ -300,7 +357,7 @@ export default function MultiMeasurementChart() {
   }, [measurementConfigs, enabledMeasurements, processedData]);
 
   const toggleMeasurement = (measurementId: string) => {
-    setEnabledMeasurements(prev => {
+    setEnabledMeasurements((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(measurementId)) {
         newSet.delete(measurementId);
@@ -341,7 +398,7 @@ export default function MultiMeasurementChart() {
             {/* Measurement Toggles */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline">
                   <Settings className="h-4 w-4 mr-2" />
                   Measurements ({enabledCount})
                 </Button>
@@ -349,33 +406,42 @@ export default function MultiMeasurementChart() {
               <PopoverContent className="w-80" align="end">
                 <div className="space-y-3">
                   <h4 className="font-medium">Select Measurements</h4>
-                  {measurementConfigs.map(config => {
-                    const dataCount = processedData[config.id]?.length || 0;
-                    return (
-                      <div key={config.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={config.id}
-                          checked={enabledMeasurements.has(config.id)}
-                          onCheckedChange={() => toggleMeasurement(config.id)}
-                        />
-                        <label 
-                          htmlFor={config.id} 
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
-                        >
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: config.color }}
+                  <ScrollArea className="h-[300px] pr-4">
+                    <div className="space-y-3">
+                      {measurementConfigs.map((config) => {
+                        const dataCount = processedData[config.id]?.length || 0;
+                        return (
+                          <div
+                            key={config.id}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={config.id}
+                              checked={enabledMeasurements.has(config.id)}
+                              onCheckedChange={() =>
+                                toggleMeasurement(config.id)
+                              }
                             />
-                            {config.label}
-                            <span className="text-muted-foreground">
-                              ({dataCount} points)
-                            </span>
+                            <label
+                              htmlFor={config.id}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: config.color }}
+                                />
+                                {config.label}
+                                <span className="text-muted-foreground">
+                                  ({dataCount} points)
+                                </span>
+                              </div>
+                            </label>
                           </div>
-                        </label>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 </div>
               </PopoverContent>
             </Popover>
@@ -402,7 +468,7 @@ export default function MultiMeasurementChart() {
                   ))}
                 </SelectContent>
               </Select>
-              
+
               {timeRange === "custom" && (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -431,9 +497,12 @@ export default function MultiMeasurementChart() {
         {enabledCount === 0 ? (
           <div className="text-center py-12">
             <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No measurements selected</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              No measurements selected
+            </h3>
             <p className="text-muted-foreground">
-              Click the "Measurements" button above to select which metrics to display.
+              Click the "Measurements" button above to select which metrics to
+              display.
             </p>
           </div>
         ) : !hasData ? (
@@ -448,25 +517,35 @@ export default function MultiMeasurementChart() {
           <>
             <div className="mb-4">
               <p className="text-sm text-muted-foreground">
-                Showing {enabledCount} measurement{enabledCount !== 1 ? 's' : ''}
+                Showing {enabledCount} measurement
+                {enabledCount !== 1 ? "s" : ""}
                 {timeRange !== "all" && (
                   <span className="ml-1">
-                    for {timeRangeOptions.find(opt => opt.value === timeRange)?.label.toLowerCase()}
-                    {timeRange === "custom" && customDateRange && ` (${formatDateRange(customDateRange)})`}
+                    for{" "}
+                    {timeRangeOptions
+                      .find((opt) => opt.value === timeRange)
+                      ?.label.toLowerCase()}
+                    {timeRange === "custom" &&
+                      customDateRange &&
+                      ` (${formatDateRange(customDateRange)})`}
                   </span>
                 )}
                 • {chartData.length} data points
               </p>
             </div>
-            
+
             <CustomLineChart
               data={chartData}
               lines={lineConfigs}
               xAxisKey="date"
               yAxisUnit=""
               yAxisDomain={["auto", "auto"]}
-              tooltipFormatter={(value: number | string, name: string, props: any) => {
-                const config = measurementConfigs.find(c => c.label === name);
+              tooltipFormatter={(
+                value: number | string,
+                name: string,
+                props: any
+              ) => {
+                const config = measurementConfigs.find((c) => c.label === name);
                 const unit = config?.unit || props.unit || "";
                 return [`${value} ${unit}`];
               }}

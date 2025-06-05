@@ -7,8 +7,14 @@ import { Separator } from "@/components/ui/separator";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 
-export default function BodyMeasurementsDashboardSummary() {
-  const data = useStore(dataStore, (state) => state.body_measurements) || [];
+interface BodyMeasurementsDashboardSummaryProps {
+  data?: BodyMeasurementRecord[];
+}
+
+export default function BodyMeasurementsDashboardSummary({
+  data: propData,
+}: BodyMeasurementsDashboardSummaryProps = {}) {
+  const storeData = useStore(dataStore, (state) => state.body_measurements) || [];
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +22,8 @@ export default function BodyMeasurementsDashboardSummary() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Use prop data if provided, otherwise fall back to store data
+  const data = propData || storeData;
   const typedData = data as BodyMeasurementRecord[];
 
   // Group measurements by type

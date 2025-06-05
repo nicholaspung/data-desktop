@@ -84,6 +84,45 @@ const HELP_TOPICS: HelpTopic[] = [
     link: "/bloodwork",
   },
   {
+    title: "Body Measurements",
+    icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-5 w-5" />,
+    description:
+      "Track your body measurements with an interactive body diagram. Record weight, circumferences, and body composition with privacy controls and comprehensive analysis tools.",
+    keywords: [
+      "body",
+      "measurements",
+      "weight",
+      "circumference",
+      "waist",
+      "chest",
+      "body fat",
+      "private",
+      "comparison",
+      "trends",
+      "visualization",
+    ],
+    link: "/body-measurements",
+  },
+  {
+    title: "People CRM",
+    icon: <FEATURE_ICONS.PEOPLE_CRM className="h-5 w-5" />,
+    description:
+      "Manage your personal relationships and contacts. Track meetings, notes, attributes, and important dates. Keep private information secure with PIN protection.",
+    keywords: [
+      "people",
+      "crm",
+      "contacts",
+      "relationships",
+      "meetings",
+      "notes",
+      "attributes",
+      "birthdays",
+      "private",
+      "network",
+    ],
+    link: "/people-crm",
+  },
+  {
     title: "Journaling",
     icon: <FEATURE_ICONS.JOURNALING className="h-5 w-5" />,
     description:

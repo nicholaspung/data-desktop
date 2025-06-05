@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BodyPart } from "../dexa/dexa";
 import ReusableTooltip from "@/components/reusable/reusable-tooltip";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableMultiselect from "@/components/reusable/reusable-multiselect";
 import { BodyMeasurementRecord } from "./types";
 import { format } from "date-fns";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -23,13 +24,67 @@ export default function BodyMeasurementsVisualization({
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
+  const [selectedMeasurementTypes, setSelectedMeasurementTypes] = useState<string[]>([]);
+
+  // Since data is now pre-filtered by the parent component based on privacy toggle,
+  // we can treat all provided data as "visible" data
+  const visibleData = useMemo(() => {
+    return data;
+  }, [data]);
+
+  // Get measurement types that are displayed on the body visualization
+  const displayedMeasurementTypes = useMemo(() => {
+    // Body part measurements shown on the body diagram
+    const bodyPartMeasurements = [
+      "neck",
+      "chest", 
+      "waist",
+      "hips",
+      "upper arm (right)",
+      "forearm (right)",
+      "upper arm (left)", 
+      "forearm (left)",
+      "thigh (right)",
+      "calf (right)",
+      "thigh (left)",
+      "calf (left)"
+    ];
+
+    // Special measurements shown in the stats area
+    const specialMeasurements = [
+      "bodyweight",
+      "weight", // Some users might use "weight" instead of "bodyweight"
+      "body fat percentage"
+    ];
+
+    const allDisplayedTypes = [...bodyPartMeasurements, ...specialMeasurements];
+
+    // Get actual measurement types from data with original casing
+    const actualMeasurements = Array.from(new Set(visibleData.map(record => record.measurement)));
+    
+    // Return displayed types that exist in actual data, using the actual data's casing
+    return actualMeasurements
+      .filter(actualType => 
+        allDisplayedTypes.some(displayedType => 
+          displayedType.toLowerCase() === actualType.toLowerCase()
+        )
+      )
+      .sort();
+  }, [visibleData]);
+
+  // Initialize selectedMeasurementTypes to include all displayed types when data changes
+  useEffect(() => {
+    if (displayedMeasurementTypes.length > 0 && selectedMeasurementTypes.length === 0) {
+      setSelectedMeasurementTypes(displayedMeasurementTypes);
+    }
+  }, [displayedMeasurementTypes, selectedMeasurementTypes.length]);
 
   // Create a map of dates to measurement types and values (excluding bodyweight)
   const measurementsByDate = useMemo(() => {
     const map = new Map<string, Map<string, BodyMeasurementRecord>>();
 
-    // Filter out bodyweight measurements
-    const nonBodyweightData = data.filter(
+    // Filter out bodyweight measurements and use visible data for main display
+    const nonBodyweightData = visibleData.filter(
       (record) => record.measurement.toLowerCase() !== "bodyweight"
     );
 
@@ -53,7 +108,7 @@ export default function BodyMeasurementsVisualization({
     });
 
     return map;
-  }, [data]);
+  }, [visibleData]);
 
   // Create date options directly from map keys, sorted newest to oldest
   const dateOptions = useMemo(() => {
@@ -105,7 +160,7 @@ export default function BodyMeasurementsVisualization({
         return undefined;
       }
       
-      const measurements = data
+      const measurements = visibleData
         .filter((record) => {
           try {
             const recordDate = new Date(record.date);
@@ -136,7 +191,7 @@ export default function BodyMeasurementsVisualization({
   // Get the latest measurement for each type (for single view)
   const getLatestMeasurement = (measurementType: string) => {
     try {
-      const measurements = data
+      const measurements = visibleData
         .filter((record) => {
           try {
             const recordDate = new Date(record.date);
@@ -401,13 +456,103 @@ export default function BodyMeasurementsVisualization({
     },
   ];
 
-  // Get overall stats
-  const totalMeasurements = data.length;
-  const uniqueMeasurementTypes = new Set(
-    data.map((record) => record.measurement)
-  ).size;
   const bodyweightData = getMeasurementData("bodyweight");
   const bodyFatData = getMeasurementData("body fat percentage");
+
+  // Calculate summary stats for the selected date(s)
+  const getSelectedDateMeasurements = () => {
+    const selectedMeasurementsMap = getMeasurementsForDate(selectedDate);
+    return Array.from(selectedMeasurementsMap.values());
+  };
+
+  const getComparisonDateMeasurements = () => {
+    if (viewMode === "comparison" && comparisonDate) {
+      const comparisonMeasurementsMap = getMeasurementsForDate(comparisonDate);
+      return Array.from(comparisonMeasurementsMap.values());
+    }
+    return [];
+  };
+
+  const selectedDateMeasurements = getSelectedDateMeasurements();
+  const comparisonDateMeasurements = getComparisonDateMeasurements();
+  
+  // Calculate sum of filtered measurement values for the selected date
+  const sumOfPrimaryValues = selectedDateMeasurements
+    .filter(record => selectedMeasurementTypes.some(type => 
+      type.toLowerCase() === record.measurement.toLowerCase()
+    ))
+    .reduce((sum, record) => {
+      return sum + (record.value || 0);
+    }, 0);
+
+  const sumOfComparisonValues = comparisonDateMeasurements
+    .filter(record => selectedMeasurementTypes.some(type => 
+      type.toLowerCase() === record.measurement.toLowerCase()
+    ))
+    .reduce((sum, record) => {
+      return sum + (record.value || 0);
+    }, 0);
+
+  const totalPrimaryMeasurements = selectedDateMeasurements
+    .filter(record => selectedMeasurementTypes.some(type => 
+      type.toLowerCase() === record.measurement.toLowerCase()
+    )).length;
+  const totalComparisonMeasurements = comparisonDateMeasurements
+    .filter(record => selectedMeasurementTypes.some(type => 
+      type.toLowerCase() === record.measurement.toLowerCase()
+    )).length;
+
+  // Calculate the difference for comparison mode
+  const sumDifference = sumOfPrimaryValues - sumOfComparisonValues;
+
+  // For comparison mode, also calculate sum of common measurement types only
+  const getCommonMeasurementsSums = () => {
+    if (viewMode !== "comparison") return { 
+      primaryCommon: 0, 
+      comparisonCommon: 0, 
+      commonCount: 0, 
+      commonDifference: 0 
+    };
+
+    const primaryMeasurementTypes = new Set(
+      selectedDateMeasurements
+        .filter(r => selectedMeasurementTypes.some(type => 
+          type.toLowerCase() === r.measurement.toLowerCase()
+        ))
+        .map(r => r.measurement)
+    );
+    const comparisonMeasurementTypes = new Set(
+      comparisonDateMeasurements
+        .filter(r => selectedMeasurementTypes.some(type => 
+          type.toLowerCase() === r.measurement.toLowerCase()
+        ))
+        .map(r => r.measurement)
+    );
+    
+    // Find measurement types that exist in both dates AND are selected in filter
+    const commonTypes = Array.from(primaryMeasurementTypes).filter(type => 
+      comparisonMeasurementTypes.has(type) && selectedMeasurementTypes.some(selectedType =>
+        selectedType.toLowerCase() === type.toLowerCase()
+      )
+    );
+
+    const primaryCommonSum = selectedDateMeasurements
+      .filter(record => commonTypes.includes(record.measurement))
+      .reduce((sum, record) => sum + (record.value || 0), 0);
+
+    const comparisonCommonSum = comparisonDateMeasurements
+      .filter(record => commonTypes.includes(record.measurement))
+      .reduce((sum, record) => sum + (record.value || 0), 0);
+
+    return {
+      primaryCommon: primaryCommonSum,
+      comparisonCommon: comparisonCommonSum,
+      commonCount: commonTypes.length,
+      commonDifference: primaryCommonSum - comparisonCommonSum
+    };
+  };
+
+  const commonSums = getCommonMeasurementsSums();
 
   return (
     <Card className={className}>
@@ -491,12 +636,12 @@ export default function BodyMeasurementsVisualization({
                           return changeInfo && !changeInfo.isUnchanged ? (
                             <div className="flex items-center">
                               {changeInfo.isIncrease ? (
-                                <TrendingUp className="h-4 w-4 text-red-500" />
+                                <TrendingUp className="h-4 w-4 text-green-500" />
                               ) : (
-                                <TrendingDown className="h-4 w-4 text-green-500" />
+                                <TrendingDown className="h-4 w-4 text-red-500" />
                               )}
                               <span
-                                className={`text-xs ml-1 ${changeInfo.isIncrease ? "text-red-500" : "text-green-500"}`}
+                                className={`text-xs ml-1 ${changeInfo.isIncrease ? "text-green-500" : "text-red-500"}`}
                               >
                                 {Math.abs(changeInfo.change).toFixed(1)}
                               </span>
@@ -540,12 +685,12 @@ export default function BodyMeasurementsVisualization({
                           return changeInfo && !changeInfo.isUnchanged ? (
                             <div className="flex items-center">
                               {changeInfo.isIncrease ? (
-                                <TrendingUp className="h-4 w-4 text-red-500" />
+                                <TrendingUp className="h-4 w-4 text-green-500" />
                               ) : (
-                                <TrendingDown className="h-4 w-4 text-green-500" />
+                                <TrendingDown className="h-4 w-4 text-red-500" />
                               )}
                               <span
-                                className={`text-xs ml-1 ${changeInfo.isIncrease ? "text-red-500" : "text-green-500"}`}
+                                className={`text-xs ml-1 ${changeInfo.isIncrease ? "text-green-500" : "text-red-500"}`}
                               >
                                 {Math.abs(changeInfo.change).toFixed(1)}%
                               </span>
@@ -568,23 +713,125 @@ export default function BodyMeasurementsVisualization({
                   )}
                 </div>
               )}
-              <div className="p-3 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">Total Records</p>
-                <p className="text-xl font-bold text-foreground">
-                  {totalMeasurements}
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">
-                  Measurement Types
-                </p>
-                <p className="text-xl font-bold text-foreground">
-                  {uniqueMeasurementTypes}
-                </p>
-              </div>
             </div>
           </div>
         </div>
+
+        {/* Measurement Type Filter */}
+        {displayedMeasurementTypes.length > 0 && (
+          <div className="mb-4 p-4 border rounded-lg bg-muted/30">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <span className="text-sm font-medium whitespace-nowrap">
+                Include in Sum:
+              </span>
+              <div className="flex-1 min-w-0">
+                <ReusableMultiselect
+                  options={displayedMeasurementTypes.map(type => ({
+                    id: type,
+                    label: type,
+                  }))}
+                  selected={selectedMeasurementTypes}
+                  onChange={setSelectedMeasurementTypes}
+                  placeholder="Select measurement types to include..."
+                  className="w-full"
+                />
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {selectedMeasurementTypes.length} of {displayedMeasurementTypes.length} selected
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Summary Stats */}
+        {viewMode === "single" ? (
+          <div className="flex justify-center gap-6 mt-4 mb-4">
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-sm text-muted-foreground">
+                Filtered Sum for Selected Date
+              </p>
+              <p className="text-xl font-bold text-foreground">
+                {sumOfPrimaryValues.toFixed(1)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-sm text-muted-foreground">Records Summed</p>
+              <p className="text-xl font-bold text-foreground">
+                {totalPrimaryMeasurements}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3 mt-4 mb-4">
+            <div className="flex justify-center gap-4">
+              <div className="p-3 rounded-lg bg-muted/50 text-center flex-1 max-w-xs">
+                <p className="text-sm text-muted-foreground">Primary Date Filtered Sum</p>
+                <p className="text-xl font-bold text-foreground">
+                  {sumOfPrimaryValues.toFixed(1)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {totalPrimaryMeasurements} records
+                </p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/50 text-center flex-1 max-w-xs">
+                <p className="text-sm text-muted-foreground">Comparison Date Filtered Sum</p>
+                <p className="text-xl font-bold text-foreground">
+                  {sumOfComparisonValues.toFixed(1)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {totalComparisonMeasurements} records
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-4">
+              <div className="p-3 rounded-lg bg-background border text-center">
+                <p className="text-sm text-muted-foreground">All Measurements Difference</p>
+                <div className="flex items-center justify-center gap-2">
+                  <p className={`text-xl font-bold ${
+                    sumDifference > 0 ? "text-green-500" : 
+                    sumDifference < 0 ? "text-red-500" : 
+                    "text-foreground"
+                  }`}>
+                    {sumDifference > 0 ? "+" : ""}{sumDifference.toFixed(1)}
+                  </p>
+                  {sumDifference !== 0 && (
+                    sumDifference > 0 ? (
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-red-500" />
+                    )
+                  )}
+                </div>
+              </div>
+              {commonSums.commonCount > 0 && (
+                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Common Types Difference
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className={`text-xl font-bold ${
+                      commonSums.commonDifference > 0 ? "text-green-500" : 
+                      commonSums.commonDifference < 0 ? "text-red-500" : 
+                      "text-foreground"
+                    }`}>
+                      {commonSums.commonDifference > 0 ? "+" : ""}{commonSums.commonDifference.toFixed(1)}
+                    </p>
+                    {commonSums.commonDifference !== 0 && (
+                      commonSums.commonDifference > 0 ? (
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                      )
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {commonSums.commonCount} shared measurement{commonSums.commonCount !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Body Visualization and Measurements */}
         <div className="flex flex-col lg:flex-row gap-6 mt-4">
@@ -660,9 +907,9 @@ export default function BodyMeasurementsVisualization({
                                     !changeInfo.isUnchanged && (
                                       <div className="flex items-center">
                                         {changeInfo.isIncrease ? (
-                                          <TrendingUp className="h-3 w-3 text-red-500" />
+                                          <TrendingUp className="h-3 w-3 text-green-500" />
                                         ) : (
-                                          <TrendingDown className="h-3 w-3 text-green-500" />
+                                          <TrendingDown className="h-3 w-3 text-red-500" />
                                         )}
                                       </div>
                                     )}
@@ -687,8 +934,8 @@ export default function BodyMeasurementsVisualization({
                                     <span
                                       className={
                                         changeInfo.isIncrease
-                                          ? "text-red-500"
-                                          : "text-green-500"
+                                          ? "text-green-500"
+                                          : "text-red-500"
                                       }
                                     >
                                       {changeInfo.isIncrease ? "+" : ""}
@@ -782,12 +1029,12 @@ export default function BodyMeasurementsVisualization({
                             !changeInfo.isUnchanged && (
                               <div className="flex items-center gap-1">
                                 {changeInfo.isIncrease ? (
-                                  <TrendingUp className="h-4 w-4 text-red-500" />
+                                  <TrendingUp className="h-4 w-4 text-green-500" />
                                 ) : (
-                                  <TrendingDown className="h-4 w-4 text-green-500" />
+                                  <TrendingDown className="h-4 w-4 text-red-500" />
                                 )}
                                 <span
-                                  className={`text-sm font-medium ${changeInfo.isIncrease ? "text-red-500" : "text-green-500"}`}
+                                  className={`text-sm font-medium ${changeInfo.isIncrease ? "text-green-500" : "text-red-500"}`}
                                 >
                                   {changeInfo.isIncrease ? "+" : ""}
                                   {changeInfo.change.toFixed(1)}
@@ -858,6 +1105,7 @@ export default function BodyMeasurementsVisualization({
             ? "Hover over the dots to see latest measurements for each body region"
             : "Hover over the dots to see measurement comparisons with change indicators"}
         </div>
+
       </CardContent>
     </Card>
   );

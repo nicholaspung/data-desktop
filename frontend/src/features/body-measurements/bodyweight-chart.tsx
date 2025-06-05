@@ -22,8 +22,13 @@ interface ChartDataPoint {
   dateObj: Date;
 }
 
-export default function BodyweightChart() {
-  const data = useStore(dataStore, (state) => state.body_measurements) || [];
+interface BodyweightChartProps {
+  data?: BodyMeasurementRecord[];
+}
+
+export default function BodyweightChart({ data: propData }: BodyweightChartProps = {}) {
+  const storeData = useStore(dataStore, (state) => state.body_measurements) || [];
+  const data = propData || storeData;
   const [averagingPeriod, setAveragingPeriod] = useState<AveragingPeriod>("daily");
   const [timeRange, setTimeRange] = useState<TimeRange>("all");
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();

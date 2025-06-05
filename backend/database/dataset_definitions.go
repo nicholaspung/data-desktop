@@ -180,5 +180,6 @@ func getBodyMeasurementsFieldsInline() []FieldDefinition {
 		{Key: "measurement", Type: FieldTypeText, DisplayName: "Measurement", IsSearchable: true},
 		{Key: "value", Type: FieldTypeNumber, DisplayName: "Value"},
 		{Key: "unit", Type: FieldTypeText, DisplayName: "Unit", IsSearchable: true},
+		{Key: "private", Type: FieldTypeBoolean, DisplayName: "Private", IsOptional: true},
 	}
 }
