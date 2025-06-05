@@ -70,10 +70,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add a finance tracking section
   - add a paycheck part in this section, along with the logs and balances
-- in time tracker form, if I modify the time entry while it's running, it doesn't update the header text if the description is changed
 
 ### DONE
 
+- in time tracker form, if I modify the time entry while it's running, it doesn't update the header text if the description is changed [DONE 2025-06-04]
 - add a bodyweight tracking section [DONE 2025-06-04]
 - add a body measurement section following the FitNotes application import [DONE 2025-06-04]
 - fixed the <div> cannot be a child of <p> error from React [DONE 2025-06-04]

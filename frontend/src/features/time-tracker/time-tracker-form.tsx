@@ -30,6 +30,9 @@ import {
   startTimer as startGlobalTimer,
   stopTimer as stopGlobalTimer,
   updateStartTime,
+  updateTimerDescription,
+  updateTimerCategory,
+  updateTimerTags,
 } from "./time-tracker-store";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import { SelectOption } from "@/types/types";
@@ -243,6 +246,30 @@ function TimeTrackerForm({
     }
   };
 
+  const handleDescriptionChange = (newDescription: string) => {
+    setDescription(newDescription);
+
+    if (isTimerActive) {
+      updateTimerDescription(newDescription);
+    }
+  };
+
+  const handleCategoryChange = (newCategoryId?: string) => {
+    setCategoryId(newCategoryId);
+
+    if (isTimerActive) {
+      updateTimerCategory(newCategoryId);
+    }
+  };
+
+  const handleTagsChange = (newTags: string) => {
+    setTags(newTags);
+
+    if (isTimerActive) {
+      updateTimerTags(newTags);
+    }
+  };
+
   const handleEndTimeChange = (newEndTime: string) => {
     setEndTime(newEndTime);
   };
@@ -401,16 +428,16 @@ function TimeTrackerForm({
       metric?: Metric;
     }
   ) => {
-    setDescription(option.label);
+    handleDescriptionChange(option.label);
 
     if (option.isMetric && option.metric) {
       // For metrics, no need to set category automatically
     } else if (option.entry) {
       if (option.entry.category_id) {
-        setCategoryId(option.entry.category_id);
+        handleCategoryChange(option.entry.category_id);
       }
       if (option.entry.tags) {
-        setTags(option.entry.tags);
+        handleTagsChange(option.entry.tags);
       }
     }
   };
@@ -552,7 +579,7 @@ function TimeTrackerForm({
               <AutocompleteInput
                 id="description"
                 value={description}
-                onChange={setDescription}
+                onChange={handleDescriptionChange}
                 onSelect={handleDescriptionSelect}
                 options={descriptionOptions}
                 placeholder="Task description"
@@ -645,7 +672,7 @@ function TimeTrackerForm({
                 }))}
                 noDefault={false}
                 value={categoryId}
-                onChange={setCategoryId}
+                onChange={handleCategoryChange}
                 title="category"
                 placeholder="Select category"
                 triggerClassName="h-10"
@@ -654,7 +681,7 @@ function TimeTrackerForm({
 
             <TagInput
               value={tags}
-              onChange={setTags}
+              onChange={handleTagsChange}
               generalData={timeEntries}
               generalDataTagField="tags"
             />

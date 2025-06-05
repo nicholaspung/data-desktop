@@ -74,6 +74,27 @@ export const updateStartTime = (newStartTime: Date) => {
   }));
 };
 
+export const updateTimerDescription = (newDescription: string) => {
+  timeTrackerStore.setState((prevState) => ({
+    ...prevState,
+    description: newDescription,
+  }));
+};
+
+export const updateTimerCategory = (newCategoryId?: string) => {
+  timeTrackerStore.setState((prevState) => ({
+    ...prevState,
+    categoryId: newCategoryId,
+  }));
+};
+
+export const updateTimerTags = (newTags: string) => {
+  timeTrackerStore.setState((prevState) => ({
+    ...prevState,
+    tags: newTags,
+  }));
+};
+
 export const getTimerData = () => {
   return {
     isActive: timeTrackerStore.state.isTimerActive,
