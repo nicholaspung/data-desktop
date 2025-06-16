@@ -35,14 +35,11 @@ export default function Header() {
           <Power className="h-5 w-5" />
         </Button>
       </div>
-
-      {/* Time tracker in the middle */}
       {visibleRoutes["/time-tracker"] && (
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <TimeTrackerHeaderButton onDataChange={handleDataChange} />
         </div>
       )}
-
       <div className="flex items-center space-x-4">
         <HelpButton />
         <PinLockButton />

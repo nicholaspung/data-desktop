@@ -883,3 +883,7 @@ func (a *App) UploadFileChunk(chunkData string, fileName string, chunkIndex int,
 func (a *App) ResetAllData() error {
 	return database.ResetAllData(a.appDataDir)
 }
+
+func (a *App) LoadSampleData() error {
+	return database.LoadSampleDataOnce()
+}

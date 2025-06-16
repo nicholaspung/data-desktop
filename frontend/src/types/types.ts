@@ -29,6 +29,12 @@ import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { TimeBlockConfig } from "@/features/time-planner/types";
 import { Todo } from "@/store/todo-definitions";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
+import {
+  FinancialLog,
+  FinancialBalance,
+  PaycheckInfo,
+  FinancialFile,
+} from "@/features/financial/types";
 
 export type DatasetId =
   | "bloodwork"
@@ -54,7 +60,11 @@ export type DatasetId =
   | "time_categories"
   | "time_planner_configs"
   | "todos"
-  | "body_measurements";
+  | "body_measurements"
+  | "financial_logs"
+  | "financial_balances"
+  | "paycheck_info"
+  | "financial_files";
 
 export const DATASET_REFERENCES = {
   BLOODWORK: { dataset: "bloodwork" as DatasetId, field: "id" },
@@ -93,6 +103,10 @@ export const DATASET_REFERENCES = {
   TIME_PLANNER_CONFIGS: { dataset: "time_planner_configs" as DatasetId, field: "id" },
   TODOS: { dataset: "todos" as DatasetId, field: "id" },
   BODY_MEASUREMENTS: { dataset: "body_measurements" as DatasetId, field: "id" },
+  FINANCIAL_LOGS: { dataset: "financial_logs" as DatasetId, field: "id" },
+  FINANCIAL_BALANCES: { dataset: "financial_balances" as DatasetId, field: "id" },
+  PAYCHECK_INFO: { dataset: "paycheck_info" as DatasetId, field: "id" },
+  FINANCIAL_FILES: { dataset: "financial_files" as DatasetId, field: "id" },
 } as const;
 
 export type DatasetTypeMap = {
@@ -120,6 +134,10 @@ export type DatasetTypeMap = {
   time_planner_configs: TimeBlockConfig;
   todos: Todo;
   body_measurements: BodyMeasurementRecord;
+  financial_logs: FinancialLog;
+  financial_balances: FinancialBalance;
+  paycheck_info: PaycheckInfo;
+  financial_files: FinancialFile;
 };
 
 export interface DatasetSummary {

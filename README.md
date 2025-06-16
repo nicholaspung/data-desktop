@@ -36,12 +36,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### TODOS
 
-- PDF reports from data
-- in bloodwork, for reports, provide a table where a user can copy/paste their "out of range" markers to be used in a LLM
-
 - create end to end test to make sure the inputs are all working correctly
 - when I press the power button, it has this error: `This wails.localhost page can’t be found No webpage was found for the web address: http://wails.localhost/dexa`, and it only happens sometimes - might be a wails bug?
-
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 
 - find a better solution when using wails to do dev/prod for the databases
@@ -62,6 +58,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
+- add a "daily journal" that is able to do like "@feature" for tracking metrics
+  - also adding templates for the user to be able to select that is added to the journal
+
+- PDF reports from data
+- in bloodwork, for reports, provide a table where a user can copy/paste their "out of range" markers to be used in a LLM
 
 - see if there's an easy to migrate data from one computer to the other, or if there's a way to have a sync service easily managed (where the data stored in the backend is end to end encrypted)
 

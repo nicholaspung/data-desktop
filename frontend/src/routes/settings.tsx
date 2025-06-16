@@ -98,6 +98,12 @@ const routes = [
     icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-4 w-4 mr-2" />,
   },
   {
+    path: "/wealth",
+    name: "Wealth",
+    description: "Track finances, income, expenses, and financial documents",
+    icon: <FEATURE_ICONS.WEALTH className="h-4 w-4 mr-2" />,
+  },
+  {
     path: "/dataset",
     name: "Dataset Manager",
     description: "Manage application datasets",

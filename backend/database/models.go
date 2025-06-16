@@ -20,6 +20,7 @@ const (
 	DatasetTypeTimeTracking DatasetType = "time_tracking"
 	DatasetTypeTodo         DatasetType = "todos"
 	DatasetTypePeopleCRM    DatasetType = "people_crm"
+	DatasetTypeFinancial    DatasetType = "financial"
 )
 
 type FieldType string

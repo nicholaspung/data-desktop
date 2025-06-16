@@ -8,39 +8,60 @@ import (
 )
 
 func LoadSampleDataOnce() error {
-
 	dexaRecords, err := GetDataRecords(DatasetIDDEXA)
-	if err == nil && len(dexaRecords) > 0 {
-
-		return nil
+	if err == nil && len(dexaRecords) == 0 {
+		if err := loadDEXASampleData(); err != nil {
+			return fmt.Errorf("failed to load DEXA sample data: %w", err)
+		}
 	}
 
-	if err := loadDEXASampleData(); err != nil {
-		return fmt.Errorf("failed to load DEXA sample data: %w", err)
+	bloodworkRecords, err := GetDataRecords(DatasetIDBloodwork)
+	if err == nil && len(bloodworkRecords) == 0 {
+		if err := loadBloodworkSampleData(); err != nil {
+			return fmt.Errorf("failed to load bloodwork sample data: %w", err)
+		}
 	}
 
-	if err := loadBloodworkSampleData(); err != nil {
-		return fmt.Errorf("failed to load bloodwork sample data: %w", err)
+	experimentRecords, err := GetDataRecords(DatasetIDExperiment)
+	if err == nil && len(experimentRecords) == 0 {
+		if err := loadExperimentSampleData(); err != nil {
+			return fmt.Errorf("failed to load experiment sample data: %w", err)
+		}
 	}
 
-	if err := loadExperimentSampleData(); err != nil {
-		return fmt.Errorf("failed to load experiment sample data: %w", err)
+	todoRecords, err := GetDataRecords(DatasetIDTodos)
+	if err == nil && len(todoRecords) == 0 {
+		if err := loadTodoSampleData(); err != nil {
+			return fmt.Errorf("failed to load todo sample data: %w", err)
+		}
 	}
 
-	if err := loadTodoSampleData(); err != nil {
-		return fmt.Errorf("failed to load todo sample data: %w", err)
+	peopleRecords, err := GetDataRecords(DatasetIDPeople)
+	if err == nil && len(peopleRecords) == 0 {
+		if err := loadPeopleCRMSampleData(); err != nil {
+			return fmt.Errorf("failed to load people CRM sample data: %w", err)
+		}
 	}
 
-	if err := loadPeopleCRMSampleData(); err != nil {
-		return fmt.Errorf("failed to load people CRM sample data: %w", err)
+	gratitudeRecords, err := GetDataRecords(DatasetIDGratitudeJournal)
+	if err == nil && len(gratitudeRecords) == 0 {
+		if err := loadJournalingSampleData(); err != nil {
+			return fmt.Errorf("failed to load journaling sample data: %w", err)
+		}
 	}
 
-	if err := loadJournalingSampleData(); err != nil {
-		return fmt.Errorf("failed to load journaling sample data: %w", err)
+	timeRecords, err := GetDataRecords(DatasetIDTimeEntries)
+	if err == nil && len(timeRecords) == 0 {
+		if err := loadTimeTrackingSampleData(); err != nil {
+			return fmt.Errorf("failed to load time tracking sample data: %w", err)
+		}
 	}
 
-	if err := loadTimeTrackingSampleData(); err != nil {
-		return fmt.Errorf("failed to load time tracking sample data: %w", err)
+	financialRecords, err := GetDataRecords(DatasetIDFinancialLogs)
+	if err == nil && len(financialRecords) == 0 {
+		if err := loadFinancialSampleData(); err != nil {
+			return fmt.Errorf("failed to load financial sample data: %w", err)
+		}
 	}
 
 	return nil
@@ -470,6 +491,345 @@ func loadTimeTrackingSampleData() error {
 	}
 
 	return addSampleRecords(DatasetIDTimeEntries, timeEntries)
+}
+
+func loadFinancialSampleData() error {
+
+	financialLogs := []map[string]interface{}{
+		{
+			"date":        "2024-01-15",
+			"amount":      -85.50,
+			"description": "Grocery shopping at Whole Foods",
+			"category":    "Food & Dining",
+			"tags":        "groceries,food,essentials",
+		},
+		{
+			"date":        "2024-01-16",
+			"amount":      -45.00,
+			"description": "Gas station fill-up",
+			"category":    "Transportation",
+			"tags":        "gas,car,transportation",
+		},
+		{
+			"date":        "2024-01-17",
+			"amount":      5500.00,
+			"description": "Monthly salary deposit",
+			"category":    "Income",
+			"tags":        "salary,income,work",
+		},
+		{
+			"date":        "2024-01-18",
+			"amount":      -1200.00,
+			"description": "Rent payment - January",
+			"category":    "Housing",
+			"tags":        "rent,housing,fixed",
+		},
+		{
+			"date":        "2024-01-19",
+			"amount":      -75.25,
+			"description": "Electric bill - December",
+			"category":    "Utilities",
+			"tags":        "electricity,utilities,bills",
+		},
+		{
+			"date":        "2024-01-20",
+			"amount":      -25.99,
+			"description": "Netflix subscription",
+			"category":    "Entertainment",
+			"tags":        "streaming,entertainment,subscription",
+		},
+		{
+			"date":        "2024-01-22",
+			"amount":      -125.00,
+			"description": "Gym membership - monthly",
+			"category":    "Health & Fitness",
+			"tags":        "gym,health,fitness,subscription",
+		},
+		{
+			"date":        "2024-01-25",
+			"amount":      -65.75,
+			"description": "Coffee shops and lunch",
+			"category":    "Food & Dining",
+			"tags":        "coffee,lunch,eating-out",
+		},
+		{
+			"date":        "2024-01-30",
+			"amount":      -89.99,
+			"description": "Online shopping - clothing",
+			"category":    "Shopping",
+			"tags":        "clothes,online,personal",
+		},
+		{
+			"date":        "2024-02-01",
+			"amount":      250.00,
+			"description": "Freelance project payment",
+			"category":    "Income",
+			"tags":        "freelance,side-income,project",
+		},
+		{
+			"date":        "2024-02-05",
+			"amount":      -55.30,
+			"description": "Pharmacy and personal care",
+			"category":    "Health & Fitness",
+			"tags":        "pharmacy,health,personal-care",
+		},
+		{
+			"date":        "2024-02-10",
+			"amount":      -95.40,
+			"description": "Grocery shopping at Trader Joe's",
+			"category":    "Food & Dining",
+			"tags":        "groceries,food,essentials",
+		},
+		{
+			"date":        "2024-02-15",
+			"amount":      5500.00,
+			"description": "Monthly salary deposit",
+			"category":    "Income",
+			"tags":        "salary,income,work",
+		},
+		{
+			"date":        "2024-02-16",
+			"amount":      -350.00,
+			"description": "Car insurance - 6 months",
+			"category":    "Transportation",
+			"tags":        "insurance,car,transportation,fixed",
+		},
+		{
+			"date":        "2024-02-20",
+			"amount":      -1200.00,
+			"description": "Rent payment - February",
+			"category":    "Housing",
+			"tags":        "rent,housing,fixed",
+		},
+	}
+
+	if err := addSampleRecords(DatasetIDFinancialLogs, financialLogs); err != nil {
+		return err
+	}
+
+	financialBalances := []map[string]interface{}{
+		{
+			"date":          "2024-01-01",
+			"amount":        5250.00,
+			"account_name":  "Chase Checking",
+			"account_type":  "Checking",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-01",
+			"amount":        15750.00,
+			"account_name":  "Chase Savings",
+			"account_type":  "Savings",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-01",
+			"amount":        85000.00,
+			"account_name":  "Vanguard 401k",
+			"account_type":  "Investment",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-15",
+			"amount":        4100.00,
+			"account_name":  "Chase Checking",
+			"account_type":  "Checking",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-15",
+			"amount":        16000.00,
+			"account_name":  "Chase Savings",
+			"account_type":  "Savings",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-31",
+			"amount":        6850.00,
+			"account_name":  "Chase Checking",
+			"account_type":  "Checking",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-31",
+			"amount":        16000.00,
+			"account_name":  "Chase Savings",
+			"account_type":  "Savings",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-01-31",
+			"amount":        87500.00,
+			"account_name":  "Vanguard 401k",
+			"account_type":  "Investment",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-02-15",
+			"amount":        5200.00,
+			"account_name":  "Chase Checking",
+			"account_type":  "Checking",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-02-15",
+			"amount":        16250.00,
+			"account_name":  "Chase Savings",
+			"account_type":  "Savings",
+			"account_owner": "Personal",
+		},
+		{
+			"date":          "2024-02-28",
+			"amount":        89200.00,
+			"account_name":  "Vanguard 401k",
+			"account_type":  "Investment",
+			"account_owner": "Personal",
+		},
+	}
+
+	if err := addSampleRecords(DatasetIDFinancialBalances, financialBalances); err != nil {
+		return err
+	}
+
+	paycheckInfo := []map[string]interface{}{
+		{
+			"date":           "2024-01-15",
+			"amount":         6500.00,
+			"category":       "Gross Pay",
+			"deduction_type": "Income",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -975.00,
+			"category":       "Federal Income Tax",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -325.00,
+			"category":       "State Income Tax",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -403.00,
+			"category":       "Social Security",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -94.25,
+			"category":       "Medicare",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -325.00,
+			"category":       "401k Contribution",
+			"deduction_type": "Investment",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -275.00,
+			"category":       "Health Insurance",
+			"deduction_type": "Benefit",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -45.00,
+			"category":       "Dental Insurance",
+			"deduction_type": "Benefit",
+		},
+		{
+			"date":           "2024-01-15",
+			"amount":         -15.00,
+			"category":       "Vision Insurance",
+			"deduction_type": "Benefit",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         6500.00,
+			"category":       "Gross Pay",
+			"deduction_type": "Income",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -975.00,
+			"category":       "Federal Income Tax",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -325.00,
+			"category":       "State Income Tax",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -403.00,
+			"category":       "Social Security",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -94.25,
+			"category":       "Medicare",
+			"deduction_type": "Tax",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -325.00,
+			"category":       "401k Contribution",
+			"deduction_type": "Investment",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -275.00,
+			"category":       "Health Insurance",
+			"deduction_type": "Benefit",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -45.00,
+			"category":       "Dental Insurance",
+			"deduction_type": "Benefit",
+		},
+		{
+			"date":           "2024-02-15",
+			"amount":         -15.00,
+			"category":       "Vision Insurance",
+			"deduction_type": "Benefit",
+		},
+	}
+
+	if err := addSampleRecords(DatasetIDPaycheckInfo, paycheckInfo); err != nil {
+		return err
+	}
+
+	financialFiles := []map[string]interface{}{
+		{
+			"date":  "2024-01-31",
+			"files": []string{"bank_statement_jan_2024.pdf", "credit_card_statement_jan.pdf"},
+		},
+		{
+			"date":  "2024-02-15",
+			"files": []string{"paystub_feb_15_2024.pdf"},
+		},
+		{
+			"date":  "2024-02-28",
+			"files": []string{"tax_documents_2023.pdf", "w2_form_2023.pdf", "1099_freelance.pdf"},
+		},
+		{
+			"date":  "2024-01-15",
+			"files": []string{"expense_receipts_jan.csv", "restaurant_receipts.pdf"},
+		},
+		{
+			"date":  "2024-02-10",
+			"files": []string{"investment_summary_q1.pdf", "401k_statement.pdf"},
+		},
+	}
+
+	return addSampleRecords(DatasetIDFinancialFiles, financialFiles)
 }
 
 func addSampleRecords(datasetID string, samples []map[string]interface{}) error {

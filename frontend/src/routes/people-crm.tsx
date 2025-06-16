@@ -7,9 +7,8 @@ import {
   NotebookPen,
   Tag,
   Gift,
-  AlertTriangle,
 } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FeatureLayout, FeatureHeader } from "@/components/layout/feature-layout";
 import EditPerson from "@/features/people-crm/edit-person";
 import { EditMeeting } from "@/features/people-crm/edit-meeting";
 import { EditNote } from "@/features/people-crm/edit-note";
@@ -189,32 +188,26 @@ function PeopleCRM() {
       {showingDetail ? (
         renderDetailContent()
       ) : (
-        <div className="container mx-auto py-6 space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
+        <FeatureLayout
+          header={
+            <FeatureHeader
+              title="People CRM"
+              description="Manage your contacts and relationships"
+              developmentStage="alpha"
+              helpText="Track people, meetings, notes, attributes, and birthdays all in one place. Use the tabs to navigate between different aspects of your relationship management."
+              helpVariant="info"
+              storageKey="people-crm-feature"
+            >
               <Users className="h-8 w-8" />
-              People CRM
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your contacts and relationships
-            </p>
-          </div>
-
-          <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-            <AlertDescription className="text-orange-800 dark:text-orange-200">
-              <strong>Alpha Feature:</strong> People CRM is currently in alpha.
-              You may experience bugs or unexpected behavior. Data integrity is
-              maintained, but the user experience may not be polished.
-            </AlertDescription>
-          </Alert>
-
+            </FeatureHeader>
+          }
+        >
           <ReusableTabs
             tabs={tabs}
             defaultTabId={activeTab}
             className="w-full"
           />
-        </div>
+        </FeatureLayout>
       )}
     </div>
   );

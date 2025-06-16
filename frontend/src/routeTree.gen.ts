@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as WealthImport } from './routes/wealth'
 import { Route as TodosImport } from './routes/todos'
 import { Route as TimeTrackerImport } from './routes/time-tracker'
 import { Route as TimePlannerImport } from './routes/time-planner'
@@ -30,6 +31,12 @@ import { Route as BloodworkImport } from './routes/bloodwork'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const WealthRoute = WealthImport.update({
+  id: '/wealth',
+  path: '/wealth',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const TodosRoute = TodosImport.update({
   id: '/todos',
@@ -256,6 +263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TodosImport
       parentRoute: typeof rootRoute
     }
+    '/wealth': {
+      id: '/wealth'
+      path: '/wealth'
+      fullPath: '/wealth'
+      preLoaderRoute: typeof WealthImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -279,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
+  '/wealth': typeof WealthRoute
 }
 
 export interface FileRoutesByTo {
@@ -299,6 +314,7 @@ export interface FileRoutesByTo {
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
+  '/wealth': typeof WealthRoute
 }
 
 export interface FileRoutesById {
@@ -320,6 +336,7 @@ export interface FileRoutesById {
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
   '/todos': typeof TodosRoute
+  '/wealth': typeof WealthRoute
 }
 
 export interface FileRouteTypes {
@@ -342,6 +359,7 @@ export interface FileRouteTypes {
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
+    | '/wealth'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -361,6 +379,7 @@ export interface FileRouteTypes {
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
+    | '/wealth'
   id:
     | '__root__'
     | '/'
@@ -380,6 +399,7 @@ export interface FileRouteTypes {
     | '/time-planner'
     | '/time-tracker'
     | '/todos'
+    | '/wealth'
   fileRoutesById: FileRoutesById
 }
 
@@ -401,6 +421,7 @@ export interface RootRouteChildren {
   TimePlannerRoute: typeof TimePlannerRoute
   TimeTrackerRoute: typeof TimeTrackerRoute
   TodosRoute: typeof TodosRoute
+  WealthRoute: typeof WealthRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -421,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   TimePlannerRoute: TimePlannerRoute,
   TimeTrackerRoute: TimeTrackerRoute,
   TodosRoute: TodosRoute,
+  WealthRoute: WealthRoute,
 }
 
 export const routeTree = rootRoute
@@ -449,7 +471,8 @@ export const routeTree = rootRoute
         "/settings",
         "/time-planner",
         "/time-tracker",
-        "/todos"
+        "/todos",
+        "/wealth"
       ]
     },
     "/": {
@@ -502,6 +525,9 @@ export const routeTree = rootRoute
     },
     "/todos": {
       "filePath": "todos.tsx"
+    },
+    "/wealth": {
+      "filePath": "wealth.tsx"
     }
   }
 }

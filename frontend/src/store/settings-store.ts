@@ -45,11 +45,17 @@ const defaultDashboardSummaries = {
     order: 6,
     visible: true,
   },
-  "/dexa": { id: "/dexa", size: "medium" as const, order: 7, visible: true },
+  "/wealth": {
+    id: "/wealth",
+    size: "medium" as const,
+    order: 7,
+    visible: true,
+  },
+  "/dexa": { id: "/dexa", size: "medium" as const, order: 8, visible: true },
   "/bloodwork": {
     id: "/bloodwork",
     size: "medium" as const,
-    order: 8,
+    order: 9,
     visible: true,
   },
 };
@@ -97,6 +103,7 @@ const defaultRoutes = {
   "/people": true,
   "/people-crm": true,
   "/body-measurements": true,
+  "/wealth": true,
 };
 
 const defaultRouteConfigs: Record<string, RouteConfig> = {
@@ -115,10 +122,11 @@ const defaultRouteConfigs: Record<string, RouteConfig> = {
     order: 10,
     visible: true,
   },
-  "/dexa": { href: "/dexa", order: 11, visible: true },
-  "/bloodwork": { href: "/bloodwork", order: 12, visible: true },
-  "/dataset": { href: "/dataset", order: 13, visible: true },
-  "/settings": { href: "/settings", order: 14, visible: true },
+  "/wealth": { href: "/wealth", order: 11, visible: true },
+  "/dexa": { href: "/dexa", order: 12, visible: true },
+  "/bloodwork": { href: "/bloodwork", order: 13, visible: true },
+  "/dataset": { href: "/dataset", order: 14, visible: true },
+  "/settings": { href: "/settings", order: 15, visible: true },
 };
 
 const defaultDatasets = {
@@ -147,6 +155,10 @@ const defaultDatasets = {
   birthday_reminders: true,
   person_relationships: true,
   body_measurements: true,
+  financial_logs: true,
+  financial_balances: true,
+  paycheck_info: true,
+  financial_files: true,
 };
 
 export const routeDatasetMapping: Record<string, string[]> = {
@@ -171,6 +183,12 @@ export const routeDatasetMapping: Record<string, string[]> = {
     "person_chats",
     "birthday_reminders",
     "person_relationships",
+  ],
+  "/wealth": [
+    "financial_logs",
+    "financial_balances", 
+    "paycheck_info",
+    "financial_files",
   ],
 };
 

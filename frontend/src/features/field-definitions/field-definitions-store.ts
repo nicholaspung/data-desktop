@@ -40,6 +40,12 @@ import {
 } from "./time-tracking-definitions";
 import { TODO_FIELD_DEFINITIONS } from "./todo-definitions";
 import { BODY_MEASUREMENTS_FIELD_DEFINITIONS } from "./body-measurements-definitions";
+import {
+  FINANCIAL_LOGS_FIELD_DEFINITIONS,
+  FINANCIAL_BALANCES_FIELD_DEFINITIONS,
+  PAYCHECK_INFO_FIELD_DEFINITIONS,
+  FINANCIAL_FILES_FIELD_DEFINITIONS,
+} from "./financial-definitions";
 import { DataStoreName } from "@/store/data-store";
 
 const ALL_DEFINITIONS = [
@@ -67,6 +73,10 @@ const ALL_DEFINITIONS = [
   TIME_PLANNER_CONFIGS_FIELD_DEFINITIONS,
   TODO_FIELD_DEFINITIONS,
   BODY_MEASUREMENTS_FIELD_DEFINITIONS,
+  FINANCIAL_LOGS_FIELD_DEFINITIONS,
+  FINANCIAL_BALANCES_FIELD_DEFINITIONS,
+  PAYCHECK_INFO_FIELD_DEFINITIONS,
+  FINANCIAL_FILES_FIELD_DEFINITIONS,
 ];
 
 const initialState: FieldDefinitionsState = {

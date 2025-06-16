@@ -15,6 +15,7 @@ interface FeatureHeaderProps {
   storageKey: string;
   children?: ReactNode;
   className?: string;
+  developmentStage?: "alpha" | "beta";
 }
 
 export function FeatureHeader({
@@ -26,6 +27,7 @@ export function FeatureHeader({
   storageKey,
   children,
   className,
+  developmentStage,
 }: FeatureHeaderProps) {
   return (
     <div className={cn("space-y-4 mb-6", className)}>
@@ -56,6 +58,17 @@ export function FeatureHeader({
           storageKey={`${storageKey}-help-panel`}
         >
           {helpText}
+        </InfoPanel>
+      )}
+
+      {developmentStage && (
+        <InfoPanel
+          variant="warning"
+          defaultExpanded={false}
+          storageKey={`${storageKey}-${developmentStage}-panel`}
+          title={`${developmentStage.charAt(0).toUpperCase() + developmentStage.slice(1)} Feature`}
+        >
+          This feature is currently in {developmentStage} and may undergo significant changes. Please report any issues or feedback.
         </InfoPanel>
       )}
     </div>

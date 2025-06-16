@@ -88,8 +88,6 @@ export function InfoPanel({
               />
             )}
           </div>
-
-          {/* Content area */}
           {expanded && (
             <div className="text-sm">
               {typeof children === "string" ? (
@@ -177,7 +175,6 @@ export function CompactInfoPanel({
             />
           )}
         </div>
-
         {expanded && (
           <div className={cn("mt-2", contentClassName)}>
             {typeof children === "string" ? (

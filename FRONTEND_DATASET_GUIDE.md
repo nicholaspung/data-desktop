@@ -296,11 +296,13 @@ const renderSummary = () => {
 
 The following files automatically pick up your new dataset once the above steps are complete:
 
-- **Data Store** (`frontend/src/store/data-store.ts`) - Automatically includes all datasets from field definitions
-- **Loading Store** (`frontend/src/store/loading-store.ts`) - Automatically creates loading states for all datasets
+- **Data Store** (`frontend/src/store/data-store.ts`) - Automatically includes all datasets from field definitions via `DATASET_IDS`
+- **Loading Store** (`frontend/src/store/loading-store.ts`) - Automatically creates loading states for all datasets via `DATASET_IDS`
 - **Generic Data Table** - Will automatically work with your dataset
 - **Generic Data Form** - Will automatically generate forms based on your field definitions
 - **Dataset Route** (`/dataset`) - Will automatically include your dataset in the dropdown
+
+**Important:** The data-store.ts and loading-store.ts files automatically include your dataset because they both import `DATASET_IDS` from the field definitions store. This array is dynamically generated from `ALL_DEFINITIONS`, so when you add your dataset to `ALL_DEFINITIONS` in step 4, it becomes available in both stores automatically.
 
 ## Verification Checklist
 
@@ -351,15 +353,17 @@ Here's a complete list of files that may need updates when adding a new dataset:
 9. `frontend/src/features/dashboard/*-dashboard-summary.tsx` - Custom dashboard widget
 
 ### Automatically Updated Files:
-- `frontend/src/store/data-store.ts` - Auto-includes all datasets
-- `frontend/src/store/loading-store.ts` - Auto-creates loading states
-- All generic components (tables, forms, etc.) - Work automatically
+- `frontend/src/store/data-store.ts` - Auto-includes all datasets via `DATASET_IDS` from field definitions store
+- `frontend/src/store/loading-store.ts` - Auto-creates loading states via `DATASET_IDS` from field definitions store
+- All generic components (tables, forms, etc.) - Work automatically with any dataset that has field definitions
 
 ## Troubleshooting
 
 ### Dataset doesn't appear in dropdown
 - Check if dataset is enabled in `settings-store.ts` `defaultDatasets`
 - Verify field definitions are imported in `field-definitions-store.ts`
+- Ensure your dataset definition is added to the `ALL_DEFINITIONS` array in `field-definitions-store.ts`
+- Verify that `DATASET_IDS` includes your dataset (this array is auto-generated from `ALL_DEFINITIONS`)
 
 ### TypeScript errors
 - Ensure dataset ID is added to `DatasetId` type in `types.ts`

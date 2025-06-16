@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import DatabaseTester from "@/components/debug/database-tester";
 import RelationDebugger from "@/components/debug/relation-debugger";
+import SampleDataLoader from "@/components/debug/sample-data-loader";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 
 export const Route = createFileRoute("/debug")({
@@ -19,6 +20,11 @@ function DebugPage() {
       <ReusableTabs
         tabs={[
           {
+            id: "sample-data-loader",
+            label: "Sample Data Loader",
+            content: <SampleDataLoader />,
+          },
+          {
             id: "relation-debugger",
             label: "Relation Debugger",
             content: <RelationDebugger />,
@@ -29,9 +35,9 @@ function DebugPage() {
             content: <DatabaseTester />,
           },
         ]}
-        defaultTabId="relation-debugger"
+        defaultTabId="sample-data-loader"
         className="w-full"
-        tabsListClassName="w-full grid grid-cols-2"
+        tabsListClassName="w-full grid grid-cols-3"
       />
     </div>
   );

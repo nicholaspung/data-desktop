@@ -56,6 +56,88 @@ Data Desktop is a Wails-based desktop application for personal data tracking and
 3. Data stored as JSON in SQLite with metadata (id, timestamps, dataset_id)
 4. Frontend fetches processed data with resolved relationships for display
 
+## Creating New Routes with FeatureLayout
+
+When creating new routes, use the standardized `FeatureLayout` and `FeatureHeader` components for consistency:
+
+### Basic Structure
+```tsx
+import { FeatureLayout, FeatureHeader } from "@/components/layout/feature-layout";
+
+function NewPage() {
+  return (
+    <FeatureLayout
+      header={
+        <FeatureHeader
+          title="Feature Name"
+          description="Brief description of what this feature does"
+          storageKey="feature-name" // Used for localStorage keys
+          helpText="Optional help text that appears in a collapsible info panel"
+          helpVariant="info" // "info" | "tip" | "warning"
+          developmentStage="alpha" // Optional: "alpha" | "beta" - shows warning panel
+          guideContent={[ // Optional: creates a guide button
+            {
+              title: "Getting Started",
+              content: "Step-by-step instructions..."
+            }
+          ]}
+        >
+          <FeatureIcon className="h-8 w-8" /> {/* Optional icon in header */}
+        </FeatureHeader>
+      }
+      sidebar={<OptionalSidebar />} // Optional sidebar content
+      sidebarPosition="right" // "left" | "right"
+    >
+      {/* Main content goes here */}
+    </FeatureLayout>
+  );
+}
+```
+
+### Required Props
+- `title`: Feature name displayed as main heading
+- `storageKey`: Unique key for localStorage (use kebab-case)
+
+### Optional Props
+- `description`: Subtitle text below title
+- `helpText`: Content for help info panel
+- `helpVariant`: Style of help panel ("info", "tip", "warning")
+- `developmentStage`: Shows alpha/beta warning ("alpha", "beta")
+- `guideContent`: Array of guide sections with title/content
+- `children`: Icon or other elements next to title
+- `sidebar`: Right/left sidebar content
+- `sidebarPosition`: Sidebar placement
+
+### Example Implementation
+See `/frontend/src/routes/wealth.tsx` for a complete example.
+
+## Adding New Datasets and Features
+
+When adding new datasets or features that involve data storage:
+
+### Backend Dataset Creation
+- **Follow the guide**: `backend/database/ADDING_DATASETS.md`
+- **Required steps**:
+  1. Add dataset ID constant to `backend/database/constants.go`
+  2. Add field definitions to `backend/database/dataset_definitions.go`
+  3. Add dataset to cleanup function in `backend/database/cleanup_unused_tables.go`
+
+### Frontend Dataset Integration
+- **Follow the guide**: `FRONTEND_DATASET_GUIDE.md`
+- **Required steps**:
+  1. Create TypeScript type definitions
+  2. Update core types in `frontend/src/types/types.ts`
+  3. Create field definitions in `frontend/src/features/field-definitions/`
+  4. Update field definitions store
+  5. Enable in settings store
+  6. Optional: Add route, dashboard summary, and navigation
+
+### Important Notes
+- Always create backend datasets first, then integrate frontend
+- Both guides provide comprehensive step-by-step instructions
+- The system automatically handles data store updates and generic component integration
+- Follow the existing patterns and naming conventions
+
 ## Important Notes
 
 - Always use `wails dev -appargs dev` for development to avoid using production database

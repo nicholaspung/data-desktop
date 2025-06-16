@@ -25,4 +25,8 @@ const (
 	DatasetIDBirthdayReminders   = "birthday_reminders"
 	DatasetIDPersonRelationships = "person_relationships"
 	DatasetIDBodyMeasurements    = "body_measurements"
+	DatasetIDFinancialLogs       = "financial_logs"
+	DatasetIDFinancialBalances   = "financial_balances"
+	DatasetIDPaycheckInfo        = "paycheck_info"
+	DatasetIDFinancialFiles      = "financial_files"
 )

@@ -62,6 +62,10 @@ export function ImportRecords(arg1, arg2) {
   return window['go']['backend']['App']['ImportRecords'](arg1, arg2);
 }
 
+export function LoadSampleData() {
+  return window['go']['backend']['App']['LoadSampleData']();
+}
+
 export function ProcessRecord(arg1, arg2) {
   return window['go']['backend']['App']['ProcessRecord'](arg1, arg2);
 }

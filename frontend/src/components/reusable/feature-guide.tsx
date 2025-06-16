@@ -65,9 +65,7 @@ export function FeatureGuide({
             <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </SheetHeader>
-
         <div className="space-y-6">
-          {/* Section navigation */}
           {sections.length > 1 && (
             <div className="flex flex-wrap gap-2">
               {sections.map((section, index) => (
@@ -82,8 +80,6 @@ export function FeatureGuide({
               ))}
             </div>
           )}
-
-          {/* Section content */}
           <div
             className={cn(
               "prose prose-sm dark:prose-invert max-w-none",
@@ -141,7 +137,6 @@ export function InlineHelp({
           </>
         )}
       </Button>
-
       {expanded && (
         <div className="rounded-md border p-3 text-sm bg-muted/40 prose prose-sm dark:prose-invert max-w-none">
           {typeof children === "string" ? (

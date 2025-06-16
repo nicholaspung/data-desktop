@@ -186,11 +186,9 @@ export default function AutocompleteInput({
           {required && <span className="text-destructive ml-1">*</span>}
         </Label>
       )}
-
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
-
       <div className="relative">
         <Input
           id={id}
@@ -213,8 +211,6 @@ export default function AutocompleteInput({
           disabled={disabled}
           autoComplete="off"
         />
-
-        {/* Suggestions dropdown */}
         {showSuggestions && finalOptions.length > 0 && (
           <div
             ref={suggestionsRef}
@@ -252,7 +248,6 @@ export default function AutocompleteInput({
             </ul>
           </div>
         )}
-
         {showSuggestions && finalOptions.length === 0 && value.length > 0 && (
           <div className="absolute top-full left-0 z-50 mt-1 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground min-w-full w-max max-w-[500px]">
             {emptyMessage}

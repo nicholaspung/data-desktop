@@ -76,6 +76,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/body-measurements",
   },
   {
+    title: "Wealth",
+    icon: <FEATURE_ICONS.WEALTH className="h-5 w-5" />,
+    href: "/wealth",
+  },
+  {
     title: "DEXA Scans",
     icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,
     href: "/dexa",

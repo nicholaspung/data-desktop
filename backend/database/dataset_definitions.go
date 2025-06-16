@@ -170,6 +170,34 @@ func GetAllDatasetDefinitions() []DatasetConfig {
 			Type:        DatasetTypeMetric,
 			Fields:      getBodyMeasurementsFieldsInline(),
 		},
+		{
+			ID:          DatasetIDFinancialLogs,
+			Name:        "Financial Logs",
+			Description: "Financial transaction logs for expense and income tracking",
+			Type:        DatasetTypeFinancial,
+			Fields:      getFinancialLogsFieldsInline(),
+		},
+		{
+			ID:          DatasetIDFinancialBalances,
+			Name:        "Financial Balances",
+			Description: "Account balances tracking for financial monitoring",
+			Type:        DatasetTypeFinancial,
+			Fields:      getFinancialBalancesFieldsInline(),
+		},
+		{
+			ID:          DatasetIDPaycheckInfo,
+			Name:        "Paycheck Information",
+			Description: "Paycheck details including deductions and benefits",
+			Type:        DatasetTypeFinancial,
+			Fields:      getPaycheckInfoFieldsInline(),
+		},
+		{
+			ID:          DatasetIDFinancialFiles,
+			Name:        "Financial Files",
+			Description: "Financial document storage and management",
+			Type:        DatasetTypeFinancial,
+			Fields:      getFinancialFilesFieldsInline(),
+		},
 	}
 }
 
@@ -181,5 +209,41 @@ func getBodyMeasurementsFieldsInline() []FieldDefinition {
 		{Key: "value", Type: FieldTypeNumber, DisplayName: "Value"},
 		{Key: "unit", Type: FieldTypeText, DisplayName: "Unit", IsSearchable: true},
 		{Key: "private", Type: FieldTypeBoolean, DisplayName: "Private", IsOptional: true},
+	}
+}
+
+func getFinancialLogsFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date", IsSearchable: true},
+		{Key: "amount", Type: FieldTypeNumber, DisplayName: "Amount", Unit: "$"},
+		{Key: "description", Type: FieldTypeText, DisplayName: "Description", IsSearchable: true},
+		{Key: "category", Type: FieldTypeText, DisplayName: "Category", IsSearchable: true},
+		{Key: "tags", Type: FieldTypeText, DisplayName: "Tags", IsSearchable: true, IsOptional: true},
+	}
+}
+
+func getFinancialBalancesFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date", IsSearchable: true},
+		{Key: "amount", Type: FieldTypeNumber, DisplayName: "Amount", Unit: "$"},
+		{Key: "account_name", Type: FieldTypeText, DisplayName: "Account Name", IsSearchable: true},
+		{Key: "account_type", Type: FieldTypeText, DisplayName: "Account Type", IsSearchable: true},
+		{Key: "account_owner", Type: FieldTypeText, DisplayName: "Account Owner", IsSearchable: true},
+	}
+}
+
+func getPaycheckInfoFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date", IsSearchable: true},
+		{Key: "amount", Type: FieldTypeNumber, DisplayName: "Amount", Unit: "$"},
+		{Key: "category", Type: FieldTypeText, DisplayName: "Category", IsSearchable: true},
+		{Key: "deduction_type", Type: FieldTypeText, DisplayName: "Deduction Type", IsSearchable: true},
+	}
+}
+
+func getFinancialFilesFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date"},
+		{Key: "files", Type: FieldTypeFileMultiple, DisplayName: "Files"},
 	}
 }
