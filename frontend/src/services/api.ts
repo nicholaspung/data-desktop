@@ -1,6 +1,7 @@
 import { DatasetType, FieldDefinition } from "@/types/types";
 import {
   AddRecord,
+  CheckForDuplicates,
   CreateDataset,
   DeleteDataset,
   DeleteRecord,
@@ -215,6 +216,22 @@ export const ApiService = {
       }
 
       return false;
+    }
+  },
+
+  async checkForDuplicates(
+    datasetId: string,
+    records: Record<string, any>[],
+    duplicateFields: string[] = []
+  ): Promise<any[]> {
+    try {
+      const recordsJson = JSON.stringify(records);
+      const duplicates = await CheckForDuplicates(datasetId, recordsJson, duplicateFields);
+      return duplicates || [];
+    } catch (error) {
+      console.error(`Failed to check for duplicates in dataset ${datasetId}:`, error);
+      toast.error("Failed to check for duplicates");
+      return [];
     }
   },
 

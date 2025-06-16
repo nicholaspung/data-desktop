@@ -1,3 +1,26 @@
+export namespace backend {
+	
+	export class DuplicateResult {
+	    importRecord: Record<string, any>;
+	    existingRecords: any[];
+	    duplicateFields: string[];
+	    confidence: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DuplicateResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.importRecord = source["importRecord"];
+	        this.existingRecords = source["existingRecords"];
+	        this.duplicateFields = source["duplicateFields"];
+	        this.confidence = source["confidence"];
+	    }
+	}
+
+}
+
 export namespace database {
 	
 	export class FieldDefinition {

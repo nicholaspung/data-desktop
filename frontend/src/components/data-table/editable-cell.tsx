@@ -31,6 +31,7 @@ import FileUpload from "../reusable/file-upload";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import MultipleFileUpload from "../reusable/multiple-file-upload";
 import { JsonEditCell } from "./json-edit-cell";
+import AutocompleteInput from "../reusable/autocomplete-input";
 
 const EditableCell = ({
   value: initialValue,
@@ -50,6 +51,62 @@ const EditableCell = ({
   onDataChange?: () => void;
 }) => {
   const allData = useStore(dataStore, (state) => state);
+
+  const getAutocompleteOptions = (field: FieldDefinition) => {
+    if (field.type !== "autocomplete") return [];
+
+    const storeData = allData[datasetId] || [];
+
+    if (field.secondaryDisplayField) {
+      const groupedValues = new Map<string, Set<string>>();
+
+      storeData.forEach((record: any) => {
+        const primaryValue = record[field.key];
+        const secondaryValue = record[field.secondaryDisplayField!];
+
+        if (
+          primaryValue &&
+          typeof primaryValue === "string" &&
+          primaryValue.trim() !== ""
+        ) {
+          if (!groupedValues.has(primaryValue)) {
+            groupedValues.set(primaryValue, new Set());
+          }
+          if (
+            secondaryValue &&
+            typeof secondaryValue === "string" &&
+            secondaryValue.trim() !== ""
+          ) {
+            groupedValues.get(primaryValue)!.add(secondaryValue);
+          }
+        }
+      });
+
+      return Array.from(groupedValues.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([primaryValue, secondaryValues]) => ({
+          id: primaryValue,
+          label: primaryValue,
+          secondaryValue: Array.from(secondaryValues).join(", "),
+        }));
+    }
+
+    const existingValues = Array.from(
+      new Set(
+        storeData
+          .map((record: any) => record[field.key])
+          .filter(
+            (value: any) =>
+              value && typeof value === "string" && value.trim() !== ""
+          )
+      )
+    ).sort();
+
+    return existingValues.map((value: string) => ({
+      id: value,
+      label: value,
+    }));
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(initialValue);
@@ -216,6 +273,7 @@ const EditableCell = ({
           return "—";
         }
         return `${JSON.stringify(value, null, 2).slice(0, 10)}...`;
+      case "autocomplete":
       case "text":
       default:
         return value || "-";
@@ -449,6 +507,35 @@ const EditableCell = ({
             className="min-w-[30rem]"
           />
         );
+      case "autocomplete": {
+        const autocompleteOptions = getAutocompleteOptions(field);
+        return (
+          <AutocompleteInput
+            value={editValue || ""}
+            onChange={(value) => handleValueChange(value)}
+            options={autocompleteOptions}
+            placeholder={`Enter ${field.displayName || field.key}...`}
+            showRecentOptions={false}
+            emptyMessage="Type to add new option"
+            className="min-w-[200px]"
+            inputClassName="h-8"
+            renderItem={
+              field.secondaryDisplayField
+                ? (option) => (
+                    <div className="flex flex-row items-center gap-2">
+                      <span>{option.label}</span>
+                      {option.secondaryValue && (
+                        <span className="text-xs text-muted-foreground">
+                          {option.secondaryValue}
+                        </span>
+                      )}
+                    </div>
+                  )
+                : undefined
+            }
+          />
+        );
+      }
       case "file":
         return null;
       case "file-multiple":

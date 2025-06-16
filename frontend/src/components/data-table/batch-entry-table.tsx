@@ -34,6 +34,10 @@ import { generateOptionsForLoadRelationOptions } from "@/lib/edit-utils";
 import ReusableSelect from "../reusable/reusable-select";
 import ReusableMultiSelect from "../reusable/reusable-multiselect";
 import ReusableCard from "../reusable/reusable-card";
+import {
+  DuplicateDetectionDialog,
+  DuplicateRecord,
+} from "./duplicate-detection-dialog";
 
 export function BatchEntryTable({
   datasetId,
@@ -67,6 +71,11 @@ export function BatchEntryTable({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
   const [currentBatch, setCurrentBatch] = useState(1);
+  const [duplicateDialogOpen, setDuplicateDialogOpen] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateRecord[]>([]);
+  const [duplicateCheckEntries, setDuplicateCheckEntries] = useState<
+    Record<string, any>[]
+  >([]);
 
   const relationFields = fields.filter(
     (field) => field.isRelation && field.relatedDataset
@@ -326,6 +335,29 @@ export function BatchEntryTable({
         return rest;
       });
 
+      const duplicateResults = await ApiService.checkForDuplicates(
+        datasetId,
+        entriesToSubmit
+      );
+
+      if (duplicateResults.length > 0) {
+        const formattedDuplicates: DuplicateRecord[] = duplicateResults.map(
+          (result) => ({
+            importRecord: result.importRecord,
+            existingRecords: result.existingRecords,
+            duplicateFields: result.duplicateFields,
+            confidence: result.confidence,
+            action: null,
+          })
+        );
+
+        setDuplicates(formattedDuplicates);
+        setDuplicateCheckEntries(processedEntries);
+        setDuplicateDialogOpen(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       const count = await ApiService.importRecords(datasetId, entriesToSubmit);
 
       if (count > 0) {
@@ -359,6 +391,125 @@ export function BatchEntryTable({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDuplicateResolution = async (
+    resolutions: Record<number, "skip" | "create" | "overwrite">
+  ) => {
+    setIsSubmitting(true);
+    setDuplicateDialogOpen(false);
+
+    try {
+      const recordsToImport: Record<string, any>[] = [];
+      const processedIndices = new Set<number>();
+
+      const entriesWithoutIds = duplicateCheckEntries.map((entry) => {
+        const entryWithoutId = { ...entry };
+        delete entryWithoutId.id;
+
+        Object.keys(entryWithoutId).forEach((key) => {
+          if (entryWithoutId[key] instanceof Date) {
+            entryWithoutId[key] = entryWithoutId[key].toISOString();
+          }
+        });
+
+        return entryWithoutId;
+      });
+
+      duplicates.forEach((duplicate, index) => {
+        const resolution = resolutions[index];
+
+        const entryIndex = entriesWithoutIds.findIndex((entryWithoutId) => {
+          const sortedEntry = Object.keys(entryWithoutId)
+            .sort()
+            .reduce((obj, key) => {
+              obj[key] = entryWithoutId[key];
+              return obj;
+            }, {} as any);
+
+          const sortedDuplicate = Object.keys(duplicate.importRecord)
+            .sort()
+            .reduce((obj, key) => {
+              obj[key] = duplicate.importRecord[key];
+              return obj;
+            }, {} as any);
+
+          return (
+            JSON.stringify(sortedEntry) === JSON.stringify(sortedDuplicate)
+          );
+        });
+
+        if (entryIndex !== -1) {
+          processedIndices.add(entryIndex);
+
+          if (resolution === "create") {
+            recordsToImport.push(duplicate.importRecord);
+          }
+        }
+      });
+
+      if (recordsToImport.length > 0) {
+        const count = await ApiService.importRecords(
+          datasetId,
+          recordsToImport
+        );
+
+        if (count > 0) {
+          toast.success(`Successfully added ${count} ${title} records`);
+
+          localStorage.removeItem(storageKey);
+          setHasSavedData(false);
+
+          await loadData();
+        }
+      } else {
+        toast.info("All records were skipped");
+      }
+
+      if (processedIndices.size === duplicateCheckEntries.length) {
+        if (hasNextBatch) {
+          loadNextBatch();
+        } else {
+          setEntries([getEmptyEntry()]);
+          setCurrentBatch(1);
+
+          if (onSuccess) {
+            onSuccess();
+          }
+
+          if (onNavigateToTable) {
+            onNavigateToTable();
+          }
+        }
+      } else {
+        const remainingEntries = entries.filter((entry) => {
+          const checkIndex = duplicateCheckEntries.findIndex(
+            (checkEntry) => checkEntry.id === entry.id
+          );
+          return checkIndex === -1 || !processedIndices.has(checkIndex);
+        });
+
+        if (remainingEntries.length === 0) {
+          setEntries([getEmptyEntry()]);
+        } else {
+          setEntries(remainingEntries);
+        }
+      }
+    } catch (error) {
+      console.error("Error processing duplicate resolutions:", error);
+      toast.error("Failed to process duplicate resolutions");
+    } finally {
+      setIsSubmitting(false);
+      setDuplicates([]);
+      setDuplicateCheckEntries([]);
+    }
+  };
+
+  const handleDuplicateCancel = () => {
+    setDuplicateDialogOpen(false);
+    setIsSubmitting(false);
+    setDuplicates([]);
+    setDuplicateCheckEntries([]);
   };
 
   const clearEntries = () => {
@@ -568,156 +719,169 @@ export function BatchEntryTable({
   };
 
   return (
-    <ReusableCard
-      title={
-        <div className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            {title} Batch Entry
-            {hasSavedData && <SavedDataBadge />}
-          </div>
-          <BatchEntryImportButtons
-            fileInputRef={fileInputRef}
-            isSubmitting={isSubmitting}
-            handleImportCSV={handleImportCSV}
-            handleDownloadTemplate={handleDownloadTemplate}
-          />
-        </div>
-      }
-      content={
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
+    <>
+      <ReusableCard
+        title={
+          <div className="flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
-              <Badge variant="outline">
-                {entries.length} {entries.length === 1 ? "entry" : "entries"}
-              </Badge>
-              {totalBatches > 1 && (
-                <Badge variant="secondary">
-                  Batch {currentBatch} of {totalBatches} ({totalEntries} total)
-                </Badge>
-              )}
-              {hasNextBatch && (
-                <Badge variant="destructive">
-                  {pendingEntries.length} pending
-                </Badge>
-              )}
+              {title} Batch Entry
+              {hasSavedData && <SavedDataBadge />}
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addEntry}
-                disabled={isSubmitting || entries.length >= maxBatchSize}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Entry
-              </Button>
-              <ConfirmResetDialog
-                onConfirm={clearEntries}
-                trigger={
-                  <Button variant="outline" size="sm" disabled={isSubmitting}>
-                    <Trash className="h-4 w-4 mr-2" />
-                    Reset
-                  </Button>
-                }
-                title="Clear all entries?"
-                description="This will remove all current entries and cannot be undone. Your data will be removed from local storage."
-              />
-            </div>
+            <BatchEntryImportButtons
+              fileInputRef={fileInputRef}
+              isSubmitting={isSubmitting}
+              handleImportCSV={handleImportCSV}
+              handleDownloadTemplate={handleDownloadTemplate}
+            />
           </div>
-          <div className="border rounded-md">
-            <div className="overflow-auto max-h-[500px]">
-              <div style={{ minWidth: "100%", overflowX: "auto" }}>
-                <Table>
-                  <TableHeader className="sticky top-0 bg-background">
-                    <TableRow>
-                      <TableHead
-                        style={{ minWidth: "50px", width: "50px" }}
-                      ></TableHead>
-                      {fields.map((field) => (
-                        <TableHead
-                          key={field.key}
-                          className="whitespace-nowrap"
-                          style={{ minWidth: "80px" }}
-                        >
-                          {field.displayName}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry, entryIndex) => (
-                      <TableRow key={entry.id}>
-                        <TableCell
-                          style={{
-                            minWidth: "50px",
-                            width: "50px",
-                            padding: "0 4px",
-                          }}
-                        >
-                          <div className="flex justify-center">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeEntry(entryIndex)}
-                              disabled={entries.length <= 1 && entryIndex === 0}
-                              className="h-8 w-8 p-0"
-                            >
-                              <Trash className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        {fields.map((field) => (
-                          <TableCell
-                            key={`${entry.id}-${field.key}`}
-                            style={{ minWidth: "80px" }}
-                          >
-                            {renderCell(entry, field, entryIndex)}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
-            {hasNextBatch && (
+        }
+        content={
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {entries.length} {entries.length === 1 ? "entry" : "entries"}
+                </Badge>
+                {totalBatches > 1 && (
+                  <Badge variant="secondary">
+                    Batch {currentBatch} of {totalBatches} ({totalEntries}{" "}
+                    total)
+                  </Badge>
+                )}
+                {hasNextBatch && (
+                  <Badge variant="destructive">
+                    {pendingEntries.length} pending
+                  </Badge>
+                )}
+              </div>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={loadNextBatch}
-                  disabled={isSubmitting}
+                  size="sm"
+                  onClick={addEntry}
+                  disabled={isSubmitting || entries.length >= maxBatchSize}
                 >
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                  Load Next Batch (
-                  {Math.min(maxBatchSize, pendingEntries.length)} entries)
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Entry
                 </Button>
-                <span className="text-sm text-muted-foreground">
-                  {pendingEntries.length} entries remaining
-                </span>
+                <ConfirmResetDialog
+                  onConfirm={clearEntries}
+                  trigger={
+                    <Button variant="outline" size="sm" disabled={isSubmitting}>
+                      <Trash className="h-4 w-4 mr-2" />
+                      Reset
+                    </Button>
+                  }
+                  title="Clear all entries?"
+                  description="This will remove all current entries and cannot be undone. Your data will be removed from local storage."
+                />
               </div>
-            )}
-            <Button
-              onClick={submitEntries}
-              disabled={isSubmitting || entries.length === 0}
-              className="bg-primary hover:bg-primary/90 ml-auto"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Submit {hasNextBatch ? "Current Batch" : "All Entries"}
-                </>
+            </div>
+            <div className="border rounded-md">
+              <div className="overflow-auto max-h-[500px]">
+                <div style={{ minWidth: "100%", overflowX: "auto" }}>
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background">
+                      <TableRow>
+                        <TableHead
+                          style={{ minWidth: "50px", width: "50px" }}
+                        ></TableHead>
+                        {fields.map((field) => (
+                          <TableHead
+                            key={field.key}
+                            className="whitespace-nowrap"
+                            style={{ minWidth: "80px" }}
+                          >
+                            {field.displayName}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {entries.map((entry, entryIndex) => (
+                        <TableRow key={entry.id}>
+                          <TableCell
+                            style={{
+                              minWidth: "50px",
+                              width: "50px",
+                              padding: "0 4px",
+                            }}
+                          >
+                            <div className="flex justify-center">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeEntry(entryIndex)}
+                                disabled={
+                                  entries.length <= 1 && entryIndex === 0
+                                }
+                                className="h-8 w-8 p-0"
+                              >
+                                <Trash className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          {fields.map((field) => (
+                            <TableCell
+                              key={`${entry.id}-${field.key}`}
+                              style={{ minWidth: "80px" }}
+                            >
+                              {renderCell(entry, field, entryIndex)}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              {hasNextBatch && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={loadNextBatch}
+                    disabled={isSubmitting}
+                  >
+                    <ChevronRight className="h-4 w-4 mr-2" />
+                    Load Next Batch (
+                    {Math.min(maxBatchSize, pendingEntries.length)} entries)
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {pendingEntries.length} entries remaining
+                  </span>
+                </div>
               )}
-            </Button>
+              <Button
+                onClick={submitEntries}
+                disabled={isSubmitting || entries.length === 0}
+                className="bg-primary hover:bg-primary/90 ml-auto"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Submit {hasNextBatch ? "Current Batch" : "All Entries"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
-      }
-    />
+        }
+      />
+      <DuplicateDetectionDialog
+        isOpen={duplicateDialogOpen}
+        onOpenChange={setDuplicateDialogOpen}
+        duplicates={duplicates}
+        fields={fields}
+        onResolve={handleDuplicateResolution}
+        onCancel={handleDuplicateCancel}
+      />
+    </>
   );
 }

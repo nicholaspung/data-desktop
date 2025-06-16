@@ -12,6 +12,7 @@ interface DatasetSearchParams {
   sortDirection?: string;
   filterColumn?: string;
   filterValue?: string;
+  showTimestamps?: string;
 }
 
 export const Route = createFileRoute("/dataset")({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/dataset")({
     sortDirection: search.sortDirection as "asc" | "desc" | undefined,
     filterColumn: search.filterColumn as string | undefined,
     filterValue: search.filterValue as string | undefined,
+    showTimestamps: search.showTimestamps as string | undefined,
   }),
   component: RouteComponent,
 });

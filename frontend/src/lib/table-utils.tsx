@@ -133,3 +133,28 @@ export const getDisplayValue = (field: FieldDefinition, record: any) => {
 
   return label;
 };
+
+export function createTimestampColumns<TData>(): ColumnDef<TData, any>[] {
+  return [
+    {
+      id: "createdAt",
+      accessorKey: "createdAt",
+      header: "Created",
+      meta: { type: "date" },
+      cell: ({ cell }) => {
+        const value = cell.getValue();
+        return value ? formatDate(value) : "—";
+      },
+    },
+    {
+      id: "lastModified", 
+      accessorKey: "lastModified",
+      header: "Updated",
+      meta: { type: "date" },
+      cell: ({ cell }) => {
+        const value = cell.getValue();
+        return value ? formatDate(value) : "—";
+      },
+    },
+  ];
+}

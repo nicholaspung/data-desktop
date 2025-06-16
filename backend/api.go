@@ -385,6 +385,93 @@ func (a *App) deleteFilesInData(data map[string]interface{}) {
 	}
 }
 
+type DuplicateResult struct {
+	ImportRecord    map[string]interface{}   `json:"importRecord"`
+	ExistingRecords []map[string]interface{} `json:"existingRecords"`
+	DuplicateFields []string                 `json:"duplicateFields"`
+	Confidence      float64                  `json:"confidence"`
+}
+
+func (a *App) CheckForDuplicates(datasetID string, records string, duplicateFields []string) ([]DuplicateResult, error) {
+	var recordsData []map[string]interface{}
+	err := json.Unmarshal([]byte(records), &recordsData)
+	if err != nil {
+		return nil, err
+	}
+
+	existingRecords, err := database.GetDataRecords(datasetID)
+	if err != nil {
+		return nil, err
+	}
+
+	var duplicates []DuplicateResult
+
+	for _, importRecord := range recordsData {
+		var matchingRecords []map[string]interface{}
+		var matchedFields []string
+
+		checkFields := duplicateFields
+		if len(checkFields) == 0 {
+
+			for key := range importRecord {
+
+				if key != "id" && key != "datasetId" && key != "createdAt" && key != "lastModified" {
+					checkFields = append(checkFields, key)
+				}
+			}
+		}
+
+		for _, existing := range existingRecords {
+			var existingData map[string]interface{}
+			err := json.Unmarshal(existing.Data, &existingData)
+			if err != nil {
+				continue
+			}
+
+			matchedCount := 0
+			currentMatchedFields := []string{}
+
+			for _, fieldKey := range checkFields {
+				importValue := importRecord[fieldKey]
+				existingValue := existingData[fieldKey]
+
+				if importValue != nil && existingValue != nil {
+
+					importStr := fmt.Sprintf("%v", importValue)
+					existingStr := fmt.Sprintf("%v", existingValue)
+
+					if importStr == existingStr {
+						matchedCount++
+						currentMatchedFields = append(currentMatchedFields, fieldKey)
+					}
+				}
+			}
+
+			if matchedCount == len(checkFields) && matchedCount > 0 {
+
+				existingData["id"] = existing.ID
+				existingData["datasetId"] = existing.DatasetID
+				existingData["createdAt"] = existing.CreatedAt
+				existingData["lastModified"] = existing.LastModified
+
+				matchingRecords = append(matchingRecords, existingData)
+				matchedFields = currentMatchedFields
+			}
+		}
+
+		if len(matchingRecords) > 0 {
+			duplicates = append(duplicates, DuplicateResult{
+				ImportRecord:    importRecord,
+				ExistingRecords: matchingRecords,
+				DuplicateFields: matchedFields,
+				Confidence:      1.0,
+			})
+		}
+	}
+
+	return duplicates, nil
+}
+
 func (a *App) ImportRecords(datasetID string, records string) (int, error) {
 	_, err := database.GetDataset(datasetID)
 	if err != nil {

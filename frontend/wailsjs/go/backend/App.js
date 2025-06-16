@@ -6,6 +6,10 @@ export function AddRecord(arg1, arg2, arg3) {
   return window['go']['backend']['App']['AddRecord'](arg1, arg2, arg3);
 }
 
+export function CheckForDuplicates(arg1, arg2, arg3) {
+  return window['go']['backend']['App']['CheckForDuplicates'](arg1, arg2, arg3);
+}
+
 export function CreateDataset(arg1, arg2, arg3, arg4) {
   return window['go']['backend']['App']['CreateDataset'](arg1, arg2, arg3, arg4);
 }

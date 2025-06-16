@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import { ColumnDef } from "@tanstack/react-table";
-import { createColumn } from "@/lib/table-utils";
+import { createColumn, createTimestampColumns } from "@/lib/table-utils";
 import { FieldDefinition } from "@/types/types";
 import { ConfirmDeleteDialog } from "../reusable/confirm-delete-dialog";
 import { useStore } from "@tanstack/react-store";
@@ -15,6 +15,8 @@ import RefreshDatasetButton from "../reusable/refresh-dataset-button";
 import ReusableSelect from "../reusable/reusable-select";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { BulkEditDialog } from "./bulk-edit-dialog";
+import { Button } from "@/components/ui/button";
+import { Clock } from "lucide-react";
 
 export default function GenericDataTable({
   datasetId,
@@ -92,6 +94,9 @@ export default function GenericDataTable({
       : null
   );
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
+  const [showTimestamps, setShowTimestamps] = useState(
+    search.showTimestamps === "true"
+  );
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +124,8 @@ export default function GenericDataTable({
       params.datasetId = search.datasetId as string;
     }
 
+    params.showTimestamps = showTimestamps.toString();
+
     navigate({
       search: params as any,
     });
@@ -128,6 +135,7 @@ export default function GenericDataTable({
     currentPageSize,
     currentSorting,
     currentFilter,
+    showTimestamps,
     persistState,
     navigate,
     search.datasetId,
@@ -147,6 +155,10 @@ export default function GenericDataTable({
         field
       )
     );
+
+    if (showTimestamps) {
+      columns.push(...createTimestampColumns<Record<string, any>>());
+    }
 
     return columns;
   };
@@ -289,6 +301,15 @@ export default function GenericDataTable({
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
         <div className="flex items-center gap-3">
+          <Button
+            variant={showTimestamps ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowTimestamps(!showTimestamps)}
+            className="flex items-center gap-2"
+          >
+            <Clock className="h-4 w-4" />
+            {showTimestamps ? "Hide" : "Show"} Timestamps
+          </Button>
           <RefreshDatasetButton
             fields={fields}
             datasetId={datasetId}

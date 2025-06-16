@@ -23,7 +23,7 @@ Application is built for my own personal use, but may be useful to others if the
 
 This application will be optimized as I find it a pain to do certain actions. Thanks for checking out the application!
 
-- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet is still like a junior engineer that needs help occasionally to make things nice.)
+- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet/Claude Code is still like a junior engineer that needs help occasionally to make things nice.)
 
 ## How to use
 
