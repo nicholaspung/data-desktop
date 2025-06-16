@@ -15,7 +15,7 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 import { Scale, TrendingUp, BarChart3, User } from "lucide-react";
-import AddBodyMeasurementButton from "@/features/body-measurements/add-body-measurement-button";
+import BodyMeasurementManager from "@/features/body-measurements/body-measurement-manager";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import { useState, useMemo } from "react";
 
@@ -125,7 +125,7 @@ function BodyMeasurementsPage() {
               showPrivate={showPrivate}
               onToggle={setShowPrivate}
             />
-            <AddBodyMeasurementButton />
+            <BodyMeasurementManager />
           </div>
         </FeatureHeader>
       }

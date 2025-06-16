@@ -11,13 +11,14 @@ import TodoStats from "./todo-stats";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { getSortedTodos } from "./todo-utils";
 import TodoListItem from "./todo-list-item";
-import PrivateToggleButton from "@/components/reusable/private-toggle-button";
+interface TodoListProps {
+  showPrivate: boolean;
+}
 
-export default function TodoList() {
+export default function TodoList({ showPrivate }: TodoListProps) {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
   const isLoading = useStore(loadingStore, (state) => state.todos);
   const [todoMetrics, setTodoMetrics] = useState<Record<string, any>>({});
-  const [showPrivateTodos, setShowPrivateTodos] = useState(true);
 
   useEffect(() => {
     const loadMetrics = async () => {
@@ -34,7 +35,7 @@ export default function TodoList() {
 
   const getFilteredTodos = (tabId: string) => {
     return todos.filter((todo) => {
-      if (todo.private && !showPrivateTodos) return false;
+      if (todo.private && !showPrivate) return false;
 
       switch (tabId) {
         case "active":
@@ -93,7 +94,7 @@ export default function TodoList() {
   }
 
   const visibleTodos = todos.filter(
-    (todo) => !todo.private || showPrivateTodos
+    (todo) => !todo.private || showPrivate
   );
 
   const tabs = [
@@ -128,10 +129,6 @@ export default function TodoList() {
       <div className="flex flex-col justify-between items-center">
         <div className="flex justify-between items-center w-full mb-4">
           <TodoStats />
-          <PrivateToggleButton
-            showPrivate={showPrivateTodos}
-            onToggle={setShowPrivateTodos}
-          />
         </div>
         <ReusableTabs
           tabs={tabs}

@@ -7,6 +7,8 @@ import {
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import TodoList from "@/features/todos/todo-list";
 import AddTodoButton from "@/features/todos/add-todo-button";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
+import { useState } from "react";
 
 export const Route = createFileRoute("/todos")({
   component: TodosPage,
@@ -80,6 +82,8 @@ This approach helps you learn from missed deadlines while still making progress 
 ];
 
 function TodosPage() {
+  const [showPrivate, setShowPrivate] = useState(true);
+
   return (
     <FeatureLayout
       header={
@@ -89,7 +93,13 @@ function TodosPage() {
           guideContent={todosGuideContent}
           storageKey="todos-page"
         >
-          <AddTodoButton />
+          <div className="flex items-center gap-2">
+            <PrivateToggleButton
+              showPrivate={showPrivate}
+              onToggle={setShowPrivate}
+            />
+            <AddTodoButton />
+          </div>
         </FeatureHeader>
       }
       sidebar={
@@ -147,7 +157,7 @@ function TodosPage() {
       }
       sidebarPosition="right"
     >
-      <TodoList />
+      <TodoList showPrivate={showPrivate} />
     </FeatureLayout>
   );
 }
