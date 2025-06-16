@@ -20,7 +20,6 @@ export default function Pagination({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 mt-2">
-      {/* Info text */}
       <div className="text-sm text-muted-foreground">
         {totalRows > 0 ? (
           <>
@@ -35,10 +34,7 @@ export default function Pagination({
           <span>No entries</span>
         )}
       </div>
-
-      {/* Controls - right aligned on desktop */}
       <div className="flex justify-start md:justify-end items-center gap-2">
-        {/* Page size selector */}
         <ReusableSelect
           options={[5, 10, 20, 50, 100].map((size) => ({
             id: size,
@@ -51,8 +47,6 @@ export default function Pagination({
           placeholder={`${pageSize}`}
           triggerClassName={"h-8 w-[70px]"}
         />
-
-        {/* Navigation buttons */}
         <div className="inline-flex items-center">
           <Button
             variant="outline"
@@ -75,11 +69,9 @@ export default function Pagination({
             <span className="sr-only">Previous page</span>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-
           <span className="mx-2 text-sm whitespace-nowrap">
             Page {pageIndex + 1} of {pageCount}
           </span>
-
           <Button
             variant="outline"
             size="icon"

@@ -59,7 +59,6 @@ export default function BloodworkDashboardSummary() {
 
     setLatestTest(sortedTests[0]);
 
-    // Calculate months since last test
     const now = new Date();
     const lastTestDate = new Date(sortedTests[0].date);
     const diffInMonths =
@@ -79,7 +78,6 @@ export default function BloodworkDashboardSummary() {
         return { ...result, marker };
       });
 
-      // Calculate marker counts
       let optimal = 0;
       let outOfRange = 0;
       let textValues = 0;
@@ -93,7 +91,6 @@ export default function BloodworkDashboardSummary() {
             return null;
           }
 
-          // Count text values
           if (value_text && !value_number) {
             textValues++;
             return null;

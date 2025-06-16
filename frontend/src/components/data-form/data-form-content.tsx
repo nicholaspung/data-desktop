@@ -39,21 +39,16 @@ export default function DataFormContent({
 }) {
   return (
     <>
-      {/* Date fields */}
       {fieldsByType.date.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
           {fieldsByType.date.map(renderField)}
         </div>
       )}
-
-      {/* Boolean fields */}
       {fieldsByType.boolean.length > 0 && (
         <div className="grid gap-4 md:grid-cols-2">
           {fieldsByType.boolean.map(renderField)}
         </div>
       )}
-
-      {/* Numeric and text fields in a grid */}
       {(fieldsByType.numeric.length > 0 ||
         fieldsByType.text.length > 0 ||
         fieldsByType.autocomplete.length > 0 ||
@@ -73,9 +68,6 @@ export default function DataFormContent({
           {fieldsByType.json.map(renderField)}
         </div>
       )}
-
-
-      {/* File and File-multiple fields */}
       {(fieldsByType.file.length > 0 ||
         fieldsByType.fileMultiple.length > 0) && (
         <div className="grid gap-4 md:grid-cols-2">
@@ -83,7 +75,6 @@ export default function DataFormContent({
           {fieldsByType.fileMultiple.map(renderField)}
         </div>
       )}
-
       {!hideSubmitButton && (
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex gap-2">
@@ -97,7 +88,6 @@ export default function DataFormContent({
                 submitLabel
               )}
             </Button>
-
             {mode === "add" && (
               <ConfirmResetDialog
                 onConfirm={handleClearForm}
@@ -116,7 +106,6 @@ export default function DataFormContent({
               />
             )}
           </div>
-
           {onCancel && (
             <Button
               variant="ghost"

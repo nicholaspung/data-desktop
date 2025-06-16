@@ -3,7 +3,7 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import CalendarView from "@/features/daily-tracker/calendar-view";
 import { Metric } from "@/store/experiment-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Filter } from "lucide-react";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 
 export const Route = createFileRoute("/metric-calendar")({
   component: MetricCalendarPage,
@@ -21,14 +22,19 @@ export const Route = createFileRoute("/metric-calendar")({
 
 function MetricCalendarPage() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
+  const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
 
-  const metricsByCategory = metrics.reduce(
-    (grouped: Record<string, Metric[]>, metric) => {
-      if (!metric.active) return grouped;
+  const visibleMetrics = metrics.filter((metric) => {
+    if (!metric.active) return false;
+    if (metric.private && !showPrivateMetrics) return false;
+    return true;
+  });
 
+  const metricsByCategory = visibleMetrics.reduce(
+    (grouped: Record<string, Metric[]>, metric) => {
       const categoryId = metric.category_id;
       const category = categories.find((c) => c.id === categoryId);
       const categoryName = category?.name || "Uncategorized";
@@ -42,6 +48,13 @@ function MetricCalendarPage() {
     },
     {}
   );
+
+  useEffect(() => {
+    const visibleMetricIds = visibleMetrics.map((m) => m.id);
+    setSelectedMetrics((prev) =>
+      prev.filter((id) => visibleMetricIds.includes(id))
+    );
+  }, [showPrivateMetrics]);
 
   const toggleMetric = (metricId: string) => {
     setSelectedMetrics((prev) =>
@@ -73,6 +86,11 @@ function MetricCalendarPage() {
       categoryMetrics.length > 0 &&
       categoryMetrics.every((m) => selectedMetrics.includes(m.id))
     );
+  };
+
+  const selectAllMetrics = () => {
+    const allVisibleMetricIds = visibleMetrics.map((m) => m.id);
+    setSelectedMetrics(allVisibleMetricIds);
   };
 
   const metricCalendarGuideContent = [
@@ -150,13 +168,18 @@ The calendar view works best when you're consistent in logging your metrics each
       }
     >
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left sidebar with metric selection */}
         <div className="lg:w-1/3">
           <Card className="sticky top-4">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Filter className="h-5 w-5 mr-2" />
-                Select Metrics
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Filter className="h-5 w-5 mr-2" />
+                  Select Metrics
+                </div>
+                <PrivateToggleButton
+                  showPrivate={showPrivateMetrics}
+                  onToggle={setShowPrivateMetrics}
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -166,15 +189,24 @@ The calendar view works best when you're consistent in logging your metrics each
                 </p>
               ) : (
                 <div className="flex flex-col h-full">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedMetrics([])}
-                    className="mb-4 self-end"
-                  >
-                    Clear Selection
-                  </Button>
-
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectAllMetrics}
+                      className="flex-1"
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedMetrics([])}
+                      className="flex-1"
+                    >
+                      Clear Selection
+                    </Button>
+                  </div>
                   <ScrollArea className="h-[calc(100vh-280px)]">
                     <div className="space-y-6 pr-4">
                       {Object.entries(metricsByCategory).map(
@@ -195,7 +227,6 @@ The calendar view works best when you're consistent in logging your metrics each
                                 {category} ({categoryMetrics.length})
                               </Label>
                             </div>
-
                             <div className="ml-6 space-y-1">
                               {categoryMetrics.map((metric) => (
                                 <div
@@ -230,8 +261,6 @@ The calendar view works best when you're consistent in logging your metrics each
             </CardContent>
           </Card>
         </div>
-
-        {/* Right side calendar view */}
         <div className="lg:w-2/3">
           {selectedMetrics.length === 0 ? (
             <Card>

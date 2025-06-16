@@ -22,10 +22,9 @@ export default function ExperimentDashboardHeader({
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <h2 className="text-2xl font-bold">{experiment.name}</h2>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1 whitespace-pre-wrap">
                 {experiment.description}
               </p>
-
               <div className="flex items-center gap-2 mt-2">
                 {experiment &&
                   getStatusBadge(
@@ -33,7 +32,6 @@ export default function ExperimentDashboardHeader({
                     experiment.status.charAt(0).toUpperCase() +
                       experiment.status.slice(1)
                   )}
-
                 <div className="flex items-center text-sm">
                   <CalendarDays className="h-4 w-4 mr-1 text-muted-foreground" />
                   <span>
@@ -48,7 +46,6 @@ export default function ExperimentDashboardHeader({
                 </div>
               </div>
             </div>
-
             <div className="flex flex-col items-end gap-2">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">
@@ -64,7 +61,6 @@ export default function ExperimentDashboardHeader({
                   %
                 </div>
               </div>
-
               <Progress
                 value={
                   progressData.totalDays > 0
@@ -73,7 +69,6 @@ export default function ExperimentDashboardHeader({
                 }
                 className="w-32 h-2"
               />
-
               <div className="text-sm">
                 {progressData.daysRemaining === 0
                   ? "Experiment complete"
@@ -84,17 +79,19 @@ export default function ExperimentDashboardHeader({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h3 className="font-medium">Start State</h3>
-              <p className="text-muted-foreground">{experiment.start_state}</p>
+              <p className="text-muted-foreground whitespace-pre-wrap">
+                {experiment.start_state}
+              </p>
             </div>
             <div>
               <h3 className="font-medium">End State</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground whitespace-pre-wrap">
                 {experiment.end_state || "Not completed"}
               </p>
             </div>
             <div>
               <h3 className="font-medium">Goal</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground whitespace-pre-wrap">
                 {experiment.goal || "No goal specified"}
               </p>
             </div>

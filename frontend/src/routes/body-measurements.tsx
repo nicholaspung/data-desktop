@@ -16,7 +16,7 @@ import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 import { Scale, TrendingUp, BarChart3, User } from "lucide-react";
 import AddBodyMeasurementButton from "@/features/body-measurements/add-body-measurement-button";
-import PrivateToggleButton from "@/features/body-measurements/private-toggle-button";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import { useState, useMemo } from "react";
 
 export const Route = createFileRoute("/body-measurements")({
@@ -28,14 +28,11 @@ function BodyMeasurementsPage() {
   const typedData = data as BodyMeasurementRecord[];
   const [showPrivate, setShowPrivate] = useState(false);
 
-  // Filter data based on privacy settings
   const filteredData = useMemo(() => {
     if (showPrivate) {
-      // Show all data when private mode is enabled
       return typedData;
     } else {
-      // Only show public data (non-private records)
-      return typedData.filter(record => !record.private);
+      return typedData.filter((record) => !record.private);
     }
   }, [typedData, showPrivate]);
 

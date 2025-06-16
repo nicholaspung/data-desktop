@@ -382,7 +382,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
 
   return (
     <div className={cn("space-y-4", className)} key={datasetId}>
-      {/* Filter controls with export button */}
       <FilterControls
         filterableColumns={filterableColumns}
         filterColumn={filterColumn}
@@ -406,24 +405,18 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
           toast.success("Data exported to CSV");
         }}
       />
-
-      {/* Pagination component */}
       <Pagination
         table={table}
         enableSelection={enableSelection}
         selectedRows={selectedRows}
       />
-
-      {/* Table with frozen header and first column */}
       <div className="rounded-md border relative">
         <div
           className="overflow-auto max-h-[600px]"
           style={{ position: "relative" }}
         >
-          {/* Custom table with sticky header and first column */}
           <div className="relative">
             <table className="w-full border-collapse">
-              {/* Add colgroup for column width control */}
               <colgroup>
                 {table.getAllColumns().map((column) => {
                   const columnId = column.id;
@@ -441,8 +434,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                   );
                 })}
               </colgroup>
-
-              {/* Sticky Header */}
               <thead className="sticky top-0 z-20 bg-background border-b">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
@@ -482,7 +473,6 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
                   </tr>
                 ))}
               </thead>
-              {/* Table Body */}
               <tbody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (

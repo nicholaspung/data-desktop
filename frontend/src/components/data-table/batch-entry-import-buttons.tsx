@@ -15,7 +15,6 @@ export default function BatchEntryImportButtons({
 }) {
   return (
     <div className="flex items-center gap-2">
-      {/* CSV Import Button with Tooltip */}
       <ReusableTooltip
         renderTrigger={
           <Button
@@ -46,8 +45,6 @@ export default function BatchEntryImportButtons({
           </p>
         }
       />
-
-      {/* Template Download Button with Tooltip */}
       <ReusableTooltip
         renderTrigger={
           <Button

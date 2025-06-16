@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import { Link } from "@tanstack/react-router";
 import dataStore from "@/store/data-store";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 
@@ -14,19 +16,19 @@ interface BodyMeasurementsDashboardSummaryProps {
 export default function BodyMeasurementsDashboardSummary({
   data: propData,
 }: BodyMeasurementsDashboardSummaryProps = {}) {
-  const storeData = useStore(dataStore, (state) => state.body_measurements) || [];
+  const storeData =
+    useStore(dataStore, (state) => state.body_measurements) || [];
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 100);
     return () => clearTimeout(timer);
   }, []);
 
-  // Use prop data if provided, otherwise fall back to store data
   const data = propData || storeData;
   const typedData = data as BodyMeasurementRecord[];
 
-  // Group measurements by type
   const measurementGroups = typedData.reduce(
     (groups, record) => {
       const type = record.measurement;
@@ -39,8 +41,6 @@ export default function BodyMeasurementsDashboardSummary({
     {} as Record<string, BodyMeasurementRecord[]>
   );
 
-
-  // Get latest measurement for each type
   const latestMeasurements = Object.entries(measurementGroups).map(
     ([type, records]) => {
       const sortedRecords = records.sort(
@@ -54,18 +54,24 @@ export default function BodyMeasurementsDashboardSummary({
     }
   );
 
-  // Get latest weight measurement specifically
+  const filteredLatestMeasurements = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return latestMeasurements;
+    }
+    return latestMeasurements.filter(({ type }) =>
+      type.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [latestMeasurements, searchTerm]);
+
   const latestWeight = measurementGroups.Bodyweight
     ? measurementGroups.Bodyweight.sort(
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       )[0]
     : null;
 
-  // Get measurement counts
   const measurementTypes = Object.keys(measurementGroups);
   const totalMeasurements = typedData.length;
 
-  // Helper function to format time since update
   const formatTimeSince = (days: number) => {
     if (days === 0) return "Today";
     if (days === 1) return "1 day ago";
@@ -105,62 +111,73 @@ export default function BodyMeasurementsDashboardSummary({
 
   return (
     <div className="space-y-4">
-        {/* Top Row: Latest Weight + Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Latest Weight - Highlighted */}
-          <div className="md:col-span-1">
-            {latestWeight ? (
-              <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
-                <div className="text-sm text-muted-foreground mb-1">
-                  Latest Weight
-                </div>
-                <div className="text-2xl font-bold text-primary">
-                  {latestWeight.value} {latestWeight.unit}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {new Date(latestWeight.date).toLocaleDateString()}
-                </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-1">
+          {latestWeight ? (
+            <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
+              <div className="text-sm text-muted-foreground mb-1">
+                Latest Weight
               </div>
-            ) : (
-              <div className="rounded-lg border-2 border-dashed border-muted p-4">
-                <div className="text-sm text-muted-foreground mb-1">
-                  Latest Weight
-                </div>
-                <div className="text-lg text-muted-foreground">
-                  No weight recorded
-                </div>
+              <div className="text-2xl font-bold text-primary">
+                {latestWeight.value} {latestWeight.unit}
               </div>
-            )}
-          </div>
-
-          {/* Overview Stats */}
-          <div className="md:col-span-2 flex flex-col items-center">
-            <h4 className="font-medium mb-3">Overview</h4>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="text-center">
-                <div className="text-2xl font-semibold">{totalMeasurements}</div>
-                <div className="text-sm text-muted-foreground">Total Records</div>
+              <div className="text-xs text-muted-foreground">
+                {new Date(latestWeight.date).toLocaleDateString()}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold">
-                  {measurementTypes.length}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Measurement Types
-                </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border-2 border-dashed border-muted p-4">
+              <div className="text-sm text-muted-foreground mb-1">
+                Latest Weight
+              </div>
+              <div className="text-lg text-muted-foreground">
+                No weight recorded
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="md:col-span-2 flex flex-col items-center">
+          <h4 className="font-medium mb-3">Overview</h4>
+          <div className="grid grid-cols-2 gap-8">
+            <div className="text-center">
+              <div className="text-2xl font-semibold">{totalMeasurements}</div>
+              <div className="text-sm text-muted-foreground">Total Records</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-semibold">
+                {measurementTypes.length}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Measurement Types
               </div>
             </div>
           </div>
         </div>
-
-        {/* Separator */}
-        <Separator />
-
-        {/* Measurement Types List */}
-        <div>
-          <h4 className="font-medium mb-3">Latest by Type</h4>
+      </div>
+      <Separator />
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium">Latest by Type</h4>
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search measurement types..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        {filteredLatestMeasurements.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            {searchTerm
+              ? `No measurement types found for "${searchTerm}"`
+              : "No measurements recorded"}
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {latestMeasurements.map(
+            {filteredLatestMeasurements.map(
               ({ type, latest, count, daysSinceUpdate }) => (
                 <div
                   key={type}
@@ -185,7 +202,8 @@ export default function BodyMeasurementsDashboardSummary({
               )
             )}
           </div>
-        </div>
+        )}
+      </div>
     </div>
   );
 }

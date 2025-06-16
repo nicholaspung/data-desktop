@@ -2,21 +2,56 @@ import { Store } from "@tanstack/react-store";
 
 interface DashboardSummaryConfig {
   id: string;
-  size: 'small' | 'medium' | 'large';
+  size: "small" | "medium" | "large";
   order: number;
   visible: boolean;
 }
 
 const defaultDashboardSummaries = {
-  "/calendar": { id: "/calendar", size: 'medium' as const, order: 0, visible: true },
-  "/todos": { id: "/todos", size: 'medium' as const, order: 1, visible: true },
-  "/time-tracker": { id: "/time-tracker", size: 'medium' as const, order: 2, visible: true },
-  "/experiments": { id: "/experiments", size: 'medium' as const, order: 3, visible: true },
-  "/metric": { id: "/metric", size: 'medium' as const, order: 4, visible: true },
-  "/journaling": { id: "/journaling", size: 'medium' as const, order: 5, visible: true },
-  "/people-crm": { id: "/people-crm", size: 'medium' as const, order: 6, visible: true },
-  "/dexa": { id: "/dexa", size: 'medium' as const, order: 7, visible: true },
-  "/bloodwork": { id: "/bloodwork", size: 'medium' as const, order: 8, visible: true },
+  "/calendar": {
+    id: "/calendar",
+    size: "medium" as const,
+    order: 0,
+    visible: true,
+  },
+  "/todos": { id: "/todos", size: "medium" as const, order: 1, visible: true },
+  "/time-tracker": {
+    id: "/time-tracker",
+    size: "medium" as const,
+    order: 2,
+    visible: true,
+  },
+  "/experiments": {
+    id: "/experiments",
+    size: "medium" as const,
+    order: 3,
+    visible: true,
+  },
+  "/metric": {
+    id: "/metric",
+    size: "medium" as const,
+    order: 4,
+    visible: true,
+  },
+  "/journaling": {
+    id: "/journaling",
+    size: "medium" as const,
+    order: 5,
+    visible: true,
+  },
+  "/people-crm": {
+    id: "/people-crm",
+    size: "medium" as const,
+    order: 6,
+    visible: true,
+  },
+  "/dexa": { id: "/dexa", size: "medium" as const, order: 7, visible: true },
+  "/bloodwork": {
+    id: "/bloodwork",
+    size: "medium" as const,
+    order: 8,
+    visible: true,
+  },
 };
 
 interface RouteConfig {
@@ -34,8 +69,14 @@ interface SettingsState {
   setVisibleRoute: (route: string, visible: boolean) => void;
   setDefaultDatasetView: (view: string) => void;
   setEnabledDataset: (dataset: string, enabled: boolean) => void;
-  setDashboardSummaryConfig: (id: string, config: Partial<DashboardSummaryConfig>) => void;
-  reorderDashboardSummaries: (sourceIndex: number, destinationIndex: number) => void;
+  setDashboardSummaryConfig: (
+    id: string,
+    config: Partial<DashboardSummaryConfig>
+  ) => void;
+  reorderDashboardSummaries: (
+    sourceIndex: number,
+    destinationIndex: number
+  ) => void;
   reorderRoutes: (sourceIndex: number, destinationIndex: number) => void;
 }
 
@@ -69,7 +110,11 @@ const defaultRouteConfigs: Record<string, RouteConfig> = {
   "/journaling": { href: "/journaling", order: 7, visible: true },
   "/time-planner": { href: "/time-planner", order: 8, visible: true },
   "/people-crm": { href: "/people-crm", order: 9, visible: true },
-  "/body-measurements": { href: "/body-measurements", order: 10, visible: true },
+  "/body-measurements": {
+    href: "/body-measurements",
+    order: 10,
+    visible: true,
+  },
   "/dexa": { href: "/dexa", order: 11, visible: true },
   "/bloodwork": { href: "/bloodwork", order: 12, visible: true },
   "/dataset": { href: "/dataset", order: 13, visible: true },
@@ -102,6 +147,31 @@ const defaultDatasets = {
   birthday_reminders: true,
   person_relationships: true,
   body_measurements: true,
+};
+
+export const routeDatasetMapping: Record<string, string[]> = {
+  "/dexa": ["dexa"],
+  "/bloodwork": ["bloodwork", "blood_markers", "blood_results"],
+  "/body-measurements": ["body_measurements"],
+  "/experiments": ["experiments", "experiment_metrics"],
+  "/calendar": ["metrics", "daily_logs", "metric_categories"],
+  "/journaling": [
+    "gratitude_journal",
+    "question_journal",
+    "creativity_journal",
+    "affirmation",
+  ],
+  "/time-tracker": ["time_entries", "time_categories", "time_planner_configs"],
+  "/todos": ["todos"],
+  "/people-crm": [
+    "people",
+    "meetings",
+    "person_attributes",
+    "person_notes",
+    "person_chats",
+    "birthday_reminders",
+    "person_relationships",
+  ],
 };
 
 const getInitialState = (): Partial<SettingsState> => {
@@ -166,15 +236,18 @@ const initialState: SettingsState = {
       return newState;
     });
   },
-  setDashboardSummaryConfig: (id: string, config: Partial<DashboardSummaryConfig>) => {
+  setDashboardSummaryConfig: (
+    id: string,
+    config: Partial<DashboardSummaryConfig>
+  ) => {
     settingsStore.setState((state) => {
       const currentConfig = state.dashboardSummaryConfigs[id] || {
         id,
-        size: 'medium',
+        size: "medium",
         order: Object.keys(state.dashboardSummaryConfigs).length,
         visible: true,
       };
-      
+
       const newState = {
         ...state,
         dashboardSummaryConfigs: {
@@ -186,19 +259,22 @@ const initialState: SettingsState = {
       return newState;
     });
   },
-  reorderDashboardSummaries: (sourceIndex: number, destinationIndex: number) => {
+  reorderDashboardSummaries: (
+    sourceIndex: number,
+    destinationIndex: number
+  ) => {
     settingsStore.setState((state) => {
       const configs = Object.values(state.dashboardSummaryConfigs);
       configs.sort((a, b) => a.order - b.order);
-      
+
       const [removed] = configs.splice(sourceIndex, 1);
       configs.splice(destinationIndex, 0, removed);
-      
+
       const reorderedConfigs: Record<string, DashboardSummaryConfig> = {};
       configs.forEach((config, index) => {
         reorderedConfigs[config.id] = { ...config, order: index };
       });
-      
+
       const newState = {
         ...state,
         dashboardSummaryConfigs: reorderedConfigs,
@@ -211,15 +287,15 @@ const initialState: SettingsState = {
     settingsStore.setState((state) => {
       const configs = Object.values(state.routeConfigs);
       configs.sort((a, b) => a.order - b.order);
-      
+
       const [removed] = configs.splice(sourceIndex, 1);
       configs.splice(destinationIndex, 0, removed);
-      
+
       const reorderedConfigs: Record<string, RouteConfig> = {};
       configs.forEach((config, index) => {
         reorderedConfigs[config.href] = { ...config, order: index };
       });
-      
+
       const newState = {
         ...state,
         routeConfigs: reorderedConfigs,

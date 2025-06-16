@@ -89,7 +89,6 @@ export default function FilterControls({
               title={"column"}
               triggerClassName={"w-[180px]"}
             />
-
             <Input
               placeholder={getPlaceholder()}
               value={
@@ -106,9 +105,7 @@ export default function FilterControls({
           </>
         )}
       </div>
-
       <div className="flex gap-2">
-        {/* Quick Export button */}
         <Button
           variant="outline"
           size="sm"
@@ -118,8 +115,6 @@ export default function FilterControls({
           <Download className="h-4 w-4 mr-2" />
           Quick Export
         </Button>
-
-        {/* Advanced Export Dialog */}
         <ExportColumnsDialog
           fields={fields}
           data={data}

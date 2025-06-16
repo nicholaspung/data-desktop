@@ -16,6 +16,7 @@ import {
   X,
   FileText,
   Loader2,
+  Eye,
 } from "lucide-react";
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
@@ -39,17 +40,21 @@ export default function QuickMetricLoggerListItem({
   isMetricCompleted,
   toggleMetricCompletion,
   toggleCalendarTracking,
+  toggleMetricActiveStatus,
   handleDeleteMetric,
   selectedDate = new Date(),
   dailyLogs = [],
+  minimalView = false,
 }: {
   groupedMetrics: Record<string, Metric[]>;
   isMetricCompleted: (metric: Metric) => boolean;
   toggleMetricCompletion: (metric: Metric) => Promise<void>;
   toggleCalendarTracking: (metric: Metric) => Promise<void>;
+  toggleMetricActiveStatus: (metric: Metric) => Promise<void>;
   handleDeleteMetric: (metric: Metric) => Promise<void>;
   selectedDate?: Date;
   dailyLogs?: DailyLog[];
+  minimalView?: boolean;
 }) {
   const [editingMetricId, setEditingMetricId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
@@ -258,6 +263,53 @@ export default function QuickMetricLoggerListItem({
     setNoteValue("");
   };
 
+  const EditingNote = ({
+    isEditingNote,
+    metric,
+  }: {
+    isEditingNote: boolean;
+    metric: Metric;
+  }) =>
+    isEditingNote && (
+      <div className="mt-2">
+        <div className="flex flex-col gap-2 mt-2">
+          <Textarea
+            placeholder="Add a note for today..."
+            value={noteValue}
+            onChange={(e) => setNoteValue(e.target.value)}
+            rows={3}
+            className="min-h-[80px] text-sm"
+            disabled={isSubmittingNote}
+          />
+          <div className="flex justify-end gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={cancelEditingNote}
+              disabled={isSubmittingNote}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => saveEditedNote(metric)}
+              disabled={isSubmittingNote}
+            >
+              {isSubmittingNote ? (
+                <div className="animate-spin mr-1">
+                  <Loader2 className="h-4 w-4" />
+                </div>
+              ) : (
+                <Save className="h-4 w-4 mr-1" />
+              )}
+              Save Note
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+
   return Object.keys(groupedMetrics)
     .sort()
     .map((category) => (
@@ -267,7 +319,6 @@ export default function QuickMetricLoggerListItem({
           <Separator className="flex-1" />
           <Badge variant="outline">{groupedMetrics[category].length}</Badge>
         </div>
-
         <div className="space-y-2">
           {groupedMetrics[category].map((metric) => {
             const isCompleted = isMetricCompleted(metric);
@@ -275,16 +326,134 @@ export default function QuickMetricLoggerListItem({
               -1
             );
             const hasGoal =
-              metric.goal_value !== undefined && 
-              metric.goal_value !== null && 
-              metric.goal_type !== undefined && 
+              metric.goal_value !== undefined &&
+              metric.goal_value !== null &&
+              metric.goal_type !== undefined &&
               metric.goal_type !== null &&
               !(metric.goal_value === "" || metric.goal_value === "0");
             const isEditing = editingMetricId === metric.id;
             const isEditingNote = editingNoteId === metric.id;
             const hasNote = getMetricNote(metric).length > 0;
 
-            const renderContent = () => (
+            const renderMinimalContent = () => (
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  {metric.type === "boolean" ? (
+                    <Checkbox
+                      checked={isCompleted}
+                      onCheckedChange={() => toggleMetricCompletion(metric)}
+                      disabled={!metric.active}
+                    />
+                  ) : (
+                    <div className="w-4" />
+                  )}
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`font-medium ${!metric.active ? "text-muted-foreground" : ""}`}
+                    >
+                      {metric.name}
+                    </span>
+                    {metric.type !== "boolean" && !isEditing && (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-xl font-bold text-primary">
+                          {getMetricValue(metric)}
+                        </span>
+                        {(metric.unit || metric.type === "percentage") && (
+                          <span className="text-sm font-medium text-muted-foreground">
+                            {metric.type === "percentage" ? "%" : metric.unit}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {metric.type !== "boolean" && isEditing && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type={
+                            metric.type === "number" ||
+                            metric.type === "percentage" ||
+                            metric.type === "time"
+                              ? "number"
+                              : "text"
+                          }
+                          value={editValue}
+                          onChange={(e) => {
+                            setEditValue(e.target.value);
+                            if (metric.type === "text") {
+                              debouncedSave(metric, e.target.value);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (
+                              metric.type === "text" &&
+                              debounceTimeoutRef.current
+                            ) {
+                              clearTimeout(debounceTimeoutRef.current);
+                              saveEditedValue(metric);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              if (debounceTimeoutRef.current) {
+                                clearTimeout(debounceTimeoutRef.current);
+                              }
+                              saveEditedValue(metric);
+                            } else if (e.key === "Escape") {
+                              cancelEditing();
+                            }
+                          }}
+                          className="h-8 w-24 text-center"
+                          disabled={isSubmitting}
+                          autoFocus
+                          placeholder="Value"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => saveEditedValue(metric)}
+                          disabled={isSubmitting}
+                          className="h-8 px-2"
+                        >
+                          {isSubmitting ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Save className="h-3 w-3" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={cancelEditing}
+                          disabled={isSubmitting}
+                          className="h-8 px-2"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+                    {isCompleted && (
+                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                        <Check className="h-3 w-3 mr-1" />
+                        Completed
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                {metric.type !== "boolean" && !isEditing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => startEditing(metric)}
+                    disabled={!metric.active}
+                    className="h-8 px-3"
+                  >
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                )}
+              </div>
+            );
+
+            const renderFullContent = () => (
               <div className="flex justify-between items-start">
                 <div className="flex items-start gap-4">
                   {metric.type === "boolean" ? (
@@ -297,7 +466,6 @@ export default function QuickMetricLoggerListItem({
                   ) : (
                     <div className="w-4" />
                   )}
-
                   <div>
                     <div className="flex items-center flex-wrap gap-1">
                       <span
@@ -347,8 +515,6 @@ export default function QuickMetricLoggerListItem({
                       style="text"
                       className="mt-1"
                     />
-
-                    {/* Show value for non-boolean metrics */}
                     {metric.type !== "boolean" && (
                       <div className="mt-2">
                         {isEditing ? (
@@ -381,7 +547,10 @@ export default function QuickMetricLoggerListItem({
                                     }
                                   }}
                                   onBlur={() => {
-                                    if (metric.type === "text" && debounceTimeoutRef.current) {
+                                    if (
+                                      metric.type === "text" &&
+                                      debounceTimeoutRef.current
+                                    ) {
                                       clearTimeout(debounceTimeoutRef.current);
                                       saveEditedValue(metric);
                                     }
@@ -389,7 +558,9 @@ export default function QuickMetricLoggerListItem({
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                       if (debounceTimeoutRef.current) {
-                                        clearTimeout(debounceTimeoutRef.current);
+                                        clearTimeout(
+                                          debounceTimeoutRef.current
+                                        );
                                       }
                                       saveEditedValue(metric);
                                     } else if (e.key === "Escape") {
@@ -436,14 +607,19 @@ export default function QuickMetricLoggerListItem({
                           <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
                             <div className="flex items-center gap-2">
                               <div className="flex flex-col">
-                                <span className="text-xs text-muted-foreground mb-1">Current Value</span>
+                                <span className="text-xs text-muted-foreground mb-1">
+                                  Current Value
+                                </span>
                                 <div className="flex items-baseline gap-1">
                                   <span className="text-2xl font-bold text-primary">
                                     {getMetricValue(metric)}
                                   </span>
-                                  {(metric.unit || metric.type === "percentage") && (
+                                  {(metric.unit ||
+                                    metric.type === "percentage") && (
                                     <span className="text-sm font-medium text-muted-foreground">
-                                      {metric.type === "percentage" ? "%" : metric.unit}
+                                      {metric.type === "percentage"
+                                        ? "%"
+                                        : metric.unit}
                                     </span>
                                   )}
                                 </div>
@@ -463,100 +639,63 @@ export default function QuickMetricLoggerListItem({
                         )}
                       </div>
                     )}
-
-                    {/* Notes section */}
-                    <div className="mt-2">
-                      {isEditingNote ? (
-                        <div className="flex flex-col gap-2 mt-2">
-                          <Textarea
-                            placeholder="Add a note for today..."
-                            value={noteValue}
-                            onChange={(e) => setNoteValue(e.target.value)}
-                            rows={3}
-                            className="min-h-[80px] text-sm"
-                            disabled={isSubmittingNote}
-                          />
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={cancelEditingNote}
-                              disabled={isSubmittingNote}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              variant="default"
-                              size="sm"
-                              onClick={() => saveEditedNote(metric)}
-                              disabled={isSubmittingNote}
-                            >
-                              {isSubmittingNote ? (
-                                <div className="animate-spin mr-1">
-                                  <Loader2 className="h-4 w-4" />
-                                </div>
-                              ) : (
-                                <Save className="h-4 w-4 mr-1" />
-                              )}
-                              Save Note
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          {hasNote ? (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6"
-                                >
-                                  <FileText className="h-3 w-3 mr-1" />
-                                  View Note
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-80">
-                                <div className="space-y-2">
-                                  <h4 className="font-medium text-sm">
-                                    Note for{" "}
-                                    {format(selectedDate, "MMM d, yyyy")}
-                                  </h4>
-                                  <p className="text-sm whitespace-pre-wrap">
-                                    {getMetricNote(metric)}
-                                  </p>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => startEditingNote(metric)}
-                                    disabled={!metric.active}
-                                    className="w-full mt-2"
-                                  >
-                                    <Edit className="h-3 w-3 mr-1" />
-                                    Edit Note
-                                  </Button>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => startEditingNote(metric)}
-                              disabled={!metric.active}
-                              className="h-6 px-2"
-                            >
-                              <FileText className="h-3 w-3 mr-1" />
-                              Add Note
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
+                  {hasNote ? (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8">
+                          <FileText className="h-3 w-3 mr-1" />
+                          View Note
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                        <div className="space-y-2">
+                          <h4 className="font-medium text-sm">
+                            Note for {format(selectedDate, "MMM d, yyyy")}
+                          </h4>
+                          <p className="text-sm whitespace-pre-wrap">
+                            {getMetricNote(metric)}
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => startEditingNote(metric)}
+                            disabled={!metric.active}
+                            className="w-full mt-2"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Edit Note
+                          </Button>
+                          <EditingNote
+                            isEditingNote={isEditingNote}
+                            metric={metric}
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    !isEditingNote && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => startEditingNote(metric)}
+                        disabled={!metric.active}
+                        className="h-8 px-2"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        Add Note
+                      </Button>
+                    )
+                  )}
+                  {!hasNote && (
+                    <EditingNote
+                      isEditingNote={isEditingNote}
+                      metric={metric}
+                    />
+                  )}
+
                   <div className="flex flex-col items-center gap-1">
                     <Badge
                       variant={isCalendarTracked ? "default" : "outline"}
@@ -569,27 +708,40 @@ export default function QuickMetricLoggerListItem({
                       )}
                       {isCalendarTracked ? "Tracked" : "Not tracked"}
                     </Badge>
-
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleCalendarTracking(metric)}
+                        disabled={!metric.active}
+                      >
+                        {isCalendarTracked
+                          ? "Remove from calendar"
+                          : "Add to calendar"}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-x-1">
                     <Button
                       variant="ghost"
-                      size="sm"
-                      onClick={() => toggleCalendarTracking(metric)}
-                      disabled={!metric.active}
+                      size="icon"
+                      onClick={() => toggleMetricActiveStatus(metric)}
+                      title={
+                        metric.active ? "Deactivate metric" : "Activate metric"
+                      }
                     >
-                      {isCalendarTracked
-                        ? "Remove from calendar"
-                        : "Add to calendar"}
+                      {metric.active ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
-                  </div>
-
-                  <div className="space-x-1">
                     <AddMetricModal
                       metric={metric}
                       buttonVariant="ghost"
                       buttonSize="icon"
                       showIcon={true}
                     />
-
                     <ConfirmDeleteDialog
                       onConfirm={() => handleDeleteMetric(metric)}
                       triggerText=""
@@ -602,6 +754,9 @@ export default function QuickMetricLoggerListItem({
                 </div>
               </div>
             );
+
+            const renderContent = () =>
+              minimalView ? renderMinimalContent() : renderFullContent();
 
             return (
               <ReusableCard

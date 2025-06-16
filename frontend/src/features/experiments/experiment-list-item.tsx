@@ -83,7 +83,6 @@ export default function ExperimentListItem({
               status.charAt(0).toUpperCase() + status.slice(1)
             )}
           </div>
-
           <CollapsibleTrigger className="w-full">
             <div className="flex justify-between items-center text-sm">
               <div className="flex items-center text-muted-foreground">
@@ -99,7 +98,6 @@ export default function ExperimentListItem({
               </div>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform ui-expanded:rotate-180" />
             </div>
-
             {daysInfo && (
               <div className="mt-2">
                 <div className="flex justify-between text-sm">
@@ -110,21 +108,21 @@ export default function ExperimentListItem({
               </div>
             )}
           </CollapsibleTrigger>
-
           <CollapsibleContent>
             <div className="mt-4 pt-4 border-t">
-              <div className="text-sm text-muted-foreground mb-4">
-                {experiment.description || "No description provided."}
-              </div>
-
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-sm font-medium">Goal:</div>
-                  <div className="text-sm">
-                    {experiment.goal || "No goal specified."}
-                  </div>
+              <div>
+                <div className="text-sm font-medium mb-1">Description:</div>
+                <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {experiment.description || "No description provided."}
                 </div>
-
+              </div>
+              <div>
+                <div className="text-sm font-medium mb-1">Goal:</div>
+                <div className="text-sm whitespace-pre-wrap">
+                  {experiment.goal || "No goal specified."}
+                </div>
+              </div>
+              <div className="flex justify-end">
                 <Button
                   variant="default"
                   size="sm"

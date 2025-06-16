@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Lock, LockOpen } from "lucide-react";
 import { usePin } from "@/hooks/usePin";
+import { useEffect, useRef } from "react";
 
 interface PrivateToggleButtonProps {
   showPrivate: boolean;
@@ -12,30 +13,34 @@ export default function PrivateToggleButton({
   onToggle,
 }: PrivateToggleButtonProps) {
   const { isConfigured, isUnlocked, openPinEntryDialog } = usePin();
+  const wasUnlockedRef = useRef(isUnlocked);
+
+  useEffect(() => {
+    if (isConfigured && !wasUnlockedRef.current && isUnlocked && !showPrivate) {
+      onToggle(true);
+    }
+    wasUnlockedRef.current = isUnlocked;
+  }, [isUnlocked, isConfigured, showPrivate, onToggle]);
 
   const handleToggle = () => {
     if (!isConfigured) {
-      // If PIN is not configured, just toggle (no privacy protection)
       onToggle(!showPrivate);
       return;
     }
 
     if (!showPrivate) {
-      // User wants to view private data
       if (isUnlocked) {
         onToggle(true);
       } else {
         openPinEntryDialog();
       }
     } else {
-      // User wants to hide private data
       onToggle(false);
     }
   };
 
-  // Don't show the button if PIN is configured but user hasn't unlocked yet and trying to show private
   if (isConfigured && !isUnlocked && showPrivate) {
-    onToggle(false); // Auto-hide private data if PIN gets locked
+    onToggle(false);
   }
 
   return (
@@ -47,8 +52,8 @@ export default function PrivateToggleButton({
         showPrivate
           ? "Hide private measurements"
           : isConfigured
-          ? "Show private measurements (requires PIN)"
-          : "Show private measurements"
+            ? "Show private measurements (requires PIN)"
+            : "Show private measurements"
       }
     >
       {showPrivate ? (

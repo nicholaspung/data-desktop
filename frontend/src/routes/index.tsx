@@ -6,8 +6,6 @@ import {
   PieChart,
   RefreshCcw,
   Power,
-  Lock,
-  Unlock,
   Settings,
   ChevronUp,
   ChevronDown,
@@ -29,10 +27,10 @@ import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric
 import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
 import appStateStore from "@/store/app-state-store";
 import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
-import settingsStore from "@/store/settings-store";
+import settingsStore, { routeDatasetMapping } from "@/store/settings-store";
 import TodoDashboardSummary from "@/features/todos/todo-dashboard-summary";
 import PeopleCRMDashboardSummary from "@/features/dashboard/people-crm-dashboard-summary";
-import { usePin } from "@/hooks/usePin";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import {
   DndContext,
   closestCenter,
@@ -83,7 +81,6 @@ function Home() {
     settingsStore.state.setDashboardSummaryConfig;
   const reorderDashboardSummaries =
     settingsStore.state.reorderDashboardSummaries;
-  const { isUnlocked, openPinEntryDialog } = usePin();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -104,6 +101,12 @@ function Home() {
       }
 
       const filteredDatasets = allDatasets.filter((dataset) => {
+        for (const [route, datasets] of Object.entries(routeDatasetMapping)) {
+          if (datasets.includes(dataset.id) && visibleRoutes[route]) {
+            return true;
+          }
+        }
+
         const route = getDatasetRoute(dataset.id);
         return visibleRoutes[route];
       });
@@ -158,12 +161,6 @@ function Home() {
       loadSummariesCallback();
     } else {
       setIsLoading(false);
-    }
-  }, [dashboardDataLoaded, loadSummariesCallback]);
-
-  useEffect(() => {
-    if (dashboardDataLoaded) {
-      loadSummariesCallback();
     }
   }, [visibleRoutes, dashboardDataLoaded, loadSummariesCallback]);
 
@@ -293,25 +290,10 @@ function Home() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <Button
-            onClick={() => {
-              if (!isUnlocked) {
-                openPinEntryDialog();
-              } else {
-                setShowPrivateMetrics(!showPrivateMetrics);
-              }
-            }}
-            size="sm"
-            variant={showPrivateMetrics ? "default" : "outline"}
-            className={!isUnlocked ? "opacity-75" : ""}
-          >
-            {isUnlocked && showPrivateMetrics ? (
-              <Unlock className="h-4 w-4 mr-2" />
-            ) : (
-              <Lock className="h-4 w-4 mr-2" />
-            )}
-            Private
-          </Button>
+          <PrivateToggleButton
+            showPrivate={showPrivateMetrics}
+            onToggle={setShowPrivateMetrics}
+          />
           <Button
             onClick={() => setIsEditMode(!isEditMode)}
             size="sm"
@@ -330,7 +312,6 @@ function Home() {
           </Button>
         </div>
       </div>
-
       <div className="mt-8">
         {isEditMode && (
           <div className="mb-4 p-3 bg-muted/50 rounded-lg">
@@ -362,13 +343,13 @@ function Home() {
                     case "/calendar":
                       return (
                         <DailyTrackingDashboardSummary
-                          showPrivateMetrics={isUnlocked && showPrivateMetrics}
+                          showPrivateMetrics={showPrivateMetrics}
                         />
                       );
                     case "/todos":
                       return (
                         <TodoDashboardSummary
-                          showPrivateMetrics={isUnlocked && showPrivateMetrics}
+                          showPrivateMetrics={showPrivateMetrics}
                         />
                       );
                     case "/time-tracker":
@@ -378,7 +359,7 @@ function Home() {
                     case "/metric":
                       return (
                         <QuickMetricLoggerDashboardSummary
-                          showPrivateMetrics={isUnlocked && showPrivateMetrics}
+                          showPrivateMetrics={showPrivateMetrics}
                         />
                       );
                     case "/journaling":
@@ -408,7 +389,6 @@ function Home() {
               })}
             </div>
           </SortableContext>
-
           <DragOverlay>
             {activeId ? (
               <div className="opacity-95 rotate-3 shadow-2xl">
@@ -424,17 +404,13 @@ function Home() {
                       case "/calendar":
                         return (
                           <DailyTrackingDashboardSummary
-                            showPrivateMetrics={
-                              isUnlocked && showPrivateMetrics
-                            }
+                            showPrivateMetrics={showPrivateMetrics}
                           />
                         );
                       case "/todos":
                         return (
                           <TodoDashboardSummary
-                            showPrivateMetrics={
-                              isUnlocked && showPrivateMetrics
-                            }
+                            showPrivateMetrics={showPrivateMetrics}
                           />
                         );
                       case "/time-tracker":
@@ -444,9 +420,7 @@ function Home() {
                       case "/metric":
                         return (
                           <QuickMetricLoggerDashboardSummary
-                            showPrivateMetrics={
-                              isUnlocked && showPrivateMetrics
-                            }
+                            showPrivateMetrics={showPrivateMetrics}
                           />
                         );
                       case "/journaling":
@@ -480,7 +454,6 @@ function Home() {
           </DragOverlay>
         </DndContext>
       </div>
-
       <div className="flex flex-col space-y-2">
         <div className="flex items-center justify-between">
           <h4 className="text-l font-bold">Dataset summary information</h4>
@@ -517,7 +490,9 @@ function Home() {
                         <div className="flex flex-col">
                           <div className="flex items-center">
                             {summary.icon}
-                            <span className="ml-2 font-bold">{summary.name}</span>
+                            <span className="ml-2 font-bold">
+                              {summary.name}
+                            </span>
                           </div>
                           <span>
                             {summary.lastUpdated
@@ -546,8 +521,8 @@ function Home() {
                 content={
                   <div className="flex flex-col items-center justify-center text-center">
                     <div className="text-muted-foreground mb-4">
-                      It looks like the application disconnected. Please reload to
-                      reconnect to your data.
+                      It looks like the application disconnected. Please reload
+                      to reconnect to your data.
                     </div>
                     <Button
                       variant="default"

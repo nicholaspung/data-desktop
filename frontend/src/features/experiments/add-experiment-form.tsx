@@ -41,6 +41,8 @@ export default function AddExperimentForm({
     "active"
   );
   const [isPrivate, setIsPrivate] = useState(false);
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -127,7 +129,6 @@ export default function AddExperimentForm({
           required
         />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="description">Description (optional)</Label>
         <Textarea
@@ -138,7 +139,6 @@ export default function AddExperimentForm({
           rows={3}
         />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="start-state">Start State</Label>
         <Textarea
@@ -149,7 +149,6 @@ export default function AddExperimentForm({
           rows={3}
         />
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="goal">Goal</Label>
         <Textarea
@@ -161,11 +160,10 @@ export default function AddExperimentForm({
           required
         />
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Start Date</Label>
-          <Popover>
+          <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -179,16 +177,20 @@ export default function AddExperimentForm({
               <Calendar
                 mode="single"
                 selected={startDate}
-                onSelect={(date) => date && setStartDate(date)}
+                onSelect={(date) => {
+                  if (date) {
+                    setStartDate(date);
+                    setStartDateOpen(false);
+                  }
+                }}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
         </div>
-
         <div className="space-y-2">
           <Label>End Date (optional)</Label>
-          <Popover>
+          <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
@@ -202,7 +204,10 @@ export default function AddExperimentForm({
               <Calendar
                 mode="single"
                 selected={endDate}
-                onSelect={setEndDate}
+                onSelect={(date) => {
+                  setEndDate(date);
+                  setEndDateOpen(false);
+                }}
                 initialFocus
                 disabled={(date) => date < startDate}
               />
@@ -210,7 +215,6 @@ export default function AddExperimentForm({
           </Popover>
         </div>
       </div>
-
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>
         <Select
@@ -229,7 +233,6 @@ export default function AddExperimentForm({
           </SelectContent>
         </Select>
       </div>
-
       <div className="flex items-center space-x-2">
         <Checkbox
           id="private"
@@ -240,7 +243,6 @@ export default function AddExperimentForm({
           Make this experiment private (PIN-protected)
         </Label>
       </div>
-
       <div className="flex justify-end space-x-2 pt-4">
         {onCancel && (
           <Button

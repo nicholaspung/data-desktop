@@ -73,7 +73,6 @@ export default function AffirmationView() {
       };
 
       const response = await ApiService.addRecord("daily_logs", newLog);
-      console.log("Logged practice response:", response);
 
       if (response) {
         addEntry(response, "daily_logs");

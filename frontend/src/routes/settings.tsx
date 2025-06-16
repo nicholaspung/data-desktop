@@ -121,14 +121,19 @@ function SettingsPage() {
 
   const orderedRoutes = useMemo(() => {
     return routes
-      .filter(route => 
-        route.path !== "/" && 
-        route.path !== "/dataset" && 
-        route.path !== "/settings"
+      .filter(
+        (route) =>
+          route.path !== "/" &&
+          route.path !== "/dataset" &&
+          route.path !== "/settings"
       )
-      .map(route => ({
+      .map((route) => ({
         ...route,
-        config: routeConfigs[route.path] || { href: route.path, order: 999, visible: true }
+        config: routeConfigs[route.path] || {
+          href: route.path,
+          order: 999,
+          visible: true,
+        },
       }))
       .sort((a, b) => a.config.order - b.config.order);
   }, [routeConfigs]);
@@ -139,21 +144,25 @@ function SettingsPage() {
 
   const handleMoveUp = (currentIndex: number) => {
     if (currentIndex > 0) {
-      // Get the routes we're working with
       const currentRoute = orderedRoutes[currentIndex];
       const targetRoute = orderedRoutes[currentIndex - 1];
-      
-      // Swap their order values
+
       settingsStore.setState((state) => {
         const newConfigs = { ...state.routeConfigs };
         const currentOrder = currentRoute.config.order;
         const targetOrder = targetRoute.config.order;
-        
-        newConfigs[currentRoute.path] = { ...currentRoute.config, order: targetOrder };
-        newConfigs[targetRoute.path] = { ...targetRoute.config, order: currentOrder };
-        
+
+        newConfigs[currentRoute.path] = {
+          ...currentRoute.config,
+          order: targetOrder,
+        };
+        newConfigs[targetRoute.path] = {
+          ...targetRoute.config,
+          order: currentOrder,
+        };
+
         const newState = { ...state, routeConfigs: newConfigs };
-        // Save to localStorage
+
         try {
           localStorage.setItem(
             "app-settings",
@@ -175,21 +184,25 @@ function SettingsPage() {
 
   const handleMoveDown = (currentIndex: number) => {
     if (currentIndex < orderedRoutes.length - 1) {
-      // Get the routes we're working with
       const currentRoute = orderedRoutes[currentIndex];
       const targetRoute = orderedRoutes[currentIndex + 1];
-      
-      // Swap their order values
+
       settingsStore.setState((state) => {
         const newConfigs = { ...state.routeConfigs };
         const currentOrder = currentRoute.config.order;
         const targetOrder = targetRoute.config.order;
-        
-        newConfigs[currentRoute.path] = { ...currentRoute.config, order: targetOrder };
-        newConfigs[targetRoute.path] = { ...targetRoute.config, order: currentOrder };
-        
+
+        newConfigs[currentRoute.path] = {
+          ...currentRoute.config,
+          order: targetOrder,
+        };
+        newConfigs[targetRoute.path] = {
+          ...targetRoute.config,
+          order: currentOrder,
+        };
+
         const newState = { ...state, routeConfigs: newConfigs };
-        // Save to localStorage
+
         try {
           localStorage.setItem(
             "app-settings",
@@ -219,7 +232,10 @@ function SettingsPage() {
   const navigationContent = (
     <div className="space-y-4">
       {orderedRoutes.map((route, index) => (
-        <div key={route.path} className="flex items-center justify-between gap-4 p-2 border rounded-lg">
+        <div
+          key={route.path}
+          className="flex items-center justify-between gap-4 p-2 border rounded-lg"
+        >
           <div className="flex flex-col">
             <Label
               htmlFor={`route-${route.path}`}

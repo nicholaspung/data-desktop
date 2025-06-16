@@ -52,14 +52,12 @@ interface MultiMeasurementChartProps {
 export default function MultiMeasurementChart({
   bodyMeasurementsData,
 }: MultiMeasurementChartProps = {}) {
-  // Get data from store
   const bodyMeasurementsRaw = useStore(
     dataStore,
     (state) => state.body_measurements
   );
   const dexaDataRaw = useStore(dataStore, (state) => state.dexa);
 
-  // Memoize data to prevent dependency issues - use prop data if provided, otherwise use store data
   const bodyMeasurements = useMemo(
     () => bodyMeasurementsData || bodyMeasurementsRaw || [],
     [bodyMeasurementsData, bodyMeasurementsRaw]
@@ -71,12 +69,10 @@ export default function MultiMeasurementChart({
     DateRange | undefined
   >();
 
-  // Dynamically generate measurement configs based on actual data
   const measurementConfigs = useMemo(() => {
     const configs: MeasurementConfig[] = [];
     let colorIndex = 0;
 
-    // Get unique measurement types from body measurements, excluding bodyweight/weight
     const uniqueMeasurements = Array.from(
       new Set(
         bodyMeasurements
@@ -89,19 +85,17 @@ export default function MultiMeasurementChart({
               lowerMeasurement !== "bodyweight" &&
               lowerMeasurement !== "body weight" &&
               lowerMeasurement !== "percentage"
-            ); // Filter out mysterious "percentage" entry
+            );
           })
       )
     );
 
-    // Add body measurement types
     uniqueMeasurements.forEach((measurement: string) => {
       const measurementData = bodyMeasurements.filter(
         (record: any) => record.measurement === measurement
       );
 
       if (measurementData.length > 0) {
-        // Get the most common unit for this measurement type
         const units = measurementData.map((record: any) => record.unit);
         const mostCommonUnit =
           units
@@ -112,7 +106,6 @@ export default function MultiMeasurementChart({
             )
             .pop() || "";
 
-        // Create a safe field name by removing special characters and normalizing
         const safeFieldName = measurement
           .toLowerCase()
           .replace(/[%]/g, "_percent")
@@ -123,11 +116,11 @@ export default function MultiMeasurementChart({
         configs.push({
           id: `body_${safeFieldName}`,
           datasetKey: "body_measurements",
-          label: measurement, // Keep the original label exactly as it appears in data
+          label: measurement,
           field: `body_${safeFieldName}`,
           unit: mostCommonUnit,
           color: CHART_COLORS[colorIndex % CHART_COLORS.length],
-          enabled: colorIndex < 3, // Enable first 3 by default
+          enabled: colorIndex < 3,
           processor: (data) => {
             return data
               .filter((record: any) => record.measurement === measurement)
@@ -142,7 +135,6 @@ export default function MultiMeasurementChart({
       }
     });
 
-    // Only add DEXA measurements if available and no body fat measurement exists in body measurements
     const hasBodyFatInBodyMeasurements = uniqueMeasurements.some(
       (m) => m.toLowerCase().includes("body") && m.toLowerCase().includes("fat")
     );
@@ -206,7 +198,6 @@ export default function MultiMeasurementChart({
     new Set()
   );
 
-  // Initialize enabled measurements based on default enabled configs
   React.useEffect(() => {
     const defaultEnabled = new Set(
       measurementConfigs
@@ -216,7 +207,6 @@ export default function MultiMeasurementChart({
     setEnabledMeasurements(defaultEnabled);
   }, [measurementConfigs]);
 
-  // Process all measurement data
   const processedData = useMemo(() => {
     const allDatasets = {
       body_measurements: bodyMeasurements,
@@ -241,7 +231,6 @@ export default function MultiMeasurementChart({
     return results;
   }, [measurementConfigs, enabledMeasurements, bodyMeasurements, dexaData]);
 
-  // Create unified chart data with date filtering
   const chartData = useMemo(() => {
     const enabledConfigs = measurementConfigs.filter((config) =>
       enabledMeasurements.has(config.id)
@@ -249,7 +238,6 @@ export default function MultiMeasurementChart({
 
     if (enabledConfigs.length === 0) return [];
 
-    // Get all unique dates from enabled measurements
     const allDates = new Set<string>();
     enabledConfigs.forEach((config) => {
       if (processedData[config.id]) {
@@ -259,32 +247,26 @@ export default function MultiMeasurementChart({
       }
     });
 
-    // Create data points for each unique date
     const dateMap = new Map<string, ChartDataPoint>();
 
-    // First, create unique data points for each date
     Array.from(allDates).forEach((dateStr) => {
       if (!dateMap.has(dateStr)) {
         dateMap.set(dateStr, {
           date: dateStr,
-          dateObj: new Date(dateStr), // This will be used for filtering
+          dateObj: new Date(dateStr),
         });
       }
     });
 
-    // Then populate measurement values for each date
     enabledConfigs.forEach((config) => {
       const measurementData = processedData[config.id];
       if (measurementData) {
         measurementData.forEach((item) => {
           const dataPoint = dateMap.get(item.dateFormatted);
           if (dataPoint) {
-            // If multiple measurements exist for the same date and measurement type,
-            // use the most recent one (or average them)
             if (dataPoint[config.field] === undefined) {
               dataPoint[config.field] = item.value;
             } else {
-              // Average multiple values for the same measurement type on the same date
               dataPoint[config.field] =
                 ((dataPoint[config.field] as number) + item.value) / 2;
             }
@@ -293,12 +275,10 @@ export default function MultiMeasurementChart({
       }
     });
 
-    // Convert map to array and sort
     const data: ChartDataPoint[] = Array.from(dateMap.values()).sort(
       (a, b) => a.dateObj.getTime() - b.dateObj.getTime()
     );
 
-    // Apply time range filtering
     if (timeRange !== "all") {
       const now = new Date();
       let startDate = new Date();
@@ -337,7 +317,6 @@ export default function MultiMeasurementChart({
     customDateRange,
   ]);
 
-  // Create line configurations for chart
   const lineConfigs: LineConfig[] = useMemo(() => {
     return measurementConfigs
       .filter(
@@ -395,7 +374,6 @@ export default function MultiMeasurementChart({
             Multi-Measurement Trends
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            {/* Measurement Toggles */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline">
@@ -405,7 +383,31 @@ export default function MultiMeasurementChart({
               </PopoverTrigger>
               <PopoverContent className="w-80" align="end">
                 <div className="space-y-3">
-                  <h4 className="font-medium">Select Measurements</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Select Measurements</h4>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setEnabledMeasurements(
+                            new Set(measurementConfigs.map((c) => c.id))
+                          )
+                        }
+                        className="h-7 px-2 text-xs"
+                      >
+                        All
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEnabledMeasurements(new Set())}
+                        className="h-7 px-2 text-xs"
+                      >
+                        None
+                      </Button>
+                    </div>
+                  </div>
                   <ScrollArea className="h-[300px] pr-4">
                     <div className="space-y-3">
                       {measurementConfigs.map((config) => {
@@ -445,8 +447,6 @@ export default function MultiMeasurementChart({
                 </div>
               </PopoverContent>
             </Popover>
-
-            {/* Time Range Filter */}
             <div className="flex items-center gap-2">
               <Select
                 value={timeRange}
@@ -468,7 +468,6 @@ export default function MultiMeasurementChart({
                   ))}
                 </SelectContent>
               </Select>
-
               {timeRange === "custom" && (
                 <Popover>
                   <PopoverTrigger asChild>
@@ -533,7 +532,6 @@ export default function MultiMeasurementChart({
                 • {chartData.length} data points
               </p>
             </div>
-
             <CustomLineChart
               data={chartData}
               lines={lineConfigs}

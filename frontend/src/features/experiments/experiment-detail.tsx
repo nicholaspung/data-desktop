@@ -132,19 +132,11 @@ const ExperimentDetail = ({
 
   const Content = () => (
     <div className="space-y-6">
-      {/* Experiment Header with Controls */}
       <div className="flex justify-between items-start">
-        {/* Back Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleBackToList}
-          className="mb-4"
-        >
+        <Button variant="outline" onClick={handleBackToList} className="mb-4">
           <ChevronLeft className="h-4 w-4 mr-2" />
           Back to Experiments
         </Button>
-
         <div className="flex gap-2">
           <EditExperimentDialog
             experiment={experiment}
@@ -157,7 +149,6 @@ const ExperimentDetail = ({
             onStatusChange={handleStatusChange}
             isSubmitting={isSubmitting}
           />
-
           <ConfirmDeleteDialog
             title="Delete Experiment"
             description="Are you sure you want to delete this experiment? This action cannot be undone and will remove all associated data."
@@ -166,8 +157,6 @@ const ExperimentDetail = ({
           />
         </div>
       </div>
-
-      {/* Experiment Dashboard */}
       <ExperimentDashboard experimentId={experimentId} />
     </div>
   );

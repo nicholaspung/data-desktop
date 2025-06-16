@@ -11,11 +11,13 @@ import TodoStats from "./todo-stats";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { getSortedTodos } from "./todo-utils";
 import TodoListItem from "./todo-list-item";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 
 export default function TodoList() {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
   const isLoading = useStore(loadingStore, (state) => state.todos);
   const [todoMetrics, setTodoMetrics] = useState<Record<string, any>>({});
+  const [showPrivateTodos, setShowPrivateTodos] = useState(true);
 
   useEffect(() => {
     const loadMetrics = async () => {
@@ -32,6 +34,8 @@ export default function TodoList() {
 
   const getFilteredTodos = (tabId: string) => {
     return todos.filter((todo) => {
+      if (todo.private && !showPrivateTodos) return false;
+
       switch (tabId) {
         case "active":
           return !todo.isComplete;
@@ -88,28 +92,33 @@ export default function TodoList() {
     );
   }
 
+  const visibleTodos = todos.filter(
+    (todo) => !todo.private || showPrivateTodos
+  );
+
   const tabs = [
     {
       id: "all",
-      label: `All (${todos.length})`,
+      label: `All (${visibleTodos.length})`,
       content: <div className="space-y-4">{renderTodoList("all")}</div>,
     },
     {
       id: "active",
-      label: `Active (${todos.filter((t) => !t.isComplete).length})`,
+      label: `Active (${visibleTodos.filter((t) => !t.isComplete).length})`,
       content: <div className="space-y-4">{renderTodoList("active")}</div>,
     },
     {
       id: "overdue",
       label: `Overdue (${
-        todos.filter((t) => !t.isComplete && isPast(new Date(t.deadline)))
-          .length
+        visibleTodos.filter(
+          (t) => !t.isComplete && isPast(new Date(t.deadline))
+        ).length
       })`,
       content: <div className="space-y-4">{renderTodoList("overdue")}</div>,
     },
     {
       id: "completed",
-      label: `Completed (${todos.filter((t) => t.isComplete).length})`,
+      label: `Completed (${visibleTodos.filter((t) => t.isComplete).length})`,
       content: <div className="space-y-4">{renderTodoList("completed")}</div>,
     },
   ];
@@ -117,7 +126,13 @@ export default function TodoList() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col justify-between items-center">
-        <TodoStats />
+        <div className="flex justify-between items-center w-full mb-4">
+          <TodoStats />
+          <PrivateToggleButton
+            showPrivate={showPrivateTodos}
+            onToggle={setShowPrivateTodos}
+          />
+        </div>
         <ReusableTabs
           tabs={tabs}
           defaultTabId="active"

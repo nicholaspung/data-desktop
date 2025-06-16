@@ -307,7 +307,6 @@ export default function AddMetricForm({
         });
 
         if (response) {
-          console.log("Metric updated successfully:", response);
           updateEntry(metric.id, response, "metrics");
           toast.success("Metric updated successfully");
         }
@@ -361,7 +360,6 @@ export default function AddMetricForm({
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="space-y-4">
-        {/* Basic Information */}
         <div className="grid grid-cols-1 gap-4">
           <div className="space-y-2">
             <Label htmlFor="name">Metric Name</Label>
@@ -373,7 +371,6 @@ export default function AddMetricForm({
               required
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Input
@@ -384,8 +381,6 @@ export default function AddMetricForm({
             />
           </div>
         </div>
-
-        {/* Type and Unit */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="type">Metric Type</Label>
@@ -407,7 +402,6 @@ export default function AddMetricForm({
               </p>
             )}
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="unit">Unit (optional)</Label>
             <Input
@@ -419,8 +413,6 @@ export default function AddMetricForm({
             />
           </div>
         </div>
-
-        {/* Default Value */}
         <div className="space-y-2">
           <Label htmlFor="defaultValue">Default Value</Label>
           {type === "boolean" ? (
@@ -447,12 +439,9 @@ export default function AddMetricForm({
             />
           )}
         </div>
-
-        {/* Category Selection with AutocompleteInput */}
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="category">Category (optional)</Label>
-
             {!showAddCategory && (
               <Button
                 type="button"
@@ -466,7 +455,6 @@ export default function AddMetricForm({
               </Button>
             )}
           </div>
-
           {!showAddCategory ? (
             <ReusableSelect
               value={categoryId}
@@ -495,13 +483,11 @@ export default function AddMetricForm({
                       : "Enter a unique name for the category"
                   }
                 />
-
                 {isDuplicateCategory && (
                   <p className="text-sm text-destructive">
                     This category already exists. Please use a different name.
                   </p>
                 )}
-
                 <div className="flex gap-2 mt-1">
                   <Button
                     type="button"
@@ -538,8 +524,6 @@ export default function AddMetricForm({
             </div>
           )}
         </div>
-
-        {/* Attach to Experiment - only show for new metrics */}
         {!isEditMode && (
           <div className="space-y-2">
             <Label htmlFor="experiment">Attach to Experiment (optional)</Label>
@@ -568,8 +552,6 @@ export default function AddMetricForm({
             />
           </div>
         )}
-
-        {/* Default Goal Toggle */}
         <div className="flex items-center justify-between space-x-2">
           <div>
             <Label htmlFor="has-default-goal" className="cursor-pointer">
@@ -586,8 +568,6 @@ export default function AddMetricForm({
             onCheckedChange={setHasDefaultGoal}
           />
         </div>
-
-        {/* Default Goal Options */}
         {hasDefaultGoal && (
           <div className="pl-4 border-l-2 border-primary/30 space-y-4">
             <div className="space-y-2">
@@ -619,8 +599,6 @@ export default function AddMetricForm({
                 />
               )}
             </div>
-
-            {/* Goal Type - only show if not boolean */}
             {type !== "boolean" && (
               <div className="space-y-2">
                 <Label htmlFor="goal-type">Goal Type</Label>
@@ -638,8 +616,6 @@ export default function AddMetricForm({
             )}
           </div>
         )}
-
-        {/* Advanced Options Toggle */}
         <div className="pt-2">
           <Button
             type="button"
@@ -650,14 +626,10 @@ export default function AddMetricForm({
             {showAdvancedOptions ? "Hide" : "Show"} Advanced Options
           </Button>
         </div>
-
-        {/* Advanced Options */}
         {showAdvancedOptions && (
           <>
             <Separator />
-
             <div className="space-y-4 pt-2">
-              {/* Active Status */}
               <div className="flex items-center justify-between">
                 <Label htmlFor="active" className="cursor-pointer">
                   Active
@@ -668,8 +640,6 @@ export default function AddMetricForm({
                   onCheckedChange={setActive}
                 />
               </div>
-
-              {/* Privacy Setting */}
               <div className="flex items-center justify-between">
                 <Label htmlFor="private" className="cursor-pointer">
                   Private (PIN Protected)
@@ -680,8 +650,6 @@ export default function AddMetricForm({
                   onCheckedChange={setIsPrivate}
                 />
               </div>
-
-              {/* Scheduling Options Toggle */}
               <div className="flex items-center justify-between">
                 <Label htmlFor="scheduling" className="cursor-pointer">
                   Enable Scheduling
@@ -692,8 +660,6 @@ export default function AddMetricForm({
                   onCheckedChange={setShowSchedulingOptions}
                 />
               </div>
-
-              {/* Scheduling Options */}
               {showSchedulingOptions && (
                 <div className="space-y-4 pl-4 border-l-2 border-muted mt-4">
                   <div className="space-y-2">
@@ -710,7 +676,6 @@ export default function AddMetricForm({
                       ]}
                     />
                   </div>
-
                   {scheduleFrequency === "custom" && (
                     <div className="space-y-2">
                       <Label htmlFor="scheduleDays">Show on Days</Label>
@@ -730,7 +695,6 @@ export default function AddMetricForm({
                       />
                     </div>
                   )}
-
                   {scheduleFrequency === "interval" && (
                     <div className="flex items-end gap-4">
                       <div className="space-y-2 flex-1">
@@ -760,7 +724,6 @@ export default function AddMetricForm({
                       </div>
                     </div>
                   )}
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="scheduleStartDate">
@@ -773,7 +736,6 @@ export default function AddMetricForm({
                         onChange={(e) => setScheduleStartDate(e.target.value)}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="scheduleEndDate">
                         End Date (optional)
@@ -791,8 +753,6 @@ export default function AddMetricForm({
             </div>
           </>
         )}
-
-        {/* Form Actions */}
         <div className="flex justify-end gap-2 pt-4">
           {onCancel && (
             <Button

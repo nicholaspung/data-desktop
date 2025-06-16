@@ -13,6 +13,7 @@ import { hasAnyRangeDefined } from "./bloodwork-utils";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import BloodMarkerManager from "./blood-marker-manager";
+import { BloodworkTest } from "@/store/bloodwork-definitions";
 
 const BloodworkVisualizations: React.FC = () => {
   const bloodMarkers = useStore(
@@ -23,9 +24,14 @@ const BloodworkVisualizations: React.FC = () => {
     dataStore,
     (state) => state.blood_results || []
   ) as BloodResult[];
+  const bloodTests = useStore(
+    dataStore,
+    (state) => state.bloodwork || []
+  ) as BloodworkTest[];
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTestDate, setSelectedTestDate] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<
     "optimal" | "outOfRange" | "textValues" | "noRange" | null
   >(null);
@@ -40,19 +46,42 @@ const BloodworkVisualizations: React.FC = () => {
     }
   };
 
+  const availableTestDates = useMemo(() => {
+    const dates = bloodTests
+      .map((test) => ({
+        id: test.id,
+        date: test.date,
+        label:
+          new Date(test.date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          }) + (test.lab_name ? ` - ${test.lab_name}` : ""),
+      }))
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    return dates;
+  }, [bloodTests]);
+
   const markerResults: Record<string, BloodResult[]> = useMemo(() => {
     const results: Record<string, BloodResult[]> = {};
 
     bloodMarkers.forEach((marker) => {
-      const markerResults = bloodResults.filter(
+      let markerResults = bloodResults.filter(
         (result) => result.blood_marker_id === marker.id
       );
+
+      if (selectedTestDate !== "all") {
+        markerResults = markerResults.filter(
+          (result) => result.blood_test_id === selectedTestDate
+        );
+      }
 
       results[marker.id] = markerResults;
     });
 
     return results;
-  }, [bloodMarkers, bloodResults]);
+  }, [bloodMarkers, bloodResults, selectedTestDate]);
 
   const markerSummary = useMemo(() => {
     let optimal = 0;
@@ -258,7 +287,6 @@ const BloodworkVisualizations: React.FC = () => {
           </li>
         </ol>
       </InfoPanel>
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
@@ -271,7 +299,6 @@ const BloodworkVisualizations: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
           <ReusableSelect
             options={[
               { id: "all", label: "All Categories" },
@@ -285,17 +312,27 @@ const BloodworkVisualizations: React.FC = () => {
             placeholder={"All Categories"}
             triggerClassName={"w-full sm:w-[180px]"}
           />
+          <ReusableSelect
+            options={[
+              { id: "all", label: "All Test Dates" },
+              ...availableTestDates.map((date) => ({
+                id: date.id,
+                label: date.label,
+              })),
+            ]}
+            value={selectedTestDate}
+            onChange={setSelectedTestDate}
+            placeholder={"All Test Dates"}
+            triggerClassName={"w-full sm:w-[220px]"}
+          />
         </div>
       </div>
-
-      {/* Summary Component with updated props */}
       <BloodworkSummary
         summary={markerSummary}
         statusFilter={statusFilter}
         onFilterChange={toggleStatusFilter}
         onClearFilter={() => setStatusFilter(null)}
       />
-
       {Object.keys(groupedMarkers).length === 0 ? (
         <Card>
           <CardContent className="flex justify-center items-center h-40">
@@ -325,7 +362,6 @@ const BloodworkVisualizations: React.FC = () => {
                   {groupedMarkers[category].length} markers
                 </Badge>
               </div>
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {groupedMarkers[category].map((marker) => (
                   <BloodMarkerCard

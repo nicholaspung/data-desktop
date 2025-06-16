@@ -11,6 +11,7 @@ interface PinContextType {
   resetPin: (password: string, newPin: string) => Promise<boolean>;
   lock: () => void;
   clearSettings: () => void;
+  extendTime: () => void;
   showPinEntry: boolean;
   showPinSetup: boolean;
   showPinReset: boolean;
@@ -28,6 +29,7 @@ const PinContext = createContext<PinContextType>({
   resetPin: async () => false,
   lock: () => {},
   clearSettings: () => {},
+  extendTime: () => {},
   showPinEntry: false,
   showPinSetup: false,
   showPinReset: false,
@@ -180,6 +182,13 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     toast.success("Security settings cleared");
   }, []);
 
+  const extendTime = useCallback(() => {
+    if (isUnlocked) {
+      setUnlockTime(unlockTime + 60);
+      toast.success("Session extended by 1 minute");
+    }
+  }, [isUnlocked, unlockTime]);
+
   const isConfigured = pinHash !== null && passwordHash !== null;
 
   const contextValue: PinContextType = {
@@ -191,6 +200,7 @@ export const PinProvider: React.FC<{ children: React.ReactNode }> = ({
     resetPin,
     lock,
     clearSettings,
+    extendTime,
     showPinEntry,
     showPinSetup,
     showPinReset,

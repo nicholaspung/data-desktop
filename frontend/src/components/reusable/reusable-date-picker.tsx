@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -14,6 +15,8 @@ interface ReusableDatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export default function ReusableDatePicker({
@@ -22,9 +25,13 @@ export default function ReusableDatePicker({
   placeholder = "Select date",
   disabled = false,
   className = "",
+  minDate,
+  maxDate,
 }: ReusableDatePickerProps) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -39,7 +46,16 @@ export default function ReusableDatePicker({
         <Calendar
           mode="single"
           selected={value}
-          onSelect={(date) => onChange(date)}
+          onSelect={(date) => {
+            onChange(date);
+            setOpen(false);
+          }}
+          disabled={(date) => {
+            if (minDate && date < minDate) return true;
+            if (maxDate && date > maxDate) return true;
+            return false;
+          }}
+          initialFocus
         />
       </PopoverContent>
     </Popover>

@@ -7,7 +7,6 @@ import {
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import { InfoPanel } from "@/components/reusable/info-panel";
-import { CalendarCheck, LineChart, ArrowRightLeft } from "lucide-react";
 import AddExperimentDialog from "@/features/experiments/add-experiment-dialog";
 
 export const Route = createFileRoute("/experiments")({
@@ -113,7 +112,6 @@ export default function ExperimentsPage() {
               whether the changes you make produce meaningful results.
             </p>
           </InfoPanel>
-
           <CompactInfoPanel
             title="How to Use Experiments"
             variant="info"
@@ -132,7 +130,6 @@ export default function ExperimentsPage() {
               </li>
             </ol>
           </CompactInfoPanel>
-
           <CompactInfoPanel
             title="Experiment Status"
             variant="info"
@@ -153,7 +150,6 @@ export default function ExperimentsPage() {
               You can change the status or delete an experiment at any time.
             </p>
           </CompactInfoPanel>
-
           <CompactInfoPanel
             title="Tips for Success"
             variant="tip"
@@ -167,7 +163,6 @@ export default function ExperimentsPage() {
               <li>- Give experiments enough time to show meaningful results</li>
             </ul>
           </CompactInfoPanel>
-
           <CompactInfoPanel
             title="Example Experiments"
             variant="info"
@@ -185,32 +180,27 @@ export default function ExperimentsPage() {
       sidebarPosition="right"
     >
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 border rounded-lg bg-card flex flex-col items-center text-center">
-            <ArrowRightLeft className="h-8 w-8 mb-2 text-primary" />
-            <h3 className="font-medium">Track Changes</h3>
-            <p className="text-sm text-muted-foreground">
-              Monitor specific actions or habits
-            </p>
-          </div>
-
-          <div className="p-4 border rounded-lg bg-card flex flex-col items-center text-center">
-            <CalendarCheck className="h-8 w-8 mb-2 text-primary" />
-            <h3 className="font-medium">Measure Results</h3>
-            <p className="text-sm text-muted-foreground">
-              Track metrics to quantify outcomes
-            </p>
-          </div>
-
-          <div className="p-4 border rounded-lg bg-card flex flex-col items-center text-center">
-            <LineChart className="h-8 w-8 mb-2 text-primary" />
-            <h3 className="font-medium">Analyze Data</h3>
-            <p className="text-sm text-muted-foreground">
-              Visualize progress and identify patterns
-            </p>
-          </div>
-        </div>
-
+        <InfoPanel
+          title="How Experiments Work"
+          variant="info"
+          defaultExpanded={true}
+          storageKey="experiments-overview"
+        >
+          <ul>
+            <li>
+              <strong>Track Changes</strong> - Monitor specific actions or
+              habits
+            </li>
+            <li>
+              <strong>Measure Results</strong> - Track metrics to quantify
+              outcomes
+            </li>
+            <li>
+              <strong>Analyze Data</strong> - Visualize progress and identify
+              patterns
+            </li>
+          </ul>
+        </InfoPanel>
         <ExperimentList />
       </div>
     </FeatureLayout>

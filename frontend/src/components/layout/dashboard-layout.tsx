@@ -126,23 +126,27 @@ export default function DashboardLayout({
 
   const filteredSidebarItems = defaultSidebarItems
     .filter((item) => {
-      // Always show core routes
-      if (item.href === "/" || item.href === "/dataset" || item.href === "/settings") {
+      if (
+        item.href === "/" ||
+        item.href === "/dataset" ||
+        item.href === "/settings"
+      ) {
         return true;
       }
-      
+
       const routeConfig = routeConfigs[item.href];
-      return routeConfig ? routeConfig.visible && visibleRoutes[item.href] !== false : visibleRoutes[item.href] !== false;
+      return routeConfig
+        ? routeConfig.visible && visibleRoutes[item.href] !== false
+        : visibleRoutes[item.href] !== false;
     })
     .sort((a, b) => {
-      // Core routes have fixed positions
       if (a.href === "/") return -1;
       if (b.href === "/") return 1;
       if (a.href === "/settings") return 1;
       if (b.href === "/settings") return -1;
       if (a.href === "/dataset") return 1;
       if (b.href === "/dataset") return -1;
-      
+
       const aConfig = routeConfigs[a.href];
       const bConfig = routeConfigs[b.href];
       const aOrder = aConfig ? aConfig.order : 999;
@@ -166,7 +170,6 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-[calc(100vh-5rem)] overflow-hidden">
-      {/* Mobile sidebar toggle */}
       <div className="md:hidden fixed bottom-4 right-4 z-10">
         <Button
           size="icon"
@@ -177,15 +180,12 @@ export default function DashboardLayout({
           <MenuIcon className="h-5 w-5" />
         </Button>
       </div>
-
-      {/* Sidebar - hidden on mobile by default, shown when toggled */}
       <div
         className={cn(
           "hidden md:flex flex-col border-r bg-background transition-all duration-300 ease-in-out",
           isExpanded ? "w-64" : "w-16"
         )}
       >
-        {/* Toggle button */}
         <div
           className={cn(
             "flex justify-end p-2 border-b",
@@ -205,8 +205,6 @@ export default function DashboardLayout({
             )}
           </Button>
         </div>
-
-        {/* Sidebar content */}
         <div className="flex-1 overflow-y-auto">
           <div
             className={cn(
@@ -254,8 +252,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </div>
-
-      {/* Mobile sidebar (slide in from left) */}
       <div
         className={cn(
           "md:hidden fixed inset-y-0 left-0 z-50 bg-background border-r w-64 transform transition-transform duration-300 ease-in-out",
@@ -269,8 +265,6 @@ export default function DashboardLayout({
           </Button>
         </div>
         <div className="overflow-y-auto h-[calc(100vh-4rem-64px)]">
-          {" "}
-          {/* Viewport height minus top header (4rem) minus sidebar header (64px) */}
           <div className="space-y-1 p-2">
             {finalSidebarItems.map((item) => (
               <Link
@@ -291,16 +285,12 @@ export default function DashboardLayout({
           </div>
         </div>
       </div>
-
-      {/* Mobile sidebar overlay */}
       {isExpanded && (
         <div
           className="md:hidden fixed inset-0 bg-black/20 z-40"
           onClick={toggleSidebar}
         />
       )}
-
-      {/* Main content */}
       <div className="flex-1 overflow-y-auto w-full">
         <div
           className={cn(

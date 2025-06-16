@@ -45,7 +45,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - Add multi-relations work for table view, add/viewing/editing/importing (really, just need a overall tag multi feature since I think that's the only thing I'll be using multi-relations for for now)
 
 - find a better solution when using wails to do dev/prod for the databases
-- if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store
 
 - add a "version history note" to the application
 - create a script that looks into the github log history, and extracts it into a file for the user to parse and clean up, it will create files according to logs before the "bump to 0.0.x" version git commits and put it into a "version_history" folder
@@ -73,6 +72,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store [DONE 2025-06-15]
+- in bloodwork, add a "blood test" filter to show only that specific blood test in the graph [DONE 2025-06-15]
+- fix add experiments changing the date [DONE 2025-06-15]
+- make the "private" button on the dashboard route reusable to be used in other default routes [DONE 2025-06-15]
+- in body measurements, used that reusable private button [DONE 2025-06-15]
+- for the protected pin, add a button that the user can press which extends the "viewable" time for a minute every time they press the button [DONE 2025-06-15]
 - in time tracker form, if I modify the time entry while it's running, it doesn't update the header text if the description is changed [DONE 2025-06-04]
 - add a bodyweight tracking section [DONE 2025-06-04]
 - add a body measurement section following the FitNotes application import [DONE 2025-06-04]

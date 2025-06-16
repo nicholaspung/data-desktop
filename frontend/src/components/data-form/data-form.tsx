@@ -116,7 +116,7 @@ export default function DataForm({
         .map(([primaryValue, secondaryValues]) => ({
           id: primaryValue,
           label: primaryValue,
-          secondaryValue: Array.from(secondaryValues).join(", "), // Join multiple units if they exist
+          secondaryValue: Array.from(secondaryValues).join(", "),
         }));
     }
 
@@ -131,12 +131,11 @@ export default function DataForm({
       )
     ).sort();
 
-    // Add default measurement options for body measurements
     if (datasetId === "body_measurements" && field.key === "measurement") {
       const defaultMeasurements = [
         "Bodyweight",
         "Body Fat Percentage",
-        "Neck", 
+        "Neck",
         "Chest",
         "Waist",
         "Hips",
@@ -150,32 +149,26 @@ export default function DataForm({
         "Calf (Left)",
         "Wrist",
         "Ankle",
-        "Height"
+        "Height",
       ];
-      
-      // Merge defaults with existing values, remove duplicates, and sort
-      const allValues = Array.from(new Set([...defaultMeasurements, ...existingValues])).sort();
-      
+
+      const allValues = Array.from(
+        new Set([...defaultMeasurements, ...existingValues])
+      ).sort();
+
       return allValues.map((value: string) => ({
         id: value,
         label: value,
       }));
     }
 
-    // Add default unit options for body measurements
     if (datasetId === "body_measurements" && field.key === "unit") {
-      const defaultUnits = [
-        "kg",
-        "lbs",
-        "cm",
-        "inches",
-        "mm",
-        "%"
-      ];
-      
-      // Merge defaults with existing values, remove duplicates, and sort
-      const allValues = Array.from(new Set([...defaultUnits, ...existingValues])).sort();
-      
+      const defaultUnits = ["kg", "lbs", "cm", "inches", "mm", "%"];
+
+      const allValues = Array.from(
+        new Set([...defaultUnits, ...existingValues])
+      ).sort();
+
       return allValues.map((value: string) => ({
         id: value,
         label: value,
@@ -370,8 +363,9 @@ export default function DataForm({
         case "number":
           schemaObj[field.key] = isOptional
             ? z.coerce.number().optional()
-            : z.coerce
-                .number({ required_error: `${field.displayName} is required` });
+            : z.coerce.number({
+                required_error: `${field.displayName} is required`,
+              });
           break;
         case "percentage":
           schemaObj[field.key] = isOptional

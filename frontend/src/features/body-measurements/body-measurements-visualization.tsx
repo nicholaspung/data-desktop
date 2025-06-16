@@ -24,100 +24,91 @@ export default function BodyMeasurementsVisualization({
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [comparisonDate, setComparisonDate] = useState<string>("");
-  const [selectedMeasurementTypes, setSelectedMeasurementTypes] = useState<string[]>([]);
+  const [selectedMeasurementTypes, setSelectedMeasurementTypes] = useState<
+    string[]
+  >([]);
 
-  // Since data is now pre-filtered by the parent component based on privacy toggle,
-  // we can treat all provided data as "visible" data
   const visibleData = useMemo(() => {
     return data;
   }, [data]);
 
-  // Get measurement types that are displayed on the body visualization
   const displayedMeasurementTypes = useMemo(() => {
-    // Body part measurements shown on the body diagram
     const bodyPartMeasurements = [
       "neck",
-      "chest", 
+      "chest",
       "waist",
       "hips",
       "upper arm (right)",
       "forearm (right)",
-      "upper arm (left)", 
+      "upper arm (left)",
       "forearm (left)",
       "thigh (right)",
       "calf (right)",
       "thigh (left)",
-      "calf (left)"
+      "calf (left)",
     ];
 
-    // Special measurements shown in the stats area
-    const specialMeasurements = [
-      "bodyweight",
-      "weight", // Some users might use "weight" instead of "bodyweight"
-      "body fat percentage"
-    ];
+    const specialMeasurements = ["bodyweight", "weight", "body fat percentage"];
 
     const allDisplayedTypes = [...bodyPartMeasurements, ...specialMeasurements];
 
-    // Get actual measurement types from data with original casing
-    const actualMeasurements = Array.from(new Set(visibleData.map(record => record.measurement)));
-    
-    // Return displayed types that exist in actual data, using the actual data's casing
+    const actualMeasurements = Array.from(
+      new Set(visibleData.map((record) => record.measurement))
+    );
+
     return actualMeasurements
-      .filter(actualType => 
-        allDisplayedTypes.some(displayedType => 
-          displayedType.toLowerCase() === actualType.toLowerCase()
+      .filter((actualType) =>
+        allDisplayedTypes.some(
+          (displayedType) =>
+            displayedType.toLowerCase() === actualType.toLowerCase()
         )
       )
       .sort();
   }, [visibleData]);
 
-  // Initialize selectedMeasurementTypes to include all displayed types when data changes
   useEffect(() => {
-    if (displayedMeasurementTypes.length > 0 && selectedMeasurementTypes.length === 0) {
+    if (
+      displayedMeasurementTypes.length > 0 &&
+      selectedMeasurementTypes.length === 0
+    ) {
       setSelectedMeasurementTypes(displayedMeasurementTypes);
     }
   }, [displayedMeasurementTypes, selectedMeasurementTypes.length]);
 
-  // Create a map of dates to measurement types and values (excluding bodyweight)
   const measurementsByDate = useMemo(() => {
     const map = new Map<string, Map<string, BodyMeasurementRecord>>();
 
-    // Filter out bodyweight measurements and use visible data for main display
     const nonBodyweightData = visibleData.filter(
       (record) => record.measurement.toLowerCase() !== "bodyweight"
     );
 
-    // Group by date, then by measurement type
     nonBodyweightData.forEach((record) => {
       try {
-        // Ensure consistent date string format
         const date = new Date(record.date);
         if (isNaN(date.getTime())) {
-          console.warn('Invalid date found:', record.date);
+          console.warn("Invalid date found:", record.date);
           return;
         }
-        const dateKey = date.toISOString().split('T')[0];
+        const dateKey = date.toISOString().split("T")[0];
         if (!map.has(dateKey)) {
           map.set(dateKey, new Map());
         }
         map.get(dateKey)!.set(record.measurement, record);
       } catch (error) {
-        console.warn('Error processing date:', record.date, error);
+        console.warn("Error processing date:", record.date, error);
       }
     });
 
     return map;
   }, [visibleData]);
 
-  // Create date options directly from map keys, sorted newest to oldest
   const dateOptions = useMemo(() => {
     return Array.from(measurementsByDate.keys())
       .map((dateString) => {
         try {
-          const date = new Date(dateString + 'T00:00:00');
+          const date = new Date(dateString + "T00:00:00");
           if (isNaN(date.getTime())) {
-            console.warn('Invalid date string for options:', dateString);
+            console.warn("Invalid date string for options:", dateString);
             return null;
           }
           return {
@@ -127,7 +118,7 @@ export default function BodyMeasurementsVisualization({
             measurementCount: measurementsByDate.get(dateString)?.size || 0,
           };
         } catch (error) {
-          console.warn('Error creating date option:', dateString, error);
+          console.warn("Error creating date option:", dateString, error);
           return null;
         }
       })
@@ -135,10 +126,6 @@ export default function BodyMeasurementsVisualization({
       .sort((a, b) => b.date.getTime() - a.date.getTime());
   }, [measurementsByDate]);
 
-  console.log("Date options:", dateOptions);
-  console.log("Map keys:", Array.from(measurementsByDate.keys()));
-
-  // Initialize selected dates
   useEffect(() => {
     if (dateOptions.length > 0 && !selectedDate) {
       setSelectedDate(dateOptions[0].value);
@@ -148,24 +135,24 @@ export default function BodyMeasurementsVisualization({
     }
   }, [dateOptions, selectedDate]);
 
-  // Get the latest measurement for each type up to a specific date
   const getLatestMeasurementByDate = (
     measurementType: string,
     upToDate: string
   ) => {
     try {
-      const upToDateObj = new Date(upToDate + 'T23:59:59');
+      const upToDateObj = new Date(upToDate + "T23:59:59");
       if (isNaN(upToDateObj.getTime())) {
-        console.warn('Invalid upToDate:', upToDate);
+        console.warn("Invalid upToDate:", upToDate);
         return undefined;
       }
-      
+
       const measurements = visibleData
         .filter((record) => {
           try {
             const recordDate = new Date(record.date);
             return (
-              record.measurement.toLowerCase() === measurementType.toLowerCase() &&
+              record.measurement.toLowerCase() ===
+                measurementType.toLowerCase() &&
               !isNaN(recordDate.getTime()) &&
               recordDate <= upToDateObj
             );
@@ -183,12 +170,11 @@ export default function BodyMeasurementsVisualization({
 
       return measurements[0];
     } catch (error) {
-      console.warn('Error in getLatestMeasurementByDate:', error);
+      console.warn("Error in getLatestMeasurementByDate:", error);
       return undefined;
     }
   };
 
-  // Get the latest measurement for each type (for single view)
   const getLatestMeasurement = (measurementType: string) => {
     try {
       const measurements = visibleData
@@ -196,8 +182,8 @@ export default function BodyMeasurementsVisualization({
           try {
             const recordDate = new Date(record.date);
             return (
-              record.measurement.toLowerCase() === measurementType.toLowerCase() &&
-              !isNaN(recordDate.getTime())
+              record.measurement.toLowerCase() ===
+                measurementType.toLowerCase() && !isNaN(recordDate.getTime())
             );
           } catch {
             return false;
@@ -213,7 +199,7 @@ export default function BodyMeasurementsVisualization({
 
       return measurements[0];
     } catch (error) {
-      console.warn('Error in getLatestMeasurement:', error);
+      console.warn("Error in getLatestMeasurement:", error);
       return undefined;
     }
   };
@@ -228,13 +214,11 @@ export default function BodyMeasurementsVisualization({
       viewMode === "single"
         ? getLatestMeasurement(measurementType)
         : getLatestMeasurementByDate(measurementType, selectedDate);
-    if (!measurement) return "#94a3b8"; // gray for no data
+    if (!measurement) return "#94a3b8";
 
-    // Simple color scheme based on whether we have data or not
-    return "#8884d8"; // blue for available data
+    return "#8884d8";
   };
 
-  // Calculate change between two measurements
   const getChangeInfo = (measurementType: string) => {
     if (viewMode !== "comparison") return null;
 
@@ -259,11 +243,10 @@ export default function BodyMeasurementsVisualization({
       percentChange,
       isIncrease: change > 0,
       isDecrease: change < 0,
-      isUnchanged: Math.abs(change) < 0.1, // Consider changes < 0.1 as unchanged
+      isUnchanged: Math.abs(change) < 0.1,
     };
   };
 
-  // Get measurement data for display
   const getMeasurementData = (measurementType: string) => {
     if (viewMode === "single") {
       return {
@@ -278,14 +261,12 @@ export default function BodyMeasurementsVisualization({
     }
   };
 
-  // Get measurement map for a specific date
   const getMeasurementsForDate = (date: string) => {
     return (
       measurementsByDate.get(date) || new Map<string, BodyMeasurementRecord>()
     );
   };
 
-  // Get all unique measurement types for the selected date(s)
   const getDisplayMeasurementTypes = () => {
     if (viewMode === "single") {
       const measurementsMap = getMeasurementsForDate(selectedDate);
@@ -300,7 +281,6 @@ export default function BodyMeasurementsVisualization({
       const primaryMeasurementsMap = getMeasurementsForDate(selectedDate);
       const comparisonMeasurementsMap = getMeasurementsForDate(comparisonDate);
 
-      // Get all unique measurement types from both dates
       const allTypes = new Set([
         ...Array.from(primaryMeasurementsMap.keys()),
         ...Array.from(comparisonMeasurementsMap.keys()),
@@ -316,7 +296,6 @@ export default function BodyMeasurementsVisualization({
     }
   };
 
-  // Map body measurements to SVG regions
   const bodyParts: BodyPart[] = [
     {
       id: "neck",
@@ -459,7 +438,6 @@ export default function BodyMeasurementsVisualization({
   const bodyweightData = getMeasurementData("bodyweight");
   const bodyFatData = getMeasurementData("body fat percentage");
 
-  // Calculate summary stats for the selected date(s)
   const getSelectedDateMeasurements = () => {
     const selectedMeasurementsMap = getMeasurementsForDate(selectedDate);
     return Array.from(selectedMeasurementsMap.values());
@@ -475,80 +453,90 @@ export default function BodyMeasurementsVisualization({
 
   const selectedDateMeasurements = getSelectedDateMeasurements();
   const comparisonDateMeasurements = getComparisonDateMeasurements();
-  
-  // Calculate sum of filtered measurement values for the selected date
+
   const sumOfPrimaryValues = selectedDateMeasurements
-    .filter(record => selectedMeasurementTypes.some(type => 
-      type.toLowerCase() === record.measurement.toLowerCase()
-    ))
+    .filter((record) =>
+      selectedMeasurementTypes.some(
+        (type) => type.toLowerCase() === record.measurement.toLowerCase()
+      )
+    )
     .reduce((sum, record) => {
       return sum + (record.value || 0);
     }, 0);
 
   const sumOfComparisonValues = comparisonDateMeasurements
-    .filter(record => selectedMeasurementTypes.some(type => 
-      type.toLowerCase() === record.measurement.toLowerCase()
-    ))
+    .filter((record) =>
+      selectedMeasurementTypes.some(
+        (type) => type.toLowerCase() === record.measurement.toLowerCase()
+      )
+    )
     .reduce((sum, record) => {
       return sum + (record.value || 0);
     }, 0);
 
-  const totalPrimaryMeasurements = selectedDateMeasurements
-    .filter(record => selectedMeasurementTypes.some(type => 
-      type.toLowerCase() === record.measurement.toLowerCase()
-    )).length;
-  const totalComparisonMeasurements = comparisonDateMeasurements
-    .filter(record => selectedMeasurementTypes.some(type => 
-      type.toLowerCase() === record.measurement.toLowerCase()
-    )).length;
+  const totalPrimaryMeasurements = selectedDateMeasurements.filter((record) =>
+    selectedMeasurementTypes.some(
+      (type) => type.toLowerCase() === record.measurement.toLowerCase()
+    )
+  ).length;
+  const totalComparisonMeasurements = comparisonDateMeasurements.filter(
+    (record) =>
+      selectedMeasurementTypes.some(
+        (type) => type.toLowerCase() === record.measurement.toLowerCase()
+      )
+  ).length;
 
-  // Calculate the difference for comparison mode
   const sumDifference = sumOfPrimaryValues - sumOfComparisonValues;
 
-  // For comparison mode, also calculate sum of common measurement types only
   const getCommonMeasurementsSums = () => {
-    if (viewMode !== "comparison") return { 
-      primaryCommon: 0, 
-      comparisonCommon: 0, 
-      commonCount: 0, 
-      commonDifference: 0 
-    };
+    if (viewMode !== "comparison")
+      return {
+        primaryCommon: 0,
+        comparisonCommon: 0,
+        commonCount: 0,
+        commonDifference: 0,
+      };
 
     const primaryMeasurementTypes = new Set(
       selectedDateMeasurements
-        .filter(r => selectedMeasurementTypes.some(type => 
-          type.toLowerCase() === r.measurement.toLowerCase()
-        ))
-        .map(r => r.measurement)
+        .filter((r) =>
+          selectedMeasurementTypes.some(
+            (type) => type.toLowerCase() === r.measurement.toLowerCase()
+          )
+        )
+        .map((r) => r.measurement)
     );
     const comparisonMeasurementTypes = new Set(
       comparisonDateMeasurements
-        .filter(r => selectedMeasurementTypes.some(type => 
-          type.toLowerCase() === r.measurement.toLowerCase()
-        ))
-        .map(r => r.measurement)
+        .filter((r) =>
+          selectedMeasurementTypes.some(
+            (type) => type.toLowerCase() === r.measurement.toLowerCase()
+          )
+        )
+        .map((r) => r.measurement)
     );
-    
-    // Find measurement types that exist in both dates AND are selected in filter
-    const commonTypes = Array.from(primaryMeasurementTypes).filter(type => 
-      comparisonMeasurementTypes.has(type) && selectedMeasurementTypes.some(selectedType =>
-        selectedType.toLowerCase() === type.toLowerCase()
-      )
+
+    const commonTypes = Array.from(primaryMeasurementTypes).filter(
+      (type) =>
+        comparisonMeasurementTypes.has(type) &&
+        selectedMeasurementTypes.some(
+          (selectedType) => selectedType.toLowerCase() === type.toLowerCase()
+        )
     );
 
     const primaryCommonSum = selectedDateMeasurements
-      .filter(record => commonTypes.includes(record.measurement))
+      .filter((record) => commonTypes.includes(record.measurement))
       .reduce((sum, record) => sum + (record.value || 0), 0);
 
     const comparisonCommonSum = comparisonDateMeasurements
-      .filter(record => commonTypes.includes(record.measurement))
+      .filter((record) => commonTypes.includes(record.measurement))
       .reduce((sum, record) => sum + (record.value || 0), 0);
 
     return {
       primaryCommon: primaryCommonSum,
       comparisonCommon: comparisonCommonSum,
       commonCount: commonTypes.length,
-      commonDifference: primaryCommonSum - comparisonCommonSum
+      commonDifference: primaryCommonSum - comparisonCommonSum,
     };
   };
 
@@ -560,7 +548,6 @@ export default function BodyMeasurementsVisualization({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Comparison Selector */}
         {dateOptions.length > 0 && (
           <div className="mb-6 p-4 border rounded-lg bg-muted/50">
             <div className="flex flex-col sm:flex-row gap-4 items-center">
@@ -577,7 +564,6 @@ export default function BodyMeasurementsVisualization({
                   triggerClassName="w-[160px]"
                 />
               </div>
-
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium">
                   {viewMode === "comparison" ? "Primary" : "Date"}:
@@ -593,7 +579,6 @@ export default function BodyMeasurementsVisualization({
                   triggerClassName="w-[180px]"
                 />
               </div>
-
               {viewMode === "comparison" && (
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium">Compare to:</span>
@@ -612,9 +597,7 @@ export default function BodyMeasurementsVisualization({
             </div>
           </div>
         )}
-
         <div className="flex flex-col items-center justify-center">
-          {/* Overall Stats */}
           <div className="text-center mb-2">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-8">
               {bodyweightData.primary && (
@@ -716,8 +699,6 @@ export default function BodyMeasurementsVisualization({
             </div>
           </div>
         </div>
-
-        {/* Measurement Type Filter */}
         {displayedMeasurementTypes.length > 0 && (
           <div className="mb-4 p-4 border rounded-lg bg-muted/30">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -726,7 +707,7 @@ export default function BodyMeasurementsVisualization({
               </span>
               <div className="flex-1 min-w-0">
                 <ReusableMultiselect
-                  options={displayedMeasurementTypes.map(type => ({
+                  options={displayedMeasurementTypes.map((type) => ({
                     id: type,
                     label: type,
                   }))}
@@ -737,13 +718,12 @@ export default function BodyMeasurementsVisualization({
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                {selectedMeasurementTypes.length} of {displayedMeasurementTypes.length} selected
+                {selectedMeasurementTypes.length} of{" "}
+                {displayedMeasurementTypes.length} selected
               </div>
             </div>
           </div>
         )}
-
-        {/* Summary Stats */}
         {viewMode === "single" ? (
           <div className="flex justify-center gap-6 mt-4 mb-4">
             <div className="p-3 rounded-lg bg-muted/50 text-center">
@@ -765,7 +745,9 @@ export default function BodyMeasurementsVisualization({
           <div className="space-y-3 mt-4 mb-4">
             <div className="flex justify-center gap-4">
               <div className="p-3 rounded-lg bg-muted/50 text-center flex-1 max-w-xs">
-                <p className="text-sm text-muted-foreground">Primary Date Filtered Sum</p>
+                <p className="text-sm text-muted-foreground">
+                  Primary Date Filtered Sum
+                </p>
                 <p className="text-xl font-bold text-foreground">
                   {sumOfPrimaryValues.toFixed(1)}
                 </p>
@@ -774,7 +756,9 @@ export default function BodyMeasurementsVisualization({
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-muted/50 text-center flex-1 max-w-xs">
-                <p className="text-sm text-muted-foreground">Comparison Date Filtered Sum</p>
+                <p className="text-sm text-muted-foreground">
+                  Comparison Date Filtered Sum
+                </p>
                 <p className="text-xl font-bold text-foreground">
                   {sumOfComparisonValues.toFixed(1)}
                 </p>
@@ -785,22 +769,28 @@ export default function BodyMeasurementsVisualization({
             </div>
             <div className="flex justify-center gap-4">
               <div className="p-3 rounded-lg bg-background border text-center">
-                <p className="text-sm text-muted-foreground">All Measurements Difference</p>
+                <p className="text-sm text-muted-foreground">
+                  All Measurements Difference
+                </p>
                 <div className="flex items-center justify-center gap-2">
-                  <p className={`text-xl font-bold ${
-                    sumDifference > 0 ? "text-green-500" : 
-                    sumDifference < 0 ? "text-red-500" : 
-                    "text-foreground"
-                  }`}>
-                    {sumDifference > 0 ? "+" : ""}{sumDifference.toFixed(1)}
+                  <p
+                    className={`text-xl font-bold ${
+                      sumDifference > 0
+                        ? "text-green-500"
+                        : sumDifference < 0
+                          ? "text-red-500"
+                          : "text-foreground"
+                    }`}
+                  >
+                    {sumDifference > 0 ? "+" : ""}
+                    {sumDifference.toFixed(1)}
                   </p>
-                  {sumDifference !== 0 && (
-                    sumDifference > 0 ? (
+                  {sumDifference !== 0 &&
+                    (sumDifference > 0 ? (
                       <TrendingUp className="h-4 w-4 text-green-500" />
                     ) : (
                       <TrendingDown className="h-4 w-4 text-red-500" />
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
               {commonSums.commonCount > 0 && (
@@ -809,52 +799,50 @@ export default function BodyMeasurementsVisualization({
                     Common Types Difference
                   </p>
                   <div className="flex items-center justify-center gap-2">
-                    <p className={`text-xl font-bold ${
-                      commonSums.commonDifference > 0 ? "text-green-500" : 
-                      commonSums.commonDifference < 0 ? "text-red-500" : 
-                      "text-foreground"
-                    }`}>
-                      {commonSums.commonDifference > 0 ? "+" : ""}{commonSums.commonDifference.toFixed(1)}
+                    <p
+                      className={`text-xl font-bold ${
+                        commonSums.commonDifference > 0
+                          ? "text-green-500"
+                          : commonSums.commonDifference < 0
+                            ? "text-red-500"
+                            : "text-foreground"
+                      }`}
+                    >
+                      {commonSums.commonDifference > 0 ? "+" : ""}
+                      {commonSums.commonDifference.toFixed(1)}
                     </p>
-                    {commonSums.commonDifference !== 0 && (
-                      commonSums.commonDifference > 0 ? (
+                    {commonSums.commonDifference !== 0 &&
+                      (commonSums.commonDifference > 0 ? (
                         <TrendingUp className="h-4 w-4 text-green-500" />
                       ) : (
                         <TrendingDown className="h-4 w-4 text-red-500" />
-                      )
-                    )}
+                      ))}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {commonSums.commonCount} shared measurement{commonSums.commonCount !== 1 ? 's' : ''}
+                    {commonSums.commonCount} shared measurement
+                    {commonSums.commonCount !== 1 ? "s" : ""}
                   </p>
                 </div>
               )}
             </div>
           </div>
         )}
-
-        {/* Body Visualization and Measurements */}
         <div className="flex flex-col lg:flex-row gap-6 mt-4">
-          {/* Body SVG Visualization */}
           <div className="relative w-full max-w-md h-[450px] lg:flex-shrink-0">
             <svg viewBox="0 0 400 500" className="w-full h-full">
-              {/* Simple body outline using basic geometric shapes - same as DEXA */}
               <g stroke="#d1d5db" strokeWidth="2" fill="none">
-                {/* Head - Simple Circle */}
                 <circle cx="200" cy="60" r="30" />
-                {/* Neck - Simple Line */}
-                <line x1="200" y1="90" x2="200" y2="110" />
-                {/* Body - Rectangle */}
-                <rect x="150" y="110" width="100" height="150" rx="4" />
-                {/* Arms - Simple Lines */}
-                <line x1="150" y1="130" x2="80" y2="180" /> {/* Right Arm */}
-                <line x1="250" y1="130" x2="320" y2="180" /> {/* Left Arm */}
-                {/* Legs - Simple Lines */}
-                <line x1="170" y1="260" x2="150" y2="390" /> {/* Right Leg */}
-                <line x1="230" y1="260" x2="250" y2="390" /> {/* Left Leg */}
-              </g>
 
-              {/* Interactive dots for each body part */}
+                <line x1="200" y1="90" x2="200" y2="110" />
+
+                <rect x="150" y="110" width="100" height="150" rx="4" />
+
+                <line x1="150" y1="130" x2="80" y2="180" />
+                <line x1="250" y1="130" x2="320" y2="180" />
+
+                <line x1="170" y1="260" x2="150" y2="390" />
+                <line x1="230" y1="260" x2="250" y2="390" />
+              </g>
               {bodyParts.map((part) => (
                 <ReusableTooltip
                   key={part.id}
@@ -956,8 +944,6 @@ export default function BodyMeasurementsVisualization({
                 />
               ))}
             </svg>
-
-            {/* Legend */}
             <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center gap-4 text-xs">
               <div className="flex items-center">
                 <div className="w-3 h-3 rounded-full bg-[#8884d8] mr-1"></div>
@@ -969,22 +955,26 @@ export default function BodyMeasurementsVisualization({
               </div>
             </div>
           </div>
-
-          {/* Measurements Panel */}
           <div className="flex-1 min-w-0">
             <div className="bg-muted/30 rounded-lg p-4 h-[450px] overflow-y-auto">
               <h3 className="font-semibold text-lg mb-4">
                 {viewMode === "single"
-                  ? `Measurements for ${selectedDate ? (() => {
-                      try {
-                        return format(new Date(selectedDate + 'T00:00:00'), "MMM d, yyyy");
-                      } catch {
-                        return selectedDate;
-                      }
-                    })() : ""}`
+                  ? `Measurements for ${
+                      selectedDate
+                        ? (() => {
+                            try {
+                              return format(
+                                new Date(selectedDate + "T00:00:00"),
+                                "MMM d, yyyy"
+                              );
+                            } catch {
+                              return selectedDate;
+                            }
+                          })()
+                        : ""
+                    }`
                   : "Measurement Comparison"}
               </h3>
-
               {getDisplayMeasurementTypes().length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   No measurements found for selected date
@@ -1042,7 +1032,6 @@ export default function BodyMeasurementsVisualization({
                               </div>
                             )}
                         </div>
-
                         <div className="space-y-1 text-sm">
                           {measurement.primary ? (
                             <div className="flex justify-between">
@@ -1068,7 +1057,6 @@ export default function BodyMeasurementsVisualization({
                               </span>
                             </div>
                           )}
-
                           {viewMode === "comparison" && (
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">
@@ -1099,13 +1087,11 @@ export default function BodyMeasurementsVisualization({
             </div>
           </div>
         </div>
-
         <div className="mt-4 text-sm text-center text-foreground">
           {viewMode === "single"
             ? "Hover over the dots to see latest measurements for each body region"
             : "Hover over the dots to see measurement comparisons with change indicators"}
         </div>
-
       </CardContent>
     </Card>
   );

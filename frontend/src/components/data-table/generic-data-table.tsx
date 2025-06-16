@@ -286,10 +286,8 @@ export default function GenericDataTable({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Table Mode Selector */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
-
         <div className="flex items-center gap-3">
           <RefreshDatasetButton
             fields={fields}
@@ -306,7 +304,6 @@ export default function GenericDataTable({
             value={tableMode}
             onChange={(value: any) => {
               setTableMode(value);
-
               if (selectedRows.length > 0) {
                 setSelectedRows([]);
               }
@@ -314,7 +311,6 @@ export default function GenericDataTable({
             title={"mode"}
             triggerClassName={"w-[150px]"}
           />
-
           {tableMode === "bulk-edit" && selectedRows.length > 0 && (
             <BulkEditDialog
               open={bulkEditDialogOpen}
@@ -329,8 +325,6 @@ export default function GenericDataTable({
               onDataChange={handleDataUpdated}
             />
           )}
-
-          {/* Delete Button - Only visible in delete mode with selections */}
           {tableMode === "delete" && selectedRows.length > 0 && (
             <ConfirmDeleteDialog
               title="Delete entry"
@@ -343,8 +337,6 @@ export default function GenericDataTable({
           )}
         </div>
       </div>
-
-      {/* Main Table Card */}
       <div ref={tableContainerRef}>
         <ReusableCard
           cardClassName="flex-1 min-w-0"

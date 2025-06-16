@@ -102,7 +102,6 @@ export async function createDefaultMetrics(
       );
 
       if (metricExists) {
-        console.log(`Metric "${defaultMetric.name}" already exists, skipping.`);
         continue;
       }
 

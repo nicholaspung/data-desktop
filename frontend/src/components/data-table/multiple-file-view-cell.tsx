@@ -45,7 +45,6 @@ export default function MultipleFileViewCell({
       }
       customContent={
         <div className="flex flex-col gap-4">
-          {/* File Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[200px] overflow-auto p-2 border rounded-md">
             {files.map((file, index) => {
               const { fileSrc, fileName, fileId } = getFileInfo(file, index);
@@ -68,8 +67,6 @@ export default function MultipleFileViewCell({
               );
             })}
           </div>
-
-          {/* Selected File Preview */}
           {selectedFile && (
             <div className="border-t pt-4">
               <h3 className="text-sm font-medium mb-2">

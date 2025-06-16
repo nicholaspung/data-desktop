@@ -39,17 +39,10 @@ timeFilterStore.subscribe(() => {
 });
 
 export const toggleHiddenHour = (hour: number) => {
-  console.log("🔧 toggleHiddenHour called:", { hour });
-
   timeFilterStore.setState((state) => {
     const newHiddenHours = state.hiddenHours.includes(hour)
       ? state.hiddenHours.filter((h) => h !== hour)
       : [...state.hiddenHours, hour].sort((a, b) => a - b);
-
-    console.log("📝 Store state updating:", {
-      oldHiddenHours: state.hiddenHours,
-      newHiddenHours: newHiddenHours,
-    });
 
     return {
       ...state,
@@ -76,14 +69,7 @@ export const filterTimeEntries = (
   entries: TimeEntry[],
   hiddenHours: number[]
 ): TimeEntry[] => {
-  console.log("🔍 filterTimeEntries called:", {
-    totalEntries: entries.length,
-    hiddenHours: hiddenHours,
-    hiddenHoursCount: hiddenHours.length,
-  });
-
   if (hiddenHours.length === 0) {
-    console.log("✅ No hidden hours, returning all entries");
     return entries;
   }
 
@@ -110,23 +96,7 @@ export const filterTimeEntries = (
 
     const shouldKeep = entryHours.some((hour) => !hiddenHours.includes(hour));
 
-    if (!shouldKeep) {
-      console.log("🚫 Filtering out entry:", {
-        description: entry.description,
-        startHour,
-        endHour,
-        entryHours,
-        hiddenHours,
-      });
-    }
-
     return shouldKeep;
-  });
-
-  console.log("📊 Filter results:", {
-    originalCount: entries.length,
-    filteredCount: filteredEntries.length,
-    removedCount: entries.length - filteredEntries.length,
   });
 
   return filteredEntries;

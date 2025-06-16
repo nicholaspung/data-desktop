@@ -7,8 +7,7 @@ import {
   EyeOff,
   ChevronLeft,
   ChevronRight,
-  Lock,
-  Unlock,
+  Eye,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,7 +34,7 @@ import AddMetricModal from "./add-metric-modal";
 import AddCategoryDialog from "./add-category-dialog";
 import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
-import { usePin } from "@/hooks/usePin";
+import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 
 const QuickMetricLogger = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,13 +52,12 @@ const QuickMetricLogger = () => {
   });
   const [selectedTab, setSelectedTab] = useState("all");
   const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
+  const [minimalView, setMinimalView] = useState(false);
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
-
-  const { isUnlocked, openPinEntryDialog } = usePin();
 
   useEffect(() => {
     setSelectedDate(startOfDay(selectedDate));
@@ -89,7 +87,7 @@ const QuickMetricLogger = () => {
       if (!showInactive && !metric.active) return false;
       if (showInactive && metric.active) return false;
 
-      if (metric.private && (!isUnlocked || !showPrivateMetrics)) return false;
+      if (metric.private && !showPrivateMetrics) return false;
 
       const matchesSearch =
         !searchTerm ||
@@ -185,7 +183,6 @@ const QuickMetricLogger = () => {
     selectedDate,
     showCalendarTracked,
     categories,
-    isUnlocked,
     showPrivateMetrics,
   ]);
 
@@ -326,6 +323,26 @@ const QuickMetricLogger = () => {
     } catch (error) {
       console.error("Error updating metric calendar tracking:", error);
       toast.error("Failed to update metric settings");
+    }
+  };
+
+  const toggleMetricActiveStatus = async (metric: Metric) => {
+    try {
+      const updatedMetric = {
+        ...metric,
+        active: !metric.active,
+      };
+
+      const response = await ApiService.updateRecord(metric.id, updatedMetric);
+      if (response) {
+        updateEntry(metric.id, response, "metrics");
+        toast.success(
+          `${metric.name} ${metric.active ? "deactivated" : "activated"}`
+        );
+      }
+    } catch (error) {
+      console.error("Error updating metric active status:", error);
+      toast.error("Failed to update metric status");
     }
   };
 
@@ -519,35 +536,25 @@ const QuickMetricLogger = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button
-            onClick={() => {
-              if (!isUnlocked) {
-                openPinEntryDialog();
-              } else {
-                setShowPrivateMetrics(!showPrivateMetrics);
-              }
-            }}
+            onClick={() => setMinimalView(!minimalView)}
             size="sm"
-            variant={showPrivateMetrics ? "default" : "outline"}
-            className={!isUnlocked ? "opacity-75" : ""}
+            variant={minimalView ? "default" : "outline"}
           >
-            {isUnlocked && showPrivateMetrics ? (
-              <Unlock className="h-4 w-4 mr-2" />
-            ) : (
-              <Lock className="h-4 w-4 mr-2" />
-            )}
-            Private
+            <Eye className="h-4 w-4 mr-2" />
+            Minimal
           </Button>
+          <PrivateToggleButton
+            showPrivate={showPrivateMetrics}
+            onToggle={setShowPrivateMetrics}
+          />
         </div>
       </div>
-
-      {/* Category Tabs */}
       <ReusableTabs
         tabs={tabItems}
         defaultTabId={selectedTab}
         onChange={setSelectedTab}
         tabsListClassName="h-auto"
       />
-
       {hasNoMetrics && (
         <div className="space-y-2 text-center flex flex-col items-center">
           <p className="text-muted-foreground py-8 text-center">
@@ -559,7 +566,6 @@ const QuickMetricLogger = () => {
           </div>
         </div>
       )}
-
       {!hasNoMetrics && Object.keys(displayedMetrics).length === 0 ? (
         <ReusableCard
           title="No metrics found"
@@ -584,9 +590,11 @@ const QuickMetricLogger = () => {
             isMetricCompleted={isMetricCompleted}
             toggleMetricCompletion={toggleMetricCompletion}
             toggleCalendarTracking={toggleCalendarTracking}
+            toggleMetricActiveStatus={toggleMetricActiveStatus}
             handleDeleteMetric={handleDeleteMetric}
             selectedDate={selectedDate}
             dailyLogs={filteredDailyLogs}
+            minimalView={minimalView}
           />
         </div>
       )}
