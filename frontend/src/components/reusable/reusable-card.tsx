@@ -10,6 +10,7 @@ export default function ReusableCard({
   cardClassName,
   description,
   useSeparator = false,
+  headerActions,
 }: {
   title?: ReactNode;
   content: ReactNode;
@@ -18,13 +19,23 @@ export default function ReusableCard({
   cardClassName?: string;
   description?: ReactNode;
   useSeparator?: boolean;
+  headerActions?: ReactNode;
 }) {
   return (
     <Card className={cardClassName}>
       {showHeader ? (
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          {description && description}
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>{title}</CardTitle>
+              {description && description}
+            </div>
+            {headerActions && (
+              <div className="flex items-center gap-2">
+                {headerActions}
+              </div>
+            )}
+          </div>
         </CardHeader>
       ) : null}
       {useSeparator && showHeader ? <Separator className="mb-4" /> : null}

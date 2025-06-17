@@ -13,6 +13,7 @@ import {
   FeatureLayout,
   FeatureHeader,
 } from "@/components/layout/feature-layout";
+import FinancialLogsManager from "@/components/financial/financial-logs-manager";
 
 interface WealthSearch {
   tab?: string;
@@ -76,6 +77,8 @@ function WealthPage() {
     setCurrentDataset("");
     setCurrentDatasetTitle("");
     toast.success("Record added successfully!");
+    // Trigger a refresh of the data
+    dataStore.setState((state) => ({ ...state }));
   };
 
   const tabs = useMemo(
@@ -98,6 +101,10 @@ function WealthPage() {
                 Add Transaction
               </Button>
             </div>
+            <FinancialLogsManager 
+              logs={financialLogs} 
+              onUpdate={() => dataStore.setState((state) => ({ ...state }))}
+            />
           </div>
         ),
       },
