@@ -58,6 +58,8 @@ export default function DataForm({
   onChange,
   forceClear = false,
   title,
+  existingEntries = [],
+  enhancedAutocompleteFields = {},
 }: {
   datasetId: DataStoreName;
   fields: FieldDefinition[];
@@ -73,6 +75,16 @@ export default function DataForm({
   onChange?: (values: Record<string, unknown>, isValid: boolean) => void;
   forceClear?: boolean;
   title?: string;
+  existingEntries?: any[];
+  enhancedAutocompleteFields?: Record<
+    string,
+    {
+      displayFields: string[];
+      autoFillFields: string[];
+      usePortal?: boolean;
+      dropdownPosition?: "top" | "bottom";
+    }
+  >;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSavedData, setHasSavedData] = useState(false);
@@ -86,10 +98,17 @@ export default function DataForm({
   const getAutocompleteOptions = (field: FieldDefinition) => {
     if (field.type !== "autocomplete") return [];
 
+    // Check if this field has enhanced configuration
+    const enhancedConfig = enhancedAutocompleteFields[field.key];
+    const dataSource =
+      enhancedConfig && existingEntries.length > 0
+        ? existingEntries
+        : storeData;
+
     if (field.secondaryDisplayField) {
       const groupedValues = new Map<string, Set<string>>();
 
-      storeData.forEach((record: any) => {
+      dataSource.forEach((record: any) => {
         const primaryValue = record[field.key];
         const secondaryValue = record[field.secondaryDisplayField!];
 
@@ -120,9 +139,31 @@ export default function DataForm({
         }));
     }
 
+    // Enhanced autocomplete options with full entry data
+    if (enhancedConfig) {
+      const uniqueValues = new Map<string, any>();
+      dataSource.forEach((entry: any) => {
+        const value = entry[field.key];
+        if (value && typeof value === "string" && value.trim()) {
+          const trimmedValue = value.trim();
+          if (!uniqueValues.has(trimmedValue)) {
+            uniqueValues.set(trimmedValue, entry);
+          }
+        }
+      });
+
+      return Array.from(uniqueValues.entries())
+        .map(([value, entry]) => ({
+          id: `${field.key}-${value}`,
+          label: value,
+          entry: entry,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    }
+
     const existingValues = Array.from(
       new Set(
-        storeData
+        dataSource
           .map((record: any) => record[field.key])
           .filter(
             (value: any) =>
@@ -179,6 +220,69 @@ export default function DataForm({
       id: value,
       label: value,
     }));
+  };
+
+  // Handle enhanced autocomplete selection with auto-fill
+  const handleEnhancedAutocompleteSelect = (fieldKey: string, option: any) => {
+    const enhancedConfig = enhancedAutocompleteFields[fieldKey];
+    if (!enhancedConfig || !option.entry) return;
+
+    // Set the main field value
+    form.setValue(fieldKey, option.label);
+
+    // Auto-fill related fields
+    enhancedConfig.autoFillFields.forEach((autoFillField) => {
+      if (option.entry[autoFillField]) {
+        form.setValue(autoFillField, option.entry[autoFillField]);
+      }
+    });
+
+    // Trigger validation for all affected fields
+    form.trigger([fieldKey, ...enhancedConfig.autoFillFields]);
+  };
+
+  // Render enhanced autocomplete item
+  const renderEnhancedAutocompleteItem = (fieldKey: string, option: any) => {
+    const enhancedConfig = enhancedAutocompleteFields[fieldKey];
+    if (!enhancedConfig || !option.entry) {
+      return (
+        <div className="flex flex-row items-center gap-2">
+          <span>{option.label}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{option.label}</span>
+        </div>
+        {enhancedConfig.displayFields.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {enhancedConfig.displayFields.map((fieldName, index) => {
+              const value = option.entry[fieldName];
+              if (!value) return null;
+
+              const colors = [
+                "bg-blue-100 text-blue-800",
+                "bg-green-100 text-green-800",
+                "bg-purple-100 text-purple-800",
+              ];
+              const colorClass = colors[index % colors.length];
+
+              return (
+                <span
+                  key={fieldName}
+                  className={`px-2 py-0.5 rounded ${colorClass}`}
+                >
+                  {value}
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const loadSavedData = useCallback(() => {
@@ -908,6 +1012,9 @@ export default function DataForm({
             name={field.key}
             render={({ field: formField }) => {
               const autocompleteOptions = getAutocompleteOptions(field);
+              const enhancedConfig = enhancedAutocompleteFields[field.key];
+              const isEnhanced = !!enhancedConfig;
+
               return (
                 <FormItem>
                   {renderFieldLabel(field)}
@@ -919,28 +1026,45 @@ export default function DataForm({
                         formField.onChange(value);
                         form.trigger(field.key);
                       }}
+                      onSelect={
+                        isEnhanced
+                          ? (option) =>
+                              handleEnhancedAutocompleteSelect(
+                                field.key,
+                                option
+                              )
+                          : undefined
+                      }
                       options={autocompleteOptions}
                       placeholder={`Enter ${field.displayName.toLowerCase()}...`}
                       id={field.key}
-                      showRecentOptions={false}
+                      showRecentOptions={!isEnhanced}
+                      maxRecentOptions={5}
                       emptyMessage="Type to add new option"
+                      usePortal={enhancedConfig?.usePortal || true}
+                      dropdownPosition={
+                        enhancedConfig?.dropdownPosition || "top"
+                      }
                       renderItem={
-                        field.secondaryDisplayField
-                          ? (option) => (
-                              <div className="flex flex-row items-center gap-2">
-                                <span>{option.label}</span>
-                                {option.secondaryValue && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {option.secondaryValue}
-                                  </span>
-                                )}
-                                {option.label.toLowerCase() ===
-                                  formField.value?.toLowerCase() && (
-                                  <Check className="h-4 w-4 text-primary" />
-                                )}
-                              </div>
-                            )
-                          : undefined
+                        isEnhanced
+                          ? (option) =>
+                              renderEnhancedAutocompleteItem(field.key, option)
+                          : field.secondaryDisplayField
+                            ? (option) => (
+                                <div className="flex flex-row items-center gap-2">
+                                  <span>{option.label}</span>
+                                  {option.secondaryValue ? (
+                                    <span className="text-xs text-muted-foreground">
+                                      {String(option.secondaryValue)}
+                                    </span>
+                                  ) : null}
+                                  {option.label.toLowerCase() ===
+                                    formField.value?.toLowerCase() && (
+                                    <Check className="h-4 w-4 text-primary" />
+                                  )}
+                                </div>
+                              )
+                            : undefined
                       }
                     />
                   </FormControl>
@@ -970,8 +1094,15 @@ export default function DataForm({
                       formField.onChange(value);
                       form.trigger(field.key);
                     }}
-                    generalData={[]}
+                    generalData={existingEntries}
                     generalDataTagField="tags"
+                    usePortal={
+                      enhancedAutocompleteFields[field.key]?.usePortal || false
+                    }
+                    dropdownPosition={
+                      enhancedAutocompleteFields[field.key]?.dropdownPosition ||
+                      "bottom"
+                    }
                   />
                 </FormControl>
                 {field.description && (

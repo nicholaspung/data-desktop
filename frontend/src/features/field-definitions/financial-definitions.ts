@@ -110,18 +110,18 @@ export const PAYCHECK_INFO_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       unit: "$",
     },
     {
+      key: "deduction_type",
+      type: "autocomplete",
+      displayName: "Deduction Type",
+      description: "Type of deduction (e.g., Tax, Benefit, Investment, Income)",
+      isSearchable: true,
+    },
+    {
       key: "category",
       type: "autocomplete",
       displayName: "Category",
       description:
         "Category of the paycheck item (e.g., Gross Pay, Federal Tax, 401k)",
-      isSearchable: true,
-    },
-    {
-      key: "deduction_type",
-      type: "autocomplete",
-      displayName: "Deduction Type",
-      description: "Type of deduction (e.g., Tax, Benefit, Investment, Income)",
       isSearchable: true,
     },
   ],

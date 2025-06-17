@@ -13,6 +13,11 @@ interface TagInputProps {
   className?: string;
   generalData?: any[];
   generalDataTagField?: string;
+  usePortal?: boolean;
+  dropdownPosition?: "top" | "bottom";
+  showLabel?: boolean;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onFocus?: () => void;
 }
 
 export default function TagInput({
@@ -22,6 +27,11 @@ export default function TagInput({
   className,
   generalData,
   generalDataTagField,
+  usePortal = false,
+  dropdownPosition = "bottom",
+  showLabel = true,
+  onKeyDown,
+  onFocus,
 }: TagInputProps) {
   const getAvailableTags = useMemo(() => {
     if (!generalData || generalData.length === 0) return [];
@@ -82,20 +92,24 @@ export default function TagInput({
       const withoutCurrentTag = currentTags.slice(0, -1);
 
       const newTags = [...withoutCurrentTag, option.label];
-      onChange(newTags.join(", "));
+      // Add comma and space after the selected tag to move cursor to end
+      onChange(newTags.join(", ") + ", ");
     } else {
       if (!currentTags.includes(option.label)) {
         const newTags = [...currentTags, option.label];
-        onChange(newTags.join(", "));
+        // Add comma and space after the selected tag to move cursor to end
+        onChange(newTags.join(", ") + ", ");
       }
     }
   };
 
   return (
     <div className={cn("space-y-2 flex-2", className)}>
-      <Label htmlFor="tags" className="text-sm font-medium">
-        {label}
-      </Label>
+      {showLabel && (
+        <Label htmlFor="tags" className="text-sm font-medium">
+          {label}
+        </Label>
+      )}
       <AutocompleteInput
         id="tags"
         value={value}
@@ -108,6 +122,10 @@ export default function TagInput({
         showRecentOptions={true}
         maxRecentOptions={10}
         continueProvidingSuggestions={true}
+        usePortal={usePortal}
+        dropdownPosition={dropdownPosition}
+        onKeyDown={onKeyDown}
+        onFocus={onFocus}
         renderItem={(option, isActive) => (
           <div
             className={cn(

@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
-import ReusableDialog from "@/components/reusable/reusable-dialog";
-import DataForm from "@/components/data-form/data-form";
+import { MultiModeAddDialog } from "@/components/multi-mode-add-dialog";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 import { Banknote, Receipt, Scale, FileText, Wallet, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,8 @@ import {
   FeatureHeader,
 } from "@/components/layout/feature-layout";
 import FinancialLogsManager from "@/components/financial/financial-logs-manager";
+import FinancialBalancesManager from "@/components/financial/financial-balances-manager";
+import PaycheckLogsManager from "@/components/financial/paycheck-logs-manager";
 
 interface WealthSearch {
   tab?: string;
@@ -47,10 +48,6 @@ function WealthPage() {
   const paycheckInfo = useStore(
     dataStore,
     (state) => state.paycheck_info || []
-  );
-  const financialFiles = useStore(
-    dataStore,
-    (state) => state.financial_files || []
   );
 
   useEffect(() => {
@@ -126,6 +123,10 @@ function WealthPage() {
                 Add Balance
               </Button>
             </div>
+            <FinancialBalancesManager 
+              balances={financialBalances} 
+              onUpdate={() => dataStore.setState((state) => ({ ...state }))}
+            />
           </div>
         ),
       },
@@ -145,6 +146,10 @@ function WealthPage() {
                 Add Paycheck Item
               </Button>
             </div>
+            <PaycheckLogsManager 
+              paychecks={paycheckInfo} 
+              onUpdate={() => dataStore.setState((state) => ({ ...state }))}
+            />
           </div>
         ),
       },
@@ -170,7 +175,7 @@ function WealthPage() {
         ),
       },
     ],
-    [financialLogs, financialBalances, paycheckInfo, financialFiles]
+    [financialLogs, financialBalances, paycheckInfo]
   );
 
   return (
@@ -196,18 +201,33 @@ function WealthPage() {
       />
 
       {showAddDialog && (
-        <ReusableDialog
+        <MultiModeAddDialog
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
-          title={`Add ${currentDatasetTitle}`}
-          customContent={
-            <div className="p-4">
-              <DataForm
-                fields={getDatasetFields(currentDataset)}
-                datasetId={currentDataset as any}
-                onSuccess={handleAddSuccess}
-              />
-            </div>
+          title={currentDatasetTitle}
+          datasetId={currentDataset}
+          fieldDefinitions={getDatasetFields(currentDataset)}
+          onSuccess={() => {
+            handleAddSuccess();
+            dataStore.setState((state) => ({ ...state }));
+          }}
+          recentEntries={
+            currentDataset === "financial_logs"
+              ? financialLogs.slice(-10)
+              : currentDataset === "financial_balances"
+              ? financialBalances.slice(-10)
+              : currentDataset === "paycheck_info"
+              ? paycheckInfo.slice(-10)
+              : []
+          }
+          existingEntries={
+            currentDataset === "financial_logs"
+              ? financialLogs
+              : currentDataset === "financial_balances"
+              ? financialBalances
+              : currentDataset === "paycheck_info"
+              ? paycheckInfo
+              : []
           }
         />
       )}

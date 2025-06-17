@@ -69,12 +69,18 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - add a finance tracking section
-  - add a paycheck part in this section, along with the logs and balances
+- add a paycheck part in this section, along with the logs and balances
+- when adding single form, is there a way to disable the "saved local data" part?
+- in bulk import for the wealth section, add an import button with the fields required
+
+- in reusable dialog, is there a way to allow for the custom content to have a dedicated footer that always shows at the bottom of the dialog? In addition, is there a way to also enabled that for the default footer?
+
 - in metrics, add a way to manage the metric category
 - rename "quick metric logger" to be just "metric logger"
 - in experiments, when attaching a metric, also allow the user to create a metric there
 - in experiments, when attaching a metric, make it easier for a user to search for an already created metric
 - in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing
+- in experiments, add a field for starting goal images and end goal images
 - in time tracking/journaling dashboard summary, make it use reusable summary
 - bug: in experiment dashboard summary, if the experiment is not private, it still shows the private
 - in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar
