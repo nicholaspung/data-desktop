@@ -361,7 +361,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {dateField && log[dateField] && (
             <span className="text-xs text-muted-foreground whitespace-nowrap">
-              {format(new Date(log[dateField]), "MMM d")}
+              {format(new Date(log[dateField]), "MMM d, yyyy")}
             </span>
           )}
 

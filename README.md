@@ -23,7 +23,7 @@ Application is built for my own personal use, but may be useful to others if the
 
 This application will be optimized as I find it a pain to do certain actions. Thanks for checking out the application!
 
-- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet/Claude Code is still like a junior engineer that needs help occasionally to make things nice.)
+- NOTE: Desktop application was created with a LOT of help from Claude 3.7 Sonnet. Some creative decisions were made by me, a lot were made by Claude 3.7 Sonnet/Claude Sonnet 4/Claude Opus 4. A lot of putting the code together is put together by me. (Unfortunately, Claude 3.7 Sonnet/Claude Sonnet 4/Claude Opus 4/Claude Code is still like a junior engineer that needs help occasionally to make things nice. It's getting a lot better these days.)
 
 ## How to use
 
@@ -70,6 +70,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - in multi-mode-add-dialog, test bulk imports
 
+- in wealth, when I edit an item, it should still be the autocomplete for that field similar to how it's done in the table inputs for new values
+
+- for wealth dashboard summary, show the current total of the logs for the year, current net worth of the individual based on the latest balances (where the user can select which account type and account owner to show), and the total total of the paycheck information for the year
+- remove the alpha from wealth and add guide information on how to use the feature in the route, onboarding modal, and help guide
+- add a new instructions files on when I "finish a route" - to make sure alpha/beta is removed from the route, there is guide information for that route, and it's also in the onboarding modal and help guide
+
 - in metrics, add a way to manage the metric category
 - rename "quick metric logger" to be just "metric logger"
 - in experiments, when attaching a metric, also allow the user to create a metric there
@@ -90,9 +96,16 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
 
 - fix the react bug on the home page about private content
+- in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled
+- in each of the features, if a specific route isn't enabled, it shouldn't show that "feature" tie in, i.e. todos shouldn't be able to create a metric if metrics are disabled, time tracking should be able to search for metrics to use as description if metrics are enabled ,etc.
+- update feature information in this README for the new features added so far
 
 ### DONE
 
+- in wealth, add a "trend" graph to show summaries of selected month/year for a time period, for logs and paycheck the total, for balances the last entry until that period [DONE 2025-06-18]
+- in that trend graph, also all for grouping the number of month/years [DONE 2025-06-18]
+- in that trend graph, also allow for filtering of the fields [DONE 2025-06-18]
+- in that trend graph, also add a checkbox to either show each "big item" field individually, or to just group the positive and negative values together [DONE 2025-06-18]
 - add a finance tracking section [DONE 2025-06-17]
 - add a paycheck part in this section, along with the logs and balances [DONE 2025-06-17]
 - in bulk import for the wealth section, add an import button with the fields required [DONE 2025-06-17]

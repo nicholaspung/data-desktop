@@ -17,6 +17,8 @@ import PaycheckLogsManager from "@/features/financial/paycheck-logs-manager";
 import FinancialFilesManager from "@/features/financial/financial-files-manager";
 import { MultiModeAddDialog } from "@/features/financial/multi-mode-add-dialog";
 import { FinancialOverviewCard } from "@/features/financial/financial-overview-card";
+import FinancialTrendGraph from "@/features/financial/financial-trend-graph";
+import ReusableCard from "@/components/reusable/reusable-card";
 import {
   FinancialBalance,
   FinancialLog,
@@ -121,6 +123,11 @@ function WealthPage() {
                 return <FinancialLogsManager logs={filteredLogs} />;
               }}
             </FinancialOverviewCard>
+            <FinancialTrendGraph
+              logs={financialLogs}
+              type="logs"
+              title="Transaction Trends"
+            />
           </>
         ),
       },
@@ -157,6 +164,18 @@ function WealthPage() {
                 return <FinancialBalancesManager balances={filteredBalances} />;
               }}
             </FinancialOverviewCard>
+            <FinancialTrendGraph
+              balances={financialBalances}
+              type="balances"
+              title="Balance Trends"
+            />
+            <ReusableCard
+              title="All Balance Entries"
+              cardClassName="mt-4"
+              content={
+                <FinancialBalancesManager balances={financialBalances} />
+              }
+            />
           </>
         ),
       },
@@ -190,6 +209,11 @@ function WealthPage() {
                 return <PaycheckLogsManager paychecks={filteredPaychecks} />;
               }}
             </FinancialOverviewCard>
+            <FinancialTrendGraph
+              paychecks={paycheckInfo}
+              type="paycheck"
+              title="Paycheck Trends"
+            />
           </>
         ),
       },
@@ -256,13 +280,13 @@ function WealthPage() {
           onSuccess={() => handleAddSuccess()}
           recentEntries={
             currentDataset === "financial_logs"
-              ? financialLogs.slice(-10)
+              ? financialLogs.slice(0, 10)
               : currentDataset === "financial_balances"
-                ? financialBalances.slice(-10)
+                ? financialBalances.slice(0, 10)
                 : currentDataset === "paycheck_info"
-                  ? paycheckInfo.slice(-10)
+                  ? paycheckInfo.slice(0, 10)
                   : currentDataset === "financial_files"
-                    ? financialFiles.slice(-10)
+                    ? financialFiles.slice(0, 10)
                     : []
           }
           existingEntries={

@@ -51,6 +51,14 @@ Data Desktop is a Wails-based desktop application for personal data tracking and
 - Schema-less approach: field definitions stored as JSON, data stored as JSON in TEXT columns
 - Relationships handled via JSON field references with runtime resolution
 
+### Date Handling Strategy
+- **Storage**: All dates are stored as UTC timestamps in the backend/database
+- **Forms**: Date inputs are automatically converted to UTC using `toISOString()` before submission
+- **Display**: All dates are displayed in the user's local timezone using `date-fns` formatting
+- **Parsing**: Uses `parseISO()` to correctly interpret UTC ISO strings and display in local time
+- **Implementation**: The system uses ISO 8601 strings for data transfer and storage, with automatic local timezone display
+- **Key files**: `frontend/src/lib/date-utils.ts` for formatting, `frontend/src/components/data-form/data-form.tsx` for UTC conversion
+
 ### Data Flow
 1. Frontend forms submit JSON data to backend API methods
 2. Backend processes files (base64 → local files) and validates relationships
