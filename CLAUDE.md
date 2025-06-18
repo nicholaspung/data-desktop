@@ -36,6 +36,7 @@ Data Desktop is a Wails-based desktop application for personal data tracking and
   - `charts/` - Recharts-based visualization components
   - `resuable/` - Reusable components to be utilize whenever possible
   - Feature-specific components in respective directories
+- **Utilities**: Common functions organized in `src/lib/`
 - **UI**: Radix UI components with Tailwind CSS styling
 
 ### Key Architectural Patterns
@@ -110,6 +111,35 @@ function NewPage() {
 
 ### Example Implementation
 See `/frontend/src/routes/wealth.tsx` for a complete example.
+
+## Component Development Guidelines
+
+When creating new components in the frontend:
+
+### Reusable Component Priority
+- **Always check first**: Browse `frontend/src/components/reusable/` for existing components before creating new ones
+- **Available reusable components include**:
+  - Form controls: `autocomplete-input.tsx`, `reusable-select.tsx`, `reusable-multiselect.tsx`, `reusable-date-picker.tsx`, `tag-input.tsx`
+  - Dialogs: `reusable-dialog.tsx`, `confirm-delete-dialog.tsx`, `confirm-changes-dialog.tsx`, `triple-confirm-dialog.tsx`
+  - Layout: `reusable-card.tsx`, `reusable-collapsible.tsx`, `reusable-tabs.tsx`, `reusable-summary.tsx`
+  - Data handling: `data-table/`, `data-form/`, `dynamic-field-renderer.tsx`, `field-value-display.tsx`
+  - File management: `file-upload.tsx`, `multiple-file-upload.tsx`, `file-viewer.tsx`
+  - UI utilities: `loading.tsx`, `reusable-tooltip.tsx`, `info-panel.tsx`, `error-boundary.tsx`
+
+### Utility Function Priority
+- **Always check first**: Browse `frontend/src/lib/` for existing utility functions before implementing new ones
+- **Available utility libraries include**:
+  - Data processing: `data-utils.ts`, `csv-parser.ts`, `csv-export.ts`, `edit-utils.ts`, `form-utils.ts`
+  - Date/time: `date-utils.ts`, `time-utils.ts`, `time-entry-utils.ts`
+  - Tables: `table-utils.tsx`, `table-filter-utils.ts`, `table-width-utils.ts`
+  - Relations: `relation-utils.ts`
+  - General: `utils.ts`, `crypto-utils.ts`
+
+### Development Approach
+1. **Research existing solutions**: Always explore reusable components and utilities first
+2. **Extend existing components**: Prefer extending/enhancing existing components over creating new ones
+3. **Extract reusable patterns**: If creating new functionality, consider if it should be added to the reusable collection
+4. **Follow established patterns**: Use the same naming conventions and structure as existing components
 
 ## Adding New Datasets and Features
 

@@ -286,7 +286,7 @@ export default function EditTimeEntryDialog({
               showRecentOptions={true}
               maxRecentOptions={7}
               renderItem={(option, isActive) => {
-                const entry = option.entry;
+                const entry = option.entry as TimeEntry;
 
                 return (
                   <div
@@ -301,17 +301,17 @@ export default function EditTimeEntryDialog({
                         description.toLowerCase() && (
                         <Check className="h-4 w-4 text-primary" />
                       )}
-                      {option.isMetric && (
+                      {option.isMetric ? (
                         <Badge
                           variant="outline"
                           className="bg-blue-100 dark:bg-blue-900 text-xs"
                         >
                           Time Metric
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
 
-                    {entry && (
+                    {entry ? (
                       <div className="flex flex-wrap gap-1 mt-1 text-xs text-muted-foreground">
                         {entry.category_id_data && (
                           <div className="flex items-center gap-1">
@@ -350,7 +350,7 @@ export default function EditTimeEntryDialog({
                           </div>
                         )}
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               }}

@@ -341,7 +341,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       footerActionLoadingText="Saving..."
       customContent={
         <div className="space-y-6 p-4 overflow-y-auto max-h-[70vh]">
-          {/* Bloodwork date selector */}
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Test Date{" "}
@@ -395,7 +394,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             </Popover>
           </div>
 
-          {/* Additional bloodwork details - only show for new dates */}
           {!isExistingDate && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -435,9 +433,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             </>
           )}
 
-          {/* Search and markers container with equal heights */}
           <div className="grid grid-cols-1 h-[400px]">
-            {/* Search and filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Search Markers</label>
               <div className="relative h-full">
@@ -452,7 +448,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
               </div>
             </div>
 
-            {/* Markers list */}
             <div className="border rounded-md overflow-hidden h-full">
               <div className="bg-muted p-2 text-sm font-medium">
                 Blood Markers
@@ -474,7 +469,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                     overflow: "auto",
                   }}
                 >
-                  {/* Virtual list container */}
                   <div
                     style={{
                       height: `${rowVirtualizer.getTotalSize()}px`,

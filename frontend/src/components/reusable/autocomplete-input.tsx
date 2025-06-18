@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,10 +71,15 @@ export default function AutocompleteInput({
     const recentOptions = showRecentOptions
       ? [...options]
           .sort((a, b) => {
-            if (a.entry?.lastModified && b.entry?.lastModified) {
+            if (
+              a.entry &&
+              b.entry &&
+              (a.entry as any)?.lastModified &&
+              (b.entry as any)?.lastModified
+            ) {
               return (
-                new Date(b.entry.lastModified).getTime() -
-                new Date(a.entry.lastModified).getTime()
+                new Date((b.entry as any).lastModified).getTime() -
+                new Date((a.entry as any).lastModified).getTime()
               );
             }
             return 0;
@@ -104,30 +109,29 @@ export default function AutocompleteInput({
     optionRefs.current = finalOptions.map(() => null);
   }, [finalOptions]);
 
-  // Update dropdown position when input focus changes or suggestions show
-  const updateDropdownPosition = () => {
+  const updateDropdownPosition = useCallback(() => {
     if (inputRef.current && usePortal) {
       const rect = inputRef.current.getBoundingClientRect();
       setDropdownRect(rect);
     }
-  };
+  }, [usePortal]);
 
   useEffect(() => {
     if (showSuggestions && usePortal) {
       updateDropdownPosition();
-      
+
       const handleScroll = () => updateDropdownPosition();
       const handleResize = () => updateDropdownPosition();
-      
-      window.addEventListener('scroll', handleScroll, true);
-      window.addEventListener('resize', handleResize);
-      
+
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleResize);
+
       return () => {
-        window.removeEventListener('scroll', handleScroll, true);
-        window.removeEventListener('resize', handleResize);
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleResize);
       };
     }
-  }, [showSuggestions, usePortal]);
+  }, [showSuggestions, usePortal, updateDropdownPosition]);
 
   useEffect(() => {
     if (autofocus && inputRef.current) {
@@ -177,25 +181,27 @@ export default function AutocompleteInput({
     }
   };
 
-  // Calculate dropdown style based on position
   const getDropdownStyle = (): React.CSSProperties => {
     if (!dropdownRect) return {};
-    
-    const top = dropdownPosition === "top" 
-      ? dropdownRect.top - 8 // 8px margin above input
-      : dropdownRect.bottom + 4; // 4px margin below input
-    
+
+    const top =
+      dropdownPosition === "top"
+        ? dropdownRect.top - 8
+        : dropdownRect.bottom + 4;
+
     return {
-      position: 'fixed',
-      top: dropdownPosition === "top" ? 'auto' : top,
-      bottom: dropdownPosition === "top" ? window.innerHeight - dropdownRect.top + 4 : 'auto',
+      position: "fixed",
+      top: dropdownPosition === "top" ? "auto" : top,
+      bottom:
+        dropdownPosition === "top"
+          ? window.innerHeight - dropdownRect.top + 4
+          : "auto",
       left: dropdownRect.left,
       minWidth: dropdownRect.width,
       zIndex: 9999,
     };
   };
 
-  // Render dropdown content for portal
   const renderPortalDropdown = () => {
     if (!showSuggestions || !usePortal || !dropdownRect) {
       return null;
@@ -259,7 +265,6 @@ export default function AutocompleteInput({
     return createPortal(dropdownContent, document.body);
   };
 
-  // Render dropdown content for non-portal (normal position)
   const renderInlineDropdown = () => {
     if (!showSuggestions || usePortal) return null;
 
@@ -310,10 +315,12 @@ export default function AutocompleteInput({
           </div>
         )}
         {finalOptions.length === 0 && value.length > 0 && (
-          <div className={cn(
-            "absolute left-0 z-50 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground min-w-full w-max max-w-[500px]",
-            dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
-          )}>
+          <div
+            className={cn(
+              "absolute left-0 z-50 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground min-w-full w-max max-w-[500px]",
+              dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
+            )}
+          >
             {emptyMessage}
           </div>
         )}
@@ -322,7 +329,6 @@ export default function AutocompleteInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Handle Alt+Shift to hide suggestions
     if (e.key === "Shift" && e.altKey) {
       if (showSuggestions) {
         e.preventDefault();
@@ -332,14 +338,17 @@ export default function AutocompleteInput({
       }
     }
 
-    // Let regular Escape always propagate for dialog closing
     if (e.key === "Escape") {
       onKeyDown?.(e);
       return;
     }
 
     if (!showSuggestions || finalOptions.length === 0) {
-      // Call parent handler when suggestions aren't showing
+      onKeyDown?.(e);
+      return;
+    }
+
+    if (e.key === "Enter" && e.altKey) {
       onKeyDown?.(e);
       return;
     }
@@ -365,11 +374,10 @@ export default function AutocompleteInput({
         break;
       case "Tab":
         setShowSuggestions(false);
-        // Call parent handler for Tab to allow normal tab navigation
+
         onKeyDown?.(e);
         break;
       default:
-        // Call parent handler for other keys when suggestions are showing
         onKeyDown?.(e);
         break;
     }
@@ -392,7 +400,6 @@ export default function AutocompleteInput({
           ref={inputRef}
           value={value}
           onBlur={() => {
-            // Delay hiding suggestions to allow clicks to register
             setTimeout(() => {
               setShowSuggestions(false);
             }, 300);

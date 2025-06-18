@@ -68,12 +68,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- add a finance tracking section
-- add a paycheck part in this section, along with the logs and balances
-- when adding single form, is there a way to disable the "saved local data" part?
-- in bulk import for the wealth section, add an import button with the fields required
-
-- in reusable dialog, is there a way to allow for the custom content to have a dedicated footer that always shows at the bottom of the dialog? In addition, is there a way to also enabled that for the default footer?
+- in multi-mode-add-dialog, test bulk imports
 
 - in metrics, add a way to manage the metric category
 - rename "quick metric logger" to be just "metric logger"
@@ -86,9 +81,27 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar
 - in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5?
 - in the dashboard summary configuration, there's the idea of small/medium/large for width, but can we also have the concept for small/medium/large for height? And if the content is too much for the size, make the content inside scrollable
+- in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode
+- in time tracking, if I press play on the time tracker form at the current time, it sometimes goes back to the last time entry time
+- in time tracking, for the category select field, is there a way to add a selection to create a new category? and also make it easier for the user to type out what they know the category they want instead of scrolling through and finding it manually?
+- for file upload component, need to change the UI and fix it
+- in todos, add a filter for the priorities
+- in todos, allow user to search for the todos
+- in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
+
+- fix the react bug on the home page about private content
 
 ### DONE
 
+- add a finance tracking section [DONE 2025-06-17]
+- add a paycheck part in this section, along with the logs and balances [DONE 2025-06-17]
+- in bulk import for the wealth section, add an import button with the fields required [DONE 2025-06-17]
+- in the multi-mode-add-dialog, if I try to use ALT+ENTER to add a new row, it doesn't work [DONE 2025-06-17]
+- in reusable dialog, is there a way to allow for the custom content to have a dedicated footer that always shows at the bottom of the dialog? In addition, is there a way to also enabled that for the default footer? [DONE 2025-06-17]
+- in wealth, add the "add files" capability [DONE 2025-06-17]
+- in wealth, add graphs and also "summaries" that filter according to specific filters [DONE 2025-06-17]
+- in wealth, add the latest "summary" for the year for logs, "current networth" for balances, "summary" for the year for paycheck [DONE 2025-06-17]
+- in wealth, balances and paycheck "this month" filter doesn't work like logs [DONE 2025-06-17]
 - if I add a new feature and use the `visibleRoutes` from `settingsStore`, it doesn't show the `visibleRoutes[new url]` as true unless the user modifies the store [DONE 2025-06-15]
 - in bloodwork, add a "blood test" filter to show only that specific blood test in the graph [DONE 2025-06-15]
 - fix add experiments changing the date [DONE 2025-06-15]

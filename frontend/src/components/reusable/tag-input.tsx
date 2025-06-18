@@ -92,12 +92,10 @@ export default function TagInput({
       const withoutCurrentTag = currentTags.slice(0, -1);
 
       const newTags = [...withoutCurrentTag, option.label];
-      // Add comma and space after the selected tag to move cursor to end
       onChange(newTags.join(", ") + ", ");
     } else {
       if (!currentTags.includes(option.label)) {
         const newTags = [...currentTags, option.label];
-        // Add comma and space after the selected tag to move cursor to end
         onChange(newTags.join(", ") + ", ");
       }
     }

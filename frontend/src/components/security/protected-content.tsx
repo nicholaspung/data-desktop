@@ -41,7 +41,6 @@ export function ProtectedContent({
 
   const defaultPlaceholder = blur ? (
     <div className="relative">
-      {/* Overlay with unlock button */}
       <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/60">
         <Button
           variant="outline"
@@ -54,7 +53,6 @@ export function ProtectedContent({
         </Button>
       </div>
 
-      {/* Blurred content - important: use specific selectors to avoid breaking the UI */}
       <div
         className={cn(
           "select-none pointer-events-none",

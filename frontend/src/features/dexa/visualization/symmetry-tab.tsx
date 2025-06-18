@@ -305,7 +305,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
 
       {viewMode === "single" ? (
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Left vs Right Comparison */}
           <CustomBarChart
             data={getLimbSymmetryData(selectedScan)}
             bars={getLimbSymmetryBarConfigs()}
@@ -321,7 +320,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
             }}
           />
 
-          {/* Symmetry Scores */}
           <CustomBarChart
             data={calculateSymmetryScores(selectedScan)}
             bars={getSymmetryBarConfigs()}
@@ -335,7 +333,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Symmetry Radar Comparison */}
           <CustomRadarChart
             data={getRadarComparisonData()}
             radars={getRadarConfigs()}
@@ -345,9 +342,7 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
             tooltipFormatter={(value) => `${Number(value).toFixed(2)}%`}
           />
 
-          {/* Detailed Comparison */}
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Primary Scan Symmetry */}
             <CustomBarChart
               data={getLimbSymmetryData(selectedScan)}
               bars={getLimbSymmetryBarConfigs()}
@@ -367,7 +362,6 @@ const SymmetryTab = ({ data }: { data: DEXAScan[] }) => {
               }}
             />
 
-            {/* Comparison Scan Symmetry */}
             <CustomBarChart
               data={getLimbSymmetryData(comparisonScan)}
               bars={getLimbSymmetryBarConfigs()}

@@ -155,7 +155,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
 
       {viewMode === "single" ? (
         <div className="space-y-6">
-          {/* Total BMD trend over time */}
           <CustomLineChart
             data={getTotalBMDTrendData()}
             lines={[
@@ -174,7 +173,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
             height={350}
           />
 
-          {/* Current scan bone density by region */}
           {selectedScan && (
             <div className="grid gap-6 md:grid-cols-2">
               <CustomBarChart
@@ -210,7 +208,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
             </div>
           )}
 
-          {/* BMD Status Key */}
           <Card>
             <CardHeader>
               <CardTitle>Bone Health Reference</CardTitle>
@@ -240,7 +237,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Bone Density Radar Comparison */}
           <CustomRadarChart
             data={getRadarComparisonData()}
             radars={[
@@ -272,7 +268,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
             tooltipFormatter={(value) => `${Number(value).toFixed(3)} g/cm²`}
           />
 
-          {/* All Bone Density Metrics Trend */}
           <CustomLineChart
             data={getBoneDensityTrendData()}
             lines={getBoneDensityLineConfigs()}
@@ -282,7 +277,6 @@ const BoneDensityTab = ({ data }: { data: DEXAScan[] }) => {
             height={400}
           />
 
-          {/* Changes Summary */}
           {selectedScan && comparisonScan && (
             <Card>
               <CardHeader>

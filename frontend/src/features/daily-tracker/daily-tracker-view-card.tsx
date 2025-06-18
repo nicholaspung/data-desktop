@@ -39,10 +39,10 @@ export default function DailyTrackerViewCard({
     ? format(new Date(metric.schedule_end_date), "MMM d")
     : null;
 
-  const hasGoal = 
-    metric.goal_value !== undefined && 
-    metric.goal_value !== null && 
-    metric.goal_type !== undefined && 
+  const hasGoal =
+    metric.goal_value !== undefined &&
+    metric.goal_value !== null &&
+    metric.goal_type !== undefined &&
     metric.goal_type !== null &&
     !(metric.goal_value === "" || metric.goal_value === "0");
 
@@ -127,10 +127,11 @@ export default function DailyTrackerViewCard({
               </Badge>
             )}
           </h4>
-          <div className="text-sm text-muted-foreground">{metric.description}</div>
+          <div className="text-sm text-muted-foreground">
+            {metric.description}
+          </div>
         </div>
 
-        {/* Show scheduling badge if schedule is defined */}
         {(metric.schedule_start_date ||
           metric.schedule_end_date ||
           (metric.schedule_days && metric.schedule_days.length > 0)) && (
@@ -152,7 +153,6 @@ export default function DailyTrackerViewCard({
         )}
       </div>
 
-      {/* Display streak information */}
       <MetricStreakDisplay
         metricId={metric.id}
         metricType={metric.type}
@@ -161,7 +161,6 @@ export default function DailyTrackerViewCard({
         className="mb-3"
       />
 
-      {/* Show goal information if available */}
       {hasGoal && (
         <div className="mb-4">
           <div className="flex items-center text-sm mb-1">
@@ -185,7 +184,6 @@ export default function DailyTrackerViewCard({
         </div>
       )}
 
-      {/* Render appropriate input based on metric type */}
       <div className="mt-4">
         {metric.type === "boolean" ? (
           <div className="flex items-center space-x-2">
@@ -203,7 +201,12 @@ export default function DailyTrackerViewCard({
           metric.type === "time" ? (
           <div className="space-y-2">
             <Label htmlFor={`metric-${metric.id}`}>
-              Value {metric.type === "percentage" ? "(%)" : metric.unit ? `(${metric.unit})` : ""}
+              Value{" "}
+              {metric.type === "percentage"
+                ? "(%)"
+                : metric.unit
+                  ? `(${metric.unit})`
+                  : ""}
             </Label>
             <NumberValueInput
               value={metric.value}
@@ -226,7 +229,6 @@ export default function DailyTrackerViewCard({
         )}
       </div>
 
-      {/* Notes field */}
       {showNotes && (
         <div className="mt-4 space-y-2">
           <Label htmlFor={`notes-${metric.id}`}>Notes (Optional)</Label>

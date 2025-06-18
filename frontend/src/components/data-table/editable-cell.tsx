@@ -524,11 +524,11 @@ const EditableCell = ({
                 ? (option) => (
                     <div className="flex flex-row items-center gap-2">
                       <span>{option.label}</span>
-                      {option.secondaryValue && (
+                      {option.secondaryValue ? (
                         <span className="text-xs text-muted-foreground">
-                          {option.secondaryValue}
+                          {String(option.secondaryValue)}
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   )
                 : undefined

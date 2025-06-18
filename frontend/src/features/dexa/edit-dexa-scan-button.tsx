@@ -91,8 +91,6 @@ export default function EditDexaScanButton() {
                   title="DEXA Scan"
                   placeholder="Select a scan date..."
                 />
-
-                {/* Delete button appears when a scan is selected */}
                 {selectedScan && (
                   <div className="mt-3">
                     <ConfirmDeleteDialog

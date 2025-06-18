@@ -81,7 +81,6 @@ const BloodworkSummary = ({
               </span>
             </div>
 
-            {/* New filter for markers with no range defined */}
             <div
               onClick={() => onFilterChange("noRange")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer transition-colors ${

@@ -9,7 +9,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, Plus, Copy, ChevronLeft, ChevronRight, Keyboard } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
+  Keyboard,
+} from "lucide-react";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import TagInput from "@/components/reusable/tag-input";
@@ -41,124 +48,122 @@ export default function MultiEntryTable({
 }: MultiEntryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [focusedCell, setFocusedCell] = useState<{ rowId: string; fieldKey: string } | null>(null);
+  const [focusedCell, setFocusedCell] = useState<{
+    rowId: string;
+    fieldKey: string;
+  } | null>(null);
 
-  // Filter out non-editable fields
   const editableFields = fieldDefinitions.filter(
     (field) => !field.isRelation && field.key !== "id"
   );
 
-  // Pagination calculations
   const totalPages = Math.ceil(rows.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const displayedRows = rows.slice(startIndex, endIndex);
 
-  // Get autocomplete options for a field  
   const getAutocompleteOptions = useMemo(() => {
     const fieldOptionsMap: Record<string, SelectOption[]> = {};
-    
-    editableFields.forEach(field => {
+
+    editableFields.forEach((field) => {
       if (!existingEntries.length) {
         fieldOptionsMap[field.key] = [];
         return;
       }
-      
+
       const uniqueValues = new Map<string, any>();
-      existingEntries.forEach(entry => {
+      existingEntries.forEach((entry) => {
         const value = entry[field.key];
-        if (value && typeof value === 'string' && value.trim()) {
+        if (value && typeof value === "string" && value.trim()) {
           const trimmedValue = value.trim();
           if (!uniqueValues.has(trimmedValue)) {
             uniqueValues.set(trimmedValue, entry);
           }
         }
       });
-      
+
       fieldOptionsMap[field.key] = Array.from(uniqueValues.entries())
         .map(([value, entry]) => ({
           id: `${field.key}-${value}`,
           label: value,
-          entry: entry
+          entry: entry,
         }))
         .sort((a, b) => a.label.localeCompare(b.label));
     });
-    
+
     return fieldOptionsMap;
   }, [existingEntries, editableFields]);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent, rowId: string, fieldKey: string) => {
-    // Don't handle ESC here - let the input components handle it first
-    if (e.key === 'Escape') {
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    rowId: string,
+    fieldKey: string
+  ) => {
+    if (e.key === "Escape") {
       return;
     }
 
     if (!focusedCell) return;
 
-    const currentRowIndex = displayedRows.findIndex(row => row.id === rowId);
-    const currentFieldIndex = editableFields.findIndex(field => field.key === fieldKey);
+    const currentRowIndex = displayedRows.findIndex((row) => row.id === rowId);
+    const currentFieldIndex = editableFields.findIndex(
+      (field) => field.key === fieldKey
+    );
 
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       e.preventDefault();
       if (e.shiftKey) {
-        // Move to previous field/row
         if (currentFieldIndex > 0) {
-          // Move to previous field in same row
           const newField = editableFields[currentFieldIndex - 1];
           setFocusedCell({ rowId, fieldKey: newField.key });
           focusCell(rowId, newField.key);
         } else if (currentRowIndex > 0) {
-          // Move to last field of previous row
           const prevRow = displayedRows[currentRowIndex - 1];
           const lastField = editableFields[editableFields.length - 1];
           setFocusedCell({ rowId: prevRow.id, fieldKey: lastField.key });
           focusCell(prevRow.id, lastField.key);
         }
       } else {
-        // Move to next field/row
         if (currentFieldIndex < editableFields.length - 1) {
-          // Move to next field in same row
           const newField = editableFields[currentFieldIndex + 1];
           setFocusedCell({ rowId, fieldKey: newField.key });
           focusCell(rowId, newField.key);
         } else if (currentRowIndex < displayedRows.length - 1) {
-          // Move to first field of next row
           const nextRow = displayedRows[currentRowIndex + 1];
           const firstField = editableFields[0];
           setFocusedCell({ rowId: nextRow.id, fieldKey: firstField.key });
           focusCell(nextRow.id, firstField.key);
         }
       }
-    } else if (e.key === 'ArrowUp' && e.altKey) {
+    } else if (e.key === "ArrowUp" && e.altKey) {
       e.preventDefault();
       if (currentRowIndex > 0) {
         const prevRow = displayedRows[currentRowIndex - 1];
         setFocusedCell({ rowId: prevRow.id, fieldKey });
         focusCell(prevRow.id, fieldKey);
       }
-    } else if (e.key === 'ArrowDown' && e.altKey) {
+    } else if (e.key === "ArrowDown" && e.altKey) {
       e.preventDefault();
       if (currentRowIndex < displayedRows.length - 1) {
         const nextRow = displayedRows[currentRowIndex + 1];
         setFocusedCell({ rowId: nextRow.id, fieldKey });
         focusCell(nextRow.id, fieldKey);
       }
-    } else if (e.key === 'ArrowLeft' && e.altKey) {
+    } else if (e.key === "ArrowLeft" && e.altKey) {
       e.preventDefault();
       if (currentFieldIndex > 0) {
         const prevField = editableFields[currentFieldIndex - 1];
         setFocusedCell({ rowId, fieldKey: prevField.key });
         focusCell(rowId, prevField.key);
       }
-    } else if (e.key === 'ArrowRight' && e.altKey) {
+    } else if (e.key === "ArrowRight" && e.altKey) {
       e.preventDefault();
       if (currentFieldIndex < editableFields.length - 1) {
         const nextField = editableFields[currentFieldIndex + 1];
         setFocusedCell({ rowId, fieldKey: nextField.key });
         focusCell(rowId, nextField.key);
       }
-    } else if (e.key === 'Enter' && e.altKey) {
+    } else if (e.key === "Enter" && e.altKey) {
       e.preventDefault();
       addNewRow();
     }
@@ -166,23 +171,25 @@ export default function MultiEntryTable({
 
   const focusCell = (rowId: string, fieldKey: string) => {
     setTimeout(() => {
-      const element = document.querySelector(`[data-cell="${rowId}-${fieldKey}"] input, [data-cell="${rowId}-${fieldKey}"] textarea`);
+      const element = document.querySelector(
+        `[data-cell="${rowId}-${fieldKey}"] input, [data-cell="${rowId}-${fieldKey}"] textarea`
+      );
       if (element instanceof HTMLElement) {
         element.focus();
       }
     }, 0);
   };
 
-  // Handle selection for enhanced autocomplete fields with auto-fill
-  const handleEnhancedAutocompleteSelect = (rowId: string, fieldKey: string, option: SelectOption & { [key: string]: any }) => {
-    const updatedData = { ...rows.find(row => row.id === rowId)?.data };
-    
-    // Set the main field value
+  const handleEnhancedAutocompleteSelect = (
+    rowId: string,
+    fieldKey: string,
+    option: SelectOption & { [key: string]: any }
+  ) => {
+    const updatedData = { ...rows.find((row) => row.id === rowId)?.data };
+
     updatedData[fieldKey] = option.label;
-    
-    // Auto-fill related fields based on field type
+
     if (fieldKey === "description" && option.entry) {
-      // Financial logs: auto-fill category and tags
       if (option.entry.category) {
         updatedData.category = option.entry.category;
       }
@@ -190,7 +197,6 @@ export default function MultiEntryTable({
         updatedData.tags = option.entry.tags;
       }
     } else if (fieldKey === "account_name" && option.entry) {
-      // Financial balances: auto-fill account_type and account_owner
       if (option.entry.account_type) {
         updatedData.account_type = option.entry.account_type;
       }
@@ -198,13 +204,11 @@ export default function MultiEntryTable({
         updatedData.account_owner = option.entry.account_owner;
       }
     } else if (fieldKey === "deduction_type" && option.entry) {
-      // Paychecks: auto-fill category
       if (option.entry.category) {
         updatedData.category = option.entry.category;
       }
     }
-    
-    // Update the row with all changes
+
     onRowsChange(
       rows.map((row) => {
         if (row.id === rowId) {
@@ -221,32 +225,42 @@ export default function MultiEntryTable({
     );
   };
 
-  // Render item for enhanced autocomplete fields with related data
-  const renderEnhancedAutocompleteItem = (fieldKey: string, option: SelectOption & { [key: string]: any }) => {
-    const relatedFields = fieldKey === "description" 
-      ? ["category", "tags"]
-      : fieldKey === "account_name"
-      ? ["account_type", "account_owner"]
-      : fieldKey === "deduction_type"
-      ? ["category"]
-      : [];
+  const renderEnhancedAutocompleteItem = (
+    fieldKey: string,
+    option: SelectOption & { [key: string]: any }
+  ) => {
+    const relatedFields =
+      fieldKey === "description"
+        ? ["category", "tags"]
+        : fieldKey === "account_name"
+          ? ["account_type", "account_owner"]
+          : fieldKey === "deduction_type"
+            ? ["category"]
+            : [];
 
     return (
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <span className="font-medium">{option.label}</span>
         </div>
-        {relatedFields.some(field => option.entry?.[field]) && (
+        {relatedFields.some((field) => option.entry?.[field]) && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {relatedFields.map((fieldName, index) => {
               const value = option.entry?.[fieldName];
               if (!value) return null;
-              
-              const colors = ['bg-blue-100 text-blue-800', 'bg-green-100 text-green-800', 'bg-purple-100 text-purple-800'];
+
+              const colors = [
+                "bg-blue-100 text-blue-800",
+                "bg-green-100 text-green-800",
+                "bg-purple-100 text-purple-800",
+              ];
               const colorClass = colors[index % colors.length];
-              
+
               return (
-                <span key={fieldName} className={`px-2 py-0.5 rounded ${colorClass}`}>
+                <span
+                  key={fieldName}
+                  className={`px-2 py-0.5 rounded ${colorClass}`}
+                >
                   {value}
                 </span>
               );
@@ -264,8 +278,7 @@ export default function MultiEntryTable({
       isValid: false,
       errors: {},
     };
-    
-    // Set default values
+
     editableFields.forEach((field) => {
       if (field.type === "date") {
         newRow.data[field.key] = format(new Date(), "yyyy-MM-dd");
@@ -277,11 +290,10 @@ export default function MultiEntryTable({
         newRow.data[field.key] = "";
       }
     });
-    
+
     const newRows = [...rows, newRow];
     onRowsChange(newRows);
-    
-    // Navigate to the last page to see the new row
+
     const newTotalPages = Math.ceil(newRows.length / itemsPerPage);
     setCurrentPage(newTotalPages);
   };
@@ -300,7 +312,7 @@ export default function MultiEntryTable({
       isValid: rowToDuplicate.isValid,
       errors: {},
     };
-    
+
     onRowsChange([...rows, newRow]);
   };
 
@@ -324,12 +336,12 @@ export default function MultiEntryTable({
 
   const validateRow = (data: Record<string, any>): Record<string, string> => {
     const errors: Record<string, string> = {};
-    
+
     editableFields.forEach((field) => {
       if (!field.isOptional && !data[field.key]) {
         errors[field.key] = "Required";
       }
-      
+
       if (field.type === "number" && data[field.key]) {
         const num = Number(data[field.key]);
         if (isNaN(num)) {
@@ -337,11 +349,10 @@ export default function MultiEntryTable({
         }
       }
     });
-    
+
     return errors;
   };
 
-  // Add initial row if empty
   useEffect(() => {
     if (rows.length === 0) {
       const newRow: MultiEntryRow = {
@@ -350,8 +361,7 @@ export default function MultiEntryTable({
         isValid: false,
         errors: {},
       };
-      
-      // Set default values
+
       editableFields.forEach((field) => {
         if (field.type === "date") {
           newRow.data[field.key] = format(new Date(), "yyyy-MM-dd");
@@ -363,7 +373,7 @@ export default function MultiEntryTable({
           newRow.data[field.key] = "";
         }
       });
-      
+
       onRowsChange([newRow]);
     }
   }, [rows.length, editableFields, onRowsChange]);
@@ -374,48 +384,98 @@ export default function MultiEntryTable({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Rows per page:</span>
-        <ReusableSelect
-          options={[
-            { id: "5", label: "5" },
-            { id: "10", label: "10" },
-            { id: "20", label: "20" },
-            { id: "50", label: "50" },
-          ]}
-          value={itemsPerPage.toString()}
-          onChange={(value) => {
-            setItemsPerPage(Number(value));
-            setCurrentPage(1);
-          }}
-          triggerClassName="w-20"
-        />
-        <TooltipProvider>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
-                <Keyboard className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent 
-              side="bottom" 
-              align="start"
-              className="max-w-sm z-[99999] bg-popover text-popover-foreground border shadow-lg"
-              sideOffset={12}
-              avoidCollisions={true}
-              sticky="always"
-            >
-              <div className="space-y-2 text-sm p-1">
-                <div className="font-medium">Keyboard shortcuts:</div>
-                <div>• <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Tab</kbd> / <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Shift+Tab</kbd> - Navigate between fields</div>
-                <div>• <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+↑</kbd> / <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+↓</kbd> / <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+←</kbd> / <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+→</kbd> - Navigate table</div>
-                <div>• <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+Enter</kbd> - Add new row</div>
-                <div>• <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Alt+Shift</kbd> - Hide autocomplete suggestions</div>
-                <div>• <kbd className="px-1 py-0.5 bg-background border rounded text-xs">Esc</kbd> - Close dialog</div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-        
+          <ReusableSelect
+            options={[
+              { id: "5", label: "5" },
+              { id: "10", label: "10" },
+              { id: "20", label: "20" },
+              { id: "50", label: "50" },
+            ]}
+            value={itemsPerPage.toString()}
+            onChange={(value) => {
+              setItemsPerPage(Number(value));
+              setCurrentPage(1);
+            }}
+            triggerClassName="w-20"
+          />
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                >
+                  <Keyboard className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                align="start"
+                className="max-w-sm z-[99999] bg-popover text-popover-foreground border shadow-lg"
+                sideOffset={12}
+                avoidCollisions={true}
+                sticky="always"
+              >
+                <div className="space-y-2 text-sm p-1">
+                  <div className="font-medium">Keyboard shortcuts:</div>
+                  <div>
+                    •{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Tab
+                    </kbd>{" "}
+                    /{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Shift+Tab
+                    </kbd>{" "}
+                    - Navigate between fields
+                  </div>
+                  <div>
+                    •{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+↑
+                    </kbd>{" "}
+                    /{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+↓
+                    </kbd>{" "}
+                    /{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+←
+                    </kbd>{" "}
+                    /{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+→
+                    </kbd>{" "}
+                    - Navigate table
+                  </div>
+                  <div>
+                    •{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+Enter
+                    </kbd>{" "}
+                    - Add new row
+                  </div>
+                  <div>
+                    •{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Alt+Shift
+                    </kbd>{" "}
+                    - Hide autocomplete suggestions
+                  </div>
+                  <div>
+                    •{" "}
+                    <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
+                      Esc
+                    </kbd>{" "}
+                    - Close dialog
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
             Page {currentPage} of {totalPages} ({rows.length} total rows)
@@ -460,19 +520,25 @@ export default function MultiEntryTable({
                   </div>
                 </TableHead>
               ))}
-              {showActions && <TableHead className="w-[100px]">Actions</TableHead>}
+              {showActions && (
+                <TableHead className="w-[100px]">Actions</TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedRows.map((row, displayIndex) => (
-              <TableRow 
+              <TableRow
                 key={row.id}
                 className={cn(
                   displayIndex % 2 === 0 ? "bg-background" : "bg-muted/30"
                 )}
               >
                 {editableFields.map((field) => (
-                  <TableCell key={field.key} className="p-2" data-cell={`${row.id}-${field.key}`}>
+                  <TableCell
+                    key={field.key}
+                    className="p-2"
+                    data-cell={`${row.id}-${field.key}`}
+                  >
                     {field.type === "date" ? (
                       <Input
                         type="date"
@@ -481,13 +547,19 @@ export default function MultiEntryTable({
                           updateRowData(row.id, field.key, e.target.value)
                         }
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
-                        className={row.errors[field.key] ? "border-red-500" : ""}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
+                        className={
+                          row.errors[field.key] ? "border-red-500" : ""
+                        }
                       />
                     ) : field.type === "number" ? (
                       <div className="space-y-1">
                         <div className="flex items-center gap-1">
-                          {field.unit && <span className="text-sm">{field.unit}</span>}
+                          {field.unit && (
+                            <span className="text-sm">{field.unit}</span>
+                          )}
                           <Input
                             type="number"
                             step="0.01"
@@ -495,10 +567,19 @@ export default function MultiEntryTable({
                             onChange={(e) =>
                               updateRowData(row.id, field.key, e.target.value)
                             }
-                            onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                            onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                            onKeyDown={(e) =>
+                              handleKeyDown(e, row.id, field.key)
+                            }
+                            onFocus={() =>
+                              setFocusedCell({
+                                rowId: row.id,
+                                fieldKey: field.key,
+                              })
+                            }
                             placeholder={field.displayName}
-                            className={row.errors[field.key] ? "border-red-500" : ""}
+                            className={
+                              row.errors[field.key] ? "border-red-500" : ""
+                            }
                           />
                         </div>
                       </div>
@@ -510,59 +591,92 @@ export default function MultiEntryTable({
                           updateRowData(row.id, field.key, e.target.checked)
                         }
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
                         className="h-4 w-4"
                       />
                     ) : field.type === "tags" ? (
                       <TagInput
                         value={row.data[field.key] || ""}
-                        onChange={(value) => updateRowData(row.id, field.key, value)}
+                        onChange={(value) =>
+                          updateRowData(row.id, field.key, value)
+                        }
                         generalData={existingEntries}
                         generalDataTagField="tags"
                         showLabel={false}
                         usePortal={true}
                         dropdownPosition="top"
-                        className={row.errors[field.key] ? "border-red-500" : ""}
+                        className={
+                          row.errors[field.key] ? "border-red-500" : ""
+                        }
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
                       />
-                    ) : field.key === "description" || field.key === "account_name" || field.key === "deduction_type" ? (
+                    ) : field.key === "description" ||
+                      field.key === "account_name" ||
+                      field.key === "deduction_type" ? (
                       <AutocompleteInput
                         value={row.data[field.key] || ""}
-                        onChange={(value) => updateRowData(row.id, field.key, value)}
-                        onSelect={(option) => handleEnhancedAutocompleteSelect(row.id, field.key, option)}
-                        options={(getAutocompleteOptions[field.key] || []) as (SelectOption & { [key: string]: unknown })[]}
+                        onChange={(value) =>
+                          updateRowData(row.id, field.key, value)
+                        }
+                        onSelect={(option) =>
+                          handleEnhancedAutocompleteSelect(
+                            row.id,
+                            field.key,
+                            option
+                          )
+                        }
+                        options={
+                          (getAutocompleteOptions[field.key] ||
+                            []) as (SelectOption & { [key: string]: unknown })[]
+                        }
                         placeholder={field.displayName}
-                        inputClassName={row.errors[field.key] ? "border-red-500" : ""}
+                        inputClassName={
+                          row.errors[field.key] ? "border-red-500" : ""
+                        }
                         showRecentOptions={true}
                         maxRecentOptions={5}
                         emptyMessage={`Type to add new ${field.displayName.toLowerCase()}`}
-                        renderItem={(option) => renderEnhancedAutocompleteItem(field.key, option)}
+                        renderItem={(option) =>
+                          renderEnhancedAutocompleteItem(field.key, option)
+                        }
                         dropdownPosition="top"
                         usePortal={true}
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
                       />
-                    ) : field.type === "autocomplete" || (
-                        // Financial logs: category
-                        // Financial balances: account_type, account_owner  
-                        // Paycheck: category
-                        field.key === "category" ||
-                        field.key === "account_type" || field.key === "account_owner"
-                      ) ? (
+                    ) : field.type === "autocomplete" ||
+                      field.key === "category" ||
+                      field.key === "account_type" ||
+                      field.key === "account_owner" ? (
                       <AutocompleteInput
                         value={row.data[field.key] || ""}
-                        onChange={(value) => updateRowData(row.id, field.key, value)}
-                        options={(getAutocompleteOptions[field.key] || []) as (SelectOption & { [key: string]: unknown })[]}
+                        onChange={(value) =>
+                          updateRowData(row.id, field.key, value)
+                        }
+                        options={
+                          (getAutocompleteOptions[field.key] ||
+                            []) as (SelectOption & { [key: string]: unknown })[]
+                        }
                         placeholder={field.displayName}
-                        inputClassName={row.errors[field.key] ? "border-red-500" : ""}
+                        inputClassName={
+                          row.errors[field.key] ? "border-red-500" : ""
+                        }
                         showRecentOptions={true}
                         maxRecentOptions={5}
                         emptyMessage={`Type to add new ${field.displayName.toLowerCase()}`}
                         usePortal={true}
                         dropdownPosition="top"
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
                       />
                     ) : (
                       <Input
@@ -571,9 +685,13 @@ export default function MultiEntryTable({
                           updateRowData(row.id, field.key, e.target.value)
                         }
                         onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() => setFocusedCell({ rowId: row.id, fieldKey: field.key })}
+                        onFocus={() =>
+                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
+                        }
                         placeholder={field.displayName}
-                        className={row.errors[field.key] ? "border-red-500" : ""}
+                        className={
+                          row.errors[field.key] ? "border-red-500" : ""
+                        }
                       />
                     )}
                     {row.errors[field.key] && (
@@ -614,7 +732,7 @@ export default function MultiEntryTable({
           </TableBody>
         </Table>
       </div>
-      
+
       {showActions && (
         <Button
           variant="outline"
@@ -626,10 +744,11 @@ export default function MultiEntryTable({
           Add Row
         </Button>
       )}
-      
+
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>
-          Showing {startIndex + 1}-{Math.min(endIndex, rows.length)} of {rows.length} row(s)
+          Showing {startIndex + 1}-{Math.min(endIndex, rows.length)} of{" "}
+          {rows.length} row(s)
         </span>
         <span>
           {rows.filter((r) => r.isValid).length} valid /{" "}

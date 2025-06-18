@@ -55,7 +55,6 @@ const BloodMarkerChart = ({
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-        {/* Hide axes but keep for structure */}
         <XAxis dataKey="date" hide />
         <YAxis domain={[yMin, yMax]} hide />
         <Tooltip
@@ -63,7 +62,6 @@ const BloodMarkerChart = ({
           cursor={{ strokeDasharray: "3 3" }}
         />
 
-        {/* Add optimal range as colored area if available and should be shown */}
         {hasOptimalRange && (
           <ReferenceArea
             y1={optimalLow}
@@ -73,7 +71,6 @@ const BloodMarkerChart = ({
           />
         )}
 
-        {/* The data line */}
         <Line
           type="monotone"
           dataKey="value"

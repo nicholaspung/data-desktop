@@ -3,10 +3,10 @@ import { FieldDefinition } from "@/types/types";
 export interface DataLogsManagerProps<T extends Record<string, any>> {
   logs: T[];
   fieldDefinitions: FieldDefinition[];
+  datasetId: string;
   onUpdate?: () => void;
   title?: string;
-  
-  // Optional customization props
+
   formatters?: {
     [key: string]: (value: any, record: T) => string | React.ReactNode;
   };
@@ -14,13 +14,13 @@ export interface DataLogsManagerProps<T extends Record<string, any>> {
   filterableFields?: string[];
   defaultSortField?: string;
   defaultSortOrder?: "asc" | "desc";
-  compactFields?: string[]; // Fields to show in compact mode
-  primaryField?: string; // Main field to display prominently
-  amountField?: string; // Field to format as currency
-  dateField?: string; // Field to use for date display
-  badgeFields?: string[]; // Fields to display as badges
-  tagFields?: string[]; // Fields to display as tag lists
-  hideFields?: string[]; // Fields to hide from display
+  compactFields?: string[];
+  primaryField?: string;
+  amountField?: string;
+  dateField?: string;
+  badgeFields?: string[];
+  tagFields?: string[];
+  hideFields?: string[];
 }
 
 export interface EditDialogProps<T extends Record<string, any>> {

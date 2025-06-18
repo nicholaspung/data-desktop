@@ -237,7 +237,6 @@ export default function QuickMetricLoggerDashboardSummary({
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Date selector */}
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="date">Date</Label>
             <Input
@@ -249,11 +248,9 @@ export default function QuickMetricLoggerDashboardSummary({
             />
           </div>
 
-          {/* Metric selector */}
           <div className="flex flex-col space-y-1.5">
             <Label>Select Metric</Label>
             <div className="relative" ref={commandRef}>
-              {/* Custom dropdown with maintained focus */}
               <div className="border rounded-lg shadow-md overflow-hidden">
                 <div className="relative">
                   <Input
@@ -278,7 +275,6 @@ export default function QuickMetricLoggerDashboardSummary({
                       Object.entries(groupedMetrics).map(
                         ([category, categoryMetrics]) => (
                           <div key={category} className="py-1">
-                            {/* Enhanced category header */}
                             <div
                               className={`px-3 py-1.5 mb-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100`}
                             >
@@ -312,7 +308,6 @@ export default function QuickMetricLoggerDashboardSummary({
             </div>
           </div>
 
-          {/* Selected metric form */}
           {selectedMetric && (
             <div className="space-y-4 p-3 border rounded-md">
               <div className="flex justify-between items-start">

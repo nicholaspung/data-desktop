@@ -48,7 +48,6 @@ export default function DailyGoalsTab({
 
   return (
     <div className="space-y-6">
-      {/* Summary Card */}
       <Card className="mb-4">
         <CardHeader>
           <CardTitle className="flex items-center">
@@ -82,7 +81,6 @@ export default function DailyGoalsTab({
         </CardContent>
       </Card>
 
-      {/* Goals List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {metricsWithGoals.map((metric) => (
           <DailyTrackerViewCard

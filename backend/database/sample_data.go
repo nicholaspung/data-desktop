@@ -808,24 +808,99 @@ func loadFinancialSampleData() error {
 
 	financialFiles := []map[string]interface{}{
 		{
-			"date":  "2024-01-31",
-			"files": []string{"bank_statement_jan_2024.pdf", "credit_card_statement_jan.pdf"},
+			"date": "2024-01-31",
+			"files": []map[string]interface{}{
+				{
+					"id":    "f1a2b3c4-d5e6-7f8g-9h0i-j1k2l3m4n5o6",
+					"src":   "/sample-files/bank_statement_jan_2024.pdf",
+					"name":  "bank_statement_jan_2024.pdf",
+					"type":  "application/pdf",
+					"order": 0,
+				},
+				{
+					"id":    "g2b3c4d5-e6f7-8g9h-0i1j-k2l3m4n5o6p7",
+					"src":   "/sample-files/credit_card_statement_jan.pdf",
+					"name":  "credit_card_statement_jan.pdf",
+					"type":  "application/pdf",
+					"order": 1,
+				},
+			},
 		},
 		{
-			"date":  "2024-02-15",
-			"files": []string{"paystub_feb_15_2024.pdf"},
+			"date": "2024-02-15",
+			"files": []map[string]interface{}{
+				{
+					"id":    "h3c4d5e6-f7g8-9h0i-1j2k-l3m4n5o6p7q8",
+					"src":   "/sample-files/paystub_feb_15_2024.pdf",
+					"name":  "paystub_feb_15_2024.pdf",
+					"type":  "application/pdf",
+					"order": 0,
+				},
+			},
 		},
 		{
-			"date":  "2024-02-28",
-			"files": []string{"tax_documents_2023.pdf", "w2_form_2023.pdf", "1099_freelance.pdf"},
+			"date": "2024-02-28",
+			"files": []map[string]interface{}{
+				{
+					"id":    "i4d5e6f7-g8h9-0i1j-2k3l-m4n5o6p7q8r9",
+					"src":   "/sample-files/tax_documents_2023.pdf",
+					"name":  "tax_documents_2023.pdf",
+					"type":  "application/pdf",
+					"order": 0,
+				},
+				{
+					"id":    "j5e6f7g8-h9i0-1j2k-3l4m-n5o6p7q8r9s0",
+					"src":   "/sample-files/w2_form_2023.pdf",
+					"name":  "w2_form_2023.pdf",
+					"type":  "application/pdf",
+					"order": 1,
+				},
+				{
+					"id":    "k6f7g8h9-i0j1-2k3l-4m5n-o6p7q8r9s0t1",
+					"src":   "/sample-files/1099_freelance.pdf",
+					"name":  "1099_freelance.pdf",
+					"type":  "application/pdf",
+					"order": 2,
+				},
+			},
 		},
 		{
-			"date":  "2024-01-15",
-			"files": []string{"expense_receipts_jan.csv", "restaurant_receipts.pdf"},
+			"date": "2024-01-15",
+			"files": []map[string]interface{}{
+				{
+					"id":    "l7g8h9i0-j1k2-3l4m-5n6o-p7q8r9s0t1u2",
+					"src":   "/sample-files/expense_receipts_jan.csv",
+					"name":  "expense_receipts_jan.csv",
+					"type":  "text/csv",
+					"order": 0,
+				},
+				{
+					"id":    "m8h9i0j1-k2l3-4m5n-6o7p-q8r9s0t1u2v3",
+					"src":   "/sample-files/restaurant_receipts.pdf",
+					"name":  "restaurant_receipts.pdf",
+					"type":  "application/pdf",
+					"order": 1,
+				},
+			},
 		},
 		{
-			"date":  "2024-02-10",
-			"files": []string{"investment_summary_q1.pdf", "401k_statement.pdf"},
+			"date": "2024-02-10",
+			"files": []map[string]interface{}{
+				{
+					"id":    "n9i0j1k2-l3m4-5n6o-7p8q-r9s0t1u2v3w4",
+					"src":   "/sample-files/investment_summary_q1.pdf",
+					"name":  "investment_summary_q1.pdf",
+					"type":  "application/pdf",
+					"order": 0,
+				},
+				{
+					"id":    "o0j1k2l3-m4n5-6o7p-8q9r-s0t1u2v3w4x5",
+					"src":   "/sample-files/401k_statement.pdf",
+					"name":  "401k_statement.pdf",
+					"type":  "application/pdf",
+					"order": 1,
+				},
+			},
 		},
 	}
 

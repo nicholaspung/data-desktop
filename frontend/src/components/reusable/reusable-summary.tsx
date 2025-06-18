@@ -168,7 +168,6 @@ export default function ReusableSummary({
       contentClassName={contentClassName}
       content={
         <div className="space-y-4">
-          {/* Main section */}
           {mainSection && (
             <div>
               <p className="text-sm text-muted-foreground">
@@ -191,7 +190,6 @@ export default function ReusableSummary({
             </div>
           )}
 
-          {/* Additional sections */}
           {sections.map((section, index) => (
             <div key={index} className={section.className}>
               {section.title && (
@@ -227,7 +225,6 @@ export default function ReusableSummary({
             </div>
           ))}
 
-          {/* Grid section for centered content */}
           {gridSection && (
             <div
               className={`grid grid-cols-1 ${gridSection.columns === 2 ? "md:grid-cols-2" : gridSection.columns === 3 ? "md:grid-cols-3" : ""} gap-4 ${gridSection.className || ""}`}
@@ -244,7 +241,6 @@ export default function ReusableSummary({
             </div>
           )}
 
-          {/* Footer */}
           {footer}
         </div>
       }

@@ -136,7 +136,6 @@ export default function BloodMarkerCard({
                   </Badge>
                 )}
               </div>
-              {/* Only show reference values if they are defined */}
               {hasAnyRangeDefined && (
                 <div className="text-xs text-muted-foreground mt-1">
                   {Boolean(marker.lower_reference || marker.upper_reference) ||

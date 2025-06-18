@@ -60,6 +60,7 @@ export default function DataForm({
   title,
   existingEntries = [],
   enhancedAutocompleteFields = {},
+  renderFooter,
 }: {
   datasetId: DataStoreName;
   fields: FieldDefinition[];
@@ -75,7 +76,7 @@ export default function DataForm({
   onChange?: (values: Record<string, unknown>, isValid: boolean) => void;
   forceClear?: boolean;
   title?: string;
-  existingEntries?: any[];
+  existingEntries?: Record<string, unknown>[];
   enhancedAutocompleteFields?: Record<
     string,
     {
@@ -85,6 +86,14 @@ export default function DataForm({
       dropdownPosition?: "top" | "bottom";
     }
   >;
+  renderFooter?: (props: {
+    isSubmitting: boolean;
+    handleSubmit: () => void;
+    handleClearForm: () => void;
+    handleCancel: () => void;
+    submitLabel: string;
+    mode: string;
+  }) => React.ReactNode;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSavedData, setHasSavedData] = useState(false);
@@ -93,12 +102,14 @@ export default function DataForm({
 
   const storageKey = persistKey || `form_${datasetId}_data`;
 
-  const storeData = useStore(dataStore, (state) => state[datasetId] || []);
+  const storeData = useStore(
+    dataStore,
+    (state) => (state[datasetId] || []) as unknown as Record<string, unknown>[]
+  );
 
   const getAutocompleteOptions = (field: FieldDefinition) => {
     if (field.type !== "autocomplete") return [];
 
-    // Check if this field has enhanced configuration
     const enhancedConfig = enhancedAutocompleteFields[field.key];
     const dataSource =
       enhancedConfig && existingEntries.length > 0
@@ -108,7 +119,7 @@ export default function DataForm({
     if (field.secondaryDisplayField) {
       const groupedValues = new Map<string, Set<string>>();
 
-      dataSource.forEach((record: any) => {
+      dataSource.forEach((record: Record<string, unknown>) => {
         const primaryValue = record[field.key];
         const secondaryValue = record[field.secondaryDisplayField!];
 
@@ -139,10 +150,9 @@ export default function DataForm({
         }));
     }
 
-    // Enhanced autocomplete options with full entry data
     if (enhancedConfig) {
-      const uniqueValues = new Map<string, any>();
-      dataSource.forEach((entry: any) => {
+      const uniqueValues = new Map<string, Record<string, unknown>>();
+      dataSource.forEach((entry: Record<string, unknown>) => {
         const value = entry[field.key];
         if (value && typeof value === "string" && value.trim()) {
           const trimmedValue = value.trim();
@@ -164,9 +174,9 @@ export default function DataForm({
     const existingValues = Array.from(
       new Set(
         dataSource
-          .map((record: any) => record[field.key])
+          .map((record: Record<string, unknown>) => record[field.key])
           .filter(
-            (value: any) =>
+            (value: unknown) =>
               value && typeof value === "string" && value.trim() !== ""
           )
       )
@@ -197,9 +207,9 @@ export default function DataForm({
         new Set([...defaultMeasurements, ...existingValues])
       ).sort();
 
-      return allValues.map((value: string) => ({
-        id: value,
-        label: value,
+      return allValues.map((value) => ({
+        id: String(value),
+        label: String(value),
       }));
     }
 
@@ -210,39 +220,44 @@ export default function DataForm({
         new Set([...defaultUnits, ...existingValues])
       ).sort();
 
-      return allValues.map((value: string) => ({
-        id: value,
-        label: value,
+      return allValues.map((value) => ({
+        id: String(value),
+        label: String(value),
       }));
     }
 
-    return existingValues.map((value: string) => ({
-      id: value,
-      label: value,
+    return existingValues.map((value) => ({
+      id: String(value),
+      label: String(value),
     }));
   };
 
-  // Handle enhanced autocomplete selection with auto-fill
-  const handleEnhancedAutocompleteSelect = (fieldKey: string, option: any) => {
+  const handleEnhancedAutocompleteSelect = (
+    fieldKey: string,
+    option: { label: string; entry?: Record<string, unknown> }
+  ) => {
     const enhancedConfig = enhancedAutocompleteFields[fieldKey];
     if (!enhancedConfig || !option.entry) return;
 
-    // Set the main field value
     form.setValue(fieldKey, option.label);
 
-    // Auto-fill related fields
     enhancedConfig.autoFillFields.forEach((autoFillField) => {
-      if (option.entry[autoFillField]) {
+      if (option.entry && option.entry[autoFillField]) {
         form.setValue(autoFillField, option.entry[autoFillField]);
       }
     });
 
-    // Trigger validation for all affected fields
     form.trigger([fieldKey, ...enhancedConfig.autoFillFields]);
   };
 
-  // Render enhanced autocomplete item
-  const renderEnhancedAutocompleteItem = (fieldKey: string, option: any) => {
+  const renderEnhancedAutocompleteItem = (
+    fieldKey: string,
+    option: {
+      label: string;
+      entry?: Record<string, unknown>;
+      secondaryValue?: string | number;
+    }
+  ) => {
     const enhancedConfig = enhancedAutocompleteFields[fieldKey];
     if (!enhancedConfig || !option.entry) {
       return (
@@ -257,10 +272,10 @@ export default function DataForm({
         <div className="flex items-center gap-2">
           <span className="font-medium">{option.label}</span>
         </div>
-        {enhancedConfig.displayFields.length > 0 && (
+        {enhancedConfig.displayFields.length > 0 && option.entry && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {enhancedConfig.displayFields.map((fieldName, index) => {
-              const value = option.entry[fieldName];
+              const value = option.entry?.[fieldName];
               if (!value) return null;
 
               const colors = [
@@ -275,7 +290,7 @@ export default function DataForm({
                   key={fieldName}
                   className={`px-2 py-0.5 rounded ${colorClass}`}
                 >
-                  {value}
+                  {String(value)}
                 </span>
               );
             })}
@@ -589,6 +604,18 @@ export default function DataForm({
     return () => subscription.unsubscribe();
   }, [form, onChange]);
 
+  const handleClearForm = () => {
+    completeFormReset();
+    toast.info("Form data has been cleared");
+  };
+
+  const handleCancel = () => {
+    completeFormReset();
+    if (onCancel) {
+      onCancel();
+    }
+  };
+
   const onSubmit = async (values: Record<string, unknown>) => {
     setIsSubmitting(true);
     try {
@@ -696,17 +723,16 @@ export default function DataForm({
     }
   };
 
-  const handleClearForm = () => {
-    completeFormReset();
-    toast.info("Form data has been cleared");
-  };
-
-  const handleCancel = () => {
-    completeFormReset();
-    if (onCancel) {
-      onCancel();
-    }
-  };
+  if (renderFooter) {
+    renderFooter({
+      isSubmitting,
+      handleSubmit: () => form.handleSubmit(onSubmit)(),
+      handleClearForm,
+      handleCancel,
+      submitLabel,
+      mode: mode as string,
+    });
+  }
 
   const fieldsByType = {
     date: fields.filter((field) => field.type === "date"),
@@ -1164,10 +1190,17 @@ export default function DataForm({
       }
       content={
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={
+              renderFooter
+                ? (e) => e.preventDefault()
+                : form.handleSubmit(onSubmit)
+            }
+            className="space-y-6"
+          >
             <DataFormContent
               fieldsByType={fieldsByType}
-              hideSubmitButton={hideSubmitButton}
+              hideSubmitButton={hideSubmitButton || !!renderFooter}
               isSubmitting={isSubmitting}
               submitLabel={submitLabel}
               mode={mode}
@@ -1182,10 +1215,15 @@ export default function DataForm({
     />
   ) : (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={
+          renderFooter ? (e) => e.preventDefault() : form.handleSubmit(onSubmit)
+        }
+        className="space-y-6"
+      >
         <DataFormContent
           fieldsByType={fieldsByType}
-          hideSubmitButton={hideSubmitButton}
+          hideSubmitButton={hideSubmitButton || !!renderFooter}
           isSubmitting={isSubmitting}
           submitLabel={submitLabel}
           mode={mode}

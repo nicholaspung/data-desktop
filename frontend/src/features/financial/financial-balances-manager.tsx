@@ -15,6 +15,7 @@ export default function FinancialBalancesManager({
     <DataLogsManager<FinancialBalance>
       logs={balances}
       fieldDefinitions={FINANCIAL_BALANCES_FIELD_DEFINITIONS.fields}
+      datasetId="financial_balances"
       onUpdate={onUpdate}
       title="Financial Balances"
       primaryField="account_name"

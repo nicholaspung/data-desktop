@@ -52,7 +52,7 @@ export default function MultipleFileUpload({
   const { uploadFile } = useChunkedFileUpload();
 
   const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
+    event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -75,7 +75,7 @@ export default function MultipleFileUpload({
 
         if (file.size > maxSize * 1024 * 1024) {
           console.warn(
-            `File ${file.name} exceeds ${maxSize}MB limit and will be skipped`,
+            `File ${file.name} exceeds ${maxSize}MB limit and will be skipped`
           );
           totalFiles--;
           continue;
@@ -83,8 +83,8 @@ export default function MultipleFileUpload({
 
         let fileSrc: string;
         const fileId = crypto.randomUUID();
-        const fileExtension = file.name.split('.').pop() || '';
-        const generatedFileName = `${fileId}${fileExtension ? `.${fileExtension}` : ''}`;
+        const fileExtension = file.name.split(".").pop() || "";
+        const generatedFileName = `${fileId}${fileExtension ? `.${fileExtension}` : ""}`;
 
         // For large files (> 5MB), use chunked upload
         if (file.size > 5 * 1024 * 1024) {
@@ -207,7 +207,9 @@ export default function MultipleFileUpload({
         if (file.src.startsWith("file://") || file.src.startsWith("files/")) {
           setLoading(true);
           try {
-            const filePath = file.src.startsWith("file://") ? file.src.substring(7) : file.src;
+            const filePath = file.src.startsWith("file://")
+              ? file.src.substring(7)
+              : file.src;
             const base64Data = await ApiService.getFile(filePath);
             setImageUrl(base64Data);
           } catch (error) {
@@ -259,7 +261,6 @@ export default function MultipleFileUpload({
   return (
     <div className={cn("space-y-4", className)}>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Existing Files */}
         {value
           .sort((a, b) => a.order - b.order)
           .map((file) => (
@@ -329,14 +330,13 @@ export default function MultipleFileUpload({
             </div>
           ))}
 
-        {/* Add File Button */}
         {value.length < maxFiles && !disabled && (
           <div
             onClick={() => !isLoading && fileInputRef.current?.click()}
             className={cn(
               "flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors",
               isLoading ? "cursor-wait" : "cursor-pointer",
-              error && "border-destructive",
+              error && "border-destructive"
             )}
           >
             <input

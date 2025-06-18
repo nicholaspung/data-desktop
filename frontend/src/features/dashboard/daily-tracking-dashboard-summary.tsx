@@ -63,8 +63,8 @@ export default function DailyTrackingDashboardSummary({
     setIsLoading(true);
 
     const activeMetrics = allMetrics.filter(
-      (metric) => 
-        metric.active && 
+      (metric) =>
+        metric.active &&
         !(metric.schedule_days || []).includes(-1) &&
         (!metric.private || showPrivateMetrics)
     );
@@ -294,14 +294,10 @@ export default function DailyTrackingDashboardSummary({
             )}
             {metric.private ? (
               <ProtectedField>
-                <span className="text-sm">
-                  {metric.name}
-                </span>
+                <span className="text-sm">{metric.name}</span>
               </ProtectedField>
             ) : (
-              <span className="text-sm">
-                {metric.name}
-              </span>
+              <span className="text-sm">{metric.name}</span>
             )}
           </div>
           <div className="flex items-center">
@@ -344,7 +340,6 @@ export default function DailyTrackingDashboardSummary({
         }
         customContent={
           <div className="flex flex-col gap-4">
-            {/* Summary count */}
             <div className="flex items-end justify-between">
               <div>
                 <div className="text-2xl font-bold">
@@ -356,13 +351,11 @@ export default function DailyTrackingDashboardSummary({
               </div>
             </div>
 
-            {/* Metrics list */}
             {metrics.length > 0 ? metricsList : null}
           </div>
         }
       />
 
-      {/* Modal for non-boolean metrics */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent>
           <DialogHeader>

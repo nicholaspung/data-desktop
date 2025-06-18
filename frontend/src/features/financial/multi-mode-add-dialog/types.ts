@@ -9,13 +9,12 @@ export interface MultiModeAddDialogProps {
   datasetId: string;
   fieldDefinitions: FieldDefinition[];
   onSuccess?: () => void;
-  // For bulk mode - show recent entries
   recentEntries?: any[];
-  // For autocomplete - all existing entries
   existingEntries?: any[];
   formatters?: {
     [key: string]: (value: any, record: any) => string | React.ReactNode;
   };
+  availableModes?: AddMode[];
 }
 
 export interface MultiEntryRow {

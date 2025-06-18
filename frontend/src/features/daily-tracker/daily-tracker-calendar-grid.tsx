@@ -239,14 +239,12 @@ export default function DailyTrackerCalendarGrid({
 
   return (
     <div className="grid grid-cols-7 gap-1 text-center">
-      {/* Weekday headers */}
       {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
         <div key={day} className="py-1 font-medium w-full">
           {day}
         </div>
       ))}
 
-      {/* Days of the month */}
       {days.map((day) => {
         const stats = getDayMetricsStats(day);
 
@@ -260,10 +258,8 @@ export default function DailyTrackerCalendarGrid({
                   setSelectedDate(day);
                 }}
               >
-                {/* Day number */}
                 <span className="text-sm">{format(day, "d")}</span>
 
-                {/* Metrics completion indicator */}
                 {stats.logsExist && (
                   <div className="mt-1 w-full">
                     <Progress
@@ -282,7 +278,6 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
-                {/* Goal completion indicator - if there are goals */}
                 {stats.goalMetricsCount > 0 && (
                   <div className="absolute bottom-0.5 right-0.5">
                     <Badge
@@ -299,7 +294,6 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
-                {/* Scheduled metrics indicator */}
                 {stats.scheduledMetricsCount > 0 && (
                   <div className="absolute bottom-0.5 left-0.5">
                     <Badge
@@ -311,7 +305,6 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
-                {/* Active experiments indicator */}
                 {stats.activeExperiments.length > 0 && (
                   <div className="absolute top-0.5 right-0.5">
                     <Badge
@@ -335,7 +328,6 @@ export default function DailyTrackerCalendarGrid({
                     : "No logs for this day"}
                 </p>
 
-                {/* Goals information */}
                 {stats.goalMetricsCount > 0 && (
                   <p className="text-sm">
                     <Target className="h-3 w-3 inline-block mr-1" />
@@ -344,7 +336,6 @@ export default function DailyTrackerCalendarGrid({
                   </p>
                 )}
 
-                {/* Scheduled metrics information */}
                 <p className="text-sm text-muted-foreground">
                   {stats.scheduledMetricsCount} of {stats.totalMetricsCount}{" "}
                   metrics scheduled
@@ -368,7 +359,6 @@ export default function DailyTrackerCalendarGrid({
                   </div>
                 )}
 
-                {/* Add info about completion rate */}
                 {stats.logsExist && stats.scheduledMetricsCount > 0 && (
                   <div className="pt-1">
                     <p className="text-sm flex items-center">

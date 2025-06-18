@@ -169,7 +169,6 @@ const ComparisonSummary = ({
       </h3>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Overall metrics */}
         <div className="bg-background rounded-md p-3 shadow-sm">
           <p className="text-sm text-muted-foreground">Body Fat %</p>
           <p

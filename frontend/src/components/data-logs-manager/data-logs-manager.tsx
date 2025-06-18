@@ -17,6 +17,7 @@ import {
   EyeOff,
   Rows3,
   LayoutList,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -24,10 +25,12 @@ import { cn } from "@/lib/utils";
 import { ApiService } from "@/services/api";
 import { DataLogsManagerProps } from "./types";
 import { FieldDefinition } from "@/types/types";
+import { updateEntry, deleteEntry, DataStoreName } from "@/store/data-store";
 
 export default function DataLogsManager<T extends Record<string, any>>({
   logs,
   fieldDefinitions,
+  datasetId,
   onUpdate,
   title = "Data Logs",
   formatters = {},
@@ -55,36 +58,42 @@ export default function DataLogsManager<T extends Record<string, any>>({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">(defaultSortOrder);
   const [filterText, setFilterText] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<{
+    path: string;
+    name: string;
+  } | null>(null);
 
-  // Get field definition by key
   const getFieldDef = (key: string): FieldDefinition | undefined => {
-    return fieldDefinitions.find(f => f.key === key);
+    return fieldDefinitions.find((f) => f.key === key);
   };
 
-  // Get sortable fields
   const sortableFieldsList = useMemo(() => {
     if (sortableFields) return sortableFields;
-    // Default: all searchable fields plus date and amount fields
+
     return fieldDefinitions
-      .filter(f => f.isSearchable || f.key === dateField || (amountField && f.key === amountField))
-      .map(f => f.key);
+      .filter(
+        (f) =>
+          f.isSearchable ||
+          f.key === dateField ||
+          (amountField && f.key === amountField)
+      )
+      .map((f) => f.key);
   }, [sortableFields, fieldDefinitions, dateField, amountField]);
 
-  // Get filterable fields
   const filterableFieldsList = useMemo(() => {
     if (filterableFields) return filterableFields;
-    // Default: all searchable autocomplete fields
+
     return fieldDefinitions
-      .filter(f => f.isSearchable && f.type === "autocomplete")
-      .map(f => f.key);
+      .filter((f) => f.isSearchable && f.type === "autocomplete")
+      .map((f) => f.key);
   }, [filterableFields, fieldDefinitions]);
 
-  // Get unique values for filterable fields
   const filterOptions = useMemo(() => {
     const options: Record<string, string[]> = {};
-    filterableFieldsList.forEach(field => {
+    filterableFieldsList.forEach((field) => {
       const values = new Set<string>();
-      logs.forEach(log => {
+      logs.forEach((log) => {
         const value = log[field];
         if (value) values.add(String(value));
       });
@@ -93,32 +102,29 @@ export default function DataLogsManager<T extends Record<string, any>>({
     return options;
   }, [logs, filterableFieldsList]);
 
-  // Get fields to display
   const displayFields = useMemo(() => {
     const fieldsToShow = fieldDefinitions
-      .filter(f => !hideFields.includes(f.key))
-      .map(f => f.key);
-    
+      .filter((f) => !hideFields.includes(f.key))
+      .map((f) => f.key);
+
     if (compactMode && compactFields) {
-      return compactFields.filter(f => fieldsToShow.includes(f));
+      return compactFields.filter((f) => fieldsToShow.includes(f));
     }
-    
+
     return fieldsToShow;
   }, [fieldDefinitions, hideFields, compactMode, compactFields]);
 
-  // Filter and sort logs
   const filteredAndSortedLogs = useMemo(() => {
     let filtered = [...logs];
 
-    // Apply text filter (searches all searchable fields)
     if (filterText) {
       const searchTerm = filterText.toLowerCase();
       const searchableFields = fieldDefinitions
-        .filter(f => f.isSearchable)
-        .map(f => f.key);
-      
-      filtered = filtered.filter(log =>
-        searchableFields.some(field => {
+        .filter((f) => f.isSearchable)
+        .map((f) => f.key);
+
+      filtered = filtered.filter((log) =>
+        searchableFields.some((field) => {
           const value = log[field];
           if (!value) return false;
           return String(value).toLowerCase().includes(searchTerm);
@@ -126,30 +132,23 @@ export default function DataLogsManager<T extends Record<string, any>>({
       );
     }
 
-    // Apply field-specific filters
     Object.entries(filterValues).forEach(([field, value]) => {
       if (value) {
-        filtered = filtered.filter(log => String(log[field]) === value);
+        filtered = filtered.filter((log) => String(log[field]) === value);
       }
     });
 
-    // Apply sorting
     return filtered.sort((a, b) => {
       let aValue: any = a[sortBy];
       let bValue: any = b[sortBy];
 
-      // Handle date fields
       if (getFieldDef(sortBy)?.type === "date") {
         aValue = new Date(aValue).getTime();
         bValue = new Date(bValue).getTime();
-      }
-      // Handle number fields
-      else if (getFieldDef(sortBy)?.type === "number") {
+      } else if (getFieldDef(sortBy)?.type === "number") {
         aValue = Number(aValue) || 0;
         bValue = Number(bValue) || 0;
-      }
-      // Handle text fields
-      else {
+      } else {
         aValue = String(aValue || "").toLowerCase();
         bValue = String(bValue || "").toLowerCase();
       }
@@ -162,16 +161,15 @@ export default function DataLogsManager<T extends Record<string, any>>({
     });
   }, [logs, filterText, filterValues, sortBy, sortOrder, fieldDefinitions]);
 
-  // Get latest log date
   const latestLogDate = useMemo(() => {
     if (logs.length === 0 || !dateField) return null;
-    const sortedByDate = [...logs].sort((a, b) => 
-      new Date(b[dateField]).getTime() - new Date(a[dateField]).getTime()
+    const sortedByDate = [...logs].sort(
+      (a, b) =>
+        new Date(b[dateField]).getTime() - new Date(a[dateField]).getTime()
     );
     return sortedByDate[0][dateField];
   }, [logs, dateField]);
 
-  // Pagination calculations
   const totalPages = Math.ceil(filteredAndSortedLogs.length / itemsPerPage);
   const startIndex = showPagination ? (currentPage - 1) * itemsPerPage : 0;
   const endIndex = showPagination
@@ -183,7 +181,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
     e.stopPropagation();
     setEditingLogId(log.id);
     const editData: Partial<T> = {};
-    fieldDefinitions.forEach(field => {
+    fieldDefinitions.forEach((field) => {
       if (field.key in log) {
         editData[field.key as keyof T] = log[field.key];
       }
@@ -202,12 +200,18 @@ export default function DataLogsManager<T extends Record<string, any>>({
     if (!editingLogId || !editedLog) return;
 
     try {
-      await ApiService.updateRecord(editingLogId, editedLog);
-      toast.success(`${title} updated successfully`);
-      setEditingLogId(null);
-      setEditedLog({});
-      setEditDialogOpen(false);
-      onUpdate?.();
+      const updatedRecord = await ApiService.updateRecord(
+        editingLogId,
+        editedLog
+      );
+      if (updatedRecord) {
+        updateEntry(editingLogId, updatedRecord, datasetId as DataStoreName);
+        toast.success(`${title} updated successfully`);
+        setEditingLogId(null);
+        setEditedLog({});
+        setEditDialogOpen(false);
+        onUpdate?.();
+      }
     } catch (error) {
       toast.error(`Failed to update ${title}`);
       console.error(error);
@@ -216,17 +220,51 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
   const handleDelete = async (logId: string) => {
     try {
-      await ApiService.deleteRecord(logId);
-      toast.success(`${title} deleted successfully`);
-      onUpdate?.();
+      const success = await ApiService.deleteRecord(logId);
+      if (success) {
+        deleteEntry(logId, datasetId as DataStoreName);
+        toast.success(`${title} deleted successfully`);
+        onUpdate?.();
+      }
     } catch (error) {
       toast.error(`Failed to delete ${title}`);
       console.error(error);
     }
   };
 
-  const formatValue = (value: any, field: string, record: T): string | React.ReactNode => {
-    // Check for custom formatter
+  const handleFileClick = (
+    filePath: string | object,
+    originalFileName?: string
+  ) => {
+    const pathString = String(filePath || "");
+
+    const fileName =
+      originalFileName ||
+      (pathString.includes("/")
+        ? pathString.split("/").pop() || pathString
+        : pathString);
+    setSelectedFile({ path: pathString, name: fileName });
+    setDownloadDialogOpen(true);
+  };
+
+  const handleDownloadFile = async () => {
+    if (!selectedFile) return;
+
+    try {
+      await ApiService.downloadFile(selectedFile.path, selectedFile.name);
+      setDownloadDialogOpen(false);
+      setSelectedFile(null);
+    } catch (error) {
+      toast.error(`Failed to download ${selectedFile.name}`);
+      console.error(error);
+    }
+  };
+
+  const formatValue = (
+    value: unknown,
+    field: string,
+    record: T
+  ): string | React.ReactNode => {
     if (formatters[field]) {
       return formatters[field](value, record);
     }
@@ -234,7 +272,63 @@ export default function DataLogsManager<T extends Record<string, any>>({
     const fieldDef = getFieldDef(field);
     if (!fieldDef) return String(value || "");
 
-    // Format based on field type
+    if (fieldDef.type === "file-multiple" || fieldDef.type === "file") {
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        return "No files";
+      }
+
+      const files = Array.isArray(value) ? value : [value];
+      return (
+        <div className="flex gap-1 flex-wrap">
+          {files.map(
+            (
+              fileItem:
+                | string
+                | {
+                    id?: string;
+                    src?: string;
+                    name?: string;
+                    [key: string]: unknown;
+                  },
+              index: number
+            ) => {
+              let fileName: string;
+              let filePath: string;
+
+              if (typeof fileItem === "string") {
+                fileName = fileItem.includes("/")
+                  ? fileItem.split("/").pop() || fileItem
+                  : fileItem;
+                filePath = fileItem;
+              } else if (fileItem && typeof fileItem === "object") {
+                fileName = fileItem.name || "Unknown file";
+                filePath = fileItem.src || fileItem.name || "";
+              } else {
+                return null;
+              }
+
+              if (!fileName.trim()) {
+                return null;
+              }
+
+              return (
+                <button
+                  key={(typeof fileItem === "object" && fileItem?.id) || index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleFileClick(filePath, fileName);
+                  }}
+                  className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs font-medium hover:bg-blue-200 transition-colors cursor-pointer"
+                >
+                  {fileName}
+                </button>
+              );
+            }
+          )}
+        </div>
+      );
+    }
+
     if (field === amountField || fieldDef.unit === "$") {
       return new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -243,7 +337,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
     }
 
     if (fieldDef.type === "date") {
-      return format(new Date(value), "MMM d, yyyy");
+      return format(new Date(value as string), "MMM d, yyyy");
     }
 
     if (fieldDef.type === "boolean") {
@@ -255,7 +349,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
   const renderCompactLog = (log: T, index: number) => {
     const primaryValue = primaryField ? log[primaryField] : null;
-    
+
     return (
       <div
         key={log.id}
@@ -270,38 +364,58 @@ export default function DataLogsManager<T extends Record<string, any>>({
               {format(new Date(log[dateField]), "MMM d")}
             </span>
           )}
-          
+
           {primaryValue && (
             <span className="font-medium text-sm truncate">
               {formatValue(primaryValue, primaryField!, log)}
             </span>
           )}
-          
-          {badgeFields.map(field => 
+
+          {badgeFields.map((field) =>
             log[field] ? (
               <Badge key={field} variant="outline" className="text-xs shrink-0">
                 {formatValue(log[field], field, log)}
               </Badge>
             ) : null
           )}
-          
-          {tagFields.map(field =>
+
+          {tagFields.map((field) =>
             log[field] ? (
               <div key={field} className="flex gap-1 ml-2 flex-wrap">
-                {String(log[field]).split(",").map((tag, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="text-xs px-1 py-0"
-                  >
-                    {tag.trim()}
-                  </Badge>
-                ))}
+                {String(log[field])
+                  .split(",")
+                  .map((tag, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="text-xs px-1 py-0"
+                    >
+                      {tag.trim()}
+                    </Badge>
+                  ))}
               </div>
             ) : null
           )}
+
+          {compactFields &&
+            compactFields
+              .filter(
+                (field) =>
+                  field !== dateField &&
+                  field !== primaryField &&
+                  !badgeFields.includes(field) &&
+                  !tagFields.includes(field) &&
+                  log[field] !== undefined &&
+                  log[field] !== null &&
+                  log[field] !== ""
+              )
+              .map((field) => (
+                <div key={field} className="text-xs">
+                  {formatValue(log[field], field, log)}
+                </div>
+              ))}
         </div>
-        
+
         <div className="flex items-center gap-1">
           {amountField && log[amountField] !== undefined && (
             <span
@@ -354,7 +468,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
                   {formatValue(log[primaryField], primaryField, log)}
                 </span>
               )}
-              {badgeFields.map(field =>
+              {badgeFields.map((field) =>
                 log[field] ? (
                   <Badge key={field} variant="outline" className="text-xs">
                     {formatValue(log[field], field, log)}
@@ -362,39 +476,43 @@ export default function DataLogsManager<T extends Record<string, any>>({
                 ) : null
               )}
             </div>
-            
+
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
               {displayFields
-                .filter(field => 
-                  field !== primaryField && 
-                  !badgeFields.includes(field) && 
-                  !tagFields.includes(field) &&
-                  log[field] !== undefined
+                .filter(
+                  (field) =>
+                    field !== primaryField &&
+                    !badgeFields.includes(field) &&
+                    !tagFields.includes(field) &&
+                    log[field] !== undefined
                 )
-                .map(field => (
+                .map((field) => (
                   <span key={field}>
-                    {getFieldDef(field)?.displayName}: {formatValue(log[field], field, log)}
+                    {getFieldDef(field)?.displayName}:{" "}
+                    {formatValue(log[field], field, log)}
                   </span>
                 ))}
             </div>
-            
-            {tagFields.map(field =>
+
+            {tagFields.map((field) =>
               log[field] ? (
                 <div key={field} className="flex gap-1 flex-wrap mt-2">
-                  {String(log[field]).split(",").map((tag, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="text-xs"
-                    >
-                      {tag.trim()}
-                    </Badge>
-                  ))}
+                  {String(log[field])
+                    .split(",")
+                    .map((tag, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {tag.trim()}
+                      </Badge>
+                    ))}
                 </div>
               ) : null
             )}
           </div>
-          
+
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -420,7 +538,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
-      {/* Show/Hide Logs Control */}
       <div className="flex items-center gap-2">
         <Switch
           id="show-logs"
@@ -444,7 +561,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
       {showLogs && (
         <div>
-          {/* Logs List */}
           <ReusableCard
             title={`${title} (${filteredAndSortedLogs.length} of ${logs.length} total)`}
             headerActions={
@@ -465,7 +581,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                       ) : (
                         <LayoutList className="h-4 w-4" />
                       )}
-                      <span className="hidden sm:inline">{compactMode ? "Compact" : "Detailed"}</span>
+                      <span className="hidden sm:inline">
+                        {compactMode ? "Compact" : "Detailed"}
+                      </span>
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
@@ -474,7 +592,10 @@ export default function DataLogsManager<T extends Record<string, any>>({
                       checked={showPagination}
                       onCheckedChange={setShowPagination}
                     />
-                    <Label htmlFor="pagination" className="text-sm whitespace-nowrap">
+                    <Label
+                      htmlFor="pagination"
+                      className="text-sm whitespace-nowrap"
+                    >
                       <span className="hidden sm:inline">Pagination</span>
                     </Label>
                   </div>
@@ -499,21 +620,30 @@ export default function DataLogsManager<T extends Record<string, any>>({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
                         disabled={currentPage === 1}
                         className="h-8 w-8 p-0"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                       <span className="text-xs sm:text-sm whitespace-nowrap px-1">
-                        <span className="hidden sm:inline">Page </span>{currentPage}<span className="hidden sm:inline"> of {totalPages}</span>
+                        <span className="hidden sm:inline">Page </span>
+                        {currentPage}
+                        <span className="hidden sm:inline">
+                          {" "}
+                          of {totalPages}
+                        </span>
                         <span className="sm:hidden">/{totalPages}</span>
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
+                          )
                         }
                         disabled={currentPage === totalPages}
                         className="h-8 w-8 p-0"
@@ -527,7 +657,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
             }
             content={
               <div className="space-y-4">
-                {/* Filters and Sorting */}
                 <div className="space-y-3 border-b pb-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <Input
@@ -539,19 +668,22 @@ export default function DataLogsManager<T extends Record<string, any>>({
                       }}
                       className="text-sm"
                     />
-                    {filterableFieldsList.map(field => (
+                    {filterableFieldsList.map((field) => (
                       <ReusableSelect
                         key={field}
                         options={[
-                          { id: `_all_${field}_`, label: `All ${getFieldDef(field)?.displayName || field}` },
-                          ...filterOptions[field].map(value => ({
+                          {
+                            id: `_all_${field}_`,
+                            label: `All ${getFieldDef(field)?.displayName || field}`,
+                          },
+                          ...filterOptions[field].map((value) => ({
                             id: value,
                             label: value,
                           })),
                         ]}
                         value={filterValues[field] || `_all_${field}_`}
                         onChange={(value) => {
-                          setFilterValues(prev => ({
+                          setFilterValues((prev) => ({
                             ...prev,
                             [field]: value === `_all_${field}_` ? "" : value,
                           }));
@@ -564,7 +696,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
                   </div>
                   <div className="flex items-center gap-2">
                     <ReusableSelect
-                      options={sortableFieldsList.map(field => ({
+                      options={sortableFieldsList.map((field) => ({
                         id: field,
                         label: getFieldDef(field)?.displayName || field,
                       }))}
@@ -588,7 +720,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
                   </div>
                 </div>
 
-                {/* Logs List */}
                 <div
                   className={cn(
                     "space-y-2 overflow-y-auto pr-2",
@@ -610,7 +741,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
         </div>
       )}
 
-      {/* Edit Dialog */}
       {editingLogId &&
         (() => {
           const editingLog = logs.find((log) => log.id === editingLogId);
@@ -629,8 +759,8 @@ export default function DataLogsManager<T extends Record<string, any>>({
               customContent={
                 <div className="space-y-4 mt-4">
                   {fieldDefinitions
-                    .filter(field => !field.isRelation && field.key !== "id")
-                    .map(field => (
+                    .filter((field) => !field.isRelation && field.key !== "id")
+                    .map((field) => (
                       <div key={field.key}>
                         <Label htmlFor={`edit-${field.key}`}>
                           {field.displayName}
@@ -640,14 +770,26 @@ export default function DataLogsManager<T extends Record<string, any>>({
                             <Input
                               id={`edit-${field.key}`}
                               type="date"
-                              value={editedLog[field.key as keyof T] as string || ""}
+                              value={
+                                (editedLog[field.key as keyof T] as string) ||
+                                ""
+                              }
                               onChange={(e) =>
-                                setEditedLog({ ...editedLog, [field.key]: e.target.value })
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: e.target.value,
+                                })
                               }
                               className="mt-1"
                             />
                             <p className="text-xs text-muted-foreground mt-1">
-                              Current: {editingLog[field.key] ? format(new Date(editingLog[field.key]), "MMM d, yyyy") : "Not set"}
+                              Current:{" "}
+                              {editingLog[field.key]
+                                ? format(
+                                    new Date(editingLog[field.key]),
+                                    "MMM d, yyyy"
+                                  )
+                                : "Not set"}
                             </p>
                           </>
                         ) : field.type === "number" ? (
@@ -656,11 +798,16 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               id={`edit-${field.key}`}
                               type="number"
                               step="0.01"
-                              value={editedLog[field.key as keyof T] as number || ""}
+                              value={
+                                (editedLog[field.key as keyof T] as number) ||
+                                ""
+                              }
                               onChange={(e) =>
                                 setEditedLog({
                                   ...editedLog,
-                                  [field.key]: e.target.value ? Number(e.target.value) : undefined,
+                                  [field.key]: e.target.value
+                                    ? Number(e.target.value)
+                                    : undefined,
                                 })
                               }
                               placeholder={String(editingLog[field.key] || "")}
@@ -675,7 +822,12 @@ export default function DataLogsManager<T extends Record<string, any>>({
                                     : "text-red-600"
                                 )}
                               >
-                                Current: {formatValue(editingLog[field.key], field.key, editingLog)}
+                                Current:{" "}
+                                {formatValue(
+                                  editingLog[field.key],
+                                  field.key,
+                                  editingLog
+                                )}
                               </p>
                             )}
                           </>
@@ -683,9 +835,15 @@ export default function DataLogsManager<T extends Record<string, any>>({
                           <>
                             <Input
                               id={`edit-${field.key}`}
-                              value={editedLog[field.key as keyof T] as string || ""}
+                              value={
+                                (editedLog[field.key as keyof T] as string) ||
+                                ""
+                              }
                               onChange={(e) =>
-                                setEditedLog({ ...editedLog, [field.key]: e.target.value })
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: e.target.value,
+                                })
                               }
                               placeholder={String(editingLog[field.key] || "")}
                               className="mt-1"
@@ -703,6 +861,21 @@ export default function DataLogsManager<T extends Record<string, any>>({
             />
           );
         })()}
+
+      <ReusableDialog
+        title="Download File"
+        description={`Do you want to download "${selectedFile?.name}"?`}
+        open={downloadDialogOpen}
+        onOpenChange={setDownloadDialogOpen}
+        onConfirm={handleDownloadFile}
+        onCancel={() => {
+          setDownloadDialogOpen(false);
+          setSelectedFile(null);
+        }}
+        confirmText="Download"
+        confirmIcon={<Download className="h-4 w-4" />}
+        showTrigger={false}
+      />
     </div>
   );
 }

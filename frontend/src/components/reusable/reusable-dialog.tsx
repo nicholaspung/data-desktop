@@ -41,6 +41,7 @@ export default function ReusableDialog({
   titleIcon,
   triggerClassName,
   disableDefaultConfirm = false,
+  fixedFooter = false,
 }: {
   title?: string | ReactNode;
   description?: string | ReactNode;
@@ -70,6 +71,7 @@ export default function ReusableDialog({
   titleIcon?: ReactNode;
   triggerClassName?: string;
   disableDefaultConfirm?: boolean;
+  fixedFooter?: boolean;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -92,11 +94,11 @@ export default function ReusableDialog({
       )}
       <AlertDialogContent
         className={cn(
-          "max-h-[90vh] flex flex-col",
+          "max-h-[90vh] flex flex-col p-0",
           contentClassName ? contentClassName : "sm:max-w-[600px]"
         )}
       >
-        <AlertDialogHeader>
+        <AlertDialogHeader className="px-6 pt-6">
           <div className="flex flex-row justify-between items-start">
             <AlertDialogTitle className="flex items-center gap-2">
               {titleIcon}
@@ -121,53 +123,111 @@ export default function ReusableDialog({
               </Button>
             )}
           </div>
-          {/* Always render AlertDialogDescription for accessibility */}
+
           <AlertDialogDescription className={!description ? "sr-only" : ""}>
             {description || title}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        {customContent}
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto",
+            fixedFooter ? "px-6 pb-4" : "px-6"
+          )}
+        >
+          {customContent}
+        </div>
 
-        {/* Standard or custom footer */}
-        {customFooter ? (
-          <div className="flex justify-end mt-4">{customFooter}</div>
+        {fixedFooter ? (
+          <>
+            {(customFooter !== undefined || onConfirm !== undefined) && (
+              <div className="border-t px-6 py-4 bg-background">
+                {customFooter !== undefined ? (
+                  <div className="flex justify-end">{customFooter}</div>
+                ) : onConfirm ? (
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={onCancel}>
+                      {cancelText}
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        if (disableDefaultConfirm) {
+                          e.preventDefault();
+                        }
+                        if (onConfirm) {
+                          onConfirm(e);
+                        }
+                      }}
+                      className={
+                        confirmVariant === "destructive"
+                          ? "bg-destructive text-destructive-foreground"
+                          : ""
+                      }
+                      disabled={footerActionDisabled}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {footerActionLoadingText
+                            ? footerActionLoadingText
+                            : "Saving..."}
+                        </>
+                      ) : (
+                        <>
+                          {confirmIcon && <Save className="h-4 w-4 mr-2" />}
+                          {confirmText}
+                        </>
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                ) : null}
+              </div>
+            )}
+          </>
         ) : (
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel onClick={onCancel}>
-              {cancelText}
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                if (disableDefaultConfirm) {
-                  e.preventDefault();
-                }
-                if (onConfirm) {
-                  onConfirm(e);
-                }
-              }}
-              className={
-                confirmVariant === "destructive"
-                  ? "bg-destructive text-destructive-foreground"
-                  : ""
-              }
-              disabled={footerActionDisabled}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {footerActionLoadingText
-                    ? footerActionLoadingText
-                    : "Saving..."}
-                </>
-              ) : (
-                <>
-                  {confirmIcon && <Save className="h-4 w-4 mr-2" />}
-                  {confirmText}
-                </>
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+          <>
+            {customFooter !== undefined ? (
+              <div className="flex justify-end px-6 pb-6 pt-4">
+                {customFooter}
+              </div>
+            ) : onConfirm ? (
+              <AlertDialogFooter className="px-6 pb-6 pt-4">
+                <AlertDialogCancel onClick={onCancel}>
+                  {cancelText}
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={(e) => {
+                    if (disableDefaultConfirm) {
+                      e.preventDefault();
+                    }
+                    if (onConfirm) {
+                      onConfirm(e);
+                    }
+                  }}
+                  className={
+                    confirmVariant === "destructive"
+                      ? "bg-destructive text-destructive-foreground"
+                      : ""
+                  }
+                  disabled={footerActionDisabled}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {footerActionLoadingText
+                        ? footerActionLoadingText
+                        : "Saving..."}
+                    </>
+                  ) : (
+                    <>
+                      {confirmIcon && <Save className="h-4 w-4 mr-2" />}
+                      {confirmText}
+                    </>
+                  )}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            ) : null}
+          </>
         )}
       </AlertDialogContent>
     </AlertDialog>

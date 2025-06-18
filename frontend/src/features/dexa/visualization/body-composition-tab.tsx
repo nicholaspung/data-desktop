@@ -219,7 +219,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
 
       {viewMode === "single" ? (
         <div className="space-y-6">
-          {/* Key Metrics */}
           <Card>
             <CardHeader>
               <CardTitle>Key Metrics</CardTitle>
@@ -262,7 +261,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
-            {/* Current Body Composition */}
             <CustomPieChart
               data={getBodyCompData(selectedScan)}
               pieConfig={{
@@ -278,7 +276,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
               tooltipFormatter={(value) => `${Number(value).toFixed(2)} lbs`}
             />
 
-            {/* Body Fat Distribution */}
             <CustomBarChart
               data={getBodyFatDistributionData(selectedScan)}
               bars={[
@@ -298,7 +295,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Changes Summary */}
           <Card>
             <CardHeader>
               <CardTitle>Changes Summary</CardTitle>
@@ -371,7 +367,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
             </CardContent>
           </Card>
 
-          {/* Body Composition Comparison */}
           <CustomBarChart
             data={getComparisonData()}
             bars={[
@@ -397,7 +392,6 @@ const BodyCompositionTab = ({ data }: { data: DEXAScan[] }) => {
             tooltipFormatter={tooltipFormatter}
           />
 
-          {/* Body Fat Distribution Comparison */}
           <CustomRadarChart
             data={getRadarComparisonData()}
             radars={[

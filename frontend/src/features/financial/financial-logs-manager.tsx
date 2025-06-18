@@ -15,6 +15,7 @@ export default function FinancialLogsManager({
     <DataLogsManager<FinancialLog>
       logs={logs}
       fieldDefinitions={FINANCIAL_LOGS_FIELD_DEFINITIONS.fields}
+      datasetId="financial_logs"
       onUpdate={onUpdate}
       title="Financial Logs"
       primaryField="description"

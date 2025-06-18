@@ -15,13 +15,15 @@ export default function PaycheckLogsManager({
     <DataLogsManager<PaycheckInfo>
       logs={paychecks}
       fieldDefinitions={PAYCHECK_INFO_FIELD_DEFINITIONS.fields}
+      datasetId="paycheck_info"
       onUpdate={onUpdate}
       title="Paycheck Information"
-      primaryField="category"
+      primaryField="deduction_type"
       amountField="amount"
       dateField="date"
-      badgeFields={["deduction_type"]}
-      compactFields={["date", "category", "deduction_type", "amount"]}
+      badgeFields={["category"]}
+      compactFields={["date", "deduction_type", "category", "amount"]}
+      summaryFilters={["category", "deduction_type"]}
       hideFields={["createdAt", "lastModified"]}
       defaultSortField="date"
       defaultSortOrder="desc"

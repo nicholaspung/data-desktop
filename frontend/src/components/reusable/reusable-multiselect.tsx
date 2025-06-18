@@ -145,15 +145,21 @@ export default function ReusableMultiSelect({
                     );
                   })}
                   {selected.length > maxDisplay && (
-                    <Badge variant="secondary">
-                      +{selected.length - maxDisplay} more
+                    <Badge 
+                      variant="secondary"
+                      className={maxDisplay === 0 ? "cursor-default" : ""}
+                      onClick={maxDisplay === 0 ? undefined : (e) => e.stopPropagation()}
+                    >
+                      +{selected.length - maxDisplay} {maxDisplay === 0 ? "selected" : "more"}
                     </Badge>
                   )}
                 </div>
-                <X
-                  className="h-4 w-4 cursor-pointer opacity-50 hover:opacity-100"
-                  onClick={handleClearAll}
-                />
+                {maxDisplay > 0 && (
+                  <X
+                    className="h-4 w-4 cursor-pointer opacity-50 hover:opacity-100"
+                    onClick={handleClearAll}
+                  />
+                )}
               </>
             ) : (
               <span className="text-muted-foreground">
