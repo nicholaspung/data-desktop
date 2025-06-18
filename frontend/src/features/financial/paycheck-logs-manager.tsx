@@ -23,13 +23,14 @@ export default function PaycheckLogsManager({
       dateField="date"
       badgeFields={["category"]}
       compactFields={["date", "deduction_type", "category", "amount"]}
-      summaryFilters={["category", "deduction_type"]}
       hideFields={["createdAt", "lastModified"]}
       defaultSortField="date"
       defaultSortOrder="desc"
       formatters={{
         amount: (value, record) => {
-          const isDeduction = ["Tax", "Benefit", "Investment"].includes(record.deduction_type);
+          const isDeduction = ["Tax", "Benefit", "Investment"].includes(
+            record.deduction_type
+          );
           return (
             <span className={isDeduction ? "text-red-600" : "text-green-600"}>
               {new Intl.NumberFormat("en-US", {
