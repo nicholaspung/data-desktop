@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Edit } from "lucide-react";
+import { Clock, Edit, CalendarDays } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function DailyTrackingDashboardSummary({
   showPrivateMetrics = true,
@@ -424,3 +425,18 @@ export default function DailyTrackingDashboardSummary({
     </>
   );
 }
+
+registerDashboardSummary({
+  route: "/calendar",
+  component: DailyTrackingDashboardSummary,
+  defaultConfig: {
+    id: "/calendar",
+    size: "medium",
+    order: 0,
+    visible: true,
+  },
+  datasets: ["metrics", "daily_logs", "metric_categories"],
+  name: "Daily Tracker",
+  description: "Track daily habits and metrics",
+  icon: CalendarDays,
+});

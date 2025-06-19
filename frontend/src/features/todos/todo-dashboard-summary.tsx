@@ -7,6 +7,8 @@ import ReusableSummary from "@/components/reusable/reusable-summary";
 import { isPast, isToday, differenceInDays } from "date-fns";
 import { getSortedTodos } from "./todo-utils";
 import TodoListItem from "./todo-list-item";
+import { CheckCircle } from "lucide-react";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function TodoDashboardSummary({
   showPrivateMetrics = true,
@@ -98,3 +100,18 @@ export default function TodoDashboardSummary({
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/todos",
+  component: TodoDashboardSummary,
+  defaultConfig: {
+    id: "/todos",
+    size: "medium",
+    order: 1,
+    visible: true,
+  },
+  datasets: ["todos"],
+  name: "Todos",
+  description: "Tasks with deadlines and progress tracking",
+  icon: CheckCircle,
+});

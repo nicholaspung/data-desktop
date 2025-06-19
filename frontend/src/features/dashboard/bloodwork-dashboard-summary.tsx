@@ -5,6 +5,7 @@ import {
   TrendingUp,
   AlertTriangle,
   HeartPulse,
+  Activity,
 } from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
@@ -14,6 +15,7 @@ import {
   BloodMarker,
 } from "@/store/bloodwork-definitions";
 import ReusableSummary from "@/components/reusable/reusable-summary";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function BloodworkDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -303,3 +305,18 @@ export default function BloodworkDashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/bloodwork",
+  component: BloodworkDashboardSummary,
+  defaultConfig: {
+    id: "/bloodwork",
+    size: "medium",
+    order: 9,
+    visible: true,
+  },
+  datasets: ["bloodwork", "blood_markers", "blood_results"],
+  name: "Bloodwork",
+  description: "Track blood test results and markers",
+  icon: Activity,
+});

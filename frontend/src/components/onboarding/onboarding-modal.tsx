@@ -23,6 +23,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       "Track DEXA scans for body composition",
       "Monitor bloodwork and lab results", 
       "Record body measurements with privacy controls",
+      "Comprehensive wealth and financial tracking",
       "Manage personal relationships and contacts",
       "Log daily metrics and habits with streak tracking",
       "Conduct self-experiments with progress tracking",
@@ -78,6 +79,20 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       "Date comparison with visual trend indicators",
       "Customizable sum calculations and filtering",
       "Multi-measurement chart overlays with scrollable filters",
+    ],
+  },
+  {
+    title: "Wealth Management",
+    description: "Comprehensive financial tracking for income, expenses, and net worth monitoring.",
+    icon: <FEATURE_ICONS.WEALTH className="h-12 w-12 text-primary" />,
+    features: [
+      "Track all financial transactions with detailed categorization",
+      "Monitor account balances across multiple institutions",
+      "Record detailed paycheck information with deductions",
+      "Store financial documents securely with file management",
+      "Real-time net worth calculation with filtering options",
+      "Dashboard integration with yearly financial summaries",
+      "Bulk import capabilities for efficient data entry",
     ],
   },
   {

@@ -6,6 +6,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import ReusableCard from "@/components/reusable/reusable-card";
 import ReusableSelect from "@/components/reusable/reusable-select";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
+import TagInput from "@/components/reusable/tag-input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import {
@@ -68,6 +71,50 @@ export default function DataLogsManager<T extends Record<string, any>>({
     return fieldDefinitions.find((f) => f.key === key);
   };
 
+  const enhancedAutocompleteFields: Record<
+    string,
+    {
+      displayFields: string[];
+      autoFillFields: string[];
+      usePortal?: boolean;
+      dropdownPosition?: "top" | "bottom";
+    }
+  > =
+    datasetId === "financial_logs"
+      ? {
+          description: {
+            displayFields: ["category", "tags"],
+            autoFillFields: ["category", "tags"],
+            usePortal: true,
+            dropdownPosition: "top" as const,
+          },
+          tags: {
+            displayFields: [],
+            autoFillFields: [],
+            usePortal: true,
+            dropdownPosition: "top" as const,
+          },
+        }
+      : datasetId === "financial_balances"
+        ? {
+            account_name: {
+              displayFields: ["account_type", "account_owner"],
+              autoFillFields: ["account_type", "account_owner"],
+              usePortal: true,
+              dropdownPosition: "top" as const,
+            },
+          }
+        : datasetId === "paycheck_info"
+          ? {
+              deduction_type: {
+                displayFields: ["category"],
+                autoFillFields: ["category"],
+                usePortal: true,
+                dropdownPosition: "top" as const,
+              },
+            }
+          : {};
+
   const sortableFieldsList = useMemo(() => {
     if (sortableFields) return sortableFields;
 
@@ -101,6 +148,123 @@ export default function DataLogsManager<T extends Record<string, any>>({
     });
     return options;
   }, [logs, filterableFieldsList]);
+
+  const getAutocompleteOptions = (field: FieldDefinition) => {
+    const enhancedConfig = enhancedAutocompleteFields[field.key];
+    
+    if (enhancedConfig && enhancedConfig.displayFields.length > 0) {
+      // Enhanced autocomplete with display fields
+      const uniqueValues = new Map<string, Record<string, unknown>>();
+      logs.forEach((entry: Record<string, unknown>) => {
+        const value = entry[field.key];
+        if (value && typeof value === "string" && value.trim()) {
+          const trimmedValue = value.trim();
+          if (!uniqueValues.has(trimmedValue)) {
+            uniqueValues.set(trimmedValue, entry);
+          }
+        }
+      });
+
+      return Array.from(uniqueValues.entries())
+        .map(([value, entry]) => ({
+          id: `${field.key}-${value}`,
+          label: value,
+          entry: entry,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+    }
+
+    // Regular autocomplete
+    const existingValues = Array.from(
+      new Set(
+        logs
+          .map((record: Record<string, unknown>) => record[field.key])
+          .filter(
+            (value: unknown) =>
+              value && typeof value === "string" && value.trim() !== ""
+          )
+      )
+    ).sort() as string[];
+
+    return existingValues.map((value) => ({
+      id: value,
+      label: value,
+    }));
+  };
+
+  const handleEnhancedAutocompleteSelect = (
+    fieldKey: string,
+    option: { label: string; entry?: Record<string, unknown> }
+  ) => {
+    const enhancedConfig = enhancedAutocompleteFields[fieldKey];
+    if (!enhancedConfig || !option.entry) return;
+
+    // Update the main field value
+    setEditedLog((prev) => ({
+      ...prev,
+      [fieldKey]: option.label,
+    }));
+
+    // Auto-fill related fields
+    enhancedConfig.autoFillFields.forEach((autoFillField) => {
+      if (option.entry && option.entry[autoFillField]) {
+        setEditedLog((prev) => ({
+          ...prev,
+          [autoFillField]: option.entry![autoFillField],
+        }));
+      }
+    });
+  };
+
+  const renderEnhancedAutocompleteItem = (
+    fieldKey: string,
+    option: {
+      label: string;
+      entry?: Record<string, unknown>;
+      secondaryValue?: string | number;
+    }
+  ) => {
+    const enhancedConfig = enhancedAutocompleteFields[fieldKey];
+    if (!enhancedConfig || !option.entry) {
+      return (
+        <div className="flex flex-row items-center gap-2">
+          <span>{option.label}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{option.label}</span>
+        </div>
+        {enhancedConfig.displayFields.length > 0 && option.entry && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {enhancedConfig.displayFields.map((fieldName, index) => {
+              const value = option.entry?.[fieldName];
+              if (!value) return null;
+
+              const colors = [
+                "bg-blue-100 text-blue-800",
+                "bg-green-100 text-green-800",
+                "bg-purple-100 text-purple-800",
+              ];
+              const colorClass = colors[index % colors.length];
+
+              return (
+                <span
+                  key={fieldName}
+                  className={`px-2 py-0.5 rounded ${colorClass}`}
+                >
+                  {String(value)}
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const displayFields = useMemo(() => {
     const fieldsToShow = fieldDefinitions
@@ -830,6 +994,98 @@ export default function DataLogsManager<T extends Record<string, any>>({
                                 )}
                               </p>
                             )}
+                          </>
+                        ) : field.type === "autocomplete" ? (
+                          <>
+                            <AutocompleteInput
+                              id={`edit-${field.key}`}
+                              label=""
+                              value={
+                                (editedLog[field.key as keyof T] as string) ||
+                                ""
+                              }
+                              onChange={(value) =>
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: value,
+                                })
+                              }
+                              onSelect={
+                                enhancedAutocompleteFields[field.key]
+                                  ? (option) =>
+                                      handleEnhancedAutocompleteSelect(
+                                        field.key,
+                                        option
+                                      )
+                                  : undefined
+                              }
+                              options={getAutocompleteOptions(field)}
+                              placeholder={`Enter ${field.displayName.toLowerCase()}...`}
+                              emptyMessage="Type to add new option"
+                              showRecentOptions={!enhancedAutocompleteFields[field.key]}
+                              maxRecentOptions={5}
+                              usePortal={enhancedAutocompleteFields[field.key]?.usePortal || true}
+                              dropdownPosition={
+                                enhancedAutocompleteFields[field.key]?.dropdownPosition || "top"
+                              }
+                              renderItem={
+                                enhancedAutocompleteFields[field.key]
+                                  ? (option) =>
+                                      renderEnhancedAutocompleteItem(field.key, option)
+                                  : undefined
+                              }
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Current: {editingLog[field.key] || "Not set"}
+                            </p>
+                          </>
+                        ) : field.type === "tags" ? (
+                          <>
+                            <TagInput
+                              value={
+                                (editedLog[field.key as keyof T] as string) ||
+                                ""
+                              }
+                              onChange={(value) =>
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: value,
+                                })
+                              }
+                              generalData={logs}
+                              generalDataTagField={field.key}
+                              usePortal={true}
+                              dropdownPosition="top"
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Current: {editingLog[field.key] || "Not set"}
+                            </p>
+                          </>
+                        ) : field.type === "boolean" ? (
+                          <>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Checkbox
+                                id={`edit-${field.key}`}
+                                checked={
+                                  (editedLog[field.key as keyof T] as boolean) ||
+                                  false
+                                }
+                                onCheckedChange={(checked) =>
+                                  setEditedLog({
+                                    ...editedLog,
+                                    [field.key]: checked,
+                                  })
+                                }
+                              />
+                              <Label htmlFor={`edit-${field.key}`} className="text-sm">
+                                {field.displayName}
+                              </Label>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Current: {editingLog[field.key] ? "Yes" : "No"}
+                            </p>
                           </>
                         ) : (
                           <>

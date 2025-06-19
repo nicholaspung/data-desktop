@@ -15,6 +15,7 @@ import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, differenceInDays, addYears } from "date-fns";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function PeopleCRMDashboardSummary() {
   const people = useStore(dataStore, (state) => state.people);
@@ -97,13 +98,15 @@ export default function PeopleCRMDashboardSummary() {
       titleIcon={
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          <Badge variant="outline" className="text-xs border-orange-200 text-orange-600 bg-orange-50">
+          <Badge
+            variant="outline"
+            className="text-xs border-orange-200 text-orange-600 bg-orange-50"
+          >
             <AlertTriangle className="h-3 w-3 mr-1" />
             Alpha
           </Badge>
         </div>
       }
-      linkText="Open People CRM"
       linkTo="/people-crm"
       loading={isLoading}
       emptyState={
@@ -295,3 +298,26 @@ export default function PeopleCRMDashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/people-crm",
+  component: PeopleCRMDashboardSummary,
+  defaultConfig: {
+    id: "/people-crm",
+    size: "medium",
+    order: 6,
+    visible: true,
+  },
+  datasets: [
+    "people",
+    "meetings",
+    "person_attributes",
+    "person_notes",
+    "person_chats",
+    "birthday_reminders",
+    "person_relationships",
+  ],
+  name: "People CRM",
+  description: "Manage your contacts and relationships",
+  icon: Users,
+});

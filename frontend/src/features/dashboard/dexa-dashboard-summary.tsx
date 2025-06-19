@@ -5,6 +5,8 @@ import { formatDate } from "@/lib/date-utils";
 import { DEXAScan } from "@/store/dexa-definitions";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { PieChart } from "lucide-react";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function DEXADashboardSummary() {
   const dexaData = useStore(dataStore, (state) => state.dexa) || [];
@@ -93,3 +95,18 @@ export default function DEXADashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/dexa",
+  component: DEXADashboardSummary,
+  defaultConfig: {
+    id: "/dexa",
+    size: "medium",
+    order: 8,
+    visible: true,
+  },
+  datasets: ["dexa"],
+  name: "DEXA Scans",
+  description: "Track body composition from DEXA scans",
+  icon: PieChart,
+});

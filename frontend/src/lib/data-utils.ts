@@ -2,6 +2,15 @@ import { ApiService } from "@/services/api";
 import { DataStoreName } from "@/store/data-store";
 import { FieldDefinition } from "@/types/types";
 
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
 export const getProcessedRecords = async (
   datasetId: DataStoreName,
   fields: FieldDefinition[],

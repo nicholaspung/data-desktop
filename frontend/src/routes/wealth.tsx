@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import { Banknote, Receipt, Scale, FileText, Wallet, Plus } from "lucide-react";
+import { Banknote, Receipt, Scale, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import dataStore from "@/store/data-store";
@@ -249,13 +249,47 @@ function WealthPage() {
         <FeatureHeader
           title="Wealth"
           description="Track your finances, income, expenses, and financial documents"
-          developmentStage="alpha"
-          helpText="This section helps you manage all aspects of your financial data. Use the tabs to navigate between different financial tracking categories."
+          helpText="This comprehensive financial tracking system helps you monitor all aspects of your wealth. Use the tabs to navigate between different financial categories and get detailed insights into your financial health."
           helpVariant="info"
           storageKey="wealth-feature"
-        >
-          <Wallet className="h-8 w-8" />
-        </FeatureHeader>
+          guideContent={[
+            {
+              title: "Getting Started with Wealth Tracking",
+              content:
+                "The Wealth section is organized into four main tabs: Logs for tracking income and expenses, Balances for monitoring account values, Paycheck for detailed salary information, and Files for storing financial documents.",
+            },
+            {
+              title: "Financial Logs - Track Transactions",
+              content:
+                "Use the Logs tab to record all financial transactions. Click 'Add Transaction' to log income (positive amounts) or expenses (negative amounts). You can categorize transactions, add descriptions, and track dates for comprehensive financial records.",
+            },
+            {
+              title: "Account Balances - Monitor Net Worth",
+              content:
+                "The Balances tab tracks your account values across different financial institutions. Record checking, savings, investment, and other account balances. Specify account type, owner, and institution for detailed net worth calculations.",
+            },
+            {
+              title: "Paycheck Details - Salary Tracking",
+              content:
+                "Use the Paycheck tab to track detailed salary information including gross income, deductions (taxes, insurance, retirement), and net pay. This helps with budgeting and understanding your true take-home income.",
+            },
+            {
+              title: "Financial Documents - File Storage",
+              content:
+                "Store important financial documents in the Files tab. Upload tax documents, bank statements, investment reports, and other financial papers. Files are stored securely and can be easily retrieved when needed.",
+            },
+            {
+              title: "Dashboard Integration",
+              content:
+                "Your wealth data automatically appears on the main dashboard, showing current net worth, yearly financial activity, and paycheck summaries. Use the filters to focus on specific account types or owners for detailed analysis.",
+            },
+            {
+              title: "Data Import & Export",
+              content:
+                "Use the bulk import feature to quickly add multiple transactions from CSV files. Each tab supports single entry, multiple entry, and bulk import modes to accommodate different data entry preferences.",
+            },
+          ]}
+        />
       }
     >
       <ReusableTabs

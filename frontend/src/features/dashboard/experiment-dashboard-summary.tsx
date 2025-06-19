@@ -9,7 +9,8 @@ import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { Calendar } from "lucide-react";
+import { Calendar, FlaskConical } from "lucide-react";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function ExperimentDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -236,3 +237,18 @@ export default function ExperimentDashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/experiments",
+  component: ExperimentDashboardSummary,
+  defaultConfig: {
+    id: "/experiments",
+    size: "medium",
+    order: 3,
+    visible: true,
+  },
+  datasets: ["experiments", "experiment_metrics"],
+  name: "Experiments",
+  description: "Create and manage self-experiments",
+  icon: FlaskConical,
+});

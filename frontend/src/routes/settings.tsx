@@ -13,109 +13,56 @@ import { Button } from "@/components/ui/button";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { useMemo } from "react";
+import { dashboardRegistry } from "@/lib/dashboard-registry";
+import { createElement } from "react";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
 });
 
-const routes = [
-  {
-    path: "/",
-    name: "Dashboard",
-    description: "Main application dashboard",
-    icon: <FEATURE_ICONS.HOME className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/dexa",
-    name: "DEXA Scans",
-    description: "Track body composition from DEXA scans",
-    icon: <FEATURE_ICONS.DEXA_SCAN className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/bloodwork",
-    name: "Bloodwork",
-    description: "Track blood test results and markers",
-    icon: <FEATURE_ICONS.BLOODWORK className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/calendar",
-    name: "Daily Tracker",
-    description: "Track daily habits and metrics",
-    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/experiments",
-    name: "Experiments",
-    description: "Create and manage self-experiments",
-    icon: <FEATURE_ICONS.EXPERIMENTS className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/metric",
-    name: "Quick Metric Logger",
-    description: "Log metrics on-demand",
-    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/time-tracker",
-    name: "Time Tracker",
-    description: "Track how you spend your time",
-    icon: <FEATURE_ICONS.TIME_TRACKER className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/journaling",
-    name: "Journaling",
-    description: "Journal thoughts, gratitude, and affirmations",
-    icon: <FEATURE_ICONS.JOURNALING className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/metric-calendar",
-    name: "Metric Calendar",
-    description: "View metrics in calendar format",
-    icon: <FEATURE_ICONS.METRIC_CALENDAR className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/time-planner",
-    name: "Time Planner",
-    description: "Plan your weekly schedule",
-    icon: <FEATURE_ICONS.TIME_PLANNER className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/todos",
-    name: "Todos",
-    description: "Tasks with deadlines and progress tracking",
-    icon: <FEATURE_ICONS.TODOS className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/people-crm",
-    name: "People CRM",
-    description: "Manage your contacts and relationships",
-    icon: <FEATURE_ICONS.PEOPLE_CRM className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/body-measurements",
-    name: "Body Measurements",
-    description: "Track body measurements and physical progress",
-    icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/wealth",
-    name: "Wealth",
-    description: "Track finances, income, expenses, and financial documents",
-    icon: <FEATURE_ICONS.WEALTH className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/dataset",
-    name: "Dataset Manager",
-    description: "Manage application datasets",
-    icon: <FEATURE_ICONS.DATASETS className="h-4 w-4 mr-2" />,
-  },
-  {
-    path: "/settings",
-    name: "Settings",
-    description: "Application settings and configuration",
-    icon: <FEATURE_ICONS.SETTINGS className="h-4 w-4 mr-2" />,
-  },
-];
+const getRoutes = () => {
+  const staticRoutes = [
+    {
+      path: "/",
+      name: "Dashboard",
+      description: "Main application dashboard",
+      icon: <FEATURE_ICONS.HOME className="h-4 w-4 mr-2" />,
+    },
+    {
+      path: "/metric-calendar",
+      name: "Metric Calendar",
+      description: "View metrics in calendar format",
+      icon: <FEATURE_ICONS.METRIC_CALENDAR className="h-4 w-4 mr-2" />,
+    },
+    {
+      path: "/time-planner",
+      name: "Time Planner",
+      description: "Plan your weekly schedule",
+      icon: <FEATURE_ICONS.TIME_PLANNER className="h-4 w-4 mr-2" />,
+    },
+    {
+      path: "/dataset",
+      name: "Dataset Manager",
+      description: "Manage application datasets",
+      icon: <FEATURE_ICONS.DATASETS className="h-4 w-4 mr-2" />,
+    },
+    {
+      path: "/settings",
+      name: "Settings",
+      description: "Application settings and configuration",
+      icon: <FEATURE_ICONS.SETTINGS className="h-4 w-4 mr-2" />,
+    },
+  ];
+
+  const registryRoutes = dashboardRegistry.getRouteInfo().map((info) => ({
+    path: info.path,
+    name: info.name,
+    description: info.description,
+    icon: createElement(info.icon, { className: "h-4 w-4 mr-2" }),
+  }));
+
+  return [...staticRoutes, ...registryRoutes];
+};
 
 function SettingsPage() {
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
@@ -126,6 +73,7 @@ function SettingsPage() {
   );
 
   const orderedRoutes = useMemo(() => {
+    const routes = getRoutes();
     return routes
       .filter(
         (route) =>

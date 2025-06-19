@@ -4,6 +4,8 @@ import dataStore from "@/store/data-store";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Badge } from "@/components/ui/badge";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { BookOpen } from "lucide-react";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function JournalingDashboardSummary() {
   const [isLoading, setIsLoading] = useState(true);
@@ -96,7 +98,6 @@ export default function JournalingDashboardSummary() {
     <ReusableSummary
       title="Journaling"
       titleIcon={<FEATURE_ICONS.JOURNALING className="h-5 w-5" />}
-      linkText="Go to Journaling"
       linkTo="/journaling"
       loading={isLoading}
       emptyState={
@@ -143,3 +144,23 @@ export default function JournalingDashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/journaling",
+  component: JournalingDashboardSummary,
+  defaultConfig: {
+    id: "/journaling",
+    size: "medium",
+    order: 5,
+    visible: true,
+  },
+  datasets: [
+    "gratitude_journal",
+    "question_journal",
+    "creativity_journal",
+    "affirmation",
+  ],
+  name: "Journaling",
+  description: "Journal thoughts, gratitude, and affirmations",
+  icon: BookOpen,
+});

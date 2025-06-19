@@ -93,25 +93,25 @@ export default function ReusableSummary({
   contentClassName,
   customContent,
 }: ReusableSummaryProps) {
-  const headerContent = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        {titleIcon}
-        {title}
-      </div>
-      {linkTo && (
-        <Link to={linkTo} className="text-sm text-primary hover:underline">
-          {linkText}
-        </Link>
-      )}
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      {titleIcon}
+      <span>{title}</span>
     </div>
   );
+
+  const headerActions = linkTo ? (
+    <Link to={linkTo} className="text-sm text-primary hover:underline whitespace-nowrap">
+      {linkText}
+    </Link>
+  ) : undefined;
 
   if (loading) {
     return (
       <ReusableCard
         useSeparator={true}
-        title={headerContent}
+        title={titleContent}
+        headerActions={headerActions}
         cardClassName={className}
         contentClassName={contentClassName}
         content={
@@ -129,7 +129,8 @@ export default function ReusableSummary({
     return (
       <ReusableCard
         useSeparator={true}
-        title={headerContent}
+        title={titleContent}
+        headerActions={headerActions}
         cardClassName={className}
         contentClassName={contentClassName}
         content={
@@ -152,7 +153,8 @@ export default function ReusableSummary({
     return (
       <ReusableCard
         useSeparator={true}
-        title={headerContent}
+        title={titleContent}
+        headerActions={headerActions}
         cardClassName={className}
         contentClassName={contentClassName}
         content={customContent}
@@ -163,7 +165,8 @@ export default function ReusableSummary({
   return (
     <ReusableCard
       useSeparator={true}
-      title={headerContent}
+      title={titleContent}
+      headerActions={headerActions}
       cardClassName={className}
       contentClassName={contentClassName}
       content={

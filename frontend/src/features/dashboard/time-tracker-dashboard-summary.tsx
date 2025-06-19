@@ -2,10 +2,11 @@ import { useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { formatHoursAndMinutes } from "@/lib/time-utils";
-import { Clock3 } from "lucide-react";
+import { Clock3, Clock } from "lucide-react";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function TimeTrackerDashboardSummary() {
   const timeEntries = useStore(
@@ -213,3 +214,18 @@ export default function TimeTrackerDashboardSummary() {
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/time-tracker",
+  component: TimeTrackerDashboardSummary,
+  defaultConfig: {
+    id: "/time-tracker",
+    size: "medium",
+    order: 2,
+    visible: true,
+  },
+  datasets: ["time_entries", "time_categories", "time_planner_configs"],
+  name: "Time Tracker",
+  description: "Track how you spend your time",
+  icon: Clock,
+});

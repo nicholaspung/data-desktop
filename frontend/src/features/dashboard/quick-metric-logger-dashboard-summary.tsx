@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import { CheckCircle2, Circle, Lock, Tag } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Tag, Zap } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -18,6 +18,7 @@ import { usePin } from "@/hooks/usePin";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function QuickMetricLoggerDashboardSummary({
   showPrivateMetrics = true,
@@ -422,3 +423,18 @@ export default function QuickMetricLoggerDashboardSummary({
     />
   );
 }
+
+registerDashboardSummary({
+  route: "/metric",
+  component: QuickMetricLoggerDashboardSummary,
+  defaultConfig: {
+    id: "/metric",
+    size: "medium",
+    order: 4,
+    visible: true,
+  },
+  datasets: ["metrics", "daily_logs", "metric_categories"],
+  name: "Quick Metric Logger",
+  description: "Log metrics on-demand",
+  icon: Zap,
+});

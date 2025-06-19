@@ -1,4 +1,5 @@
 import { Store } from "@tanstack/react-store";
+import { dashboardRegistry } from "@/lib/dashboard-registry";
 
 interface DashboardSummaryConfig {
   id: string;
@@ -7,57 +8,8 @@ interface DashboardSummaryConfig {
   visible: boolean;
 }
 
-const defaultDashboardSummaries = {
-  "/calendar": {
-    id: "/calendar",
-    size: "medium" as const,
-    order: 0,
-    visible: true,
-  },
-  "/todos": { id: "/todos", size: "medium" as const, order: 1, visible: true },
-  "/time-tracker": {
-    id: "/time-tracker",
-    size: "medium" as const,
-    order: 2,
-    visible: true,
-  },
-  "/experiments": {
-    id: "/experiments",
-    size: "medium" as const,
-    order: 3,
-    visible: true,
-  },
-  "/metric": {
-    id: "/metric",
-    size: "medium" as const,
-    order: 4,
-    visible: true,
-  },
-  "/journaling": {
-    id: "/journaling",
-    size: "medium" as const,
-    order: 5,
-    visible: true,
-  },
-  "/people-crm": {
-    id: "/people-crm",
-    size: "medium" as const,
-    order: 6,
-    visible: true,
-  },
-  "/wealth": {
-    id: "/wealth",
-    size: "medium" as const,
-    order: 7,
-    visible: true,
-  },
-  "/dexa": { id: "/dexa", size: "medium" as const, order: 8, visible: true },
-  "/bloodwork": {
-    id: "/bloodwork",
-    size: "medium" as const,
-    order: 9,
-    visible: true,
-  },
+const getDefaultDashboardSummaries = () => {
+  return dashboardRegistry.getDefaultConfigs();
 };
 
 interface RouteConfig {
@@ -86,24 +38,21 @@ interface SettingsState {
   reorderRoutes: (sourceIndex: number, destinationIndex: number) => void;
 }
 
-const defaultRoutes = {
-  "/": true,
-  "/dexa": true,
-  "/bloodwork": true,
-  "/calendar": true,
-  "/experiments": true,
-  "/metric": true,
-  "/time-tracker": true,
-  "/journaling": true,
-  "/metric-calendar": true,
-  "/time-planner": true,
-  "/dataset": true,
-  "/settings": true,
-  "/todos": true,
-  "/people": true,
-  "/people-crm": true,
-  "/body-measurements": true,
-  "/wealth": true,
+const getDefaultRoutes = () => {
+  const routes: Record<string, boolean> = {
+    "/": true,
+    "/metric-calendar": true,
+    "/time-planner": true,
+    "/dataset": true,
+    "/settings": true,
+    "/people": true,
+  };
+  
+  dashboardRegistry.getAllRoutes().forEach(route => {
+    routes[route] = true;
+  });
+  
+  return routes;
 };
 
 const defaultRouteConfigs: Record<string, RouteConfig> = {
@@ -161,36 +110,17 @@ const defaultDatasets = {
   financial_files: true,
 };
 
-export const routeDatasetMapping: Record<string, string[]> = {
-  "/dexa": ["dexa"],
-  "/bloodwork": ["bloodwork", "blood_markers", "blood_results"],
-  "/body-measurements": ["body_measurements"],
-  "/experiments": ["experiments", "experiment_metrics"],
-  "/calendar": ["metrics", "daily_logs", "metric_categories"],
-  "/journaling": [
-    "gratitude_journal",
-    "question_journal",
-    "creativity_journal",
-    "affirmation",
-  ],
-  "/time-tracker": ["time_entries", "time_categories", "time_planner_configs"],
-  "/todos": ["todos"],
-  "/people-crm": [
-    "people",
-    "meetings",
-    "person_attributes",
-    "person_notes",
-    "person_chats",
-    "birthday_reminders",
-    "person_relationships",
-  ],
-  "/wealth": [
-    "financial_logs",
-    "financial_balances", 
-    "paycheck_info",
-    "financial_files",
-  ],
+export const getRouteDatasetMapping = (): Record<string, string[]> => {
+  const baseMapping: Record<string, string[]> = {
+    "/people": ["people", "person_attributes"],
+  };
+  
+  const registryMapping = dashboardRegistry.getRouteDatasetMapping();
+  
+  return { ...baseMapping, ...registryMapping };
 };
+
+export const routeDatasetMapping = getRouteDatasetMapping();
 
 const getInitialState = (): Partial<SettingsState> => {
   try {
@@ -203,20 +133,20 @@ const getInitialState = (): Partial<SettingsState> => {
   }
 
   return {
-    visibleRoutes: defaultRoutes,
+    visibleRoutes: getDefaultRoutes(),
     routeConfigs: defaultRouteConfigs,
     defaultDatasetView: "card",
     enabledDatasets: defaultDatasets,
-    dashboardSummaryConfigs: defaultDashboardSummaries,
+    dashboardSummaryConfigs: getDefaultDashboardSummaries(),
   };
 };
 
 const initialState: SettingsState = {
-  visibleRoutes: defaultRoutes,
+  visibleRoutes: getDefaultRoutes(),
   routeConfigs: defaultRouteConfigs,
   defaultDatasetView: "card",
   enabledDatasets: defaultDatasets,
-  dashboardSummaryConfigs: defaultDashboardSummaries,
+  dashboardSummaryConfigs: getDefaultDashboardSummaries(),
   ...getInitialState(),
   setVisibleRoute: (route: string, visible: boolean) => {
     settingsStore.setState((state) => {

@@ -53,8 +53,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - refactor application to use reusable components
 
 - add inventory management system
-- add a "taking current supplements" section
+- add a "taking current supplements" section - supplements and medication
   - allow user to select supplements based on what's in inventory
+  - allow user to check if the user took a supplement or medication for the day
+  - add a way for the user to select grouped supplements/medications taken at a specific time to be checked with a single button, but also allow the user to deselect a taken supplement/medication afterwards
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
@@ -70,11 +72,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - in multi-mode-add-dialog, test bulk imports
 
-- in wealth, when I edit an item, it should still be the autocomplete for that field similar to how it's done in the table inputs for new values
-
-- for wealth dashboard summary, show the current total of the logs for the year, current net worth of the individual based on the latest balances (where the user can select which account type and account owner to show), and the total total of the paycheck information for the year
-- remove the alpha from wealth and add guide information on how to use the feature in the route, onboarding modal, and help guide
-- add a new instructions files on when I "finish a route" - to make sure alpha/beta is removed from the route, there is guide information for that route, and it's also in the onboarding modal and help guide
+- user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
 - in metrics, add a way to manage the metric category
 - rename "quick metric logger" to be just "metric logger"
@@ -94,6 +92,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in todos, add a filter for the priorities
 - in todos, allow user to search for the todos
 - in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
+- make the dashboard layout icons for the routes the same in settings, and also within the routes
 
 - fix the react bug on the home page about private content
 - in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled
@@ -102,6 +101,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- update how body measurement dashboard summary looks like [DONE 2025-06-18]
+- in customize dashboards, it doesn't seem to show the wealth dashboard summary [DONE 2025-06-18]
+- for wealth dashboard summary, show the current total of the logs for the year, current net worth of the individual based on the latest balances (where the user can select which account type and account owner to show), and the total total of the paycheck information for the year [DONE 2025-06-18]
+- remove the alpha from wealth and add guide information on how to use the feature in the route, onboarding modal, and help guide [DONE 2025-06-18]
+- add a new instructions files on when I "finish a route" - to make sure alpha/beta is removed from the route, there is guide information for that route, and it's also in the onboarding modal and help guide [DONE 2025-06-18]
+- in wealth, when I edit an item, it should still be the autocomplete for that field similar to how it's done in the table inputs for new values [DONE 2025-06-18]
 - in wealth, add a "trend" graph to show summaries of selected month/year for a time period, for logs and paycheck the total, for balances the last entry until that period [DONE 2025-06-18]
 - in that trend graph, also all for grouping the number of month/years [DONE 2025-06-18]
 - in that trend graph, also allow for filtering of the fields [DONE 2025-06-18]

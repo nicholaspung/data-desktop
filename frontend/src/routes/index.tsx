@@ -17,19 +17,10 @@ import { DatasetSummary, FieldDefinition } from "@/types/types";
 import { DataStoreName, loadState } from "@/store/data-store";
 import { getProcessedRecords } from "@/lib/data-utils";
 import ReusableCard from "@/components/reusable/reusable-card";
-import DEXADashboardSummary from "@/features/dashboard/dexa-dashboard-summary";
 import { Separator } from "@/components/ui/separator";
-import BloodworkDashboardSummary from "@/features/dashboard/bloodwork-dashboard-summary";
-import ExperimentDashboardSummary from "@/features/dashboard/experiment-dashboard-summary";
 import { Link } from "@tanstack/react-router";
-import DailyTrackingDashboardSummary from "@/features/dashboard/daily-tracking-dashboard-summary";
-import QuickMetricLoggerDashboardSummary from "@/features/dashboard/quick-metric-logger-dashboard-summary";
-import JournalingDashboardSummary from "@/features/dashboard/journaling-dashboard-summary";
 import appStateStore from "@/store/app-state-store";
-import TimeTrackerDashboardSummary from "@/features/dashboard/time-tracker-dashboard-summary";
-import settingsStore, { routeDatasetMapping } from "@/store/settings-store";
-import TodoDashboardSummary from "@/features/todos/todo-dashboard-summary";
-import PeopleCRMDashboardSummary from "@/features/dashboard/people-crm-dashboard-summary";
+import settingsStore, { getRouteDatasetMapping } from "@/store/settings-store";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import {
   DndContext,
@@ -48,6 +39,20 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import CustomizableDashboardSummary from "@/components/reusable/customizable-dashboard-summary";
+import { dashboardRegistry } from "@/lib/dashboard-registry";
+
+// Import all dashboard summaries to trigger registration
+import "@/features/dashboard/dexa-dashboard-summary";
+import "@/features/dashboard/bloodwork-dashboard-summary";
+import "@/features/dashboard/experiment-dashboard-summary";
+import "@/features/dashboard/daily-tracking-dashboard-summary";
+import "@/features/dashboard/quick-metric-logger-dashboard-summary";
+import "@/features/dashboard/journaling-dashboard-summary";
+import "@/features/dashboard/time-tracker-dashboard-summary";
+import "@/features/todos/todo-dashboard-summary";
+import "@/features/dashboard/people-crm-dashboard-summary";
+import "@/features/dashboard/wealth-dashboard-summary";
+import "@/features/dashboard/body-measurements-dashboard-summary";
 
 const sizeClasses = {
   small: "col-span-1",
@@ -100,6 +105,7 @@ function Home() {
         return;
       }
 
+      const routeDatasetMapping = getRouteDatasetMapping();
       const filteredDatasets = allDatasets.filter((dataset) => {
         for (const [route, datasets] of Object.entries(routeDatasetMapping)) {
           if (datasets.includes(dataset.id) && visibleRoutes[route]) {
@@ -240,22 +246,13 @@ function Home() {
 
   const getOrderedDashboardSummaries = () => {
     const configs = dashboardSummaryConfigs || {};
-    const dashboardRoutes = [
-      "/calendar",
-      "/todos",
-      "/time-tracker",
-      "/experiments",
-      "/metric",
-      "/journaling",
-      "/people-crm",
-      "/dexa",
-      "/bloodwork",
-    ];
+    const dashboardRoutes = dashboardRegistry.getAllRoutes();
 
     const summariesWithConfigs = dashboardRoutes
       .filter((route) => visibleRoutes[route])
       .map((route) => {
-        const defaultConfig = {
+        const registryDefinition = dashboardRegistry.get(route);
+        const defaultConfig = registryDefinition?.defaultConfig || {
           id: route,
           size: "medium" as const,
           order: dashboardRoutes.indexOf(route),
@@ -339,40 +336,17 @@ function Home() {
                 const { route, config } = item;
 
                 const renderSummary = () => {
-                  switch (route) {
-                    case "/calendar":
-                      return (
-                        <DailyTrackingDashboardSummary
-                          showPrivateMetrics={showPrivateMetrics}
-                        />
-                      );
-                    case "/todos":
-                      return (
-                        <TodoDashboardSummary
-                          showPrivateMetrics={showPrivateMetrics}
-                        />
-                      );
-                    case "/time-tracker":
-                      return <TimeTrackerDashboardSummary />;
-                    case "/experiments":
-                      return <ExperimentDashboardSummary />;
-                    case "/metric":
-                      return (
-                        <QuickMetricLoggerDashboardSummary
-                          showPrivateMetrics={showPrivateMetrics}
-                        />
-                      );
-                    case "/journaling":
-                      return <JournalingDashboardSummary />;
-                    case "/people-crm":
-                      return <PeopleCRMDashboardSummary />;
-                    case "/dexa":
-                      return <DEXADashboardSummary />;
-                    case "/bloodwork":
-                      return <BloodworkDashboardSummary />;
-                    default:
-                      return null;
+                  const summaryDefinition = dashboardRegistry.get(route);
+                  if (!summaryDefinition) {
+                    return null;
                   }
+
+                  const Component = summaryDefinition.component;
+                  // Pass showPrivateMetrics only if the component expects it
+                  const props = route === "/wealth" 
+                    ? {} 
+                    : { showPrivateMetrics };
+                  return <Component {...props} />;
                 };
 
                 return (
@@ -400,40 +374,17 @@ function Home() {
 
                   const { route, config } = activeItem;
                   const renderSummary = () => {
-                    switch (route) {
-                      case "/calendar":
-                        return (
-                          <DailyTrackingDashboardSummary
-                            showPrivateMetrics={showPrivateMetrics}
-                          />
-                        );
-                      case "/todos":
-                        return (
-                          <TodoDashboardSummary
-                            showPrivateMetrics={showPrivateMetrics}
-                          />
-                        );
-                      case "/time-tracker":
-                        return <TimeTrackerDashboardSummary />;
-                      case "/experiments":
-                        return <ExperimentDashboardSummary />;
-                      case "/metric":
-                        return (
-                          <QuickMetricLoggerDashboardSummary
-                            showPrivateMetrics={showPrivateMetrics}
-                          />
-                        );
-                      case "/journaling":
-                        return <JournalingDashboardSummary />;
-                      case "/people-crm":
-                        return <PeopleCRMDashboardSummary />;
-                      case "/dexa":
-                        return <DEXADashboardSummary />;
-                      case "/bloodwork":
-                        return <BloodworkDashboardSummary />;
-                      default:
-                        return null;
+                    const summaryDefinition = dashboardRegistry.get(route);
+                    if (!summaryDefinition) {
+                      return null;
                     }
+
+                    const Component = summaryDefinition.component;
+                    // Pass showPrivateMetrics only if the component expects it
+                    const props = route === "/wealth" 
+                      ? {} 
+                      : { showPrivateMetrics };
+                    return <Component {...props} />;
                   };
 
                   return (

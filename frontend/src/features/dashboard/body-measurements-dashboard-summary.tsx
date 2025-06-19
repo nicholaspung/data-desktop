@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
-import { Link } from "@tanstack/react-router";
 import dataStore from "@/store/data-store";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Ruler } from "lucide-react";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
+import ReusableSummary from "@/components/reusable/reusable-summary";
 
 interface BodyMeasurementsDashboardSummaryProps {
   data?: BodyMeasurementRecord[];
@@ -15,7 +15,7 @@ interface BodyMeasurementsDashboardSummaryProps {
 
 export default function BodyMeasurementsDashboardSummary({
   data: propData,
-}: BodyMeasurementsDashboardSummaryProps = {}) {
+}: BodyMeasurementsDashboardSummaryProps) {
   const storeData =
     useStore(dataStore, (state) => state.body_measurements) || [];
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,10 @@ export default function BodyMeasurementsDashboardSummary({
   const data = propData || storeData;
   const typedData = data as BodyMeasurementRecord[];
 
-  const measurementGroups = typedData.reduce(
+  // Filter out private measurements
+  const nonPrivateData = typedData.filter((record) => !record.private);
+
+  const measurementGroups = nonPrivateData.reduce(
     (groups, record) => {
       const type = record.measurement;
       if (!groups[type]) {
@@ -55,12 +58,21 @@ export default function BodyMeasurementsDashboardSummary({
   );
 
   const filteredLatestMeasurements = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return latestMeasurements;
+    let filtered = latestMeasurements;
+
+    if (searchTerm.trim()) {
+      filtered = latestMeasurements.filter(({ type }) =>
+        type.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else {
+      // Sort by most recent when not searching, then limit to 5
+      filtered = latestMeasurements.sort(
+        (a, b) => a.daysSinceUpdate - b.daysSinceUpdate
+      );
     }
-    return latestMeasurements.filter(({ type }) =>
-      type.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+
+    // Limit to 5 measurement types
+    return filtered.slice(0, 5);
   }, [latestMeasurements, searchTerm]);
 
   const latestWeight = measurementGroups.Bodyweight
@@ -70,7 +82,6 @@ export default function BodyMeasurementsDashboardSummary({
     : null;
 
   const measurementTypes = Object.keys(measurementGroups);
-  const totalMeasurements = typedData.length;
 
   const formatTimeSince = (days: number) => {
     if (days === 0) return "Today";
@@ -80,111 +91,75 @@ export default function BodyMeasurementsDashboardSummary({
     return `${Math.floor(days / 30)} months ago`;
   };
 
-  if (loading) {
-    return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-20 bg-muted rounded-lg"></div>
-        <div className="space-y-2">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
-        </div>
-      </div>
-    );
-  }
+  // Prepare sections with both weight and measurement types
+  const sections = [
+    {
+      items: [
+        {
+          label: "Latest Weight",
+          value: latestWeight
+            ? `${latestWeight.value} ${latestWeight.unit}`
+            : "No weight recorded",
+          subText: latestWeight
+            ? new Date(latestWeight.date).toLocaleDateString()
+            : undefined,
+        },
+        {
+          label: "Measurement Types",
+          value: measurementTypes.length,
+        },
+      ],
+      columns: 2 as const,
+    },
+  ];
 
-  if (totalMeasurements === 0) {
-    return (
-      <div className="text-center py-8">
-        <FEATURE_ICONS.BODY_MEASUREMENTS className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-        <p className="text-muted-foreground mb-4">
-          No measurements recorded yet
-        </p>
-        <Link
-          to="/body-measurements"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Add your first measurement
-        </Link>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1">
-          {latestWeight ? (
-            <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4">
-              <div className="text-sm text-muted-foreground mb-1">
-                Latest Weight
-              </div>
-              <div className="text-2xl font-bold text-primary">
-                {latestWeight.value} {latestWeight.unit}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {new Date(latestWeight.date).toLocaleDateString()}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-lg border-2 border-dashed border-muted p-4">
-              <div className="text-sm text-muted-foreground mb-1">
-                Latest Weight
-              </div>
-              <div className="text-lg text-muted-foreground">
-                No weight recorded
-              </div>
-            </div>
+  // Prepare search section
+  const searchSection = [
+    {
+      title: (
+        <div className="flex items-center justify-between">
+          <h4 className="font-medium">Latest by Type</h4>
+          {!searchTerm && latestMeasurements.length > 5 && (
+            <p className="pl-4 text-xs text-muted-foreground">
+              Showing 5 most recent types ({latestMeasurements.length} total)
+            </p>
           )}
         </div>
-        <div className="md:col-span-2 flex flex-col items-center">
-          <h4 className="font-medium mb-3">Overview</h4>
-          <div className="grid grid-cols-2 gap-8">
-            <div className="text-center">
-              <div className="text-2xl font-semibold">{totalMeasurements}</div>
-              <div className="text-sm text-muted-foreground">Total Records</div>
+      ),
+      items: [
+        {
+          label: "",
+          value: (
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search measurement types..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-semibold">
-                {measurementTypes.length}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Measurement Types
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <Separator />
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium">Latest by Type</h4>
-          <div className="relative w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search measurement types..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-        {filteredLatestMeasurements.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            {searchTerm
-              ? `No measurement types found for "${searchTerm}"`
-              : "No measurements recorded"}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredLatestMeasurements.map(
-              ({ type, latest, count, daysSinceUpdate }) => (
-                <div
-                  key={type}
-                  className="p-3 rounded-lg border hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium capitalize">{type}</span>
+          ),
+        },
+      ],
+      columns: 1 as const,
+    },
+  ];
+
+  // Prepare grid section for measurements
+  const gridSection =
+    filteredLatestMeasurements.length > 0
+      ? {
+          columns: 3 as const,
+          items: filteredLatestMeasurements.map(
+            ({ type, latest, count, daysSinceUpdate }) => ({
+              content: (
+                <div className="w-full">
+                  <div className="flex items-center gap-2 mb-2 justify-center">
+                    <span className="font-medium capitalize text-sm">
+                      {type}
+                    </span>
                     <Badge variant="secondary" className="text-xs">
                       {count}
                     </Badge>
@@ -199,11 +174,56 @@ export default function BodyMeasurementsDashboardSummary({
                     {new Date(latest.date).toLocaleDateString()}
                   </div>
                 </div>
-              )
-            )}
-          </div>
-        )}
+              ),
+            })
+          ),
+        }
+      : undefined;
+
+  // Prepare footer with empty state message
+  const footer =
+    filteredLatestMeasurements.length === 0 ? (
+      <div className="text-center py-8 text-muted-foreground">
+        {searchTerm
+          ? `No measurement types found for "${searchTerm}"`
+          : "No measurements recorded"}
       </div>
-    </div>
+    ) : undefined;
+
+  return (
+    <ReusableSummary
+      title="Body Measurements"
+      titleIcon={<FEATURE_ICONS.BODY_MEASUREMENTS className="h-5 w-5" />}
+      linkText="View All"
+      linkTo="/body-measurements"
+      loading={loading}
+      emptyState={
+        nonPrivateData.length === 0
+          ? {
+              message: "No measurements recorded yet",
+              actionText: "Add your first measurement",
+              actionTo: "/body-measurements",
+            }
+          : undefined
+      }
+      sections={[...sections, ...searchSection]}
+      gridSection={gridSection}
+      footer={footer}
+    />
   );
 }
+
+registerDashboardSummary({
+  route: "/body-measurements",
+  component: BodyMeasurementsDashboardSummary,
+  defaultConfig: {
+    id: "/body-measurements",
+    size: "medium",
+    order: 10,
+    visible: true,
+  },
+  datasets: ["body_measurements"],
+  name: "Body Measurements",
+  description: "Track body measurements and physical progress",
+  icon: Ruler,
+});
