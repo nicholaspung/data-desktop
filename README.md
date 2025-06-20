@@ -74,13 +74,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5? [DONE 2025-06-20]
-- in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode [DONE 2025-06-20]
-- in time tracking, if I press play on the time tracker form at the current time, it sometimes goes back to the last time entry time [DONE 2025-06-20]
-- in time tracking, show the user when they are adding incorrect start time and end times [DONE 2025-06-20]
-- in time tracking, for the category select field, is there a way to add a selection to create a new category? and also make it easier for the user to type out what they know the category they want instead of scrolling through and finding it manually? [DONE 2025-06-20]
+- for file upload component, need to change the UI and fix it [DONE 2025-06-20]
 
-- for file upload component, need to change the UI and fix it
 - in todos, add a filter for the priorities
 - in todos, allow user to search for the todos
 - in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
@@ -98,6 +93,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5? [DONE 2025-06-20]
+- in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode [DONE 2025-06-20]
+- in time tracking, if I press play on the time tracker form at the current time, it sometimes goes back to the last time entry time [DONE 2025-06-20]
+- in time tracking, show the user when they are adding incorrect start time and end times [DONE 2025-06-20]
+- in time tracking, for the category select field, is there a way to add a selection to create a new category? and also make it easier for the user to type out what they know the category they want instead of scrolling through and finding it manually? [DONE 2025-06-20]
 - in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing [DONE 2025-06-20]
 - in experiments, add a field for starting goal images and end goal images [DONE 2025-06-20]
 - in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar [DONE 2025-06-20]

@@ -138,13 +138,13 @@ export default function FileUpload({
   return (
     <div className={cn("space-y-2", className)}>
       {value ? (
-        <div className="relative border rounded-md p-4 bg-muted/20">
-          <div className="flex items-center gap-4">
+        <div className="relative border rounded-md p-2 sm:p-4 bg-muted/20">
+          <div className="flex items-center gap-2 sm:gap-4">
             {showPreview && (
               <div className="flex-shrink-0">{getFileTypeIcon(value)}</div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{value.name}</p>
+              <p className="font-medium text-xs sm:text-sm truncate">{value.name}</p>
               <p className="text-xs text-muted-foreground">
                 {value.type || "File"}
               </p>
@@ -154,10 +154,10 @@ export default function FileUpload({
                 type="button"
                 variant="destructive"
                 size="icon"
-                className="h-8 w-8 rounded-full"
+                className="h-6 w-6 sm:h-8 sm:w-8 rounded-full flex-shrink-0"
                 onClick={handleRemoveFile}
               >
-                <X className="h-4 w-4" />
+                <X className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             )}
           </div>
@@ -168,7 +168,7 @@ export default function FileUpload({
             !isLoading && !disabled && fileInputRef.current?.click()
           }
           className={cn(
-            "flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md transition-colors",
+            "flex flex-col items-center justify-center p-3 sm:p-6 border-2 border-dashed rounded-md transition-colors min-h-[100px] sm:min-h-[120px]",
             isLoading || disabled
               ? "cursor-not-allowed opacity-60"
               : "cursor-pointer hover:bg-muted/50",
@@ -185,28 +185,28 @@ export default function FileUpload({
           />
 
           {isLoading ? (
-            <div className="flex flex-col items-center w-full space-y-4">
-              <Loader2 className="h-8 w-8 text-primary animate-spin" />
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center w-full space-y-2 sm:space-y-4">
+              <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
+              <p className="text-xs sm:text-sm text-muted-foreground text-center">
                 Uploading {currentFile ? `"${currentFile}"` : "file"}...
               </p>
-              <Progress value={uploadProgress} className="w-full h-2" />
+              <Progress value={uploadProgress} className="w-full h-1 sm:h-2" />
               <p className="text-xs text-muted-foreground">
                 {uploadProgress}% complete
               </p>
             </div>
           ) : (
             <>
-              <Upload className="h-12 w-12 text-muted-foreground mb-2" />
-              <p className="font-medium text-sm mb-1">Click to upload file</p>
-              <p className="text-xs text-muted-foreground">
+              <Upload className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mb-1 sm:mb-2" />
+              <p className="font-medium text-xs sm:text-sm mb-1 text-center">Click to upload file</p>
+              <p className="text-xs text-muted-foreground text-center px-2">
                 {acceptedTypes
                   ? `Accepted formats: ${acceptedTypes.split(",").join(", ")}`
                   : "All file types accepted"}
                 {maxSize && ` (max ${maxSize}MB)`}
               </p>
               {error && (
-                <p className="text-xs text-destructive mt-2">{error}</p>
+                <p className="text-xs text-destructive mt-2 text-center">{error}</p>
               )}
             </>
           )}

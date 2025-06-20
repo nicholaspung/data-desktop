@@ -120,8 +120,8 @@ export default function MultipleFileUpload({
       }
 
       onChange(newFiles);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
       console.error("File upload error:", err);
     } finally {
       setIsLoading(false);
@@ -260,70 +260,72 @@ export default function MultipleFileUpload({
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 lg:gap-4">
         {value
           .sort((a, b) => a.order - b.order)
           .map((file) => (
             <div
               key={file.id}
-              className="relative border rounded-md p-4 bg-muted/20"
+              className="relative border rounded-md p-2 lg:p-4 bg-muted/20"
             >
-              <div className="flex items-center gap-4">
+              <div className="flex items-start gap-2 md:gap-4">
                 <div className="flex-shrink-0">{getFileTypeIcon(file)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{file.name}</p>
+                  <p className="font-medium text-xs md:text-sm break-words">
+                    {file.name}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {file.type || "File"}
                   </p>
                 </div>
-                <div className="flex-shrink-0 flex gap-1">
+                <div className="flex-shrink-0 flex flex-col md:flex-row gap-0.5 md:gap-1">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8"
+                    className="h-6 w-6 md:h-8 md:w-8"
                     onClick={() => handleDownload(file)}
                     disabled={disabled}
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                   {!disabled && (
                     <Button
                       type="button"
                       variant="destructive"
                       size="icon"
-                      className="h-8 w-8"
+                      className="h-6 w-6 md:h-8 md:w-8"
                       onClick={() => handleRemoveFile(file.id)}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3 md:h-4 md:w-4" />
                     </Button>
                   )}
                 </div>
               </div>
 
               {enableReordering && !disabled && (
-                <div className="flex justify-center gap-2 mt-3 pt-3 border-t">
+                <div className="flex flex-col md:flex-row justify-center gap-1 md:gap-2 mt-2 md:mt-3 pt-2 md:pt-3 border-t">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="h-8 px-3"
+                    className="h-6 px-2 md:h-8 md:px-3 text-xs"
                     onClick={() => moveFile(file.id, "up")}
                     disabled={file.order === 0}
                   >
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    Move Up
+                    <ArrowUp className="h-3 w-3 md:mr-1" />
+                    <span className="hidden md:inline">Move Up</span>
                   </Button>
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="h-8 px-3"
+                    className="h-6 px-2 md:h-8 md:px-3 text-xs"
                     onClick={() => moveFile(file.id, "down")}
                     disabled={file.order === value.length - 1}
                   >
-                    <ArrowDown className="h-3 w-3 mr-1" />
-                    Move Down
+                    <ArrowDown className="h-3 w-3 md:mr-1" />
+                    <span className="hidden md:inline">Move Down</span>
                   </Button>
                 </div>
               )}
@@ -334,7 +336,7 @@ export default function MultipleFileUpload({
           <div
             onClick={() => !isLoading && fileInputRef.current?.click()}
             className={cn(
-              "flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors",
+              "flex flex-col items-center justify-center p-3 lg:p-4 border-2 border-dashed rounded-md cursor-pointer hover:bg-muted/50 transition-colors min-h-[100px] md:min-h-[120px]",
               isLoading ? "cursor-wait" : "cursor-pointer",
               error && "border-destructive"
             )}
@@ -350,9 +352,12 @@ export default function MultipleFileUpload({
             />
 
             {isLoading ? (
-              <div className="flex flex-col items-center w-full space-y-4">
-                <Progress value={uploadProgress} className="w-full h-2" />
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col items-center w-full space-y-2 md:space-y-4">
+                <Progress
+                  value={uploadProgress}
+                  className="w-full h-1 md:h-2"
+                />
+                <p className="text-xs md:text-sm text-muted-foreground text-center">
                   Uploading {currentFile ? `"${currentFile}"` : "files"}...
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -361,8 +366,8 @@ export default function MultipleFileUpload({
               </div>
             ) : (
               <>
-                <Plus className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="font-medium text-sm mb-1 text-center">
+                <Plus className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground mb-1 md:mb-2" />
+                <p className="font-medium text-xs md:text-sm mb-1 text-center">
                   Add Files
                 </p>
                 <p className="text-xs text-muted-foreground text-center">
