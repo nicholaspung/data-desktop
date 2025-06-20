@@ -74,13 +74,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing [DONE 2025-06-20]
-- in experiments, add a field for starting goal images and end goal images [DONE 2025-06-20]
-- in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar [DONE 2025-06-20]
-- bug: in experiment dashboard summary, if the experiment is not private, it still shows the private [DONE 2025-06-20]
-
 - in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5?
-- in the dashboard summary configuration, there's the idea of small/medium/large for width, but can we also have the concept for small/medium/large for height? And if the content is too much for the size, make the content inside scrollable
 - in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode
 - in time tracking, if I press play on the time tracker form at the current time, it sometimes goes back to the last time entry time
 - in time tracking, for the category select field, is there a way to add a selection to create a new category? and also make it easier for the user to type out what they know the category they want instead of scrolling through and finding it manually?
@@ -93,6 +87,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - sometimes when you click on an autocomplete, it only shows a specific number of suggestions, rather than everything, allow to show all (maybe even virtualize it)
 - when using autocomplete usePortal, if the original UI changes, the portal doesn't move with it
 - with the select field, allow a prop that adds a search field at the top of the selections, and also allow the select items to be wider than the field
+- in body measurements, turns out it was using the same body-measurement-dashboard summary, but it should show all the different types of measurements inside
 
 - fix the react bug on the home page about private content
 - in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled
@@ -101,6 +96,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing [DONE 2025-06-20]
+- in experiments, add a field for starting goal images and end goal images [DONE 2025-06-20]
+- in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar [DONE 2025-06-20]
+- bug: in experiment dashboard summary, if the experiment is not private, it still shows the private [DONE 2025-06-20]
+- in the dashboard summary configuration, there's the idea of small/medium/large for width, but can we also have the concept for small/medium/large for height? And if the content is too much for the size, make the content inside scrollable [DONE 2025-06-20]
 - in metrics, add a way to manage the metric category [DONE 2025-06-19]
 - rename "quick metric logger" to be just "metric logger" [DONE 2025-06-19]
 - in experiments, when attaching a metric, also allow the user to create a metric there [DONE 2025-06-19]

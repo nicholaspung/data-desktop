@@ -211,7 +211,8 @@ registerDashboardSummary({
   component: BodyMeasurementsDashboardSummary,
   defaultConfig: {
     id: "/body-measurements",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 10,
     visible: true,
   },

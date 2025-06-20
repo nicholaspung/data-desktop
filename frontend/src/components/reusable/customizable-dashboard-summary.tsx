@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, Children, cloneElement, isValidElement } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,22 @@ const sizeClasses = {
   large: "col-span-1 sm:col-span-2 lg:col-span-3",
 };
 
+const heightClasses = {
+  small: "h-48",
+  medium: "h-64",
+  large: "h-80",
+};
+
 const sizeLabels = {
   small: "Small",
   medium: "Medium",
   large: "Large",
+};
+
+const heightLabels = {
+  small: "Short",
+  medium: "Medium",
+  large: "Tall",
 };
 
 export default function CustomizableDashboardSummary({
@@ -57,18 +69,23 @@ export default function CustomizableDashboardSummary({
     onConfigChange(id, { size });
   };
 
+  const handleHeightChange = (height: "small" | "medium" | "large") => {
+    onConfigChange(id, { height });
+  };
+
   const handleVisibilityToggle = () => {
     onConfigChange(id, { visible: !config.visible });
   };
 
   const content = (
     <div
-      className={`${!config.visible ? "opacity-50" : ""} ${isEditMode ? "border-2 border-dashed border-primary/30 rounded-lg p-2" : ""}`}
+      className={`${!config.visible ? "opacity-50" : ""} ${isEditMode ? "border-2 border-dashed border-primary/30 rounded-lg p-2" : ""} ${heightClasses[config.height]} flex flex-col`}
       data-size={config.size}
+      data-height={config.height}
       data-id={id}
     >
       {isEditMode && (
-        <div className="flex justify-between items-center mb-2 bg-muted/50 rounded px-2 py-1">
+        <div className="flex justify-between items-center mb-2 bg-muted/50 rounded px-2 py-1 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div
               className="cursor-grab active:cursor-grabbing p-1 hover:bg-background rounded"
@@ -79,7 +96,7 @@ export default function CustomizableDashboardSummary({
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </div>
             <span className="text-xs font-medium text-muted-foreground">
-              {sizeLabels[config.size]}
+              {sizeLabels[config.size]} × {heightLabels[config.height]}
             </span>
           </div>
 
@@ -109,6 +126,9 @@ export default function CustomizableDashboardSummary({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Width
+                </div>
                 {Object.entries(sizeLabels).map(([size, label]) => (
                   <DropdownMenuItem
                     key={size}
@@ -127,12 +147,48 @@ export default function CustomizableDashboardSummary({
                     )}
                   </DropdownMenuItem>
                 ))}
+                <div className="border-t my-1"></div>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                  Height
+                </div>
+                {Object.entries(heightLabels).map(([height, label]) => (
+                  <DropdownMenuItem
+                    key={height}
+                    onClick={() =>
+                      handleHeightChange(height as "small" | "medium" | "large")
+                    }
+                    className={`${config.height === height ? "bg-accent font-medium" : ""} cursor-pointer`}
+                  >
+                    <span
+                      className={
+                        config.height === height ? "font-semibold" : ""
+                      }
+                    >
+                      {label}
+                    </span>
+                    {config.height === height && (
+                      <span className="ml-2 text-xs">✓</span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       )}
-      {children}
+      <div
+        className={`flex-1 flex flex-col ${heightClasses[config.height]} overflow-y-auto`}
+      >
+        {Children.map(children, (child) => {
+          if (isValidElement(child)) {
+            return cloneElement(child, {
+              ...(child.props as any),
+              isDashboardConstrained: true,
+            });
+          }
+          return child;
+        })}
+      </div>
     </div>
   );
 
@@ -144,7 +200,7 @@ export default function CustomizableDashboardSummary({
     <div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClasses[config.size]} ${isEditMode ? "ring-2 ring-primary/20 rounded-lg" : ""}`}
+      className={`${sizeClasses[config.size]} ${heightClasses[config.height]} ${isEditMode ? "ring-2 ring-primary/20 rounded-lg" : ""}`}
     >
       {content}
     </div>

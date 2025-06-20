@@ -429,7 +429,8 @@ registerDashboardSummary({
   component: MetricLoggerDashboardSummary,
   defaultConfig: {
     id: "/metric",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 4,
     visible: true,
   },

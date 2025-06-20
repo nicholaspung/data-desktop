@@ -427,7 +427,8 @@ registerDashboardSummary({
   component: WealthDashboardSummary,
   defaultConfig: {
     id: "/wealth",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 7,
     visible: true,
   },

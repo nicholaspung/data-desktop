@@ -106,7 +106,8 @@ registerDashboardSummary({
   component: TodoDashboardSummary,
   defaultConfig: {
     id: "/todos",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 1,
     visible: true,
   },

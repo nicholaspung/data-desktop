@@ -4,6 +4,7 @@ import { LucideIcon } from "lucide-react";
 export interface DashboardSummaryConfig {
   id: string;
   size: "small" | "medium" | "large";
+  height: "small" | "medium" | "large";
   order: number;
   visible: boolean;
 }

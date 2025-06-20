@@ -311,7 +311,8 @@ registerDashboardSummary({
   component: BloodworkDashboardSummary,
   defaultConfig: {
     id: "/bloodwork",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 9,
     visible: true,
   },

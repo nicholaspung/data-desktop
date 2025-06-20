@@ -253,7 +253,8 @@ function Home() {
         const registryDefinition = dashboardRegistry.get(route);
         const defaultConfig = registryDefinition?.defaultConfig || {
           id: route,
-          size: "medium" as const,
+          size: "small" as const,
+          height: "large" as const,
           order: dashboardRoutes.indexOf(route),
           visible: true,
         };

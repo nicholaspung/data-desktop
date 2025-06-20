@@ -11,6 +11,7 @@ export default function ReusableCard({
   description,
   useSeparator = false,
   headerActions,
+  isDashboardConstrained = false,
 }: {
   title?: ReactNode;
   content: ReactNode;
@@ -20,26 +21,44 @@ export default function ReusableCard({
   description?: ReactNode;
   useSeparator?: boolean;
   headerActions?: ReactNode;
+  isDashboardConstrained?: boolean;
 }) {
   return (
-    <Card className={cardClassName}>
+    <Card
+      className={`${cardClassName || ""} ${isDashboardConstrained ? "h-full" : ""}`.trim()}
+      style={
+        isDashboardConstrained
+          ? { display: "flex", flexDirection: "column" }
+          : undefined
+      }
+    >
       {showHeader ? (
-        <CardHeader>
+        <CardHeader className={isDashboardConstrained ? "flex-shrink-0" : ""}>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>{title}</CardTitle>
               {description && description}
             </div>
             {headerActions && (
-              <div className="flex items-center gap-2">
-                {headerActions}
-              </div>
+              <div className="flex items-center gap-2">{headerActions}</div>
             )}
           </div>
         </CardHeader>
       ) : null}
-      {useSeparator && showHeader ? <Separator className="mb-4" /> : null}
-      <CardContent className={contentClassName}>{content}</CardContent>
+      {useSeparator && showHeader ? (
+        <Separator
+          className={`mb-4 ${isDashboardConstrained ? "flex-shrink-0" : ""}`}
+        />
+      ) : null}
+      <CardContent
+        className={`${contentClassName || ""} ${isDashboardConstrained ? "flex-1 min-h-0 p-0" : ""}`.trim()}
+      >
+        {isDashboardConstrained ? (
+          <div className="overflow-y-auto h-full p-6">{content}</div>
+        ) : (
+          content
+        )}
+      </CardContent>
     </Card>
   );
 }

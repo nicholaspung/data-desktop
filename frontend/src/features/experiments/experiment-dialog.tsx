@@ -11,7 +11,9 @@ import { addEntry, updateEntry } from "@/store/data-store";
 import { Experiment } from "@/store/experiment-definitions";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableDatePicker from "@/components/reusable/reusable-date-picker";
-import MultipleFileUpload, { FileItem } from "@/components/reusable/multiple-file-upload";
+import MultipleFileUpload, {
+  FileItem,
+} from "@/components/reusable/multiple-file-upload";
 
 interface ExperimentDialogProps {
   mode: "add" | "edit";
@@ -64,12 +66,11 @@ export default function ExperimentDialog({
       );
       setStatus(experiment.status || "active");
       setIsPrivate(experiment.private || false);
-      // Convert string[] to FileItem[] for the UI
       setStartingImages(
         (experiment.starting_images || []).map((src, index) => ({
           id: `image-${index}`,
           src: String(src),
-          name: String(src).split('/').pop() || `image-${index}`,
+          name: String(src).split("/").pop() || `image-${index}`,
           order: index,
         }))
       );
@@ -77,7 +78,7 @@ export default function ExperimentDialog({
         (experiment.ending_images || []).map((src, index) => ({
           id: `image-${index}`,
           src: String(src),
-          name: String(src).split('/').pop() || `image-${index}`,
+          name: String(src).split("/").pop() || `image-${index}`,
           order: index,
         }))
       );
@@ -144,9 +145,8 @@ export default function ExperimentDialog({
         start_date: startDate,
         end_date: endDate,
         private: isPrivate,
-        // Convert FileItem[] to string[] for storage
-        starting_images: startingImages.map(item => item.src),
-        ending_images: endingImages.map(item => item.src),
+        starting_images: startingImages.map((item) => item.src),
+        ending_images: endingImages.map((item) => item.src),
       };
 
       if (mode === "add") {
@@ -297,10 +297,12 @@ export default function ExperimentDialog({
             options={[
               { id: "active", label: "Active" },
               { id: "paused", label: "Paused" },
-              { id: "completed", label: "Completed" }
+              { id: "completed", label: "Completed" },
             ]}
             value={status}
-            onChange={(value) => setStatus(value as "active" | "paused" | "completed")}
+            onChange={(value) =>
+              setStatus(value as "active" | "paused" | "completed")
+            }
             placeholder="Select status"
             title="status"
           />

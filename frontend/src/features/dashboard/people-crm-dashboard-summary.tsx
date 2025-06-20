@@ -304,7 +304,8 @@ registerDashboardSummary({
   component: PeopleCRMDashboardSummary,
   defaultConfig: {
     id: "/people-crm",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 6,
     visible: true,
   },

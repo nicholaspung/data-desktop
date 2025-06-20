@@ -101,7 +101,8 @@ registerDashboardSummary({
   component: DEXADashboardSummary,
   defaultConfig: {
     id: "/dexa",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 8,
     visible: true,
   },

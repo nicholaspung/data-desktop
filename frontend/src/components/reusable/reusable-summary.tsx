@@ -64,6 +64,7 @@ interface ReusableSummaryProps {
   className?: string;
   contentClassName?: string;
   customContent?: ReactNode;
+  isDashboardConstrained?: boolean;
 }
 
 function StatusBadge({
@@ -92,6 +93,7 @@ export default function ReusableSummary({
   className,
   contentClassName,
   customContent,
+  isDashboardConstrained = false,
 }: ReusableSummaryProps) {
   const titleContent = (
     <div className="flex items-center gap-2">
@@ -101,7 +103,10 @@ export default function ReusableSummary({
   );
 
   const headerActions = linkTo ? (
-    <Link to={linkTo} className="text-sm text-primary hover:underline whitespace-nowrap">
+    <Link
+      to={linkTo}
+      className="text-sm text-primary hover:underline whitespace-nowrap"
+    >
       {linkText}
     </Link>
   ) : undefined;
@@ -114,6 +119,7 @@ export default function ReusableSummary({
         headerActions={headerActions}
         cardClassName={className}
         contentClassName={contentClassName}
+        isDashboardConstrained={isDashboardConstrained}
         content={
           <div className="space-y-4">
             <Skeleton className="h-4 w-full" />
@@ -133,6 +139,7 @@ export default function ReusableSummary({
         headerActions={headerActions}
         cardClassName={className}
         contentClassName={contentClassName}
+        isDashboardConstrained={isDashboardConstrained}
         content={
           <div className="text-center py-6 text-muted-foreground">
             <p>{emptyState.message}</p>
@@ -155,8 +162,9 @@ export default function ReusableSummary({
         useSeparator={true}
         title={titleContent}
         headerActions={headerActions}
-        cardClassName={className}
+        cardClassName={`${className} overflow-y-auto`}
         contentClassName={contentClassName}
+        isDashboardConstrained={isDashboardConstrained}
         content={customContent}
       />
     );
@@ -167,8 +175,9 @@ export default function ReusableSummary({
       useSeparator={true}
       title={titleContent}
       headerActions={headerActions}
-      cardClassName={className}
+      cardClassName={`${className} overflow-y-auto`}
       contentClassName={contentClassName}
+      isDashboardConstrained={isDashboardConstrained}
       content={
         <div className="space-y-4">
           {mainSection && (

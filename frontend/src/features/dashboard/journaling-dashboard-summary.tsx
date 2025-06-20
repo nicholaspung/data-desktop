@@ -150,7 +150,8 @@ registerDashboardSummary({
   component: JournalingDashboardSummary,
   defaultConfig: {
     id: "/journaling",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 5,
     visible: true,
   },

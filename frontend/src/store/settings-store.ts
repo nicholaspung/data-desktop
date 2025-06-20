@@ -4,6 +4,7 @@ import { dashboardRegistry } from "@/lib/dashboard-registry";
 interface DashboardSummaryConfig {
   id: string;
   size: "small" | "medium" | "large";
+  height: "small" | "medium" | "large";
   order: number;
   visible: boolean;
 }
@@ -191,7 +192,8 @@ const initialState: SettingsState = {
     settingsStore.setState((state) => {
       const currentConfig = state.dashboardSummaryConfigs[id] || {
         id,
-        size: "medium",
+        size: "small",
+        height: "large",
         order: Object.keys(state.dashboardSummaryConfigs).length,
         visible: true,
       };

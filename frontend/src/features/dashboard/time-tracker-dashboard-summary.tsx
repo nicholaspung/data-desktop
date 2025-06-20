@@ -220,7 +220,8 @@ registerDashboardSummary({
   component: TimeTrackerDashboardSummary,
   defaultConfig: {
     id: "/time-tracker",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 2,
     visible: true,
   },

@@ -261,7 +261,8 @@ registerDashboardSummary({
   component: ExperimentDashboardSummary,
   defaultConfig: {
     id: "/experiments",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 3,
     visible: true,
   },

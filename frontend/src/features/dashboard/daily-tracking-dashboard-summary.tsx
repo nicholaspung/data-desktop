@@ -431,7 +431,8 @@ registerDashboardSummary({
   component: DailyTrackingDashboardSummary,
   defaultConfig: {
     id: "/calendar",
-    size: "medium",
+    size: "small",
+    height: "large",
     order: 0,
     visible: true,
   },
