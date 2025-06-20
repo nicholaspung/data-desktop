@@ -4,9 +4,9 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { InfoPanel, CompactInfoPanel } from "@/components/reusable/info-panel";
-import AddCategoryDialog from "@/features/daily-tracker/add-category-dialog";
+import CategoryManager from "@/features/daily-tracker/category-manager";
 import AddMetricModal from "@/features/daily-tracker/add-metric-modal";
-import QuickMetricLogger from "@/features/daily-tracker/quick-metric-logger";
+import MetricLogger from "@/features/daily-tracker/metric-logger";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarDays, Tag, PlusSquare, List, Grid } from "lucide-react";
 
@@ -19,9 +19,9 @@ function MetricInfoPage() {
     {
       title: "Getting Started",
       content: `
-## Quick Metric Logger Overview
+## Metric Logger Overview
 
-The Quick Metric Logger provides a flexible way to log metrics on demand, outside of your regular daily tracking schedule. Key features include:
+The Metric Logger provides a flexible way to log metrics on demand, outside of your regular daily tracking schedule. Key features include:
 
 - Log any metric at any time, even ones hidden from daily tracking
 - Manage your metrics (edit properties, delete, or hide from daily view)
@@ -34,7 +34,7 @@ The Quick Metric Logger provides a flexible way to log metrics on demand, outsid
       content: `
 ## Creating and Organizing Metrics
 
-For best results with the Quick Metric Logger:
+For best results with the Metric Logger:
 
 1. **Create categories first** to organize your metrics
 2. **Create metrics** and assign them to appropriate categories
@@ -47,7 +47,7 @@ For best results with the Quick Metric Logger:
       content: `
 ## Special Use Cases
 
-The Quick Metric Logger excels at tracking infrequent events:
+The Metric Logger excels at tracking infrequent events:
 
 - **Occasional activities** (haircuts, car maintenance, etc.)
 - **Irregular measurements** (weight, blood pressure, etc.)
@@ -63,23 +63,23 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
     <FeatureLayout
       header={
         <FeatureHeader
-          title="Quick Metric Logger"
+          title="Metric Logger"
           description="Log and manage metrics on-demand, regardless of schedule"
           guideContent={metricLoggerGuideContent}
-          storageKey="quick-metric-logger"
+          storageKey="metric-logger"
         >
           <AddMetricModal buttonLabel="Add Metric" />
-          <AddCategoryDialog />
+          <CategoryManager />
         </FeatureHeader>
       }
       sidebar={
-        <HelpSidebar title="Using Quick Metric Logger">
+        <HelpSidebar title="Using Metric Logger">
           <CompactInfoPanel
             title="What is this feature?"
             variant="info"
-            storageKey="quick-metric-logger-what-is-this-feature"
+            storageKey="metric-logger-what-is-this-feature"
           >
-            The Quick Metric Logger provides an alternative way to log and
+            The Metric Logger provides an alternative way to log and
             manage your metrics outside the daily tracking calendar. It's
             perfect for occasional events and metric administration.
           </CompactInfoPanel>
@@ -87,12 +87,12 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           <CompactInfoPanel
             title="Getting Started"
             variant="tip"
-            storageKey="quick-metric-logger-getting-started"
+            storageKey="metric-logger-getting-started"
           >
             <ol>
               <li>
                 1. First, create categories using{" "}
-                <Tag className="inline h-3 w-3" /> Add Category
+                <Tag className="inline h-3 w-3" /> Category Manager
               </li>
               <li>
                 2. Then add metrics with{" "}
@@ -113,7 +113,7 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           <CompactInfoPanel
             title="Pro Tip"
             variant="warning"
-            storageKey="quick-metric-logger-pro-tip"
+            storageKey="metric-logger-pro-tip"
           >
             For infrequent events (like haircuts or annual check-ups), create
             the metric, then disable it from daily tracking. This keeps your
@@ -126,13 +126,13 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
     >
       <div className="space-y-6">
         <InfoPanel
-          title="About Quick Metric Logger"
+          title="About Metric Logger"
           variant="info"
           defaultExpanded={true}
-          storageKey="quick-metric-logger-about"
+          storageKey="metric-logger-about"
         >
           <p className="mb-2">
-            The Quick Metric Logger connects to the metrics you create for daily
+            The Metric Logger connects to the metrics you create for daily
             tracking but extends their functionality. Here you can:
           </p>
 
@@ -160,7 +160,7 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           </p>
         </InfoPanel>
 
-        <QuickMetricLogger />
+        <MetricLogger />
       </div>
     </FeatureLayout>
   );

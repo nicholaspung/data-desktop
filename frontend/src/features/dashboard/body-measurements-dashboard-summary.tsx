@@ -29,7 +29,6 @@ export default function BodyMeasurementsDashboardSummary({
   const data = propData || storeData;
   const typedData = data as BodyMeasurementRecord[];
 
-  // Filter out private measurements
   const nonPrivateData = typedData.filter((record) => !record.private);
 
   const measurementGroups = nonPrivateData.reduce(
@@ -65,13 +64,11 @@ export default function BodyMeasurementsDashboardSummary({
         type.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } else {
-      // Sort by most recent when not searching, then limit to 5
       filtered = latestMeasurements.sort(
         (a, b) => a.daysSinceUpdate - b.daysSinceUpdate
       );
     }
 
-    // Limit to 5 measurement types
     return filtered.slice(0, 5);
   }, [latestMeasurements, searchTerm]);
 
@@ -91,7 +88,6 @@ export default function BodyMeasurementsDashboardSummary({
     return `${Math.floor(days / 30)} months ago`;
   };
 
-  // Prepare sections with both weight and measurement types
   const sections = [
     {
       items: [
@@ -113,7 +109,6 @@ export default function BodyMeasurementsDashboardSummary({
     },
   ];
 
-  // Prepare search section
   const searchSection = [
     {
       title: (
@@ -147,7 +142,6 @@ export default function BodyMeasurementsDashboardSummary({
     },
   ];
 
-  // Prepare grid section for measurements
   const gridSection =
     filteredLatestMeasurements.length > 0
       ? {
@@ -180,7 +174,6 @@ export default function BodyMeasurementsDashboardSummary({
         }
       : undefined;
 
-  // Prepare footer with empty state message
   const footer =
     filteredLatestMeasurements.length === 0 ? (
       <div className="text-center py-8 text-muted-foreground">

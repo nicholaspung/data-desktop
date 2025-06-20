@@ -127,7 +127,6 @@ export default function WealthDashboardSummary() {
       };
     }
 
-    // Get unique account types and owners for filtering
     const accountTypes = [
       ...new Set(financialBalances.map((b) => b.account_type)),
     ];
@@ -135,7 +134,6 @@ export default function WealthDashboardSummary() {
       ...new Set(financialBalances.map((b) => b.account_owner)),
     ];
 
-    // Get the latest balance for each account
     const latestBalances = new Map<string, FinancialBalance>();
 
     financialBalances.forEach((balance) => {
@@ -149,13 +147,11 @@ export default function WealthDashboardSummary() {
 
     const latestBalancesArray = Array.from(latestBalances.values());
 
-    // Calculate total net worth
     const totalNetWorth = latestBalancesArray.reduce(
       (sum, balance) => sum + balance.amount,
       0
     );
 
-    // Calculate filtered net worth based on selected filters
     let filteredBalances = latestBalancesArray;
 
     if (selectedAccountTypes.length > 0) {
@@ -189,7 +185,6 @@ export default function WealthDashboardSummary() {
     financialBalances.length > 0 ||
     paycheckInfo.length > 0;
 
-
   if (!hasData) {
     return (
       <ReusableSummary
@@ -208,12 +203,15 @@ export default function WealthDashboardSummary() {
 
   const accountTypeOptions = [
     { id: "all-types", label: "All Types" },
-    ...netWorthSummary.accountTypes.map((type) => ({ id: type, label: type }))
+    ...netWorthSummary.accountTypes.map((type) => ({ id: type, label: type })),
   ];
 
   const accountOwnerOptions = [
     { id: "all-owners", label: "All Owners" },
-    ...netWorthSummary.accountOwners.map((owner) => ({ id: owner, label: owner }))
+    ...netWorthSummary.accountOwners.map((owner) => ({
+      id: owner,
+      label: owner,
+    })),
   ];
 
   const filterControls = (
@@ -222,9 +220,15 @@ export default function WealthDashboardSummary() {
       <div className="flex flex-wrap gap-2">
         <ReusableSelect
           options={accountTypeOptions}
-          value={selectedAccountTypes.length === 0 ? "all-types" : selectedAccountTypes.join(",")}
+          value={
+            selectedAccountTypes.length === 0
+              ? "all-types"
+              : selectedAccountTypes.join(",")
+          }
           onChange={(value) =>
-            setSelectedAccountTypes(value === "all-types" ? [] : value ? value.split(",") : [])
+            setSelectedAccountTypes(
+              value === "all-types" ? [] : value ? value.split(",") : []
+            )
           }
           placeholder="Account Types"
           triggerClassName="w-32 h-7 text-xs"
@@ -232,9 +236,15 @@ export default function WealthDashboardSummary() {
         />
         <ReusableSelect
           options={accountOwnerOptions}
-          value={selectedAccountOwners.length === 0 ? "all-owners" : selectedAccountOwners.join(",")}
+          value={
+            selectedAccountOwners.length === 0
+              ? "all-owners"
+              : selectedAccountOwners.join(",")
+          }
           onChange={(value) =>
-            setSelectedAccountOwners(value === "all-owners" ? [] : value ? value.split(",") : [])
+            setSelectedAccountOwners(
+              value === "all-owners" ? [] : value ? value.split(",") : []
+            )
           }
           placeholder="Owners"
           triggerClassName="w-32 h-7 text-xs"
@@ -270,7 +280,9 @@ export default function WealthDashboardSummary() {
               <div className="text-sm text-muted-foreground">{item.label}</div>
               <div className="text-lg font-semibold">{item.value}</div>
               {item.subText && (
-                <div className="text-xs text-muted-foreground">{item.subText}</div>
+                <div className="text-xs text-muted-foreground">
+                  {item.subText}
+                </div>
               )}
             </div>
           ))}
@@ -392,13 +404,14 @@ export default function WealthDashboardSummary() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Based on {netWorthSummary.latestBalances.length} latest account balances
+              Based on {netWorthSummary.latestBalances.length} latest account
+              balances
             </p>
             {netWorthSummary.accountTypes.length > 1 && filterControls}
           </div>
-          
+
           <Separator />
-          
+
           {/* Sections with separators */}
           {sections.map((section, index) =>
             renderSection(section, index, index === sections.length - 1)
@@ -418,7 +431,12 @@ registerDashboardSummary({
     order: 7,
     visible: true,
   },
-  datasets: ["financial_logs", "financial_balances", "paycheck_info", "financial_files"],
+  datasets: [
+    "financial_logs",
+    "financial_balances",
+    "paycheck_info",
+    "financial_files",
+  ],
   name: "Wealth",
   description: "Track finances, income, expenses, and financial documents",
   icon: DollarSign,

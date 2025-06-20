@@ -66,7 +66,6 @@ export default function FinancialTrendGraph({
   const [viewMode, setViewMode] = useState<ViewMode>("separate");
   const [chartType, setChartType] = useState<ChartType>("line");
 
-  // Filter controls
   const [timeFilter, setTimeFilter] = useState<"all" | "range">("all");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -82,7 +81,6 @@ export default function FinancialTrendGraph({
     string[]
   >([]);
 
-  // Get the field name for grouping based on data type
   const getGroupingField = useCallback((): string => {
     switch (type) {
       case "logs":
@@ -94,7 +92,6 @@ export default function FinancialTrendGraph({
     }
   }, [type]);
 
-  // Generate options for the number selector
   const numberOptions = Array.from({ length: 24 }, (_, i) => ({
     id: String(i + 1),
     label: String(i + 1),
@@ -105,7 +102,6 @@ export default function FinancialTrendGraph({
     { id: "year", label: "Year" },
   ];
 
-  // Get the appropriate data based on type
   const allData = useMemo(() => {
     switch (type) {
       case "logs":
@@ -119,7 +115,6 @@ export default function FinancialTrendGraph({
     }
   }, [type, logs, balances, paychecks]);
 
-  // Calculate date range limits
   const dateRangeLimits = useMemo(() => {
     if (allData.length === 0) {
       return { minDate: null, maxDate: null };
@@ -144,7 +139,6 @@ export default function FinancialTrendGraph({
     };
   }, [allData]);
 
-  // Generate filter options from data
   const filterOptions = useMemo(() => {
     if (allData.length === 0) {
       return {
@@ -200,7 +194,6 @@ export default function FinancialTrendGraph({
     };
   }, [allData, type]);
 
-  // Apply filters to data
   const filteredData = useMemo(() => {
     const filterByDate = (date: string | Date) => {
       const itemDate = typeof date === "string" ? parseISO(date) : date;
@@ -253,9 +246,6 @@ export default function FinancialTrendGraph({
       (item) => filterByDate(item.date) && filterByContent(item)
     );
 
-    // For balances, we'll handle latest balance calculation in the trend data processing
-    // to show proper historical snapshots per time period
-
     return filtered;
   }, [
     allData,
@@ -270,24 +260,20 @@ export default function FinancialTrendGraph({
     selectedDeductionTypes,
   ]);
 
-  // Calculate trend data
   const trendData = useMemo(() => {
     if (!filteredData || filteredData.length === 0) return [];
 
     const groupingField = getGroupingField();
     const num = parseInt(groupingNumber);
 
-    // Helper function to convert date to Date object
     const toDate = (date: string | Date): Date => {
       if (date instanceof Date) return date;
       if (typeof date === "string") return parseISO(date);
       throw new Error("Invalid date type");
     };
 
-    // Sort all data by date with error handling
     const sortedData = [...filteredData]
       .filter((item) => {
-        // Ensure we have valid data with date field
         if (!item || !item.date) return false;
         try {
           const testDate = toDate(item.date);
@@ -311,7 +297,6 @@ export default function FinancialTrendGraph({
       return [];
     }
 
-    // Find the date range of all data
     let firstDate: Date;
     try {
       firstDate = toDate(sortedData[0].date);
@@ -321,10 +306,6 @@ export default function FinancialTrendGraph({
     }
 
     if (type === "balances") {
-      // For balances, we need to calculate snapshots for each period
-      // showing the latest balance for each account as of that period
-
-      // First, determine all periods we need to show
       const allPeriods = new Set<string>();
       const periodLabels = new Map<string, string>();
 
@@ -340,7 +321,6 @@ export default function FinancialTrendGraph({
           return;
         }
 
-        // Calculate which period this item belongs to
         let periodKey: string;
         let periodLabel: string;
 
@@ -376,26 +356,23 @@ export default function FinancialTrendGraph({
         periodLabels.set(periodKey, periodLabel);
       });
 
-      // Now for each period, find the latest balance for each account
       const periodGroups = new Map<string, Map<string, number>>();
       const sortedPeriods = Array.from(allPeriods).sort();
 
       sortedPeriods.forEach((periodKey) => {
         const periodData = new Map<string, number>();
 
-        // Get period end date for filtering
         let periodEndDate: Date;
         if (groupingPeriod === "month") {
           const [year, month] = periodKey.split("-").map(Number);
-          // Create last day of the month at end of day (23:59:59.999)
+
           periodEndDate = new Date(year, month, 0, 23, 59, 59, 999);
         } else {
           const year = parseInt(periodKey);
-          // Create last day of the year period at end of day
+
           periodEndDate = new Date(year + num - 1, 11, 31, 23, 59, 59, 999);
         }
 
-        // Find all accounts and their latest balance up to this period
         const accountLatestBalances = new Map<string, FinancialBalance>();
 
         (sortedData as FinancialBalance[]).forEach((balance) => {
@@ -412,7 +389,6 @@ export default function FinancialTrendGraph({
           }
         });
 
-        // Group balances by the appropriate field
         accountLatestBalances.forEach((balance) => {
           const groupKey =
             viewMode === "net"
@@ -430,16 +406,13 @@ export default function FinancialTrendGraph({
         periodGroups.set(periodKey, periodData);
       });
 
-      // Convert to chart data format
       const chartData: TrendDataPoint[] = [];
       const allGroups = new Set<string>();
 
-      // First pass: collect all unique groups
       periodGroups.forEach((periodData) => {
         periodData.forEach((_, group) => allGroups.add(group));
       });
 
-      // Generate data points for each period
       sortedPeriods.forEach((periodKey) => {
         const periodLabel = periodLabels.get(periodKey) || periodKey;
         const dataPoint: TrendDataPoint = { period: periodLabel };
@@ -454,11 +427,9 @@ export default function FinancialTrendGraph({
 
       return chartData;
     } else {
-      // Original logic for logs and paycheck
       const periodGroups = new Map<string, Map<string, number>>();
       const periodLabels = new Map<string, string>();
 
-      // Process all data
       sortedData.forEach((item) => {
         let itemDate: Date;
         try {
@@ -471,12 +442,10 @@ export default function FinancialTrendGraph({
           return;
         }
 
-        // Calculate which period this item belongs to
         let periodKey: string;
         let periodLabel: string;
 
         if (groupingPeriod === "month") {
-          // Group by N-month periods
           const firstPeriodStart = startOfMonth(firstDate);
           const monthsDiff = differenceInMonths(itemDate, firstPeriodStart);
           const periodIndex = Math.floor(monthsDiff / num);
@@ -490,7 +459,6 @@ export default function FinancialTrendGraph({
           }
           periodKey = format(periodStart, "yyyy-MM");
         } else {
-          // Group by N-year periods
           const firstPeriodStart = startOfYear(firstDate);
           const yearsDiff = differenceInYears(itemDate, firstPeriodStart);
           const periodIndex = Math.floor(yearsDiff / num);
@@ -522,23 +490,18 @@ export default function FinancialTrendGraph({
         const currentValue = periodData.get(groupKey) || 0;
         periodData.set(groupKey, currentValue + item.amount);
 
-        // Store the period label
         periodLabels.set(periodKey, periodLabel);
       });
 
-      // Convert to chart data format
       const chartData: TrendDataPoint[] = [];
       const allGroups = new Set<string>();
 
-      // First pass: collect all unique groups
       periodGroups.forEach((periodData) => {
         periodData.forEach((_, group) => allGroups.add(group));
       });
 
-      // Create sorted list of period keys
       const periodKeys = Array.from(periodGroups.keys()).sort();
 
-      // Generate data points for each period
       periodKeys.forEach((periodKey) => {
         const periodLabel = periodLabels.get(periodKey) || periodKey;
 
@@ -554,9 +517,15 @@ export default function FinancialTrendGraph({
 
       return chartData;
     }
-  }, [filteredData, type, groupingNumber, groupingPeriod, viewMode, getGroupingField]);
+  }, [
+    filteredData,
+    type,
+    groupingNumber,
+    groupingPeriod,
+    viewMode,
+    getGroupingField,
+  ]);
 
-  // Generate line/bar configurations
   const chartLines = useMemo(() => {
     if (trendData.length === 0) return [];
 
@@ -569,13 +538,10 @@ export default function FinancialTrendGraph({
     }));
   }, [trendData, chartType]);
 
-  // Calculate totals for display
   const totals = useMemo(() => {
     if (type === "balances") {
-      // For balances, show current totals (latest balance per account), not sum across time
       const sums: Record<string, number> = {};
       if (trendData.length > 0) {
-        // Get the latest period's data
         const latestPeriod = trendData[trendData.length - 1];
         Object.entries(latestPeriod).forEach(([key, value]) => {
           if (key !== "period" && typeof value === "number") {
@@ -585,7 +551,6 @@ export default function FinancialTrendGraph({
       }
       return sums;
     } else {
-      // For logs and paycheck, sum across all periods as before
       const sums: Record<string, number> = {};
       trendData.forEach((point) => {
         Object.entries(point).forEach(([key, value]) => {
@@ -655,7 +620,9 @@ export default function FinancialTrendGraph({
                 size="sm"
                 onClick={() => setViewMode("net")}
               >
-                {type === "balances" ? "Assets vs Liabilities" : "Income vs Expense"}
+                {type === "balances"
+                  ? "Assets vs Liabilities"
+                  : "Income vs Expense"}
               </Button>
             </div>
 
@@ -981,11 +948,13 @@ export default function FinancialTrendGraph({
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                 {Object.entries(totals).map(([category, total]) => {
                   const isPositive =
-                    viewMode === "net" && 
-                    (category === "Income" || (type === "balances" && category === "Assets"));
+                    viewMode === "net" &&
+                    (category === "Income" ||
+                      (type === "balances" && category === "Assets"));
                   const isNegative =
-                    viewMode === "net" && 
-                    (category === "Expense" || (type === "balances" && category === "Liabilities"));
+                    viewMode === "net" &&
+                    (category === "Expense" ||
+                      (type === "balances" && category === "Liabilities"));
                   return (
                     <div key={category} className="text-center">
                       <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">

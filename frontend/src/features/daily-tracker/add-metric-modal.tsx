@@ -6,23 +6,31 @@ import ReusableDialog from "@/components/reusable/reusable-dialog";
 
 export default function AddMetricModal({
   buttonLabel,
+  buttonVariant,
+  buttonSize,
+  buttonClassName,
   metric,
   onSuccess,
+  defaultExperimentId,
+  disableExperimentSelection = false,
+  defaultExperimentName,
 }: {
   buttonLabel?: string;
   buttonVariant?: "default" | "outline" | "ghost" | "link" | "destructive";
   buttonSize?: "default" | "sm" | "lg" | "icon";
   buttonClassName?: string;
-  showIcon?: boolean;
   metric?: Metric;
-  onSuccess?: () => void;
+  onSuccess?: (metricId?: string, metricName?: string) => void;
+  defaultExperimentId?: string;
+  disableExperimentSelection?: boolean;
+  defaultExperimentName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const isEdit = !!metric;
 
-  const handleSuccess = () => {
+  const handleSuccess = (metricId?: string, metricName?: string) => {
     setOpen(false);
-    if (onSuccess) onSuccess();
+    if (onSuccess) onSuccess(metricId, metricName);
   };
 
   return (
@@ -36,6 +44,9 @@ export default function AddMetricModal({
           metric={metric}
           onSuccess={handleSuccess}
           onCancel={() => setOpen(false)}
+          defaultExperimentId={defaultExperimentId}
+          disableExperimentSelection={disableExperimentSelection}
+          defaultExperimentName={defaultExperimentName}
         />
       }
       triggerIcon={
@@ -46,7 +57,9 @@ export default function AddMetricModal({
         )
       }
       triggerText={buttonLabel || (isEdit ? "" : "Add Metric")}
-      variant="default"
+      variant={buttonVariant || "default"}
+      size={buttonSize}
+      triggerClassName={buttonClassName}
       customFooter={<></>}
     />
   );

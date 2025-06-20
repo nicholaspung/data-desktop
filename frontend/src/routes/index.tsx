@@ -41,12 +41,11 @@ import {
 import CustomizableDashboardSummary from "@/components/reusable/customizable-dashboard-summary";
 import { dashboardRegistry } from "@/lib/dashboard-registry";
 
-// Import all dashboard summaries to trigger registration
 import "@/features/dashboard/dexa-dashboard-summary";
 import "@/features/dashboard/bloodwork-dashboard-summary";
 import "@/features/dashboard/experiment-dashboard-summary";
 import "@/features/dashboard/daily-tracking-dashboard-summary";
-import "@/features/dashboard/quick-metric-logger-dashboard-summary";
+import "@/features/dashboard/metric-logger-dashboard-summary";
 import "@/features/dashboard/journaling-dashboard-summary";
 import "@/features/dashboard/time-tracker-dashboard-summary";
 import "@/features/todos/todo-dashboard-summary";
@@ -342,10 +341,9 @@ function Home() {
                   }
 
                   const Component = summaryDefinition.component;
-                  // Pass showPrivateMetrics only if the component expects it
-                  const props = route === "/wealth" 
-                    ? {} 
-                    : { showPrivateMetrics };
+
+                  const props =
+                    route === "/wealth" ? {} : { showPrivateMetrics };
                   return <Component {...props} />;
                 };
 
@@ -380,10 +378,9 @@ function Home() {
                     }
 
                     const Component = summaryDefinition.component;
-                    // Pass showPrivateMetrics only if the component expects it
-                    const props = route === "/wealth" 
-                      ? {} 
-                      : { showPrivateMetrics };
+
+                    const props =
+                      route === "/wealth" ? {} : { showPrivateMetrics };
                     return <Component {...props} />;
                   };
 

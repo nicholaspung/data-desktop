@@ -134,10 +134,10 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     ],
   },
   {
-    title: "Quick Metric Logger",
+    title: "Metric Logger",
     description: "Log metrics on-demand, outside your regular schedule.",
     icon: (
-      <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-12 w-12 text-primary" />
+      <FEATURE_ICONS.METRIC_LOGGER className="h-12 w-12 text-primary" />
     ),
     features: [
       "Log any metric at any time",

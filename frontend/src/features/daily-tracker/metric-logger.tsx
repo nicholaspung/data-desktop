@@ -31,12 +31,12 @@ import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
 import AddMetricModal from "./add-metric-modal";
-import AddCategoryDialog from "./add-category-dialog";
-import QuickMetricLoggerListItem from "./quick-metric-logger-list-item";
+import CategoryManager from "./category-manager";
+import MetricLoggerListItem from "./metric-logger-list-item";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 
-const QuickMetricLogger = () => {
+const MetricLogger = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [showOnlyIncomplete, setShowOnlyIncomplete] = useState(false);
@@ -562,7 +562,7 @@ const QuickMetricLogger = () => {
           </p>
           <div className="flex items-center space-x-2">
             <AddMetricModal buttonLabel="Add Metric" />
-            <AddCategoryDialog />
+            <CategoryManager />
           </div>
         </div>
       )}
@@ -585,7 +585,7 @@ const QuickMetricLogger = () => {
               </span>
             </div>
           )}
-          <QuickMetricLoggerListItem
+          <MetricLoggerListItem
             groupedMetrics={displayedMetrics}
             isMetricCompleted={isMetricCompleted}
             toggleMetricCompletion={toggleMetricCompletion}
@@ -602,4 +602,4 @@ const QuickMetricLogger = () => {
   );
 };
 
-export default QuickMetricLogger;
+export default MetricLogger;

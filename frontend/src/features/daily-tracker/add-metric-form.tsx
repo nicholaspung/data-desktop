@@ -20,11 +20,17 @@ export default function AddMetricForm({
   onSuccess,
   onCancel,
   className,
+  defaultExperimentId,
+  disableExperimentSelection = false,
+  defaultExperimentName,
 }: {
   metric?: Metric;
-  onSuccess?: () => void;
+  onSuccess?: (metricId?: string, metricName?: string) => void;
   onCancel?: () => void;
   className?: string;
+  defaultExperimentId?: string;
+  disableExperimentSelection?: boolean;
+  defaultExperimentName?: string;
 }) {
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
@@ -50,7 +56,7 @@ export default function AddMetricForm({
 
   const [active, setActive] = useState(metric?.active ?? true);
   const [isPrivate, setIsPrivate] = useState(metric?.private ?? false);
-  const [experimentId, setExperimentId] = useState<string>("");
+  const [experimentId, setExperimentId] = useState<string>(defaultExperimentId || "");
 
   const [scheduleFrequency, setScheduleFrequency] = useState<
     "daily" | "weekly" | "interval" | "custom"
@@ -320,7 +326,7 @@ export default function AddMetricForm({
       }
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess(response?.id, response?.name);
       }
 
       if (!isEditMode) {
@@ -526,12 +532,20 @@ export default function AddMetricForm({
         </div>
         {!isEditMode && (
           <div className="space-y-2">
-            <Label htmlFor="experiment">Attach to Experiment (optional)</Label>
+            <Label htmlFor="experiment">
+              Attach to Experiment (optional)
+              {disableExperimentSelection && defaultExperimentId && (
+                <span className="text-sm text-muted-foreground ml-2">
+                  - Pre-selected: {defaultExperimentName || 'Current Experiment'}
+                </span>
+              )}
+            </Label>
             <ReusableSelect
               value={experimentId}
               onChange={setExperimentId}
               title="experiment"
               noDefault={false}
+              disabled={disableExperimentSelection}
               renderItem={(option) =>
                 option.private ? (
                   <ProtectedField>

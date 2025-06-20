@@ -220,12 +220,11 @@ const HELP_TOPICS: HelpTopic[] = [
     link: "/experiments",
   },
   {
-    title: "Quick Metric Logger",
-    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />,
+    title: "Metric Logger",
+    icon: <FEATURE_ICONS.METRIC_LOGGER className="h-5 w-5" />,
     description:
       "Log metrics outside of your regular schedule. Useful for infrequent events or metrics you don't track daily.",
     keywords: [
-      "quick",
       "logger",
       "metric",
       "log",

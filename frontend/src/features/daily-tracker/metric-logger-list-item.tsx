@@ -35,7 +35,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-export default function QuickMetricLoggerListItem({
+export default function MetricLoggerListItem({
   groupedMetrics,
   isMetricCompleted,
   toggleMetricCompletion,
@@ -740,7 +740,6 @@ export default function QuickMetricLoggerListItem({
                       metric={metric}
                       buttonVariant="ghost"
                       buttonSize="icon"
-                      showIcon={true}
                     />
                     <ConfirmDeleteDialog
                       onConfirm={() => handleDeleteMetric(metric)}

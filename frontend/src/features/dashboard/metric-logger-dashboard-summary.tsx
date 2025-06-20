@@ -20,7 +20,7 @@ import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
-export default function QuickMetricLoggerDashboardSummary({
+export default function MetricLoggerDashboardSummary({
   showPrivateMetrics = true,
 }: {
   showPrivateMetrics?: boolean;
@@ -403,8 +403,8 @@ export default function QuickMetricLoggerDashboardSummary({
 
   return (
     <ReusableSummary
-      title="Quick Metric Logger"
-      titleIcon={<FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />}
+      title="Metric Logger"
+      titleIcon={<FEATURE_ICONS.METRIC_LOGGER className="h-5 w-5" />}
       linkText="View all"
       linkTo="/metric"
       loading={isLoading}
@@ -426,7 +426,7 @@ export default function QuickMetricLoggerDashboardSummary({
 
 registerDashboardSummary({
   route: "/metric",
-  component: QuickMetricLoggerDashboardSummary,
+  component: MetricLoggerDashboardSummary,
   defaultConfig: {
     id: "/metric",
     size: "medium",
@@ -434,7 +434,7 @@ registerDashboardSummary({
     visible: true,
   },
   datasets: ["metrics", "daily_logs", "metric_categories"],
-  name: "Quick Metric Logger",
+  name: "Metric Logger",
   description: "Log metrics on-demand",
   icon: Zap,
 });

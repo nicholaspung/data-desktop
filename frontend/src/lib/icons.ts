@@ -29,7 +29,7 @@ export const FEATURE_ICONS = {
   TIME_TRACKER: Clock,
   DAILY_TRACkER: CalendarDays,
   TODOS: CheckCircle,
-  QUICK_METRIC_LOGGER: Zap,
+  METRIC_LOGGER: Zap,
   METRIC_CALENDAR: Calendar,
   EXPERIMENTS: FlaskConical,
   JOURNALING: BookOpen,

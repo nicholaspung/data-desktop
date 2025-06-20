@@ -84,7 +84,6 @@ export default function MetricManagement() {
                       metric={metric}
                       buttonVariant="ghost"
                       buttonSize="icon"
-                      showIcon={true}
                       buttonLabel=""
                     />
 

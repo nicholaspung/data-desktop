@@ -151,9 +151,8 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
   const getAutocompleteOptions = (field: FieldDefinition) => {
     const enhancedConfig = enhancedAutocompleteFields[field.key];
-    
+
     if (enhancedConfig && enhancedConfig.displayFields.length > 0) {
-      // Enhanced autocomplete with display fields
       const uniqueValues = new Map<string, Record<string, unknown>>();
       logs.forEach((entry: Record<string, unknown>) => {
         const value = entry[field.key];
@@ -174,7 +173,6 @@ export default function DataLogsManager<T extends Record<string, any>>({
         .sort((a, b) => a.label.localeCompare(b.label));
     }
 
-    // Regular autocomplete
     const existingValues = Array.from(
       new Set(
         logs
@@ -199,13 +197,11 @@ export default function DataLogsManager<T extends Record<string, any>>({
     const enhancedConfig = enhancedAutocompleteFields[fieldKey];
     if (!enhancedConfig || !option.entry) return;
 
-    // Update the main field value
     setEditedLog((prev) => ({
       ...prev,
       [fieldKey]: option.label,
     }));
 
-    // Auto-fill related fields
     enhancedConfig.autoFillFields.forEach((autoFillField) => {
       if (option.entry && option.entry[autoFillField]) {
         setEditedLog((prev) => ({
@@ -1022,16 +1018,25 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               options={getAutocompleteOptions(field)}
                               placeholder={`Enter ${field.displayName.toLowerCase()}...`}
                               emptyMessage="Type to add new option"
-                              showRecentOptions={!enhancedAutocompleteFields[field.key]}
+                              showRecentOptions={
+                                !enhancedAutocompleteFields[field.key]
+                              }
                               maxRecentOptions={5}
-                              usePortal={enhancedAutocompleteFields[field.key]?.usePortal || true}
+                              usePortal={
+                                enhancedAutocompleteFields[field.key]
+                                  ?.usePortal || true
+                              }
                               dropdownPosition={
-                                enhancedAutocompleteFields[field.key]?.dropdownPosition || "top"
+                                enhancedAutocompleteFields[field.key]
+                                  ?.dropdownPosition || "top"
                               }
                               renderItem={
                                 enhancedAutocompleteFields[field.key]
                                   ? (option) =>
-                                      renderEnhancedAutocompleteItem(field.key, option)
+                                      renderEnhancedAutocompleteItem(
+                                        field.key,
+                                        option
+                                      )
                                   : undefined
                               }
                               className="mt-1"
@@ -1069,8 +1074,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               <Checkbox
                                 id={`edit-${field.key}`}
                                 checked={
-                                  (editedLog[field.key as keyof T] as boolean) ||
-                                  false
+                                  (editedLog[
+                                    field.key as keyof T
+                                  ] as boolean) || false
                                 }
                                 onCheckedChange={(checked) =>
                                   setEditedLog({
@@ -1079,7 +1085,10 @@ export default function DataLogsManager<T extends Record<string, any>>({
                                   })
                                 }
                               />
-                              <Label htmlFor={`edit-${field.key}`} className="text-sm">
+                              <Label
+                                htmlFor={`edit-${field.key}`}
+                                className="text-sm"
+                              >
                                 {field.displayName}
                               </Label>
                             </div>

@@ -74,10 +74,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- in metrics, add a way to manage the metric category
-- rename "quick metric logger" to be just "metric logger"
-- in experiments, when attaching a metric, also allow the user to create a metric there
-- in experiments, when attaching a metric, make it easier for a user to search for an already created metric
 - in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing
 - in experiments, add a field for starting goal images and end goal images
 - in time tracking/journaling dashboard summary, make it use reusable summary
@@ -93,6 +89,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in todos, allow user to search for the todos
 - in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
 - make the dashboard layout icons for the routes the same in settings, and also within the routes
+- in time tracker, instead of having "category" be it's own tab, can you change it 
+- sometimes when you click on an autocomplete, it only shows a specific number of suggestions, rather than everything, allow to show all (maybe even virtualize it)
+- when using autocomplete usePortal, if the original UI changes, the portal doesn't move with it
+- with the select field, allow a prop that adds a search field at the top of the selections, and also allow the select items to be wider than the field
 
 - fix the react bug on the home page about private content
 - in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled
@@ -101,6 +101,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in metrics, add a way to manage the metric category [DONE 2025-06-19]
+- rename "quick metric logger" to be just "metric logger" [DONE 2025-06-19]
+- in experiments, when attaching a metric, also allow the user to create a metric there [DONE 2025-06-19]
+- in experiments, when attaching a metric, make it easier for a user to search for an already created metric [DONE 2025-06-19]
+- in experiments, when creating a metric from the experiments page, autofill the "attach to experiment" with the currently viewed experiment and don't allow switching [DONE 2025-06-19]
 - update how body measurement dashboard summary looks like [DONE 2025-06-18]
 - in customize dashboards, it doesn't seem to show the wealth dashboard summary [DONE 2025-06-18]
 - for wealth dashboard summary, show the current total of the logs for the year, current net worth of the individual based on the latest balances (where the user can select which account type and account owner to show), and the total total of the paycheck information for the year [DONE 2025-06-18]

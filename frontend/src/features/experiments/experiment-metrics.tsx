@@ -11,7 +11,8 @@ import dataStore, { addEntry, deleteEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import ReusableSelect from "@/components/reusable/reusable-select";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
+import AddMetricModal from "@/features/daily-tracker/add-metric-modal";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { ExperimentMetric } from "@/store/experiment-definitions";
 import { ProtectedContent } from "@/components/security/protected-content";
@@ -33,6 +34,7 @@ const ExperimentMetrics = ({
     null
   );
   const [selectedMetricId, setSelectedMetricId] = useState<string>("");
+  const [selectedMetricName, setSelectedMetricName] = useState<string>("");
   const [targetValue, setTargetValue] = useState<string | number | boolean>(
     "0"
   );
@@ -44,8 +46,13 @@ const ExperimentMetrics = ({
   const [loading, setLoading] = useState(false);
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
+  const experiments = useStore(dataStore, (state) => state.experiments) || [];
   const experimentMetricsData =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
+
+  const currentExperiment = experiments.find(
+    (exp: any) => exp.id === experimentId
+  );
 
   useEffect(() => {
     loadExperimentMetrics();
@@ -127,6 +134,7 @@ const ExperimentMetrics = ({
 
   const resetForm = () => {
     setSelectedMetricId("");
+    setSelectedMetricName("");
     setTargetValue("0");
     setTargetType("atleast");
     setImportance(5);
@@ -142,6 +150,7 @@ const ExperimentMetrics = ({
 
     const metricInfo: any = metrics.find((m: any) => m.id === metric.metric_id);
     if (metricInfo) {
+      setSelectedMetricName(metricInfo.name);
       try {
         setTargetValue(JSON.parse(metric.target));
       } catch (e: any) {
@@ -215,15 +224,28 @@ const ExperimentMetrics = ({
             <div className="flex gap-4">
               <div className="flex-1">
                 <Label htmlFor="target-type">Target Type</Label>
-                <ReusableSelect
-                  value={targetType}
-                  onChange={(value) => setTargetType(value as any)}
-                  title="target type"
+                <AutocompleteInput
+                  id="target-type-select"
+                  label=""
+                  value={
+                    targetType === "atleast"
+                      ? "At least"
+                      : targetType === "atmost"
+                        ? "At most"
+                        : "Exactly"
+                  }
+                  onChange={(value) => {
+                    if (value === "At least") setTargetType("atleast");
+                    else if (value === "At most") setTargetType("atmost");
+                    else if (value === "Exactly") setTargetType("exactly");
+                  }}
                   options={[
                     { id: "atleast", label: "At least" },
                     { id: "atmost", label: "At most" },
                     { id: "exactly", label: "Exactly" },
                   ]}
+                  placeholder="Select target type"
+                  usePortal={true}
                 />
               </div>
 
@@ -347,14 +369,60 @@ const ExperimentMetrics = ({
                 <div className="space-y-4 py-4">
                   {/* Metric Selection */}
                   <div className="space-y-2">
-                    <Label htmlFor="metric-select">Metric</Label>
-                    <ReusableSelect
-                      value={selectedMetricId}
-                      onChange={setSelectedMetricId}
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="metric-select">Metric</Label>
+                      {!editingMetric && (
+                        <AddMetricModal
+                          buttonLabel="Create New Metric"
+                          buttonVariant="outline"
+                          buttonSize="sm"
+                          defaultExperimentId={experimentId}
+                          disableExperimentSelection={true}
+                          defaultExperimentName={currentExperiment?.name}
+                          onSuccess={(
+                            metricId?: string,
+                            metricName?: string
+                          ) => {
+                            if (metricId && metricName) {
+                              setSelectedMetricId(metricId);
+                              setSelectedMetricName(metricName);
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                    <AutocompleteInput
+                      id="metric-select"
+                      label=""
+                      value={selectedMetricName}
+                      onChange={(value) => {
+                        setSelectedMetricName(value);
+                        const metric = metrics.find(
+                          (m: any) => m.name === value
+                        );
+                        if (metric) {
+                          setSelectedMetricId(metric.id);
+                        } else {
+                          setSelectedMetricId("");
+                        }
+                      }}
+                      options={metrics.map((m: any) => ({
+                        id: m.id,
+                        label: m.name,
+                      }))}
+                      placeholder="Search for a metric..."
                       disabled={!!editingMetric}
-                      title="a metric to track"
-                      renderItem={(option) => option.name}
-                      options={metrics}
+                      description={
+                        selectedMetricName && !selectedMetricId
+                          ? "Metric not found. Please select an existing metric or create a new one."
+                          : ""
+                      }
+                      className={
+                        selectedMetricName && !selectedMetricId
+                          ? "border-destructive"
+                          : ""
+                      }
+                      usePortal={true}
                     />
                   </div>
 
@@ -406,7 +474,11 @@ const ExperimentMetrics = ({
               }
               onCancel={() => setDialogOpen(false)}
               onConfirm={saveMetric}
-              footerActionDisabled={!selectedMetricId || loading}
+              footerActionDisabled={
+                !selectedMetricId ||
+                loading ||
+                (!!selectedMetricName && !selectedMetricId)
+              }
               confirmText={editingMetric ? "Update Metric" : "Add Metric"}
               confirmIcon={<Save className="h-4 w-4 mr-2" />}
             />

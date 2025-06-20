@@ -41,8 +41,8 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/todos",
   },
   {
-    title: "Quick Metric Logger",
-    icon: <FEATURE_ICONS.QUICK_METRIC_LOGGER className="h-5 w-5" />,
+    title: "Metric Logger",
+    icon: <FEATURE_ICONS.METRIC_LOGGER className="h-5 w-5" />,
     href: "/metric",
   },
   {
