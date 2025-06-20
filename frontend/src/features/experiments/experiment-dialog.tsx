@@ -3,13 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import ReusableSelect from "@/components/reusable/reusable-select";
 import { Save, PlusCircle, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
@@ -17,6 +11,7 @@ import { addEntry, updateEntry } from "@/store/data-store";
 import { Experiment } from "@/store/experiment-definitions";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableDatePicker from "@/components/reusable/reusable-date-picker";
+import MultipleFileUpload, { FileItem } from "@/components/reusable/multiple-file-upload";
 
 interface ExperimentDialogProps {
   mode: "add" | "edit";
@@ -49,6 +44,8 @@ export default function ExperimentDialog({
     "active"
   );
   const [isPrivate, setIsPrivate] = useState(false);
+  const [startingImages, setStartingImages] = useState<FileItem[]>([]);
+  const [endingImages, setEndingImages] = useState<FileItem[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,6 +64,23 @@ export default function ExperimentDialog({
       );
       setStatus(experiment.status || "active");
       setIsPrivate(experiment.private || false);
+      // Convert string[] to FileItem[] for the UI
+      setStartingImages(
+        (experiment.starting_images || []).map((src, index) => ({
+          id: `image-${index}`,
+          src: String(src),
+          name: String(src).split('/').pop() || `image-${index}`,
+          order: index,
+        }))
+      );
+      setEndingImages(
+        (experiment.ending_images || []).map((src, index) => ({
+          id: `image-${index}`,
+          src: String(src),
+          name: String(src).split('/').pop() || `image-${index}`,
+          order: index,
+        }))
+      );
     }
   }, [mode, experiment]);
 
@@ -80,6 +94,8 @@ export default function ExperimentDialog({
     setEndDate(undefined);
     setStatus("active");
     setIsPrivate(false);
+    setStartingImages([]);
+    setEndingImages([]);
   };
 
   const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
@@ -128,6 +144,9 @@ export default function ExperimentDialog({
         start_date: startDate,
         end_date: endDate,
         private: isPrivate,
+        // Convert FileItem[] to string[] for storage
+        starting_images: startingImages.map(item => item.src),
+        ending_images: endingImages.map(item => item.src),
       };
 
       if (mode === "add") {
@@ -199,15 +218,46 @@ export default function ExperimentDialog({
           rows={3}
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="start-state">Start State</Label>
-        <Textarea
-          id="start-state"
-          placeholder="Describe what the starting state of the experiment is..."
-          value={startState}
-          onChange={(e) => setStartState(e.target.value)}
-          rows={3}
-        />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="start-state">Start State</Label>
+          <Textarea
+            id="start-state"
+            placeholder="Describe what the starting state of the experiment is..."
+            value={startState}
+            onChange={(e) => setStartState(e.target.value)}
+            rows={3}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Starting Images (optional)</Label>
+          <MultipleFileUpload
+            value={startingImages}
+            onChange={setStartingImages}
+            acceptedTypes="image/*"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="goal">Goal</Label>
+          <Textarea
+            id="goal"
+            placeholder="What do you want to achieve with this experiment?"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            rows={2}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Ending Images (optional)</Label>
+          <MultipleFileUpload
+            value={endingImages}
+            onChange={setEndingImages}
+            acceptedTypes="image/*"
+          />
+        </div>
       </div>
       {mode === "edit" && experiment?.status === "completed" && (
         <div className="space-y-2">
@@ -221,17 +271,6 @@ export default function ExperimentDialog({
           />
         </div>
       )}
-      <div className="space-y-2">
-        <Label htmlFor="goal">Goal</Label>
-        <Textarea
-          id="goal"
-          placeholder="What do you want to achieve with this experiment?"
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          rows={2}
-          required
-        />
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Start Date</Label>
@@ -254,21 +293,17 @@ export default function ExperimentDialog({
       {mode === "add" && (
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select
-            defaultValue={status}
-            onValueChange={(value) =>
-              setStatus(value as "active" | "paused" | "completed")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
+          <ReusableSelect
+            options={[
+              { id: "active", label: "Active" },
+              { id: "paused", label: "Paused" },
+              { id: "completed", label: "Completed" }
+            ]}
+            value={status}
+            onChange={(value) => setStatus(value as "active" | "paused" | "completed")}
+            placeholder="Select status"
+            title="status"
+          />
         </div>
       )}
       <div className="flex items-center space-x-2">

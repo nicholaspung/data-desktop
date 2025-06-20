@@ -69,6 +69,20 @@ export const EXPERIMENT_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Private",
       description: "Is experiment private?",
     },
+    {
+      key: "starting_images",
+      type: "file-multiple",
+      displayName: "Starting Images",
+      description: "Images from the beginning of the experiment",
+      isOptional: true,
+    },
+    {
+      key: "ending_images",
+      type: "file-multiple",
+      displayName: "Ending Images",
+      description: "Images from the end of the experiment",
+      isOptional: true,
+    },
   ],
 };
 

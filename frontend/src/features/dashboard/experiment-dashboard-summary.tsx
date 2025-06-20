@@ -8,6 +8,7 @@ import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
+import { OngoingIndicator } from "@/components/experiments/ongoing-indicator";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { Calendar, FlaskConical } from "lucide-react";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
@@ -163,11 +164,17 @@ export default function ExperimentDashboardSummary() {
                     value: (
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <ProtectedField>
+                          {currentExperiment.private ? (
+                            <ProtectedField>
+                              <h3 className="font-medium">
+                                {currentExperiment.name}
+                              </h3>
+                            </ProtectedField>
+                          ) : (
                             <h3 className="font-medium">
                               {currentExperiment.name}
                             </h3>
-                          </ProtectedField>
+                          )}
                           <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                             {getDaysRemaining(currentExperiment)}
                           </Badge>
@@ -190,18 +197,29 @@ export default function ExperimentDashboardSummary() {
                           )}
                         </div>
 
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span>Time Progress</span>
-                            <span>
-                              {Math.round(currentExperiment.progress)}%
-                            </span>
+                        {currentExperiment.end_date ? (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                              <span>Time Progress</span>
+                              <span>
+                                {Math.round(currentExperiment.progress)}%
+                              </span>
+                            </div>
+                            <Progress
+                              value={currentExperiment.progress}
+                              className="h-2"
+                            />
                           </div>
-                          <Progress
-                            value={currentExperiment.progress}
-                            className="h-2"
+                        ) : (
+                          <OngoingIndicator
+                            daysElapsed={
+                              Math.floor(
+                                (new Date().getTime() - new Date(currentExperiment.start_date).getTime()) /
+                                (1000 * 60 * 60 * 24)
+                              ) + 1
+                            }
                           />
-                        </div>
+                        )}
 
                         {!currentExperiment.private &&
                           currentExperiment.description && (

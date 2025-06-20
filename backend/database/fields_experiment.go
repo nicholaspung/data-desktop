@@ -64,6 +64,20 @@ func GetExperimentFields() []FieldDefinition {
 			DisplayName: "Private",
 			Description: "Is this experiment private?",
 		},
+		{
+			Key:         "starting_images",
+			Type:        FieldTypeFileMultiple,
+			DisplayName: "Starting Images",
+			Description: "Images from the beginning of the experiment",
+			IsOptional:  true,
+		},
+		{
+			Key:         "ending_images",
+			Type:        FieldTypeFileMultiple,
+			DisplayName: "Ending Images",
+			Description: "Images from the end of the experiment",
+			IsOptional:  true,
+		},
 	}
 }
 

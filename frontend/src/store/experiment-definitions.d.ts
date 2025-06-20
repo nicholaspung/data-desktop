@@ -11,6 +11,8 @@ export interface Experiment {
   private: boolean;
   start_state: string;
   end_state: string;
+  starting_images?: string[];
+  ending_images?: string[];
 
   // Metadata fields
   id: string;

@@ -2,6 +2,7 @@ import { LineConfig } from "@/components/charts/charts";
 import CustomLineChart from "@/components/charts/line-chart";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { Progress } from "@/components/ui/progress";
+import { OngoingIndicator } from "@/components/experiments/ongoing-indicator";
 import { format } from "date-fns";
 
 export default function ExperimentDashboardProgress({
@@ -106,28 +107,35 @@ export default function ExperimentDashboardProgress({
               </div>
               <Progress value={progressData.overall} className="h-2" />
               <p className="text-sm text-muted-foreground">
-                Based on {progressData.daysElapsed} days of tracking out of{" "}
-                {progressData.totalDays} total days
+                Based on {progressData.daysElapsed} days of tracking
+                {experiment.end_date && ` out of ${progressData.totalDays} total days`}
               </p>
             </div>
 
             {/* Time progress section */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">Time Progress</h3>
-                <span className="text-lg">
-                  {progressData.daysElapsed} of {progressData.totalDays} days
-                </span>
+            {experiment.end_date ? (
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium">Time Progress</h3>
+                  <span className="text-lg">
+                    {progressData.daysElapsed} of {progressData.totalDays} days
+                  </span>
+                </div>
+                <Progress
+                  value={
+                    progressData.totalDays > 0
+                      ? (progressData.daysElapsed / progressData.totalDays) * 100
+                      : 0
+                  }
+                  className="h-2"
+                />
               </div>
-              <Progress
-                value={
-                  progressData.totalDays > 0
-                    ? (progressData.daysElapsed / progressData.totalDays) * 100
-                    : 0
-                }
-                className="h-2"
-              />
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <h3 className="font-medium">Experiment Progress</h3>
+                <OngoingIndicator daysElapsed={progressData.daysElapsed} />
+              </div>
+            )}
 
             {/* Per-metric completion rates */}
             <div className="mt-4">

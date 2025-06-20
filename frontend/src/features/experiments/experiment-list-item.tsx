@@ -8,6 +8,7 @@ import { CalendarDays, ChevronDown } from "lucide-react";
 import { getStatusBadge } from "./experiments-utils";
 import { differenceInDays, format, isAfter } from "date-fns";
 import { Progress } from "@/components/ui/progress";
+import { OngoingIndicator } from "@/components/experiments/ongoing-indicator";
 import { Button } from "@/components/ui/button";
 import { ProtectedContent } from "@/components/security/protected-content";
 import { Experiment } from "@/store/experiment-definitions";
@@ -100,11 +101,20 @@ export default function ExperimentListItem({
             </div>
             {daysInfo && (
               <div className="mt-2">
-                <div className="flex justify-between text-sm">
-                  <span>{daysInfo.text}</span>
-                  <span>{daysInfo.progress}%</span>
-                </div>
-                <Progress value={daysInfo.progress} className="h-1 mt-1" />
+                {experiment.end_date ? (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>{daysInfo.text}</span>
+                      <span>{daysInfo.progress}%</span>
+                    </div>
+                    <Progress value={daysInfo.progress} className="h-1 mt-1" />
+                  </>
+                ) : (
+                  <OngoingIndicator 
+                    daysElapsed={differenceInDays(new Date(), new Date(experiment.start_date)) + 1}
+                    className="mt-1" 
+                  />
+                )}
               </div>
             )}
           </CollapsibleTrigger>

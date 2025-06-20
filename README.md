@@ -74,11 +74,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing
-- in experiments, add a field for starting goal images and end goal images
-- in time tracking/journaling dashboard summary, make it use reusable summary
-- bug: in experiment dashboard summary, if the experiment is not private, it still shows the private
-- in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar
+- in experiments, if an experiment doesn't have an end date, don't show the progress bar or make something that signifies that ongoing [DONE 2025-06-20]
+- in experiments, add a field for starting goal images and end goal images [DONE 2025-06-20]
+- in experiment dashboard summary, if the experiment doesn't have an end date, it shouldn't show the progress bar [DONE 2025-06-20]
+- bug: in experiment dashboard summary, if the experiment is not private, it still shows the private [DONE 2025-06-20]
+
 - in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5?
 - in the dashboard summary configuration, there's the idea of small/medium/large for width, but can we also have the concept for small/medium/large for height? And if the content is too much for the size, make the content inside scrollable
 - in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode
