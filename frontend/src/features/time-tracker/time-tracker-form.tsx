@@ -13,6 +13,7 @@ import {
   FolderIcon,
   Check,
   Coffee,
+  AlertCircle,
 } from "lucide-react";
 import { TimeEntry } from "@/store/time-tracking-definitions";
 import { ApiService } from "@/services/api";
@@ -97,6 +98,9 @@ function TimeTrackerForm({
   );
 
   const [isSaving, setIsSaving] = useState(false);
+  const [showStartTimeWarning, setShowStartTimeWarning] = useState(false);
+  const [startTimeError, setStartTimeError] = useState<string>("");
+  const [endTimeError, setEndTimeError] = useState<string>("");
 
   const [addState, setAddState] = useState<"timer" | "manual">("timer");
 
@@ -150,6 +154,9 @@ function TimeTrackerForm({
     setStartTime(formatDateForInput(new Date()));
     setEndTime("");
     setElapsedSeconds(0);
+    setStartTimeError("");
+    setEndTimeError("");
+    setShowStartTimeWarning(false);
 
     if (globalTimerData.isActive) {
       stopGlobalTimer();
@@ -187,6 +194,11 @@ function TimeTrackerForm({
       const prevStateVal = state.prevVal;
 
       if (currentState.isTimerActive) {
+        // If timer just became active and we're in manual mode, switch to timer mode
+        if (!prevStateVal.isTimerActive && addState === "manual") {
+          setAddState("timer");
+        }
+
         if (currentState.description !== prevStateVal.description) {
           setDescription(currentState.description);
         }
@@ -213,7 +225,7 @@ function TimeTrackerForm({
     });
 
     return () => unsubscribe();
-  }, [isPomodoroActive, resetForm]);
+  }, [isPomodoroActive, resetForm, addState]);
 
   useEffect(() => {
     if (isTimerActive) {
@@ -238,11 +250,30 @@ function TimeTrackerForm({
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
+    setStartTimeError("");
 
-    if (isTimerActive && newStartTime) {
+    if (newStartTime) {
       const newStartDate = new Date(newStartTime);
+      const now = new Date();
 
-      updateStartTime(newStartDate);
+      // In timer mode, prevent future dates
+      if (addState === "timer" && newStartDate > now) {
+        setStartTimeError("Start time cannot be in the future");
+        return;
+      }
+
+      // In manual mode, check if start time is after end time
+      if (addState === "manual" && endTime) {
+        const endDate = new Date(endTime);
+        if (newStartDate >= endDate) {
+          setStartTimeError("Start time must be before end time");
+          return;
+        }
+      }
+
+      if (isTimerActive) {
+        updateStartTime(newStartDate);
+      }
     }
   };
 
@@ -272,6 +303,24 @@ function TimeTrackerForm({
 
   const handleEndTimeChange = (newEndTime: string) => {
     setEndTime(newEndTime);
+    setEndTimeError("");
+
+    // Validate end time is not in the future and is after start time
+    if (newEndTime && startTime) {
+      const endDate = new Date(newEndTime);
+      const startDate = new Date(startTime);
+      const now = new Date();
+
+      if (endDate > now) {
+        setEndTimeError("End time cannot be in the future");
+        return;
+      }
+
+      if (endDate <= startDate) {
+        setEndTimeError("End time must be after start time");
+        return;
+      }
+    }
   };
 
   const handleStartTimer = () => {
@@ -279,12 +328,33 @@ function TimeTrackerForm({
 
     if (startTime) {
       actualStartTime = new Date(startTime);
+      const now = new Date();
+
+      // Check if start time is in the future
+      if (actualStartTime > now) {
+        setStartTimeError("Start time cannot be in the future");
+        return;
+      }
+
+      // Check if start time is over 1 hour old
+      const hoursDiff =
+        (now.getTime() - actualStartTime.getTime()) / (1000 * 60 * 60);
+
+      if (hoursDiff > 1) {
+        setShowStartTimeWarning(true);
+        // Hide warning after 5 seconds
+        setTimeout(() => {
+          setShowStartTimeWarning(false);
+        }, 5000);
+      }
     } else {
       actualStartTime = new Date();
       const formattedNow = formatDateForInput(actualStartTime);
       setStartTime(formattedNow);
     }
 
+    // Clear any existing errors
+    setStartTimeError("");
     startGlobalTimer(description, categoryId, tags, actualStartTime);
   };
 
@@ -292,6 +362,8 @@ function TimeTrackerForm({
     const now = new Date();
     const formattedNow = formatDateForInput(now);
     handleStartTimeChange(formattedNow);
+    setShowStartTimeWarning(false);
+    setStartTimeError("");
   };
 
   const setLastEntryEndTimeAsStartTime = () => {
@@ -375,17 +447,40 @@ function TimeTrackerForm({
   const handleManualSave = async () => {
     if (!startTime || !endTime) return;
 
+    // Clear existing errors
+    setStartTimeError("");
+    setEndTimeError("");
+
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const now = new Date();
+
+    let hasError = false;
+
+    // Check if start time is in the future
+    if (startDate > now) {
+      setStartTimeError("Start time cannot be in the future");
+      hasError = true;
+    }
+
+    // Check if end time is in the future
+    if (endDate > now) {
+      setEndTimeError("End time cannot be in the future");
+      hasError = true;
+    }
+
+    // Check if start time is after end time
+    if (startDate >= endDate) {
+      setEndTimeError("End time must be after start time");
+      hasError = true;
+    }
+
+    if (hasError) {
+      return;
+    }
+
     try {
       setIsSaving(true);
-
-      const startDate = new Date(startTime);
-      const endDate = new Date(endTime);
-
-      if (startDate >= endDate) {
-        alert("End time must be after start time");
-        setIsSaving(false);
-        return;
-      }
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
       const sortedTags = getSortedTags();
@@ -460,6 +555,51 @@ function TimeTrackerForm({
         metric.active &&
         metric.name.toLowerCase() === description.toLowerCase()
     );
+  };
+
+  const generateRandomColor = () => {
+    const colors = [
+      "#ef4444", // red
+      "#f97316", // orange
+      "#f59e0b", // amber
+      "#eab308", // yellow
+      "#84cc16", // lime
+      "#22c55e", // green
+      "#10b981", // emerald
+      "#14b8a6", // teal
+      "#06b6d4", // cyan
+      "#0ea5e9", // sky
+      "#3b82f6", // blue
+      "#6366f1", // indigo
+      "#8b5cf6", // violet
+      "#a855f7", // purple
+      "#d946ef", // fuchsia
+      "#ec4899", // pink
+      "#f43f5e", // rose
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const handleCreateCategory = async (categoryName: string) => {
+    try {
+      const newCategory = {
+        name: categoryName,
+        color: generateRandomColor(),
+        private: false,
+      };
+
+      const response = await ApiService.addRecord("time_categories", newCategory);
+      
+      if (response) {
+        addEntry(response, "time_categories");
+        // Set the newly created category as selected
+        handleCategoryChange(response.id);
+        onDataChange(); // Refresh data
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      alert("Failed to create category. Please try again.");
+    }
   };
 
   return (
@@ -666,16 +806,29 @@ function TimeTrackerForm({
                 Category
               </Label>
               <ReusableSelect
+                searchSelect={true}
                 options={categories.map((category) => ({
                   id: category.id,
                   label: category.name,
+                  color: category.color,
                 }))}
                 noDefault={false}
                 value={categoryId}
                 onChange={handleCategoryChange}
+                onCreateNew={handleCreateCategory}
                 title="category"
-                placeholder="Select category"
+                placeholder="Search or create category..."
+                createNewLabel="Create category"
                 triggerClassName="h-10"
+                renderItem={(option) => (
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-full border" 
+                      style={{ backgroundColor: option.color || "#3b82f6" }}
+                    />
+                    <span>{option.label}</span>
+                  </div>
+                )}
               />
             </div>
 
@@ -711,16 +864,28 @@ function TimeTrackerForm({
             )}
 
             {!usePomodoroActive && (
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="start-time" className="text-sm font-medium">
                     Start Time
                   </Label>
-                  <div className="flex space-x-1">
+                  <div className="flex items-center space-x-1">
+                    {showStartTimeWarning && (
+                      <div className="pl-2 flex items-center gap-1 text-amber-600 dark:text-amber-500 animate-pulse mr-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          Old start time!
+                        </span>
+                      </div>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 px-2 text-xs"
+                      className={cn(
+                        "h-6 px-2 text-xs",
+                        showStartTimeWarning &&
+                          "ring-2 ring-amber-500 ring-offset-2 animate-pulse"
+                      )}
                       onClick={setCurrentTimeAsStartTime}
                       title="Set to current time"
                     >
@@ -744,8 +909,19 @@ function TimeTrackerForm({
                   type="datetime-local"
                   value={startTime}
                   onChange={(e) => handleStartTimeChange(e.target.value)}
-                  className="h-10 focus:ring-2 focus:ring-primary/50"
+                  className={cn(
+                    "h-10 focus:ring-2 focus:ring-primary/50",
+                    showStartTimeWarning &&
+                      "border-amber-500 dark:border-amber-500",
+                    startTimeError && "border-red-500 dark:border-red-500"
+                  )}
                 />
+                {startTimeError && (
+                  <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-500">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-xs">{startTimeError}</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -774,8 +950,17 @@ function TimeTrackerForm({
                   type="datetime-local"
                   value={endTime}
                   onChange={(e) => handleEndTimeChange(e.target.value)}
-                  className="h-10 focus:ring-2 focus:ring-primary/50"
+                  className={cn(
+                    "h-10 focus:ring-2 focus:ring-primary/50",
+                    endTimeError && "border-red-500 dark:border-red-500"
+                  )}
                 />
+                {endTimeError && (
+                  <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-500">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-xs">{endTimeError}</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -785,6 +970,7 @@ function TimeTrackerForm({
                   <Button
                     onClick={handleStartTimer}
                     size="sm"
+                    disabled={!!startTimeError}
                     className="px-6 py-5 bg-blue-600 hover:bg-blue-700 font-medium"
                   >
                     <Play className="mr-2 h-4 w-4" />
@@ -803,7 +989,7 @@ function TimeTrackerForm({
                     disabled={
                       addState === "timer"
                         ? isSaving
-                        : !startTime || !endTime || isSaving
+                        : !startTime || !endTime || isSaving || !!startTimeError || !!endTimeError
                     }
                     className={cn(
                       "px-6 py-5 font-medium",

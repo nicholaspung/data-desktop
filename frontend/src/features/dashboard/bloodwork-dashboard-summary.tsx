@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   HeartPulse,
   Activity,
+  Settings,
 } from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
@@ -16,6 +17,13 @@ import {
 } from "@/store/bloodwork-definitions";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
+import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export default function BloodworkDashboardSummary() {
   const [loading, setLoading] = useState(true);
@@ -41,16 +49,73 @@ export default function BloodworkDashboardSummary() {
   const [monthsSinceLastTest, setMonthsSinceLastTest] = useState<number | null>(
     null
   );
+  const [selectedMarkerIds, setSelectedMarkerIds] = useState<string[]>([]);
+  const [showMarkerSelector, setShowMarkerSelector] = useState(false);
 
-  const keyMarkerCategories = [
-    "Lipids",
-    "Metabolic",
-    "Inflammation",
-    "Thyroid",
-  ];
+  // Get stored selected markers from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("bloodwork-dashboard-selected-markers");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setSelectedMarkerIds(parsed.slice(0, 5));
+        }
+      } catch (e) {
+        console.error("Failed to parse stored markers", e);
+      }
+    }
+  }, []);
+
+  // Save selected markers to localStorage
+  useEffect(() => {
+    if (selectedMarkerIds.length > 0) {
+      localStorage.setItem(
+        "bloodwork-dashboard-selected-markers",
+        JSON.stringify(selectedMarkerIds)
+      );
+    }
+  }, [selectedMarkerIds]);
 
   useEffect(() => {
+    const keyMarkerCategories = [
+      "Lipids",
+      "Metabolic",
+      "Inflammation",
+      "Thyroid",
+    ];
+
     if (bloodworkTests.length === 0) {
+      // If no tests but markers are selected, show them with "No data"
+      if (selectedMarkerIds.length > 0) {
+        const selectedResults = selectedMarkerIds
+          .map((markerId) => {
+            const marker = bloodMarkers.find((m) => m.id === markerId);
+            if (marker) {
+              return {
+                result: {
+                  id: `placeholder-${markerId}`,
+                  blood_test_id: "",
+                  blood_marker_id: markerId,
+                  value_number: undefined,
+                  value_text: "No data",
+                  unit_used: marker.unit,
+                  created_at: "",
+                  updated_at: "",
+                  marker,
+                } as BloodResult & { marker: BloodMarker },
+                status: "optimal" as const,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean) as Array<{
+          result: BloodResult & { marker?: BloodMarker };
+          status: "high" | "low" | "optimal";
+        }>;
+
+        setFlaggedMarkers(selectedResults);
+      }
       setLoading(false);
       return;
     }
@@ -165,11 +230,77 @@ export default function BloodworkDashboardSummary() {
         return 0;
       });
 
-      setFlaggedMarkers(flagged.slice(0, 5));
+      // If user has selected specific markers, show those instead of flagged markers
+      if (selectedMarkerIds.length > 0) {
+        const selectedResults = selectedMarkerIds
+          .map((markerId) => {
+            const result = resultsWithMarkers.find(
+              (r) => r.blood_marker_id === markerId
+            );
+
+            // If no result found, check if we have the marker definition
+            if (!result) {
+              const marker = bloodMarkers.find((m) => m.id === markerId);
+              if (marker) {
+                // Create a placeholder result for markers without data
+                return {
+                  result: {
+                    id: `placeholder-${markerId}`,
+                    blood_test_id: "",
+                    blood_marker_id: markerId,
+                    value_number: undefined,
+                    value_text: "No data",
+                    unit_used: marker.unit,
+                    created_at: "",
+                    updated_at: "",
+                    marker,
+                  } as BloodResult & { marker: BloodMarker },
+                  status: "optimal" as const,
+                };
+              }
+              return null;
+            }
+
+            const { marker, value_number } = result;
+            let status: "high" | "low" | "optimal" = "optimal";
+
+            if (marker && value_number !== undefined) {
+              if (
+                marker.optimal_low !== undefined &&
+                marker.optimal_high !== undefined
+              ) {
+                if (value_number < marker.optimal_low) {
+                  status = "low";
+                } else if (value_number > marker.optimal_high) {
+                  status = "high";
+                }
+              } else if (
+                marker.lower_reference !== undefined &&
+                marker.upper_reference !== undefined
+              ) {
+                if (value_number < marker.lower_reference) {
+                  status = "low";
+                } else if (value_number > marker.upper_reference) {
+                  status = "high";
+                }
+              }
+            }
+
+            return { result, status };
+          })
+          .filter(Boolean) as Array<{
+          result: BloodResult & { marker?: BloodMarker };
+          status: "high" | "low" | "optimal";
+        }>;
+
+        setFlaggedMarkers(selectedResults);
+      } else {
+        setFlaggedMarkers(flagged.slice(0, 5));
+      }
     }
 
     setLoading(false);
-  }, [bloodworkTests, bloodMarkers, bloodResults]);
+  }, [bloodworkTests, bloodMarkers, bloodResults, selectedMarkerIds]);
 
   const getStatusColor = (status: "high" | "low" | "optimal") => {
     switch (status) {
@@ -223,18 +354,93 @@ export default function BloodworkDashboardSummary() {
           ? [
               {
                 title: (
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
-                    <span>Flagged Markers</span>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      {selectedMarkerIds.length > 0 ? (
+                        <Activity className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      )}
+                      <span>
+                        {selectedMarkerIds.length > 0
+                          ? "Selected Markers"
+                          : "Flagged Markers"}
+                      </span>
+                    </div>
+                    {bloodMarkers.length > 0 && (
+                      <Popover
+                        open={showMarkerSelector}
+                        onOpenChange={setShowMarkerSelector}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="ml-2 h-6 w-6"
+                            title="Select markers to display"
+                          >
+                            <Settings className="h-3.5 w-3.5" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="end">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="font-medium text-sm mb-1">
+                                Select Markers to Display
+                              </h4>
+                              <p className="text-xs text-muted-foreground">
+                                Choose up to 5 markers to show in the summary
+                              </p>
+                            </div>
+                            <ReusableMultiSelect
+                              options={bloodMarkers.map((marker) => ({
+                                id: marker.id,
+                                label: marker.name,
+                                category: marker.category,
+                              }))}
+                              selected={selectedMarkerIds}
+                              onChange={(ids) =>
+                                setSelectedMarkerIds(ids.slice(0, 5))
+                              }
+                              placeholder="Search markers..."
+                              title="markers"
+                              useGroups={true}
+                              groupByKey="category"
+                              searchPlaceholder="Search by marker name..."
+                              maxDisplay={0}
+                            />
+                            {selectedMarkerIds.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => {
+                                  setSelectedMarkerIds([]);
+                                  localStorage.removeItem(
+                                    "bloodwork-dashboard-selected-markers"
+                                  );
+                                }}
+                              >
+                                Clear Selection
+                              </Button>
+                            )}
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                 ),
                 items: flaggedMarkers.map((flagged) => ({
                   label: (
                     <div className="flex items-center gap-2">
-                      {flagged.status === "high" ? (
+                      {flagged.result.value_number !== undefined &&
+                      flagged.status === "high" ? (
                         <TrendingUp className="h-4 w-4 text-red-500" />
-                      ) : (
+                      ) : flagged.result.value_number !== undefined &&
+                        flagged.status === "low" ? (
                         <TrendingDown className="h-4 w-4 text-amber-500" />
+                      ) : (
+                        <Activity className="h-4 w-4 text-muted-foreground" />
                       )}
                       <span>
                         {flagged.result.marker?.name || "Unknown Marker"}
@@ -243,15 +449,25 @@ export default function BloodworkDashboardSummary() {
                   ),
                   value: (
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">
-                        {flagged.result.value_number}{" "}
-                        {flagged.result.marker?.unit}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(flagged.status)}`}
-                      >
-                        {flagged.status === "high" ? "HIGH" : "LOW"}
-                      </span>
+                      {flagged.result.value_number !== undefined ? (
+                        <>
+                          <span className="font-medium">
+                            {flagged.result.value_number}{" "}
+                            {flagged.result.marker?.unit}
+                          </span>
+                          {flagged.status !== "optimal" && (
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(flagged.status)}`}
+                            >
+                              {flagged.status === "high" ? "HIGH" : "LOW"}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          No data
+                        </span>
+                      )}
                     </div>
                   ),
                 })),
