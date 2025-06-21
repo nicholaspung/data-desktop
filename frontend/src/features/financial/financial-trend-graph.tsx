@@ -534,33 +534,74 @@ export default function FinancialTrendGraph({
       dataKey: group,
       name: group,
       color: COLORS[index % COLORS.length],
-      stackId: chartType === "bar" ? "stack" : undefined,
+      stackId: undefined,
     }));
   }, [trendData, chartType]);
 
   const totals = useMemo(() => {
+    let positiveTotal = 0;
+    let negativeTotal = 0;
+    const categorySums: Record<string, number> = {};
+
     if (type === "balances") {
-      const sums: Record<string, number> = {};
       if (trendData.length > 0) {
         const latestPeriod = trendData[trendData.length - 1];
         Object.entries(latestPeriod).forEach(([key, value]) => {
           if (key !== "period" && typeof value === "number") {
-            sums[key] = value;
+            categorySums[key] = value;
+            if (value > 0) {
+              positiveTotal += value;
+            } else {
+              negativeTotal += value;
+            }
           }
         });
       }
-      return sums;
     } else {
-      const sums: Record<string, number> = {};
       trendData.forEach((point) => {
         Object.entries(point).forEach(([key, value]) => {
           if (key !== "period" && typeof value === "number") {
-            sums[key] = (sums[key] || 0) + value;
+            categorySums[key] = (categorySums[key] || 0) + value;
           }
         });
       });
-      return sums;
+
+      Object.values(categorySums).forEach((value) => {
+        if (value > 0) {
+          positiveTotal += value;
+        } else {
+          negativeTotal += value;
+        }
+      });
     }
+
+    let positiveLabel = "Positive";
+    let negativeLabel = "Negative";
+    let totalLabel = "Total";
+
+    if (type === "logs") {
+      positiveLabel = "Income + Cash";
+      negativeLabel = "Expenses";
+      totalLabel = "Net Flow";
+    } else if (type === "balances") {
+      positiveLabel = "Assets";
+      negativeLabel = "Liabilities";
+      totalLabel = "Net Worth";
+    } else if (type === "paycheck") {
+      positiveLabel = "Gross Income";
+      negativeLabel = "Deductions";
+      totalLabel = "Net Pay";
+    }
+
+    return {
+      categories: categorySums,
+      positiveTotal,
+      negativeTotal,
+      total: positiveTotal + negativeTotal,
+      positiveLabel,
+      negativeLabel,
+      totalLabel,
+    };
   }, [trendData, type]);
 
   return (
@@ -944,45 +985,62 @@ export default function FinancialTrendGraph({
                 </div>
               )}
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                {Object.entries(totals).map(([category, total]) => {
-                  const isPositive =
-                    viewMode === "net" &&
-                    (category === "Income" ||
-                      (type === "balances" && category === "Assets"));
-                  const isNegative =
-                    viewMode === "net" &&
-                    (category === "Expense" ||
-                      (type === "balances" && category === "Liabilities"));
-                  return (
-                    <div key={category} className="text-center">
-                      <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                        {category}
-                        {isPositive && (
-                          <TrendingUp className="h-3 w-3 text-green-600" />
-                        )}
-                        {isNegative && (
-                          <TrendingDown className="h-3 w-3 text-red-600" />
-                        )}
-                      </p>
-                      <p
-                        className={`text-lg font-semibold ${
-                          isPositive
-                            ? "text-green-600"
-                            : isNegative
-                              ? "text-red-600"
-                              : total >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                        }`}
-                      >
-                        {total < 0
-                          ? `-$${Math.abs(total).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                          : `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      </p>
-                    </div>
-                  );
-                })}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {/* Positive Total */}
+                {totals.positiveTotal > 0 && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                      {totals.positiveLabel}
+                      <TrendingUp className="h-3 w-3 text-green-600" />
+                    </p>
+                    <p className="text-lg font-semibold text-green-600">
+                      $
+                      {totals.positiveTotal.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Negative Total */}
+                {totals.negativeTotal < 0 && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                      {totals.negativeLabel}
+                      <TrendingDown className="h-3 w-3 text-red-600" />
+                    </p>
+                    <p className="text-lg font-semibold text-red-600">
+                      $
+                      {Math.abs(totals.negativeTotal).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Net Total */}
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {totals.totalLabel}
+                  </p>
+                  <p
+                    className={`text-lg font-semibold ${
+                      totals.total >= 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {totals.total < 0
+                      ? `-$${Math.abs(totals.total).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : `$${totals.total.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`}
+                  </p>
+                </div>
               </div>
             </>
           ) : (

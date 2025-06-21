@@ -10,9 +10,12 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  Cell,
+  Legend,
 } from "recharts";
 import { format, isSameMonth, isSameYear } from "date-fns";
 import type { FinancialLog, FinancialBalance, PaycheckInfo } from "./types";
+import { Button } from "@/components/ui/button";
 
 type TimeFilter = "month" | "year" | "all";
 
@@ -47,8 +50,11 @@ export function FinancialOverviewCard({
   const [selectedAccountOwners, setSelectedAccountOwners] = useState<string[]>(
     []
   );
-  const [selectedDeductionTypes, setSelectedDeductionTypes] = useState<string[]>(
-    []
+  const [selectedDeductionTypes, setSelectedDeductionTypes] = useState<
+    string[]
+  >([]);
+  const [chartViewMode, setChartViewMode] = useState<"split" | "total">(
+    "split"
   );
 
   const allData = useMemo(() => {
@@ -127,7 +133,8 @@ export function FinancialOverviewCard({
 
       (allData as PaycheckInfo[]).forEach((paycheck) => {
         if (paycheck.category) categories.add(paycheck.category);
-        if (paycheck.deduction_type) deductionTypes.add(paycheck.deduction_type);
+        if (paycheck.deduction_type)
+          deductionTypes.add(paycheck.deduction_type);
       });
 
       return {
@@ -238,98 +245,235 @@ export function FinancialOverviewCard({
   const summaryData = useMemo(() => {
     if (type === "logs") {
       const categoryTotals = new Map<string, number>();
+      let positiveTotal = 0;
+      let negativeTotal = 0;
+
       (filteredData as FinancialLog[]).forEach((log) => {
         const current = categoryTotals.get(log.category) || 0;
         categoryTotals.set(log.category, current + log.amount);
+
+        if (log.amount > 0) {
+          positiveTotal += log.amount;
+        } else {
+          negativeTotal += log.amount;
+        }
       });
 
       return {
         categories: Array.from(categoryTotals.entries()).map(
           ([category, total]) => ({
             category,
-            total: Math.abs(total),
+            total,
+            isPositive: total > 0,
           })
         ),
         total: (filteredData as FinancialLog[]).reduce(
           (sum, log) => sum + log.amount,
           0
         ),
+        positiveTotal,
+        negativeTotal,
+        positiveLabel: "Income + Cash",
+        negativeLabel: "Expenses",
+        totalLabel: "Net Flow",
       };
     } else if (type === "balances") {
       const typeTotals = new Map<string, number>();
+      let positiveTotal = 0;
+      let negativeTotal = 0;
+
       (filteredData as FinancialBalance[]).forEach((balance) => {
         const current = typeTotals.get(balance.account_type) || 0;
         typeTotals.set(balance.account_type, current + balance.amount);
+
+        if (balance.amount > 0) {
+          positiveTotal += balance.amount;
+        } else {
+          negativeTotal += balance.amount;
+        }
       });
 
       return {
         categories: Array.from(typeTotals.entries()).map(
           ([category, total]) => ({
             category,
-            total: Math.abs(total),
+            total,
+            isPositive: total > 0,
           })
         ),
         total: (filteredData as FinancialBalance[]).reduce(
           (sum, balance) => sum + balance.amount,
           0
         ),
+        positiveTotal,
+        negativeTotal,
+        positiveLabel: "Assets",
+        negativeLabel: "Liabilities",
+        totalLabel: "Net Worth",
       };
     } else if (type === "paycheck") {
       const categoryTotals = new Map<string, number>();
+      let positiveTotal = 0;
+      let negativeTotal = 0;
+
       (filteredData as PaycheckInfo[]).forEach((paycheck) => {
         const current = categoryTotals.get(paycheck.category) || 0;
         categoryTotals.set(paycheck.category, current + paycheck.amount);
+
+        if (paycheck.amount > 0) {
+          positiveTotal += paycheck.amount;
+        } else {
+          negativeTotal += paycheck.amount;
+        }
       });
 
       return {
         categories: Array.from(categoryTotals.entries()).map(
           ([category, total]) => ({
             category,
-            total: Math.abs(total),
+            total,
+            isPositive: total > 0,
           })
         ),
         total: (filteredData as PaycheckInfo[]).reduce(
           (sum, paycheck) => sum + paycheck.amount,
           0
         ),
+        positiveTotal,
+        negativeTotal,
+        positiveLabel: "Gross Income",
+        negativeLabel: "Deductions",
+        totalLabel: "Net Pay",
       };
     }
 
-    return { categories: [], total: 0 };
+    return {
+      categories: [],
+      total: 0,
+      positiveTotal: 0,
+      negativeTotal: 0,
+      positiveLabel: "",
+      negativeLabel: "",
+      totalLabel: "Total",
+    };
   }, [filteredData, type]);
 
   const chartData = useMemo(() => {
     if (type === "logs") {
-      const monthlyData = new Map<string, number>();
+      const monthlyData = new Map<
+        string,
+        { positive: number; negative: number; net: number }
+      >();
       (filteredData as FinancialLog[]).forEach((log) => {
         const month = format(new Date(log.date), "MMM yyyy");
-        const current = monthlyData.get(month) || 0;
-        monthlyData.set(month, current + Math.abs(log.amount));
+        const current = monthlyData.get(month) || {
+          positive: 0,
+          negative: 0,
+          net: 0,
+        };
+
+        if (log.amount > 0) {
+          current.positive += log.amount;
+        } else {
+          current.negative += log.amount;
+        }
+        current.net += log.amount;
+
+        monthlyData.set(month, current);
       });
 
       return Array.from(monthlyData.entries())
-        .map(([month, amount]) => ({ month, amount }))
+        .map(([month, data]) => {
+          if (chartViewMode === "split") {
+            return {
+              month,
+              [summaryData.positiveLabel]: data.positive,
+              [summaryData.negativeLabel]: data.negative,
+              amount: data.net,
+            };
+          } else {
+            return {
+              month,
+              amount: data.net,
+            };
+          }
+        })
         .sort(
           (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
     } else if (type === "balances") {
-      return summaryData.categories;
+      if (chartViewMode === "split") {
+        const categoriesWithTotals = [
+          ...summaryData.categories.map(({ category, total }) => ({
+            category,
+            amount: total,
+          })),
+          {
+            category: summaryData.positiveLabel,
+            amount: summaryData.positiveTotal,
+          },
+          {
+            category: summaryData.negativeLabel,
+            amount: summaryData.negativeTotal,
+          },
+          { category: summaryData.totalLabel, amount: summaryData.total },
+        ];
+
+        return categoriesWithTotals.map((item) => ({
+          category: item.category,
+          total: item.amount,
+        }));
+      } else {
+        return summaryData.categories.map(({ category, total }) => ({
+          category,
+          total,
+        }));
+      }
     } else if (type === "paycheck") {
-      const monthlyData = new Map<string, number>();
+      const monthlyData = new Map<
+        string,
+        { positive: number; negative: number; net: number }
+      >();
       (filteredData as PaycheckInfo[]).forEach((paycheck) => {
         const month = format(new Date(paycheck.date), "MMM yyyy");
-        const current = monthlyData.get(month) || 0;
-        monthlyData.set(month, current + Math.abs(paycheck.amount));
+        const current = monthlyData.get(month) || {
+          positive: 0,
+          negative: 0,
+          net: 0,
+        };
+
+        if (paycheck.amount > 0) {
+          current.positive += paycheck.amount;
+        } else {
+          current.negative += paycheck.amount;
+        }
+        current.net += paycheck.amount;
+
+        monthlyData.set(month, current);
       });
 
       return Array.from(monthlyData.entries())
-        .map(([month, amount]) => ({ month, amount }))
+        .map(([month, data]) => {
+          if (chartViewMode === "split") {
+            return {
+              month,
+              [summaryData.positiveLabel]: data.positive,
+              [summaryData.negativeLabel]: data.negative,
+              amount: data.net,
+            };
+          } else {
+            return {
+              month,
+              amount: data.net,
+            };
+          }
+        })
         .sort(
           (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime()
         );
     }
     return [];
-  }, [filteredData, type, summaryData]);
+  }, [filteredData, type, summaryData, chartViewMode]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -423,7 +567,9 @@ export function FinancialOverviewCard({
       filterOptions.deductionTypes &&
       selectedDeductionTypes.length === 0
     ) {
-      setSelectedDeductionTypes(filterOptions.deductionTypes.map((type) => type.id));
+      setSelectedDeductionTypes(
+        filterOptions.deductionTypes.map((type) => type.id)
+      );
     }
   }, [
     filterOptions,
@@ -453,6 +599,30 @@ export function FinancialOverviewCard({
 
   const headerActions = (
     <div className="flex items-center gap-2 flex-wrap">
+      {type !== "balances" && (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            Chart View
+          </label>
+          <div className="flex gap-1">
+            <Button
+              variant={chartViewMode === "split" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartViewMode("split")}
+            >
+              Split
+            </Button>
+            <Button
+              variant={chartViewMode === "total" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setChartViewMode("total")}
+            >
+              Total
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-1">
         <label className="text-xs font-medium text-muted-foreground">
           Period
@@ -669,32 +839,34 @@ export function FinancialOverviewCard({
               />
             </div>
           )}
-          {filterOptions.deductionTypes && filterOptions.deductionTypes.length > 0 && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-medium text-muted-foreground">
-                Deduction Types
-              </label>
-              <ReusableMultiSelect
-                options={[
-                  { id: "all", label: "All Deduction Types" },
-                  ...filterOptions.deductionTypes,
-                ]}
-                selected={selectedDeductionTypes}
-                onChange={(values) => {
-                  if (values.includes("all")) {
-                    setSelectedDeductionTypes(
-                      filterOptions.deductionTypes?.map((type) => type.id) || []
-                    );
-                  } else {
-                    setSelectedDeductionTypes(values);
-                  }
-                }}
-                placeholder="Deduction Types"
-                className="w-40"
-                maxDisplay={0}
-              />
-            </div>
-          )}
+          {filterOptions.deductionTypes &&
+            filterOptions.deductionTypes.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Deduction Types
+                </label>
+                <ReusableMultiSelect
+                  options={[
+                    { id: "all", label: "All Deduction Types" },
+                    ...filterOptions.deductionTypes,
+                  ]}
+                  selected={selectedDeductionTypes}
+                  onChange={(values) => {
+                    if (values.includes("all")) {
+                      setSelectedDeductionTypes(
+                        filterOptions.deductionTypes?.map((type) => type.id) ||
+                          []
+                      );
+                    } else {
+                      setSelectedDeductionTypes(values);
+                    }
+                  }}
+                  placeholder="Deduction Types"
+                  className="w-40"
+                  maxDisplay={0}
+                />
+              </div>
+            )}
         </>
       )}
     </div>
@@ -707,19 +879,58 @@ export function FinancialOverviewCard({
           <h3 className="text-sm font-medium text-muted-foreground">Summary</h3>
           <div className="space-y-2">
             <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-              <span className="font-medium">Total</span>
-              <span className="text-lg font-semibold">
+              <span className="font-medium">{summaryData.totalLabel}</span>
+              <span
+                className={`text-lg font-semibold ${
+                  summaryData.total > 0
+                    ? "text-green-600"
+                    : summaryData.total < 0
+                      ? "text-red-600"
+                      : ""
+                }`}
+              >
                 {formatCurrency(summaryData.total)}
               </span>
             </div>
-            {summaryData.categories.map(({ category, total }) => (
+
+            {summaryData.positiveTotal > 0 && (
+              <div className="flex justify-between items-center p-2 border rounded bg-green-50 border-green-200">
+                <span className="text-sm font-medium text-green-800">
+                  {summaryData.positiveLabel}
+                </span>
+                <span className="text-sm font-semibold text-green-600">
+                  {formatCurrency(summaryData.positiveTotal)}
+                </span>
+              </div>
+            )}
+
+            {summaryData.negativeTotal < 0 && (
+              <div className="flex justify-between items-center p-2 border rounded bg-red-50 border-red-200">
+                <span className="text-sm font-medium text-red-800">
+                  {summaryData.negativeLabel}
+                </span>
+                <span className="text-sm font-semibold text-red-600">
+                  {formatCurrency(Math.abs(summaryData.negativeTotal))}
+                </span>
+              </div>
+            )}
+
+            {summaryData.categories.map(({ category, total, isPositive }) => (
               <div
                 key={category}
                 className="flex justify-between items-center p-2 border rounded"
               >
                 <span className="text-sm">{category}</span>
-                <span className="text-sm font-medium">
-                  {formatCurrency(total)}
+                <span
+                  className={`text-sm font-medium ${
+                    isPositive
+                      ? "text-green-600"
+                      : total < 0
+                        ? "text-red-600"
+                        : ""
+                  }`}
+                >
+                  {formatCurrency(Math.abs(total))}
                 </span>
               </div>
             ))}
@@ -738,13 +949,44 @@ export function FinancialOverviewCard({
                   dataKey={type === "balances" ? "category" : "month"}
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar
-                  dataKey={type === "balances" ? "total" : "amount"}
-                  fill="#3b82f6"
-                  radius={[8, 8, 0, 0]}
+                <YAxis
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => formatCurrency(value)}
                 />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                {chartViewMode === "split" && type !== "balances" && <Legend />}
+                {type === "balances" || chartViewMode === "total" ? (
+                  <Bar
+                    dataKey={type === "balances" ? "total" : "amount"}
+                    radius={[8, 8, 0, 0]}
+                  >
+                    {chartData.map((entry, index) => {
+                      const value =
+                        type === "balances"
+                          ? (entry as { category: string; total: number }).total
+                          : (entry as { month: string; amount: number }).amount;
+                      return (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={value >= 0 ? "#22c55e" : "#ef4444"}
+                        />
+                      );
+                    })}
+                  </Bar>
+                ) : (
+                  <>
+                    <Bar
+                      dataKey={summaryData.positiveLabel}
+                      fill="#22c55e"
+                      radius={[8, 8, 0, 0]}
+                    />
+                    <Bar
+                      dataKey={summaryData.negativeLabel}
+                      fill="#ef4444"
+                      radius={[8, 8, 0, 0]}
+                    />
+                  </>
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>

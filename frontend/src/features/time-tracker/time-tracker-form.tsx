@@ -201,7 +201,6 @@ function TimeTrackerForm({
       const prevStateVal = state.prevVal;
 
       if (currentState.isTimerActive) {
-        // If timer just became active and we're in manual mode, switch to timer mode
         if (!prevStateVal.isTimerActive && addState === "manual") {
           setAddState("timer");
         }
@@ -263,13 +262,11 @@ function TimeTrackerForm({
       const newStartDate = new Date(newStartTime);
       const now = new Date();
 
-      // In timer mode, prevent future dates
       if (addState === "timer" && newStartDate > now) {
         setStartTimeError("Start time cannot be in the future");
         return;
       }
 
-      // In manual mode, check if start time is after end time
       if (addState === "manual" && endTime) {
         const endDate = new Date(endTime);
         if (newStartDate >= endDate) {
@@ -312,7 +309,6 @@ function TimeTrackerForm({
     setEndTime(newEndTime);
     setEndTimeError("");
 
-    // Validate end time is not in the future and is after start time
     if (newEndTime && startTime) {
       const endDate = new Date(newEndTime);
       const startDate = new Date(startTime);
@@ -337,19 +333,16 @@ function TimeTrackerForm({
       actualStartTime = new Date(startTime);
       const now = new Date();
 
-      // Check if start time is in the future
       if (actualStartTime > now) {
         setStartTimeError("Start time cannot be in the future");
         return;
       }
 
-      // Check if start time is over 1 hour old
       const hoursDiff =
         (now.getTime() - actualStartTime.getTime()) / (1000 * 60 * 60);
 
       if (hoursDiff > 1) {
         setShowStartTimeWarning(true);
-        // Hide warning after 5 seconds
         setTimeout(() => {
           setShowStartTimeWarning(false);
         }, 5000);
@@ -360,7 +353,6 @@ function TimeTrackerForm({
       setStartTime(formattedNow);
     }
 
-    // Clear any existing errors
     setStartTimeError("");
     startGlobalTimer(description, categoryId, tags, actualStartTime);
   };
