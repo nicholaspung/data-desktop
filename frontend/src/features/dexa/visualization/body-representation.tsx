@@ -252,7 +252,6 @@ export default function BodyRepresentation({
               <line x1="230" y1="260" x2="250" y2="390" /> {/* Left Leg */}
             </g>
 
-            {/* Interactive dots for each body part */}
             {bodyParts.map((part) => (
               <ReusableTooltip
                 key={part.id}
@@ -301,7 +300,6 @@ export default function BodyRepresentation({
             ))}
           </svg>
 
-          {/* Legend for the body fat percentage colors */}
           <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center gap-2 text-xs">
             <div className="flex items-center">
               <div className="w-3 h-3 rounded-full bg-[#82ca9d] mr-1"></div>

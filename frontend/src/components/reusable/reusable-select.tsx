@@ -50,23 +50,21 @@ export default function ReusableSelect({
 }) {
   const [searchValue, setSearchValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  
-  // Get the currently selected option for display
-  const selectedOption = options.find(opt => opt.id === value);
-  
-  // Display logic: show search value when actively typing, otherwise show selected option name
-  const displayValue = searchValue || (selectedOption ? selectedOption.label : "");
-  
-  // Create SelectOptions for AutocompleteInput
-  const autocompleteOptions: SelectOption[] = options.map(option => ({
+
+  const selectedOption = options.find((opt) => opt.id === value);
+
+  const displayValue =
+    searchValue || (selectedOption ? selectedOption.label : "");
+
+  const autocompleteOptions: SelectOption[] = options.map((option) => ({
     id: option.id,
     label: option.label,
-    ...option
+    ...option,
   }));
 
   const handleCreateNew = async (newValue: string) => {
     if (!onCreateNew || !newValue.trim()) return;
-    
+
     setIsCreating(true);
     try {
       await onCreateNew(newValue.trim());
@@ -82,7 +80,6 @@ export default function ReusableSelect({
     onChange(option.id);
     setSearchValue("");
   };
-
 
   const renderOptions = () => {
     if (!useGroups) {
@@ -123,17 +120,19 @@ export default function ReusableSelect({
   };
 
   if (searchSelect) {
-    // Enhanced options with create new option when applicable
     const enhancedOptions = [...autocompleteOptions];
-    
-    // Add "Create new" option if we have a search value and onCreateNew handler
-    if (onCreateNew && searchValue.trim() && !enhancedOptions.some(opt => 
-      opt.label.toLowerCase() === searchValue.toLowerCase().trim()
-    )) {
+
+    if (
+      onCreateNew &&
+      searchValue.trim() &&
+      !enhancedOptions.some(
+        (opt) => opt.label.toLowerCase() === searchValue.toLowerCase().trim()
+      )
+    ) {
       enhancedOptions.push({
         id: "__create_new__",
         label: `${createNewLabel}: "${searchValue.trim()}"`,
-        isCreateNew: true
+        isCreateNew: true,
       } as SelectOption & { isCreateNew: boolean });
     }
 
@@ -143,7 +142,7 @@ export default function ReusableSelect({
         value={displayValue}
         onChange={(newValue) => {
           setSearchValue(newValue);
-          // If user is typing and the current input doesn't match the selected option, clear selection
+
           if (selectedOption && newValue !== selectedOption.label) {
             onChange("");
           }
@@ -155,7 +154,9 @@ export default function ReusableSelect({
             handleAutocompleteSelect(option);
           }
         }}
-        options={enhancedOptions as (SelectOption & { [key: string]: unknown })[]}
+        options={
+          enhancedOptions as (SelectOption & { [key: string]: unknown })[]
+        }
         placeholder={placeholder || `Search or create ${title}...`}
         className={triggerClassName}
         disabled={disabled || isLoading || isCreating}
@@ -170,7 +171,7 @@ export default function ReusableSelect({
               </div>
             );
           }
-          
+
           return (
             <div className="flex items-center justify-between w-full">
               <span>{renderItem ? renderItem(option) : option.label}</span>

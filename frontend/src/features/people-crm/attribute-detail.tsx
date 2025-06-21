@@ -94,7 +94,6 @@ export default function AttributeDetail({
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -124,11 +123,9 @@ export default function AttributeDetail({
         </div>
       </div>
 
-      {/* Attribute Details */}
       <ReusableCard
         content={
           <div className="space-y-6">
-            {/* Basic Information */}
             <div className="flex flex-wrap items-center gap-4 pb-4 border-b">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
@@ -151,7 +148,6 @@ export default function AttributeDetail({
               )}
             </div>
 
-            {/* Attribute Value */}
             <div>
               <h3 className="font-medium mb-3">Value</h3>
               <div className="bg-muted/30 rounded-lg p-4">
@@ -159,7 +155,6 @@ export default function AttributeDetail({
               </div>
             </div>
 
-            {/* Additional Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {attribute.source && (
                 <div>
@@ -182,7 +177,6 @@ export default function AttributeDetail({
               )}
             </div>
 
-            {/* Metadata */}
             <div className="pt-4 border-t text-sm text-muted-foreground">
               <div className="flex justify-between">
                 <span>
@@ -199,7 +193,6 @@ export default function AttributeDetail({
         }
       />
 
-      {/* Related Actions */}
       <ReusableCard
         title="Related Actions"
         content={

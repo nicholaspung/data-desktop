@@ -380,7 +380,6 @@ export default function MultiEntryTable({
 
   return (
     <div className="space-y-4">
-      {/* Pagination Controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Rows per page:</span>
@@ -505,7 +504,6 @@ export default function MultiEntryTable({
         </div>
       </div>
 
-      {/* Scrollable Table */}
       <div className="rounded-md border max-h-[40vh] overflow-auto pr-2">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">

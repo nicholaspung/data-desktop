@@ -328,7 +328,6 @@ const ExperimentMetrics = ({
             </span>
           </div>
 
-          {/* Display metric type and unit */}
           <div className="mt-1 text-xs text-muted-foreground">
             Type: {metric.metric_id_data?.type || "Unknown"}
             {metric.metric_id_data?.unit &&
@@ -367,7 +366,6 @@ const ExperimentMetrics = ({
               }
               customContent={
                 <div className="space-y-4 py-4">
-                  {/* Metric Selection */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="metric-select">Metric</Label>
@@ -426,7 +424,6 @@ const ExperimentMetrics = ({
                     />
                   </div>
 
-                  {/* Target Configuration */}
                   {selectedMetricId && (
                     <>
                       <Separator />
@@ -454,7 +451,6 @@ const ExperimentMetrics = ({
                           </div>
                         </div>
 
-                        {/* Privacy setting */}
                         <div className="flex items-center space-x-2 pt-2">
                           <Checkbox
                             id="private"

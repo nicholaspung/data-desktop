@@ -71,11 +71,10 @@ export default function AutocompleteInput({
     (SelectOption & { [key: string]: unknown })[]
   >([]);
 
-  // Virtualizer for performance with large lists
   const virtualizer = useVirtualizer({
     count: finalOptions.length,
     getScrollElement: () => listRef.current,
-    estimateSize: () => 50, // Increased estimate for variable content
+    estimateSize: () => 50,
     overscan: 5,
     measureElement: (element) => element?.getBoundingClientRect().height ?? 50,
   });
@@ -129,14 +128,12 @@ export default function AutocompleteInput({
     }
   }, [usePortal]);
 
-  // Use ResizeObserver and MutationObserver to track DOM changes
   useEffect(() => {
     if (!showSuggestions || !usePortal || !inputRef.current) return;
 
     const input = inputRef.current;
     let animationFrameId: number;
 
-    // Throttled position update using requestAnimationFrame
     const throttledUpdate = () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -144,20 +141,17 @@ export default function AutocompleteInput({
       animationFrameId = requestAnimationFrame(updateDropdownPosition);
     };
 
-    // Observe size changes on input element
     const resizeObserver = new ResizeObserver(throttledUpdate);
     resizeObserver.observe(input);
 
-    // Observe DOM changes that might affect layout
     const mutationObserver = new MutationObserver(throttledUpdate);
     mutationObserver.observe(document.body, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['style', 'class']
+      attributeFilter: ["style", "class"],
     });
 
-    // Listen for scroll events on all scrollable parents
     const handleScroll = throttledUpdate;
     const handleResize = throttledUpdate;
 
@@ -174,7 +168,6 @@ export default function AutocompleteInput({
       window.removeEventListener("resize", handleResize);
     };
   }, [showSuggestions, usePortal, updateDropdownPosition]);
-
 
   useEffect(() => {
     if (autofocus && inputRef.current) {
@@ -257,7 +250,9 @@ export default function AutocompleteInput({
             style={getDropdownStyle()}
             className={cn(
               "bg-popover border rounded-md shadow-md max-h-72 overflow-hidden pointer-events-auto",
-              wider ? "min-w-[300px] w-max max-w-[600px]" : "min-w-[200px] w-max max-w-[500px]"
+              wider
+                ? "min-w-[300px] w-max max-w-[600px]"
+                : "min-w-[200px] w-max max-w-[500px]"
             )}
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
@@ -266,13 +261,13 @@ export default function AutocompleteInput({
             <div
               ref={listRef}
               className="overflow-y-auto py-1"
-              style={{ height: Math.min(finalOptions.length * 50, 300) + 'px' }}
+              style={{ height: Math.min(finalOptions.length * 50, 300) + "px" }}
             >
               <div
                 style={{
                   height: `${virtualizer.getTotalSize()}px`,
-                  width: '100%',
-                  position: 'relative',
+                  width: "100%",
+                  position: "relative",
                 }}
               >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -283,15 +278,17 @@ export default function AutocompleteInput({
                       data-index={virtualItem.index}
                       ref={(el) => virtualizer.measureElement(el)}
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
+                        width: "100%",
                         transform: `translateY(${virtualItem.start}px)`,
                       }}
                       className={cn(
                         "px-3 py-2 text-sm cursor-pointer flex items-center min-h-[40px]",
-                        activeIndex === virtualItem.index ? "bg-accent" : "hover:bg-accent/50"
+                        activeIndex === virtualItem.index
+                          ? "bg-accent"
+                          : "hover:bg-accent/50"
                       )}
                       onMouseDown={(e) => {
                         e.preventDefault();
@@ -304,8 +301,11 @@ export default function AutocompleteInput({
                         renderItem(option, activeIndex === virtualItem.index)
                       ) : (
                         <div className="flex flex-row items-center gap-2 w-full">
-                          <span className="flex-1 truncate">{option.label}</span>
-                          {option.label.toLowerCase() === value.toLowerCase() && (
+                          <span className="flex-1 truncate">
+                            {option.label}
+                          </span>
+                          {option.label.toLowerCase() ===
+                            value.toLowerCase() && (
                             <Check className="h-4 w-4 text-primary flex-shrink-0" />
                           )}
                         </div>
@@ -322,7 +322,9 @@ export default function AutocompleteInput({
             style={getDropdownStyle()}
             className={cn(
               "bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground pointer-events-auto",
-              wider ? "min-w-[300px] w-max max-w-[600px]" : "w-max max-w-[500px]"
+              wider
+                ? "min-w-[300px] w-max max-w-[600px]"
+                : "w-max max-w-[500px]"
             )}
           >
             {emptyMessage}
@@ -344,7 +346,9 @@ export default function AutocompleteInput({
             ref={suggestionsRef}
             className={cn(
               "absolute left-0 z-50 bg-popover border rounded-md shadow-md max-h-72 overflow-hidden",
-              wider ? "min-w-[300px] w-max max-w-[600px]" : "min-w-full w-max max-w-[500px]",
+              wider
+                ? "min-w-[300px] w-max max-w-[600px]"
+                : "min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}
           >
@@ -354,13 +358,13 @@ export default function AutocompleteInput({
             <div
               ref={listRef}
               className="overflow-y-auto py-1"
-              style={{ height: Math.min(finalOptions.length * 50, 300) + 'px' }}
+              style={{ height: Math.min(finalOptions.length * 50, 300) + "px" }}
             >
               <div
                 style={{
                   height: `${virtualizer.getTotalSize()}px`,
-                  width: '100%',
-                  position: 'relative',
+                  width: "100%",
+                  position: "relative",
                 }}
               >
                 {virtualizer.getVirtualItems().map((virtualItem) => {
@@ -371,15 +375,17 @@ export default function AutocompleteInput({
                       data-index={virtualItem.index}
                       ref={(el) => virtualizer.measureElement(el)}
                       style={{
-                        position: 'absolute',
+                        position: "absolute",
                         top: 0,
                         left: 0,
-                        width: '100%',
+                        width: "100%",
                         transform: `translateY(${virtualItem.start}px)`,
                       }}
                       className={cn(
                         "px-3 py-2 text-sm cursor-pointer flex items-center min-h-[40px]",
-                        activeIndex === virtualItem.index ? "bg-accent" : "hover:bg-accent/50"
+                        activeIndex === virtualItem.index
+                          ? "bg-accent"
+                          : "hover:bg-accent/50"
                       )}
                       onMouseDown={(e) => {
                         e.preventDefault();
@@ -392,8 +398,11 @@ export default function AutocompleteInput({
                         renderItem(option, activeIndex === virtualItem.index)
                       ) : (
                         <div className="flex flex-row items-center gap-2 w-full">
-                          <span className="flex-1 truncate">{option.label}</span>
-                          {option.label.toLowerCase() === value.toLowerCase() && (
+                          <span className="flex-1 truncate">
+                            {option.label}
+                          </span>
+                          {option.label.toLowerCase() ===
+                            value.toLowerCase() && (
                             <Check className="h-4 w-4 text-primary flex-shrink-0" />
                           )}
                         </div>
@@ -409,7 +418,9 @@ export default function AutocompleteInput({
           <div
             className={cn(
               "absolute left-0 z-50 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground",
-              wider ? "min-w-[300px] w-max max-w-[600px]" : "min-w-full w-max max-w-[500px]",
+              wider
+                ? "min-w-[300px] w-max max-w-[600px]"
+                : "min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}
           >

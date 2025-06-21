@@ -142,7 +142,6 @@ export default function BirthdayDetail({
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -176,7 +175,6 @@ export default function BirthdayDetail({
         </div>
       </div>
 
-      {/* Next Birthday Info */}
       <ReusableCard
         content={
           <div className="text-center space-y-4">
@@ -217,7 +215,6 @@ export default function BirthdayDetail({
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Previous Birthdays */}
         <ReusableCard
           title="Previous Birthdays"
           content={
@@ -242,7 +239,6 @@ export default function BirthdayDetail({
           }
         />
 
-        {/* Upcoming Milestones */}
         <ReusableCard
           title="Upcoming Milestones"
           content={
@@ -275,7 +271,6 @@ export default function BirthdayDetail({
         />
       </div>
 
-      {/* Quick Actions */}
       <ReusableCard
         title="Quick Actions"
         content={

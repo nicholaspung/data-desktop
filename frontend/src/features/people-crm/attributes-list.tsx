@@ -119,7 +119,6 @@ export default function PersonAttributesList({
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
@@ -140,7 +139,6 @@ export default function PersonAttributesList({
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
@@ -151,7 +149,6 @@ export default function PersonAttributesList({
         />
       </div>
 
-      {/* Attributes List */}
       {isLoading ? (
         <div className="text-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto"></div>

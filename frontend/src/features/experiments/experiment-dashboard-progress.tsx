@@ -91,13 +91,11 @@ export default function ExperimentDashboardProgress({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Overall Progress Card - Replaced Pie Chart with Completion Stats */}
       <ReusableCard
         showHeader
         title="Overall Completion"
         content={
           <div className="space-y-6">
-            {/* Overall metric completion percentage */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <h3 className="font-medium">Metric Completion</h3>
@@ -108,11 +106,11 @@ export default function ExperimentDashboardProgress({
               <Progress value={progressData.overall} className="h-2" />
               <p className="text-sm text-muted-foreground">
                 Based on {progressData.daysElapsed} days of tracking
-                {experiment.end_date && ` out of ${progressData.totalDays} total days`}
+                {experiment.end_date &&
+                  ` out of ${progressData.totalDays} total days`}
               </p>
             </div>
 
-            {/* Time progress section */}
             {experiment.end_date ? (
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -124,7 +122,8 @@ export default function ExperimentDashboardProgress({
                 <Progress
                   value={
                     progressData.totalDays > 0
-                      ? (progressData.daysElapsed / progressData.totalDays) * 100
+                      ? (progressData.daysElapsed / progressData.totalDays) *
+                        100
                       : 0
                   }
                   className="h-2"
@@ -137,7 +136,6 @@ export default function ExperimentDashboardProgress({
               </div>
             )}
 
-            {/* Per-metric completion rates */}
             <div className="mt-4">
               <h3 className="font-medium mb-2">Metric Completion Rates</h3>
               <div className="space-y-4">
@@ -171,7 +169,6 @@ export default function ExperimentDashboardProgress({
         }
       />
 
-      {/* Completion Rate Trend */}
       {completionChartData.length === 0 ? (
         <ReusableCard
           title="Daily Completion Trend"

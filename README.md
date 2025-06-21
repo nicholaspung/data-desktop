@@ -75,9 +75,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
 - fix the react bug on the home page about private content [DONE 2025-06-20]
+- in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled [DONE 2025-06-20]
 
-- in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled
 - in each of the features, if a specific route isn't enabled, it shouldn't show that "feature" tie in, i.e. todos shouldn't be able to create a metric if metrics are disabled, time tracking should be able to search for metrics to use as description if metrics are enabled ,etc.
+
 - update feature information in this README for the new features added so far
 
 ### DONE

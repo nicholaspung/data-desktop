@@ -383,7 +383,6 @@ export default function WealthDashboardSummary() {
       linkTo="/wealth"
       customContent={
         <div className="space-y-4">
-          {/* Main Section */}
           <div>
             <p className="text-sm text-muted-foreground">Current Net Worth</p>
             <div className="flex items-center justify-between">
@@ -413,7 +412,6 @@ export default function WealthDashboardSummary() {
 
           <Separator />
 
-          {/* Sections with separators */}
           {sections.map((section, index) =>
             renderSection(section, index, index === sections.length - 1)
           )}

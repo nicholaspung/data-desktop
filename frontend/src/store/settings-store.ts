@@ -48,11 +48,11 @@ const getDefaultRoutes = () => {
     "/settings": true,
     "/people": true,
   };
-  
-  dashboardRegistry.getAllRoutes().forEach(route => {
+
+  dashboardRegistry.getAllRoutes().forEach((route) => {
     routes[route] = true;
   });
-  
+
   return routes;
 };
 
@@ -115,13 +115,57 @@ export const getRouteDatasetMapping = (): Record<string, string[]> => {
   const baseMapping: Record<string, string[]> = {
     "/people": ["people", "person_attributes"],
   };
-  
+
   const registryMapping = dashboardRegistry.getRouteDatasetMapping();
-  
+
   return { ...baseMapping, ...registryMapping };
 };
 
 export const routeDatasetMapping = getRouteDatasetMapping();
+
+export const routeDependencies: Record<string, string[]> = {
+  "/experiments": ["/metric"],
+  "/metric-calendar": ["/metric"],
+  "/calendar": ["/metric"],
+};
+
+export const conditionalFeatures: Record<string, string[]> = {
+  "/todos": ["/metric"],
+  "/time-tracker": ["/metric"],
+  "/journaling": ["/metric"],
+};
+
+export const checkRouteDependencies = (
+  route: string,
+  visibleRoutes: Record<string, boolean>
+): boolean => {
+  const dependencies = routeDependencies[route];
+  if (!dependencies) return true;
+
+  return dependencies.every((dep) => visibleRoutes[dep] === true);
+};
+
+export const getDependentRoutes = (route: string): string[] => {
+  return Object.entries(routeDependencies)
+    .filter(([, dependencies]) => dependencies.includes(route))
+    .map(([dependentRoute]) => dependentRoute);
+};
+
+export const checkConditionalFeatures = (
+  route: string,
+  visibleRoutes: Record<string, boolean>
+): boolean => {
+  const conditionalDeps = conditionalFeatures[route];
+  if (!conditionalDeps) return true;
+
+  return conditionalDeps.every((dep) => visibleRoutes[dep] === true);
+};
+
+export const isMetricsEnabled = (
+  visibleRoutes: Record<string, boolean>
+): boolean => {
+  return visibleRoutes["/metric"] === true;
+};
 
 const getInitialState = (): Partial<SettingsState> => {
   try {
@@ -151,12 +195,18 @@ const initialState: SettingsState = {
   ...getInitialState(),
   setVisibleRoute: (route: string, visible: boolean) => {
     settingsStore.setState((state) => {
+      const newVisibleRoutes = { ...state.visibleRoutes, [route]: visible };
+
+      if (!visible) {
+        const dependentRoutes = getDependentRoutes(route);
+        dependentRoutes.forEach((dependentRoute) => {
+          newVisibleRoutes[dependentRoute] = false;
+        });
+      }
+
       const newState = {
         ...state,
-        visibleRoutes: {
-          ...state.visibleRoutes,
-          [route]: visible,
-        },
+        visibleRoutes: newVisibleRoutes,
       };
       saveSettings(newState);
       return newState;

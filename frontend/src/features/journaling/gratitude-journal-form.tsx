@@ -73,7 +73,6 @@ export default function GratitudeJournalForm() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Gratitude Input Form - 2/3 width */}
         <div className="lg:w-2/3">
           <Card>
             <CardHeader className="pb-3">
@@ -103,7 +102,6 @@ export default function GratitudeJournalForm() {
           </Card>
         </div>
 
-        {/* Today's Entries - 1/3 width */}
         <div className="lg:w-1/3">
           <Card className="h-full">
             <CardHeader className="pb-3">

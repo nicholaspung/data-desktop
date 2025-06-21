@@ -170,7 +170,6 @@ export default function AffirmationView() {
 
       <InfoCard />
 
-      {/* Conditionally show form or display current affirmation */}
       {!latestAffirmation || isEditing ? (
         <AffirmationForm
           latestAffirmation={latestAffirmation}

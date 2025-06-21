@@ -677,7 +677,6 @@ export default function FinancialTrendGraph({
             )}
           </div>
 
-          {/* Multi-select filters */}
           <div className="flex flex-wrap gap-4 items-center">
             {type === "logs" && (
               <>

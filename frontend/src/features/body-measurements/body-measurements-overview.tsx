@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
-import { 
-  processMeasurementData, 
-  formatTimeSince, 
-  filterMeasurements 
+import {
+  processMeasurementData,
+  formatTimeSince,
+  filterMeasurements,
 } from "@/features/body-measurements/body-measurements-core";
 
 interface BodyMeasurementsOverviewProps {
@@ -41,7 +41,6 @@ export default function BodyMeasurementsOverview({
 
   return (
     <div className="space-y-6">
-      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Latest Weight</div>
@@ -56,29 +55,33 @@ export default function BodyMeasurementsOverview({
             </div>
           )}
         </div>
-        
+
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Measurement Types</div>
-          <div className="text-2xl font-semibold">{measurementTypes.length}</div>
+          <div className="text-2xl font-semibold">
+            {measurementTypes.length}
+          </div>
         </div>
-        
+
         <div className="bg-card border rounded-lg p-4">
           <div className="text-sm text-muted-foreground">Total Records</div>
           <div className="text-2xl font-semibold">{totalMeasurements}</div>
         </div>
       </div>
 
-      {/* Search and Measurement Types */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">
             {showAllTypes ? "All Measurement Types" : "Latest by Type"}
           </h3>
-          {!showAllTypes && !searchTerm && latestMeasurements.length > maxDisplayItems && (
-            <p className="text-sm text-muted-foreground">
-              Showing {maxDisplayItems} most recent types ({latestMeasurements.length} total)
-            </p>
-          )}
+          {!showAllTypes &&
+            !searchTerm &&
+            latestMeasurements.length > maxDisplayItems && (
+              <p className="text-sm text-muted-foreground">
+                Showing {maxDisplayItems} most recent types (
+                {latestMeasurements.length} total)
+              </p>
+            )}
         </div>
 
         {showSearchBar && (

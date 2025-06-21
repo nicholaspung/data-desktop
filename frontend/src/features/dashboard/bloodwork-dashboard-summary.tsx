@@ -51,7 +51,6 @@ export default function BloodworkDashboardSummary() {
   const [selectedMarkerIds, setSelectedMarkerIds] = useState<string[]>([]);
   const [showMarkerSelector, setShowMarkerSelector] = useState(false);
 
-  // Get stored selected markers from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("bloodwork-dashboard-selected-markers");
     if (stored) {
@@ -66,7 +65,6 @@ export default function BloodworkDashboardSummary() {
     }
   }, []);
 
-  // Save selected markers to localStorage
   useEffect(() => {
     if (selectedMarkerIds.length > 0) {
       localStorage.setItem(
@@ -85,7 +83,6 @@ export default function BloodworkDashboardSummary() {
     ];
 
     if (bloodworkTests.length === 0) {
-      // If no tests but markers are selected, show them with "No data"
       if (selectedMarkerIds.length > 0) {
         const selectedResults = selectedMarkerIds
           .map((markerId) => {
@@ -229,7 +226,6 @@ export default function BloodworkDashboardSummary() {
         return 0;
       });
 
-      // If user has selected specific markers, show those instead of flagged markers
       if (selectedMarkerIds.length > 0) {
         const selectedResults = selectedMarkerIds
           .map((markerId) => {
@@ -237,11 +233,9 @@ export default function BloodworkDashboardSummary() {
               (r) => r.blood_marker_id === markerId
             );
 
-            // If no result found, check if we have the marker definition
             if (!result) {
               const marker = bloodMarkers.find((m) => m.id === markerId);
               if (marker) {
-                // Create a placeholder result for markers without data
                 return {
                   result: {
                     id: `placeholder-${markerId}`,

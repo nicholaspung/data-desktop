@@ -45,7 +45,6 @@ export default function TodoList({ showPrivate }: TodoListProps) {
     return todos.filter((todo) => {
       if (todo.private && !showPrivate) return false;
 
-      // Search text filter
       if (searchText) {
         const searchLower = searchText.toLowerCase();
         const matchesSearch =
@@ -55,7 +54,6 @@ export default function TodoList({ showPrivate }: TodoListProps) {
         if (!matchesSearch) return false;
       }
 
-      // Priority filter
       if (
         priorityFilter &&
         priorityFilter !== "all" &&
@@ -64,12 +62,10 @@ export default function TodoList({ showPrivate }: TodoListProps) {
         return false;
       }
 
-      // Has metric filter
       if (hasMetricFilter && !todo.relatedMetricId) {
         return false;
       }
 
-      // Has deadline filter
       if (hasDeadlineFilter === "with-deadline" && !todo.deadline) {
         return false;
       }
@@ -113,7 +109,6 @@ export default function TodoList({ showPrivate }: TodoListProps) {
       );
     }
 
-    // For active tab, separate todos with and without deadlines
     if (tabId === "active") {
       const todosWithDeadlines = sortedTodos.filter((todo) => todo.deadline);
       const todosWithoutDeadlines = sortedTodos.filter(

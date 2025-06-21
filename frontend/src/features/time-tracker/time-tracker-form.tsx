@@ -588,8 +588,11 @@ function TimeTrackerForm({
         private: false,
       };
 
-      const response = await ApiService.addRecord("time_categories", newCategory);
-      
+      const response = await ApiService.addRecord(
+        "time_categories",
+        newCategory
+      );
+
       if (response) {
         addEntry(response, "time_categories");
         // Set the newly created category as selected
@@ -822,8 +825,8 @@ function TimeTrackerForm({
                 triggerClassName="h-10"
                 renderItem={(option) => (
                   <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full border" 
+                    <div
+                      className="w-3 h-3 rounded-full border"
                       style={{ backgroundColor: option.color || "#3b82f6" }}
                     />
                     <span>{option.label}</span>
@@ -989,7 +992,11 @@ function TimeTrackerForm({
                     disabled={
                       addState === "timer"
                         ? isSaving
-                        : !startTime || !endTime || isSaving || !!startTimeError || !!endTimeError
+                        : !startTime ||
+                          !endTime ||
+                          isSaving ||
+                          !!startTimeError ||
+                          !!endTimeError
                     }
                     className={cn(
                       "px-6 py-5 font-medium",

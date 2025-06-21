@@ -22,7 +22,6 @@ import {
   UserRound,
   Ruler,
   Wallet,
-  // Additional icons for route components
   Banknote,
   Receipt,
   Scale,
@@ -78,7 +77,7 @@ export const FEATURE_ICONS = {
   ATTRIBUTES: Heart,
   BODY_MEASUREMENTS: Ruler,
   WEALTH: Wallet,
-  // Additional utility icons
+
   BANKNOTE: Banknote,
   RECEIPT: Receipt,
   SCALE: Scale,
