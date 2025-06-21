@@ -25,6 +25,7 @@ export default function FinancialLogsManager({
       tagFields={["tags"]}
       compactFields={["date", "description", "category", "tags", "amount"]}
       hideFields={["createdAt", "lastModified"]}
+      filterableFields={["category"]}
     />
   );
 }

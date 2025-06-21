@@ -722,18 +722,18 @@ export function BatchEntryTable({
     <>
       <ReusableCard
         title={
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2">
-              {title} Batch Entry
-              {hasSavedData && <SavedDataBadge />}
-            </div>
-            <BatchEntryImportButtons
-              fileInputRef={fileInputRef}
-              isSubmitting={isSubmitting}
-              handleImportCSV={handleImportCSV}
-              handleDownloadTemplate={handleDownloadTemplate}
-            />
+          <div className="flex items-center gap-2">
+            {title} Batch Entry
+            {hasSavedData && <SavedDataBadge />}
           </div>
+        }
+        headerActions={
+          <BatchEntryImportButtons
+            fileInputRef={fileInputRef}
+            isSubmitting={isSubmitting}
+            handleImportCSV={handleImportCSV}
+            handleDownloadTemplate={handleDownloadTemplate}
+          />
         }
         content={
           <div className="flex flex-col space-y-4">

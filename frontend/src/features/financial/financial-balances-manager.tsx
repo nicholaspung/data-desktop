@@ -22,10 +22,17 @@ export default function FinancialBalancesManager({
       amountField="amount"
       dateField="date"
       badgeFields={["account_type", "account_owner"]}
-      compactFields={["date", "account_name", "account_type", "account_owner", "amount"]}
+      compactFields={[
+        "date",
+        "account_name",
+        "account_type",
+        "account_owner",
+        "amount",
+      ]}
       hideFields={["createdAt", "lastModified"]}
       defaultSortField="date"
       defaultSortOrder="desc"
+      filterableFields={["account_type", "account_owner"]}
     />
   );
 }

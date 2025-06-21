@@ -229,16 +229,54 @@ const MetricLogger = () => {
 
     if (!todayLog) return false;
 
+    let loggedValue;
+    try {
+      loggedValue = JSON.parse(todayLog.value);
+    } catch {
+      loggedValue = todayLog.value;
+    }
+
     if (metric.type === "boolean") {
+      return loggedValue === true;
+    }
+
+    const hasGoal =
+      metric.goal_value !== undefined &&
+      metric.goal_value !== null &&
+      metric.goal_value !== "" &&
+      metric.goal_value !== "0" &&
+      metric.goal_type !== undefined &&
+      metric.goal_type !== null;
+
+    if (hasGoal) {
+      let goalValue;
       try {
-        return JSON.parse(todayLog.value) === true;
-      } catch (e) {
-        console.error(e);
-        return false;
+        goalValue = parseFloat(metric.goal_value!);
+      } catch {
+        goalValue = 0;
+      }
+
+      const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
+
+      switch (metric.goal_type) {
+        case "minimum":
+          return numericLoggedValue >= goalValue;
+        case "maximum":
+          return numericLoggedValue <= goalValue;
+        case "exact":
+          return numericLoggedValue === goalValue;
+        default:
+          return numericLoggedValue >= goalValue;
       }
     }
 
-    return true;
+    const numericValue = parseFloat(String(loggedValue)) || 0;
+
+    if (metric.goal_value === "0" || metric.default_value === "0") {
+      return numericValue === 0;
+    }
+
+    return numericValue > 0;
   };
 
   const toggleMetricCompletion = async (metric: Metric) => {

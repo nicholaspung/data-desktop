@@ -51,7 +51,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
 
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const allDailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
-  
+
   const dailyLogs = useMemo(() => {
     return allDailyLogs.filter((log: DailyLog) => {
       return metrics.some((metric: Metric) => metric.id === log.metric_id);
@@ -132,7 +132,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
         const logDate = new Date(log.date);
         const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
-          isSameDay(logDate, day) && 
+          isSameDay(logDate, day) &&
           selectedMetrics.includes(log.metric_id) &&
           metric &&
           !isDefaultValue(metric, log.value)
@@ -143,7 +143,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
         const logDate = new Date(log.date);
         const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
-          isSameDay(logDate, day) && 
+          isSameDay(logDate, day) &&
           selectedMetrics.includes(log.metric_id) &&
           metric &&
           !isDefaultValue(metric, log.value)
@@ -151,12 +151,57 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
       });
 
       const completedCount = metricsForDay.filter((log) => {
+        const metric = metrics.find((m) => m.id === log.metric_id);
+        if (!metric) return false;
+
+        let loggedValue;
         try {
-          const value = JSON.parse(log.value);
-          return value === true;
+          loggedValue = JSON.parse(log.value);
         } catch {
-          return false;
+          loggedValue = log.value;
         }
+
+        if (metric.type === "boolean") {
+          return loggedValue === true;
+        }
+
+        const hasGoal =
+          metric.goal_value !== undefined &&
+          metric.goal_value !== null &&
+          metric.goal_value !== "" &&
+          metric.goal_value !== "0" &&
+          metric.goal_type !== undefined &&
+          metric.goal_type !== null;
+
+        if (hasGoal) {
+          let goalValue;
+          try {
+            goalValue = parseFloat(metric.goal_value!);
+          } catch {
+            goalValue = 0;
+          }
+
+          const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
+
+          switch (metric.goal_type) {
+            case "minimum":
+              return numericLoggedValue >= goalValue;
+            case "maximum":
+              return numericLoggedValue <= goalValue;
+            case "exact":
+              return numericLoggedValue === goalValue;
+            default:
+              return numericLoggedValue >= goalValue;
+          }
+        }
+
+        const numericValue = parseFloat(String(loggedValue)) || 0;
+
+        if (metric.goal_value === "0" || metric.default_value === "0") {
+          return numericValue === 0;
+        }
+
+        return numericValue > 0;
       }).length;
 
       formattedDays.push(

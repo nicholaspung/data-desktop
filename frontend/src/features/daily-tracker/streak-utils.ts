@@ -6,11 +6,72 @@ function getDateString(date: Date | string): string {
   return format(dateObj, "yyyy-MM-dd");
 }
 
+function isLogCompleted(
+  log: DailyLog,
+  metricType: string,
+  metric?: { goal_value?: string; goal_type?: string; default_value?: string }
+): boolean {
+  let loggedValue;
+  try {
+    loggedValue = JSON.parse(log.value);
+  } catch {
+    loggedValue = log.value;
+  }
+
+  if (metricType === "boolean") {
+    return loggedValue === true;
+  }
+
+  if (metric) {
+    const hasGoal =
+      metric.goal_value !== undefined &&
+      metric.goal_value !== null &&
+      metric.goal_value !== "" &&
+      metric.goal_value !== "0" &&
+      metric.goal_type !== undefined &&
+      metric.goal_type !== null;
+
+    if (hasGoal) {
+      let goalValue;
+      try {
+        goalValue = parseFloat(metric.goal_value!);
+      } catch {
+        goalValue = 0;
+      }
+
+      const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
+
+      switch (metric.goal_type) {
+        case "minimum":
+          return numericLoggedValue >= goalValue;
+        case "maximum":
+          return numericLoggedValue <= goalValue;
+        case "exact":
+          return numericLoggedValue === goalValue;
+        default:
+          return numericLoggedValue >= goalValue;
+      }
+    }
+
+    const numericValue = parseFloat(String(loggedValue)) || 0;
+
+    if (metric.goal_value === "0" || metric.default_value === "0") {
+      return numericValue === 0;
+    }
+
+    return numericValue > 0;
+  }
+
+  const numericValue = parseFloat(String(loggedValue)) || 0;
+  return numericValue > 0;
+}
+
 export function calculateStreaks(
   logs: DailyLog[],
   metricId: string,
   metricType: string,
-  currentDate: Date = new Date()
+  currentDate: Date = new Date(),
+  metric?: { goal_value?: string; goal_type?: string; default_value?: string }
 ): { currentStreak: number; longestStreak: number } {
   const metricLogs = logs.filter((log) => log.metric_id === metricId);
 
@@ -53,22 +114,14 @@ export function calculateStreaks(
       if (logsForDate.length === 0) {
         continuousStreak = false;
       } else {
-        if (metricType === "boolean") {
-          const hasCompletedLog = logsForDate.some((log) => {
-            try {
-              return JSON.parse(log.value) === true;
-            } catch {
-              return false;
-            }
-          });
+        const hasCompletedLog = logsForDate.some((log) =>
+          isLogCompleted(log, metricType, metric)
+        );
 
-          if (hasCompletedLog) {
-            currentStreak++;
-          } else {
-            continuousStreak = false;
-          }
-        } else {
+        if (hasCompletedLog) {
           currentStreak++;
+        } else {
+          continuousStreak = false;
         }
       }
 
@@ -86,18 +139,11 @@ export function calculateStreaks(
     const currentDateStr = datesSorted[i];
     const logsForDate = logsByDate.get(currentDateStr) || [];
 
-    let isCompleted = true;
-    if (metricType === "boolean") {
-      isCompleted = logsForDate.some((log) => {
-        try {
-          return JSON.parse(log.value) === true;
-        } catch {
-          return false;
-        }
-      });
-    }
+    const isCompleted = logsForDate.some((log) =>
+      isLogCompleted(log, metricType, metric)
+    );
 
-    if (logsForDate.length > 0 && (metricType !== "boolean" || isCompleted)) {
+    if (logsForDate.length > 0 && isCompleted) {
       if (i === 0) {
         tempStreak = 1;
       } else {
