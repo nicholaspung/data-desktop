@@ -83,10 +83,6 @@ export default function ReusableSelect({
     setSearchValue("");
   };
 
-  const handleClearSelection = () => {
-    onChange("");
-    setSearchValue("");
-  };
 
   const renderOptions = () => {
     if (!useGroups) {
@@ -138,7 +134,7 @@ export default function ReusableSelect({
         id: "__create_new__",
         label: `${createNewLabel}: "${searchValue.trim()}"`,
         isCreateNew: true
-      });
+      } as SelectOption & { isCreateNew: boolean });
     }
 
     return (
@@ -153,19 +149,19 @@ export default function ReusableSelect({
           }
         }}
         onSelect={(option) => {
-          if (option.isCreateNew) {
+          if ((option as any).isCreateNew) {
             handleCreateNew(searchValue);
           } else {
             handleAutocompleteSelect(option);
           }
         }}
-        options={enhancedOptions}
+        options={enhancedOptions as (SelectOption & { [key: string]: unknown })[]}
         placeholder={placeholder || `Search or create ${title}...`}
         className={triggerClassName}
         disabled={disabled || isLoading || isCreating}
         emptyMessage="No options available."
-        renderItem={(option, isActive) => {
-          if (option.isCreateNew) {
+        renderItem={(option) => {
+          if ((option as any).isCreateNew) {
             return (
               <div className="flex items-center gap-2 w-full text-primary">
                 <Plus className="h-4 w-4" />
