@@ -71,11 +71,11 @@ export default function BodyMeasurementsDashboardSummary({
     {
       title: (
         <div className="flex items-center justify-between">
-          <h4 className="font-medium">Latest by Type</h4>
+          <span className="font-medium">Latest by Type</span>
           {!searchTerm && latestMeasurements.length > 5 && (
-            <p className="pl-4 text-xs text-muted-foreground">
+            <span className="pl-4 text-xs text-muted-foreground">
               Showing 5 most recent types ({latestMeasurements.length} total)
-            </p>
+            </span>
           )}
         </div>
       ),

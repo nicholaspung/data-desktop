@@ -22,6 +22,12 @@ export default function PrivateToggleButton({
     wasUnlockedRef.current = isUnlocked;
   }, [isUnlocked, isConfigured, showPrivate, onToggle]);
 
+  useEffect(() => {
+    if (isConfigured && !isUnlocked && showPrivate) {
+      onToggle(false);
+    }
+  }, [isConfigured, isUnlocked, showPrivate, onToggle]);
+
   const handleToggle = () => {
     if (!isConfigured) {
       onToggle(!showPrivate);
@@ -38,10 +44,6 @@ export default function PrivateToggleButton({
       onToggle(false);
     }
   };
-
-  if (isConfigured && !isUnlocked && showPrivate) {
-    onToggle(false);
-  }
 
   return (
     <Button

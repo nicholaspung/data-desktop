@@ -142,7 +142,7 @@ export default function ReusableSummary({
         isDashboardConstrained={isDashboardConstrained}
         content={
           <div className="text-center py-6 text-muted-foreground">
-            <p>{emptyState.message}</p>
+            <div>{emptyState.message}</div>
             {emptyState.actionText && emptyState.actionTo && (
               <Link to={emptyState.actionTo}>
                 <Button variant="outline" className="mt-2">
@@ -182,9 +182,9 @@ export default function ReusableSummary({
         <div className="space-y-4">
           {mainSection && (
             <div>
-              <p className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 {mainSection.title}
-              </p>
+              </div>
               <div className="flex items-center justify-between">
                 <div className="text-xl font-semibold">{mainSection.value}</div>
                 {mainSection.badge && (
@@ -194,9 +194,9 @@ export default function ReusableSummary({
                 )}
               </div>
               {mainSection.subText && (
-                <p className="text-sm text-muted-foreground">
+                <div className="text-sm text-muted-foreground">
                   {mainSection.subText}
-                </p>
+                </div>
               )}
               {mainSection.subComponent && mainSection.subComponent}
             </div>
@@ -206,7 +206,7 @@ export default function ReusableSummary({
             <div key={index} className={section.className}>
               {section.title && (
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="font-medium">{section.title}</p>
+                  <div className="font-medium">{section.title}</div>
                   {section.badge && (
                     <StatusBadge {...section.badge}>
                       {section.badge.children}
@@ -222,14 +222,14 @@ export default function ReusableSummary({
               >
                 {section.items.map((item, itemIndex) => (
                   <div key={itemIndex} className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground">
                       {item.label}
-                    </p>
+                    </div>
                     <div className="font-semibold">{item.value}</div>
                     {item.subText && (
-                      <p className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         {item.subText}
-                      </p>
+                      </div>
                     )}
                   </div>
                 ))}
