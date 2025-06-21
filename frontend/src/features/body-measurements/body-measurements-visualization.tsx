@@ -103,6 +103,21 @@ export default function BodyMeasurementsVisualization({
   }, [visibleData]);
 
   const dateOptions = useMemo(() => {
+    const bodyPartMeasurements = [
+      "neck",
+      "chest",
+      "waist",
+      "hips",
+      "upper arm (right)",
+      "forearm (right)",
+      "upper arm (left)",
+      "forearm (left)",
+      "thigh (right)",
+      "calf (right)",
+      "thigh (left)",
+      "calf (left)",
+    ];
+
     return Array.from(measurementsByDate.keys())
       .map((dateString) => {
         try {
@@ -111,6 +126,21 @@ export default function BodyMeasurementsVisualization({
             console.warn("Invalid date string for options:", dateString);
             return null;
           }
+
+          // Check if this date has any body part measurements
+          const measurements = measurementsByDate.get(dateString);
+          if (!measurements) return null;
+
+          const hasBodyPartMeasurements = Array.from(measurements.keys()).some(
+            (measurementType) =>
+              bodyPartMeasurements.some(
+                (bodyPart) =>
+                  bodyPart.toLowerCase() === measurementType.toLowerCase()
+              )
+          );
+
+          if (!hasBodyPartMeasurements) return null;
+
           return {
             value: dateString,
             label: format(date, "MMM d, yyyy"),

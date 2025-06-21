@@ -31,14 +31,14 @@ export function FeatureHeader({
 }: FeatureHeaderProps) {
   return (
     <div className={cn("space-y-4 mb-6", className)}>
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
           <h1 className="text-2xl font-bold">{title}</h1>
           {description && (
             <p className="text-muted-foreground mt-1">{description}</p>
           )}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-2">
           {children}
           {guideContent && guideContent.length > 0 && (
             <FeatureGuide
@@ -68,7 +68,8 @@ export function FeatureHeader({
           storageKey={`${storageKey}-${developmentStage}-panel`}
           title={`${developmentStage.charAt(0).toUpperCase() + developmentStage.slice(1)} Feature`}
         >
-          This feature is currently in {developmentStage} and may undergo significant changes. Please report any issues or feedback.
+          This feature is currently in {developmentStage} and may undergo
+          significant changes. Please report any issues or feedback.
         </InfoPanel>
       )}
     </div>

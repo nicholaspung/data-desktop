@@ -15,6 +15,7 @@ import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 import { FEATURE_ICONS } from "@/lib/icons";
 import BodyMeasurementManager from "@/features/body-measurements/body-measurement-manager";
+import BodyMeasurementsCSVImport from "@/features/body-measurements/body-measurements-csv-import";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import { useState, useMemo } from "react";
 import { Scale, TrendingUp } from "lucide-react";
@@ -119,13 +120,12 @@ function BodyMeasurementsPage() {
           guideContent={guideContent}
           storageKey="body-measurements-feature"
         >
-          <div className="flex items-center gap-2">
-            <PrivateToggleButton
-              showPrivate={showPrivate}
-              onToggle={setShowPrivate}
-            />
-            <BodyMeasurementManager />
-          </div>
+          <PrivateToggleButton
+            showPrivate={showPrivate}
+            onToggle={setShowPrivate}
+          />
+          <BodyMeasurementsCSVImport />
+          <BodyMeasurementManager />
         </FeatureHeader>
       }
       sidebar={
