@@ -139,7 +139,7 @@ export default function DailyTrackerViewCard({
             variant="outline"
             className="text-xs flex items-center gap-1 bg-blue-50 dark:bg-blue-950"
           >
-            <FEATURE_ICONS.DAILY_TRACkER className="h-3 w-3" />
+            <FEATURE_ICONS.DAILY_TRACKER className="h-3 w-3" />
             {startDateText && !endDateText && `From ${startDateText}`}
             {!startDateText && endDateText && `Until ${endDateText}`}
             {startDateText &&

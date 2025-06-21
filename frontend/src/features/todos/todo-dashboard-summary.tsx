@@ -35,12 +35,20 @@ export default function TodoDashboardSummary({
     const sortedTodos = getSortedTodos(filteredTodos);
 
     const today = sortedTodos.filter(
-      (todo) => !todo.isComplete && isToday(new Date(todo.deadline))
+      (todo) =>
+        !todo.isComplete &&
+        todo.deadline !== undefined &&
+        isToday(new Date(todo.deadline))
     );
     setTodayTodos(today);
 
     const upcoming = sortedTodos.filter((todo) => {
-      if (todo.isComplete || isToday(new Date(todo.deadline))) return false;
+      if (
+        todo.isComplete ||
+        todo.deadline === undefined ||
+        isToday(new Date(todo.deadline))
+      )
+        return false;
       const daysUntil = differenceInDays(new Date(todo.deadline), new Date());
       return daysUntil > 0 && daysUntil <= 7;
     });
@@ -49,6 +57,7 @@ export default function TodoDashboardSummary({
     const overdue = sortedTodos.filter(
       (todo) =>
         !todo.isComplete &&
+        todo.deadline !== undefined &&
         isPast(new Date(todo.deadline)) &&
         !isToday(new Date(todo.deadline))
     );

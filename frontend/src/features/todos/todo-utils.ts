@@ -10,8 +10,10 @@ export const getSortedTodos = (todos: Todo[]) => {
       [TodoPriority.LOW]: 3,
     };
 
-    const aIsOverdue = !a.isComplete && isPast(new Date(a.deadline));
-    const bIsOverdue = !b.isComplete && isPast(new Date(b.deadline));
+    const aIsOverdue =
+      !a.isComplete && !!a.deadline && isPast(new Date(a.deadline));
+    const bIsOverdue =
+      !b.isComplete && !!b.deadline && isPast(new Date(b.deadline));
 
     if (aIsOverdue === bIsOverdue) {
       if (a.isComplete !== b.isComplete) {

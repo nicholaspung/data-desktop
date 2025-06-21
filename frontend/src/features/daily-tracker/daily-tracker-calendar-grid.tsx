@@ -300,7 +300,7 @@ export default function DailyTrackerCalendarGrid({
                       variant="outline"
                       className="h-4 w-4 p-0 flex items-center justify-center bg-blue-100/50 dark:bg-blue-900/50"
                     >
-                      <FEATURE_ICONS.DAILY_TRACkER className="h-2.5 w-2.5" />
+                      <FEATURE_ICONS.DAILY_TRACKER className="h-2.5 w-2.5" />
                     </Badge>
                   </div>
                 )}

@@ -34,7 +34,7 @@ const HELP_TOPICS: HelpTopic[] = [
   },
   {
     title: "Daily Tracking",
-    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DAILY_TRACKER className="h-5 w-5" />,
     description:
       "Track daily metrics, habits, and goals using the calendar interface. Set up categories and custom schedules for your metrics.",
     keywords: [
@@ -224,14 +224,7 @@ const HELP_TOPICS: HelpTopic[] = [
     icon: <FEATURE_ICONS.METRIC_LOGGER className="h-5 w-5" />,
     description:
       "Log metrics outside of your regular schedule. Useful for infrequent events or metrics you don't track daily.",
-    keywords: [
-      "logger",
-      "metric",
-      "log",
-      "event",
-      "infrequent",
-      "record",
-    ],
+    keywords: ["logger", "metric", "log", "event", "infrequent", "record"],
     link: "/metric",
   },
   {

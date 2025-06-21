@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -61,11 +62,20 @@ export default function AutocompleteInput({
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
 
   const [finalOptions, setFinalOptions] = useState<
     (SelectOption & { [key: string]: unknown })[]
   >([]);
+
+  // Virtualizer for performance with large lists
+  const virtualizer = useVirtualizer({
+    count: finalOptions.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 40, // Approximate height of each item
+    overscan: 5,
+  });
 
   useEffect(() => {
     const recentOptions = showRecentOptions
@@ -160,13 +170,12 @@ export default function AutocompleteInput({
   }, [showSuggestions]);
 
   useEffect(() => {
-    if (activeIndex >= 0 && optionRefs.current[activeIndex]) {
-      optionRefs.current[activeIndex]?.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
+    if (activeIndex >= 0) {
+      virtualizer.scrollToIndex(activeIndex, {
+        align: "auto",
       });
     }
-  }, [activeIndex]);
+  }, [activeIndex, virtualizer]);
 
   const handleSelect = (option: SelectOption & { [key: string]: unknown }) => {
     if (onSelect) {
@@ -213,42 +222,62 @@ export default function AutocompleteInput({
           <div
             ref={suggestionsRef}
             style={getDropdownStyle()}
-            className="bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto w-max max-w-[500px] pointer-events-auto"
+            className="bg-popover border rounded-md shadow-md max-h-72 overflow-hidden min-w-[200px] w-max max-w-[500px] pointer-events-auto"
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
               {value.length > 0 ? "Search results" : "Recent entries"}
             </div>
-            <ul className="py-1">
-              {finalOptions.map((option, index) => (
-                <li
-                  key={option.id}
-                  ref={(el) => {
-                    optionRefs.current[index] = el;
-                  }}
-                  className={cn(
-                    "px-3 py-2 text-sm cursor-pointer",
-                    activeIndex === index ? "bg-accent" : "hover:bg-accent/50"
-                  )}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setTimeout(() => handleSelect(option), 0);
-                  }}
-                  onMouseEnter={() => setActiveIndex(index)}
-                >
-                  {renderItem ? (
-                    renderItem(option, activeIndex === index)
-                  ) : (
-                    <div className="flex flex-row items-center gap-2">
-                      <span>{option.label}</span>
-                      {option.label.toLowerCase() === value.toLowerCase() && (
-                        <Check className="h-4 w-4 text-primary" />
+            <div
+              ref={listRef}
+              className="overflow-y-auto py-1"
+              style={{ height: Math.min(finalOptions.length * 40, 280) + 'px' }}
+            >
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const option = finalOptions[virtualItem.index];
+                  return (
+                    <div
+                      key={option.id}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualItem.size}px`,
+                        transform: `translateY(${virtualItem.start}px)`,
+                      }}
+                      className={cn(
+                        "px-3 py-2 text-sm cursor-pointer flex items-center",
+                        activeIndex === virtualItem.index ? "bg-accent" : "hover:bg-accent/50"
+                      )}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTimeout(() => handleSelect(option), 0);
+                      }}
+                      onMouseEnter={() => setActiveIndex(virtualItem.index)}
+                    >
+                      {renderItem ? (
+                        renderItem(option, activeIndex === virtualItem.index)
+                      ) : (
+                        <div className="flex flex-row items-center gap-2 w-full">
+                          <span className="flex-1 truncate">{option.label}</span>
+                          {option.label.toLowerCase() === value.toLowerCase() && (
+                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
         {finalOptions.length === 0 && value.length > 0 && (
@@ -274,44 +303,64 @@ export default function AutocompleteInput({
           <div
             ref={suggestionsRef}
             className={cn(
-              "absolute left-0 z-50 bg-popover border rounded-md shadow-md max-h-72 overflow-y-auto min-w-full w-max max-w-[500px]",
+              "absolute left-0 z-50 bg-popover border rounded-md shadow-md max-h-72 overflow-hidden min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
               {value.length > 0 ? "Search results" : "Recent entries"}
             </div>
-            <ul className="py-1">
-              {finalOptions.map((option, index) => (
-                <li
-                  key={option.id}
-                  ref={(el) => {
-                    optionRefs.current[index] = el;
-                  }}
-                  className={cn(
-                    "px-3 py-2 text-sm cursor-pointer",
-                    activeIndex === index ? "bg-accent" : "hover:bg-accent/50"
-                  )}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setTimeout(() => handleSelect(option), 0);
-                  }}
-                  onMouseEnter={() => setActiveIndex(index)}
-                >
-                  {renderItem ? (
-                    renderItem(option, activeIndex === index)
-                  ) : (
-                    <div className="flex flex-row items-center gap-2">
-                      <span>{option.label}</span>
-                      {option.label.toLowerCase() === value.toLowerCase() && (
-                        <Check className="h-4 w-4 text-primary" />
+            <div
+              ref={listRef}
+              className="overflow-y-auto py-1"
+              style={{ height: Math.min(finalOptions.length * 40, 280) + 'px' }}
+            >
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualItem) => {
+                  const option = finalOptions[virtualItem.index];
+                  return (
+                    <div
+                      key={option.id}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualItem.size}px`,
+                        transform: `translateY(${virtualItem.start}px)`,
+                      }}
+                      className={cn(
+                        "px-3 py-2 text-sm cursor-pointer flex items-center",
+                        activeIndex === virtualItem.index ? "bg-accent" : "hover:bg-accent/50"
+                      )}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setTimeout(() => handleSelect(option), 0);
+                      }}
+                      onMouseEnter={() => setActiveIndex(virtualItem.index)}
+                    >
+                      {renderItem ? (
+                        renderItem(option, activeIndex === virtualItem.index)
+                      ) : (
+                        <div className="flex flex-row items-center gap-2 w-full">
+                          <span className="flex-1 truncate">{option.label}</span>
+                          {option.label.toLowerCase() === value.toLowerCase() && (
+                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
+                        </div>
                       )}
                     </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
         {finalOptions.length === 0 && value.length > 0 && (

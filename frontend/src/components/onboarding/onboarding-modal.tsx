@@ -21,7 +21,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     icon: <FEATURE_ICONS.DATASETS className="h-12 w-12 text-primary" />,
     features: [
       "Track DEXA scans for body composition",
-      "Monitor bloodwork and lab results", 
+      "Monitor bloodwork and lab results",
       "Record body measurements with privacy controls",
       "Comprehensive wealth and financial tracking",
       "Manage personal relationships and contacts",
@@ -35,7 +35,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Daily Tracking",
     description: "Build habits and track metrics with our daily tracker.",
-    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-12 w-12 text-primary" />,
+    icon: <FEATURE_ICONS.DAILY_TRACKER className="h-12 w-12 text-primary" />,
     features: [
       "Create custom categories for organization",
       "Add metrics with flexible scheduling",
@@ -70,8 +70,11 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: "Body Measurements",
-    description: "Track your physical progress with comprehensive body measurement tools.",
-    icon: <FEATURE_ICONS.BODY_MEASUREMENTS className="h-12 w-12 text-primary" />,
+    description:
+      "Track your physical progress with comprehensive body measurement tools.",
+    icon: (
+      <FEATURE_ICONS.BODY_MEASUREMENTS className="h-12 w-12 text-primary" />
+    ),
     features: [
       "Interactive body diagram with clickable regions",
       "Record weight, circumferences, and body composition",
@@ -83,7 +86,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: "Wealth Management",
-    description: "Comprehensive financial tracking for income, expenses, and net worth monitoring.",
+    description:
+      "Comprehensive financial tracking for income, expenses, and net worth monitoring.",
     icon: <FEATURE_ICONS.WEALTH className="h-12 w-12 text-primary" />,
     features: [
       "Track all financial transactions with detailed categorization",
@@ -97,7 +101,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   },
   {
     title: "People CRM",
-    description: "Manage your personal relationships and networking with privacy-focused tools.",
+    description:
+      "Manage your personal relationships and networking with privacy-focused tools.",
     icon: <FEATURE_ICONS.PEOPLE_CRM className="h-12 w-12 text-primary" />,
     features: [
       "Store contact information and personal details",
@@ -136,9 +141,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     title: "Metric Logger",
     description: "Log metrics on-demand, outside your regular schedule.",
-    icon: (
-      <FEATURE_ICONS.METRIC_LOGGER className="h-12 w-12 text-primary" />
-    ),
+    icon: <FEATURE_ICONS.METRIC_LOGGER className="h-12 w-12 text-primary" />,
     features: [
       "Log any metric at any time",
       "Perfect for infrequent events",

@@ -13,11 +13,15 @@ export default function TodoStats() {
   const overdueTodos = todos.filter(
     (todo) =>
       !todo.isComplete &&
+      todo.deadline !== undefined &&
       isPast(new Date(todo.deadline)) &&
       !isToday(new Date(todo.deadline))
   ).length;
   const dueTodayTodos = todos.filter(
-    (todo) => !todo.isComplete && isToday(new Date(todo.deadline))
+    (todo) =>
+      !todo.isComplete &&
+      todo.deadline !== undefined &&
+      isToday(new Date(todo.deadline))
   ).length;
 
   const completionRate =
