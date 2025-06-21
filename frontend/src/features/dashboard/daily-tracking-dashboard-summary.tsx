@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Edit, CalendarDays } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
-import { Metric, DailyLog } from "@/store/experiment-definitions";
+import { Metric, DailyLog, GoalType } from "@/store/experiment-definitions";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { toast } from "sonner";
 import { ApiService } from "@/services/api";
@@ -22,6 +22,7 @@ import { ProtectedField } from "@/components/security/protected-content";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
+import { calculateGoalProgress } from "@/features/daily-tracker/goal-utils";
 
 export default function DailyTrackingDashboardSummary({
   showPrivateMetrics = true,
@@ -86,7 +87,7 @@ export default function DailyTrackingDashboardSummary({
 
     setTodayLogs(logsMap);
     setIsLoading(false);
-  }, [allMetrics, dailyLogs, showPrivateMetrics]);
+  }, [allMetrics, dailyLogs, showPrivateMetrics, today]);
 
   const toggleMetric = async (metric: Metric) => {
     if (metric.type !== "boolean") {
@@ -260,9 +261,141 @@ export default function DailyTrackingDashboardSummary({
     }
   };
 
+  const isGoalCompleted = (metric: Metric): boolean => {
+    const log = todayLogs[metric.id];
+    if (!log) return false;
+
+    // Create a MetricWithLog object for goal calculation
+    const metricWithLog = {
+      ...metric,
+      log: log,
+      value: log.value,
+      notes: log.notes || "",
+      hasChanged: false,
+      goal_type: metric.goal_type as GoalType | undefined,
+    };
+
+    const goalProgress = calculateGoalProgress(metricWithLog);
+    return goalProgress?.isComplete || false;
+  };
+
+  const hasGoal = (metric: Metric): boolean => {
+    return !!(metric.goal_value && metric.goal_type);
+  };
+
+  const hasNonZeroValue = (metric: Metric): boolean => {
+    const log = todayLogs[metric.id];
+    if (!log) return false;
+
+    try {
+      const value = JSON.parse(log.value);
+      return typeof value === 'number' ? value !== 0 : !!value;
+    } catch {
+      return log.value !== "0" && !!log.value;
+    }
+  };
+
   const getCompletedCount = (): number => {
     return metrics.filter((metric) => isMetricCompleted(metric)).length;
   };
+
+  const getWeekProgress = (): { completedThisWeek: number; totalThisWeek: number; weekPercentage: number } => {
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    let completedThisWeek = 0;
+    let totalThisWeek = 0;
+
+    // Get all logs from this week for the active metrics
+    const weekLogs = dailyLogs.filter(log => {
+      const logDate = new Date(log.date);
+      return logDate >= startOfWeek && logDate <= today &&
+        metrics.some(m => m.id === log.metric_id);
+    });
+
+    // Count total logged entries and completed entries
+    weekLogs.forEach(log => {
+      const metric = metrics.find(m => m.id === log.metric_id);
+      if (!metric) return;
+
+      totalThisWeek++;
+
+      const metricWithLog = {
+        ...metric,
+        log: log,
+        value: log.value,
+        notes: log.notes || "",
+        hasChanged: false,
+        goal_type: metric.goal_type as GoalType | undefined,
+      };
+      
+      if (metric.type === 'boolean') {
+        try {
+          const completed = JSON.parse(log.value) === true;
+          if (completed) completedThisWeek++;
+        } catch {
+          if (log.value === 'true') completedThisWeek++;
+        }
+      } else {
+        // For non-boolean metrics, check if goal is completed or has non-zero value
+        const goalProgress = calculateGoalProgress(metricWithLog);
+        const hasGoalCompleted = goalProgress?.isComplete || false;
+        
+        const hasValue = (() => {
+          try {
+            const value = JSON.parse(log.value);
+            return typeof value === 'number' ? value !== 0 : !!value;
+          } catch {
+            return log.value !== "0" && !!log.value;
+          }
+        })();
+        
+        if (hasGoalCompleted || (!hasGoal(metric) && hasValue)) {
+          completedThisWeek++;
+        }
+      }
+    });
+
+    const weekPercentage = totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
+
+    return { completedThisWeek, totalThisWeek, weekPercentage };
+  };
+
+  const weekProgress = getWeekProgress();
+  const todayPercentage = metrics.length > 0 ? (getCompletedCount() / metrics.length) * 100 : 0;
+
+  const progressDisplay = (
+    <div className="space-y-3 mt-3">
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Today: {Math.round(todayPercentage)}%</span>
+          <span>{getCompletedCount()}/{metrics.length} completed</span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-all duration-300"
+            style={{
+              width: `${Math.min(100, todayPercentage)}%`,
+            }}
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>This Week: {Math.round(weekProgress.weekPercentage)}%</span>
+          <span>{weekProgress.completedThisWeek}/{weekProgress.totalThisWeek} completed</span>
+        </div>
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-500 rounded-full transition-all duration-300"
+            style={{
+              width: `${Math.min(100, weekProgress.weekPercentage)}%`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
 
   const metricsList = (
     <div className="space-y-2 pt-2">
@@ -313,9 +446,18 @@ export default function DailyTrackingDashboardSummary({
                 </Badge>
               )
             ) : (
-              <span className="text-xs font-medium">
-                {getMetricDisplayValue(metric)}
-              </span>
+              <div className="flex items-center gap-2">
+                {/* Show green badge if goal is completed OR if no goal but has non-zero value */}
+                {(hasGoal(metric) && isGoalCompleted(metric)) || (!hasGoal(metric) && hasNonZeroValue(metric)) ? (
+                  <Badge className="text-xs bg-green-500 hover:bg-green-600">
+                    {getMetricDisplayValue(metric)}
+                  </Badge>
+                ) : (
+                  <span className="text-xs font-medium">
+                    {getMetricDisplayValue(metric)}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -352,6 +494,7 @@ export default function DailyTrackingDashboardSummary({
               </div>
             </div>
 
+            {metrics.length > 0 ? progressDisplay : null}
             {metrics.length > 0 ? metricsList : null}
           </div>
         }

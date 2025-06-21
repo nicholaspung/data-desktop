@@ -71,15 +71,17 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - in multi-mode-add-dialog, test bulk imports
+- sometimes the date/amount are filled, but a lot of the times they are not
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
 - update feature information in this README for the new features added so far
 
-- in "today's tracking", add a "percentage" for how many metrics are completed vs total. In addition, also add a "weekly" percentage up to that day on how many metrics were completed vs total up to that week
+- in body measurements, add a way to easily add weight measurements via CSV, with fields date/weight, and then it gets transformed to be imported record structure
 
 ### DONE
 
+- in "today's tracking", add a "percentage" for how many metrics are completed vs total. In addition, also add a "weekly" percentage up to that day on how many metrics were completed vs total up to that week [DONE 2025-06-20]
 - in metrics, a metric is only completed if the metric is either true or the number is > 0. If the metric has a goal, it is only completed if it completes the goal [DONE 2025-06-20]
 - fix the react bug on the home page about private content [DONE 2025-06-20]
 - in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled [DONE 2025-06-20]
