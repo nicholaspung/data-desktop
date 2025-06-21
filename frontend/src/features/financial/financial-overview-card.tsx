@@ -56,6 +56,12 @@ export function FinancialOverviewCard({
   const [chartViewMode, setChartViewMode] = useState<"split" | "total">(
     "split"
   );
+  const [sortSummary, setSortSummary] = useState<"none" | "asc" | "desc">(
+    "none"
+  );
+  const [balanceViewMode, setBalanceViewMode] = useState<
+    "individual" | "totals"
+  >("individual");
 
   const allData = useMemo(() => {
     if (type === "logs") return logs;
@@ -259,14 +265,24 @@ export function FinancialOverviewCard({
         }
       });
 
+      const categories = Array.from(categoryTotals.entries()).map(
+        ([category, total]) => ({
+          category,
+          total,
+          isPositive: total > 0,
+        })
+      );
+
+      if (sortSummary !== "none") {
+        categories.sort((a, b) => {
+          const aAbs = Math.abs(a.total);
+          const bAbs = Math.abs(b.total);
+          return sortSummary === "asc" ? aAbs - bAbs : bAbs - aAbs;
+        });
+      }
+
       return {
-        categories: Array.from(categoryTotals.entries()).map(
-          ([category, total]) => ({
-            category,
-            total,
-            isPositive: total > 0,
-          })
-        ),
+        categories,
         total: (filteredData as FinancialLog[]).reduce(
           (sum, log) => sum + log.amount,
           0
@@ -293,14 +309,41 @@ export function FinancialOverviewCard({
         }
       });
 
-      return {
-        categories: Array.from(typeTotals.entries()).map(
+      let categories;
+
+      if (balanceViewMode === "totals") {
+        categories = [
+          {
+            category: "Assets",
+            total: positiveTotal,
+            isPositive: true,
+          },
+          {
+            category: "Liabilities",
+            total: negativeTotal,
+            isPositive: false,
+          },
+        ];
+      } else {
+        categories = Array.from(typeTotals.entries()).map(
           ([category, total]) => ({
             category,
             total,
             isPositive: total > 0,
           })
-        ),
+        );
+      }
+
+      if (sortSummary !== "none") {
+        categories.sort((a, b) => {
+          const aAbs = Math.abs(a.total);
+          const bAbs = Math.abs(b.total);
+          return sortSummary === "asc" ? aAbs - bAbs : bAbs - aAbs;
+        });
+      }
+
+      return {
+        categories,
         total: (filteredData as FinancialBalance[]).reduce(
           (sum, balance) => sum + balance.amount,
           0
@@ -327,14 +370,24 @@ export function FinancialOverviewCard({
         }
       });
 
+      const categories = Array.from(categoryTotals.entries()).map(
+        ([category, total]) => ({
+          category,
+          total,
+          isPositive: total > 0,
+        })
+      );
+
+      if (sortSummary !== "none") {
+        categories.sort((a, b) => {
+          const aAbs = Math.abs(a.total);
+          const bAbs = Math.abs(b.total);
+          return sortSummary === "asc" ? aAbs - bAbs : bAbs - aAbs;
+        });
+      }
+
       return {
-        categories: Array.from(categoryTotals.entries()).map(
-          ([category, total]) => ({
-            category,
-            total,
-            isPositive: total > 0,
-          })
-        ),
+        categories,
         total: (filteredData as PaycheckInfo[]).reduce(
           (sum, paycheck) => sum + paycheck.amount,
           0
@@ -356,7 +409,7 @@ export function FinancialOverviewCard({
       negativeLabel: "",
       totalLabel: "Total",
     };
-  }, [filteredData, type]);
+  }, [filteredData, type, sortSummary, balanceViewMode]);
 
   const chartData = useMemo(() => {
     if (type === "logs") {
@@ -403,26 +456,57 @@ export function FinancialOverviewCard({
         );
     } else if (type === "balances") {
       if (chartViewMode === "split") {
-        const categoriesWithTotals = [
-          ...summaryData.categories.map(({ category, total }) => ({
-            category,
-            amount: total,
-          })),
-          {
-            category: summaryData.positiveLabel,
-            amount: summaryData.positiveTotal,
-          },
-          {
-            category: summaryData.negativeLabel,
-            amount: summaryData.negativeTotal,
-          },
-          { category: summaryData.totalLabel, amount: summaryData.total },
-        ];
+        let categoriesWithTotals;
 
-        return categoriesWithTotals.map((item) => ({
-          category: item.category,
-          total: item.amount,
-        }));
+        if (balanceViewMode === "totals") {
+          categoriesWithTotals = [
+            ...summaryData.categories.map(({ category, total }) => ({
+              category,
+              [summaryData.positiveLabel]: total > 0 ? total : 0,
+              [summaryData.negativeLabel]: total < 0 ? total : 0,
+              total: total,
+            })),
+            {
+              category: summaryData.totalLabel,
+              [summaryData.positiveLabel]:
+                summaryData.total > 0 ? summaryData.total : 0,
+              [summaryData.negativeLabel]:
+                summaryData.total < 0 ? summaryData.total : 0,
+              total: summaryData.total,
+            },
+          ];
+        } else {
+          categoriesWithTotals = [
+            ...summaryData.categories.map(({ category, total }) => ({
+              category,
+              [summaryData.positiveLabel]: total > 0 ? total : 0,
+              [summaryData.negativeLabel]: total < 0 ? total : 0,
+              total: total,
+            })),
+            {
+              category: summaryData.positiveLabel,
+              [summaryData.positiveLabel]: summaryData.positiveTotal,
+              [summaryData.negativeLabel]: 0,
+              total: summaryData.positiveTotal,
+            },
+            {
+              category: summaryData.negativeLabel,
+              [summaryData.positiveLabel]: 0,
+              [summaryData.negativeLabel]: summaryData.negativeTotal,
+              total: summaryData.negativeTotal,
+            },
+            {
+              category: summaryData.totalLabel,
+              [summaryData.positiveLabel]:
+                summaryData.total > 0 ? summaryData.total : 0,
+              [summaryData.negativeLabel]:
+                summaryData.total < 0 ? summaryData.total : 0,
+              total: summaryData.total,
+            },
+          ];
+        }
+
+        return categoriesWithTotals;
       } else {
         return summaryData.categories.map(({ category, total }) => ({
           category,
@@ -473,7 +557,7 @@ export function FinancialOverviewCard({
         );
     }
     return [];
-  }, [filteredData, type, summaryData, chartViewMode]);
+  }, [filteredData, type, summaryData, chartViewMode, balanceViewMode]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -599,25 +683,47 @@ export function FinancialOverviewCard({
 
   const headerActions = (
     <div className="flex items-center gap-2 flex-wrap">
-      {type !== "balances" && (
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-muted-foreground">
+          Chart View
+        </label>
+        <div className="flex gap-1">
+          <Button
+            variant={chartViewMode === "split" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setChartViewMode("split")}
+          >
+            Split
+          </Button>
+          <Button
+            variant={chartViewMode === "total" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setChartViewMode("total")}
+          >
+            Total
+          </Button>
+        </div>
+      </div>
+
+      {type === "balances" && (
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-muted-foreground">
-            Chart View
+            Summary View
           </label>
           <div className="flex gap-1">
             <Button
-              variant={chartViewMode === "split" ? "default" : "outline"}
+              variant={balanceViewMode === "individual" ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartViewMode("split")}
+              onClick={() => setBalanceViewMode("individual")}
             >
-              Split
+              Individual
             </Button>
             <Button
-              variant={chartViewMode === "total" ? "default" : "outline"}
+              variant={balanceViewMode === "totals" ? "default" : "outline"}
               size="sm"
-              onClick={() => setChartViewMode("total")}
+              onClick={() => setBalanceViewMode("totals")}
             >
-              Total
+              Totals
             </Button>
           </div>
         </div>
@@ -876,7 +982,37 @@ export function FinancialOverviewCard({
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <h3 className="text-sm font-medium text-muted-foreground">Summary</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-muted-foreground">
+              Summary
+            </h3>
+            <div className="flex gap-1">
+              <Button
+                variant={sortSummary === "none" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortSummary("none")}
+                className="h-7 text-xs"
+              >
+                Default
+              </Button>
+              <Button
+                variant={sortSummary === "asc" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortSummary("asc")}
+                className="h-7 text-xs"
+              >
+                ↑ Low to High
+              </Button>
+              <Button
+                variant={sortSummary === "desc" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortSummary("desc")}
+                className="h-7 text-xs"
+              >
+                ↓ High to Low
+              </Button>
+            </div>
+          </div>
           <div className="space-y-2">
             <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
               <span className="font-medium">{summaryData.totalLabel}</span>
@@ -893,27 +1029,29 @@ export function FinancialOverviewCard({
               </span>
             </div>
 
-            {summaryData.positiveTotal > 0 && (
-              <div className="flex justify-between items-center p-2 border rounded bg-green-50 border-green-200">
-                <span className="text-sm font-medium text-green-800">
-                  {summaryData.positiveLabel}
-                </span>
-                <span className="text-sm font-semibold text-green-600">
-                  {formatCurrency(summaryData.positiveTotal)}
-                </span>
-              </div>
-            )}
+            {(type !== "balances" || balanceViewMode === "totals") &&
+              summaryData.positiveTotal > 0 && (
+                <div className="flex justify-between items-center p-2 border rounded bg-green-50 border-green-200">
+                  <span className="text-sm font-medium text-green-800">
+                    {summaryData.positiveLabel}
+                  </span>
+                  <span className="text-sm font-semibold text-green-600">
+                    {formatCurrency(summaryData.positiveTotal)}
+                  </span>
+                </div>
+              )}
 
-            {summaryData.negativeTotal < 0 && (
-              <div className="flex justify-between items-center p-2 border rounded bg-red-50 border-red-200">
-                <span className="text-sm font-medium text-red-800">
-                  {summaryData.negativeLabel}
-                </span>
-                <span className="text-sm font-semibold text-red-600">
-                  {formatCurrency(Math.abs(summaryData.negativeTotal))}
-                </span>
-              </div>
-            )}
+            {(type !== "balances" || balanceViewMode === "totals") &&
+              summaryData.negativeTotal < 0 && (
+                <div className="flex justify-between items-center p-2 border rounded bg-red-50 border-red-200">
+                  <span className="text-sm font-medium text-red-800">
+                    {summaryData.negativeLabel}
+                  </span>
+                  <span className="text-sm font-semibold text-red-600">
+                    {formatCurrency(Math.abs(summaryData.negativeTotal))}
+                  </span>
+                </div>
+              )}
 
             {summaryData.categories.map(({ category, total, isPositive }) => (
               <div
@@ -954,17 +1092,21 @@ export function FinancialOverviewCard({
                   tickFormatter={(value) => formatCurrency(value)}
                 />
                 <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                {chartViewMode === "split" && type !== "balances" && <Legend />}
-                {type === "balances" || chartViewMode === "total" ? (
+                {chartViewMode === "split" && <Legend />}
+                {chartViewMode === "total" ? (
                   <Bar
                     dataKey={type === "balances" ? "total" : "amount"}
                     radius={[8, 8, 0, 0]}
                   >
                     {chartData.map((entry, index) => {
-                      const value =
-                        type === "balances"
-                          ? (entry as { category: string; total: number }).total
-                          : (entry as { month: string; amount: number }).amount;
+                      let value: number;
+                      if (type === "balances") {
+                        value = (entry as { category: string; total: number })
+                          .total;
+                      } else {
+                        value = (entry as { month: string; amount: number })
+                          .amount;
+                      }
                       return (
                         <Cell
                           key={`cell-${index}`}

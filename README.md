@@ -80,6 +80,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in financial balances, add a button to show between individual sum records or the total sum records [DONE 2025-06-21]
+- in wealth summary, add a "sort" button" for the totals [DONE 2025-06-21]
 - in financial log summary, if the value is negative it should be red, and if positive, it should be green [DONE 2025-06-21]
 - in financial log summary, it should also show the "income + cash" and "spend" [DONE 2025-06-21]
 - in financial balance summary, if value is negative it should be red, and if positive, it should be green [DONE 2025-06-21]
