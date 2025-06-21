@@ -5,12 +5,11 @@ import {
   HelpSidebar,
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
-import BodyMeasurementsDashboardSummary from "@/features/dashboard/body-measurements-dashboard-summary";
+import BodyMeasurementsOverview from "@/features/body-measurements/body-measurements-overview";
 import BodyweightChart from "@/features/body-measurements/bodyweight-chart";
 import MultiMeasurementChart from "@/components/charts/multi-measurement-chart";
 import BodyMeasurementsVisualization from "@/features/body-measurements/body-measurements-visualization";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
-import ReusableCard from "@/components/reusable/reusable-card";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
@@ -71,11 +70,10 @@ function BodyMeasurementsPage() {
       label: "Overview",
       icon: <FEATURE_ICONS.BAR_CHART_3 className="h-4 w-4" />,
       content: (
-        <ReusableCard
-          title="Body Measurements Overview"
-          description="Summary of your recent measurements and tracking progress"
-          useSeparator={true}
-          content={<BodyMeasurementsDashboardSummary data={filteredData} />}
+        <BodyMeasurementsOverview
+          data={filteredData}
+          showAllTypes={true}
+          showSearchBar={true}
         />
       ),
     },
