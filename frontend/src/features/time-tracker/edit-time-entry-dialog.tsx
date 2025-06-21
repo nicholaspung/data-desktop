@@ -12,6 +12,7 @@ import { updateEntry } from "@/store/data-store";
 import { Clock, Save, ArrowLeft, Check, FolderIcon, Tag } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 import { syncTimeEntryWithMetrics } from "./time-metrics-sync";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import { SelectOption } from "@/types/types";
@@ -43,9 +44,13 @@ export default function EditTimeEntryDialog({
     dataStore,
     (state) => state.time_entries as TimeEntry[]
   );
-  const metricsData = useStore(dataStore, (state) => state.metrics) || [];
+  const metricsDataRaw = useStore(dataStore, (state) => state.metrics);
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories = useStore(dataStore, (state) => state.time_categories);
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
+
+  const metricsData = useMemo(() => metricsDataRaw || [], [metricsDataRaw]);
 
   const descriptionOptions = useMemo(() => {
     const uniqueDescriptions = new Map<string, TimeEntry>();
@@ -59,19 +64,23 @@ export default function EditTimeEntryDialog({
       }
     });
 
-    const timeMetrics = metricsData
-      .filter((m: any) => m.type === "time" && m.active)
-      .map((metric: any) => ({
-        id: `metric-${metric.id}`,
-        label: metric.name,
-        isMetric: true,
-        metric: metric,
-      }));
+    const timeMetrics = metricsEnabled
+      ? metricsData
+          .filter((m: any) => m.type === "time" && m.active)
+          .map((metric: any) => ({
+            id: `metric-${metric.id}`,
+            label: metric.name,
+            isMetric: true,
+            metric: metric,
+          }))
+      : [];
 
     const timeMetricNames = new Set(
-      metricsData
-        .filter((m: any) => m.type === "time" && m.active)
-        .map((m: any) => m.name.toLowerCase())
+      metricsEnabled
+        ? metricsData
+            .filter((m: any) => m.type === "time" && m.active)
+            .map((m: any) => m.name.toLowerCase())
+        : []
     );
 
     const entryOptions = Array.from(uniqueDescriptions.values()).map(
@@ -91,7 +100,7 @@ export default function EditTimeEntryDialog({
     );
 
     return [...timeMetrics, ...entryOptions];
-  }, [allTimeEntries, metricsData]);
+  }, [allTimeEntries, metricsData, metricsEnabled]);
 
   useEffect(() => {
     const formatDateForInput = (date: Date) => {

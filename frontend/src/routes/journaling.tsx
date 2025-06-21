@@ -13,12 +13,17 @@ import QuestionJournalView from "@/features/journaling/question-journal-view";
 import AffirmationView from "@/features/journaling/affirmation-view";
 import JournalingMetricsSync from "@/features/journaling/journaling-metrics-sync";
 import CreateDefaultMetricsButton from "@/features/daily-tracker/create-default-metrics-form";
+import { useStore } from "@tanstack/react-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 
 export const Route = createFileRoute("/journaling")({
   component: JournalingPage,
 });
 
 function JournalingPage() {
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
+
   return (
     <FeatureLayout
       header={
@@ -27,7 +32,7 @@ function JournalingPage() {
           description="Record your thoughts, ideas, gratitude, and affirmations"
           storageKey="journaling-page"
         >
-          <CreateDefaultMetricsButton />
+          {metricsEnabled && <CreateDefaultMetricsButton />}
         </FeatureHeader>
       }
       sidebar={
@@ -71,7 +76,7 @@ function JournalingPage() {
       }
       sidebarPosition="right"
     >
-      <JournalingMetricsSync />
+      {metricsEnabled && <JournalingMetricsSync />}
       <ReusableTabs
         tabs={[
           {

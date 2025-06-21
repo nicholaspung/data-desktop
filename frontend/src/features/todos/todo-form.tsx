@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 import { Todo, TodoStatus, TodoPriority } from "@/store/todo-definitions.d";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const isEditMode = !!existingTodo;
 
   const metrics = useStore(dataStore, (state) => state.metrics);
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
   const metricCategories = useStore(
     dataStore,
     (state) => state.metric_categories
@@ -344,11 +347,12 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         generalDataTagField="tags"
       />
 
-      <div className="space-y-4">
-        <Label htmlFor="tracking">
-          Progress Tracking{" "}
-          <span className="text-xs text-muted-foreground">(optional)</span>
-        </Label>
+      {metricsEnabled && (
+        <div className="space-y-4">
+          <Label htmlFor="tracking">
+            Progress Tracking{" "}
+            <span className="text-xs text-muted-foreground">(optional)</span>
+          </Label>
 
         {!isEditMode && (
           <div className="space-y-2">
@@ -436,7 +440,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
             />
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="reminder">

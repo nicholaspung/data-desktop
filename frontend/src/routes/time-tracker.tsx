@@ -11,6 +11,7 @@ import TimeEntryConflictResolver from "@/features/time-tracker/time-entry-confli
 import { useMemo, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 import { findOverlappingEntries } from "@/lib/time-entry-utils";
 import { Button } from "@/components/ui/button";
 import { FEATURE_ICONS } from "@/lib/icons";
@@ -90,6 +91,8 @@ These reports help identify patterns, track productivity, and make informed deci
 function TimeTrackerPage() {
   const [showConflictChecker, setShowConflictChecker] = useState(false);
   const timeEntries = useStore(dataStore, (state) => state.time_entries);
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
 
   const overlappingEntries = useMemo(() => {
     return findOverlappingEntries(timeEntries);
@@ -162,7 +165,7 @@ function TimeTrackerPage() {
                 - The header timer allows tracking from anywhere in the app
               </li>
               <li>
-                - Previous entries and time metrics appear in autocomplete
+                - Previous entries{metricsEnabled ? " and time metrics" : ""} appear in autocomplete
               </li>
               <li>- Check for overlapping entries in the list view</li>
             </ul>

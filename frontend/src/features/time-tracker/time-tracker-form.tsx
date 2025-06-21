@@ -25,6 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry } from "@/store/data-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 import {
   timeTrackerStore,
   getTimerData,
@@ -63,6 +64,8 @@ function TimeTrackerForm({
   const timeEntries = useStore(dataStore, (state) => state.time_entries);
   const categories = useStore(dataStore, (state) => state.time_categories);
   const metricsData = useStore(dataStore, (state) => state.metrics) || [];
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
   const dailyLogsData = useStore(dataStore, (state) => state.daily_logs) || [];
   const isPomodoroActive = useStore(pomodoroStore, (state) => state.isActive);
   const isPomodoroBreak = useStore(pomodoroStore, (state) => state.isBreak);
@@ -113,19 +116,23 @@ function TimeTrackerForm({
       }
     });
 
-    const timeMetrics = metricsData
-      .filter((m: any) => m.type === "time" && m.active)
-      .map((metric: any) => ({
-        id: `metric-${metric.id}`,
-        label: metric.name,
-        isMetric: true,
-        metric: metric,
-      }));
+    const timeMetrics = metricsEnabled
+      ? metricsData
+          .filter((m: any) => m.type === "time" && m.active)
+          .map((metric: any) => ({
+            id: `metric-${metric.id}`,
+            label: metric.name,
+            isMetric: true,
+            metric: metric,
+          }))
+      : [];
 
     const timeMetricNames = new Set(
-      metricsData
-        .filter((m: any) => m.type === "time" && m.active)
-        .map((m: any) => m.name.toLowerCase())
+      metricsEnabled
+        ? metricsData
+            .filter((m: any) => m.type === "time" && m.active)
+            .map((m: any) => m.name.toLowerCase())
+        : []
     );
 
     const entryOptions = Array.from(uniqueDescriptions.values()).map(
@@ -145,7 +152,7 @@ function TimeTrackerForm({
     );
 
     return [...timeMetrics, ...entryOptions];
-  }, [timeEntries, metricsData]);
+  }, [timeEntries, metricsData, metricsEnabled]);
 
   const resetForm = useCallback(() => {
     setDescription("");
@@ -549,6 +556,7 @@ function TimeTrackerForm({
   };
 
   const isTimeMetric = (description: string) => {
+    if (!metricsEnabled) return false;
     return metricsData.some(
       (metric: any) =>
         metric.type === "time" &&
@@ -710,7 +718,7 @@ function TimeTrackerForm({
                 className="text-sm font-medium flex items-center"
               >
                 What are you working on?
-                {isTimeMetric(description) && (
+                {metricsEnabled && isTimeMetric(description) && (
                   <Badge
                     variant="outline"
                     className="ml-2 bg-blue-100 dark:bg-blue-900 text-xs"
@@ -748,7 +756,7 @@ function TimeTrackerForm({
                           description.toLowerCase() && (
                           <Check className="h-4 w-4 text-primary" />
                         )}
-                        {option.isMetric ? (
+                        {metricsEnabled && option.isMetric ? (
                           <Badge
                             variant="outline"
                             className="bg-blue-100 dark:bg-blue-900 text-xs"

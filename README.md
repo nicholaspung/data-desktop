@@ -74,15 +74,13 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- fix the react bug on the home page about private content [DONE 2025-06-20]
-- in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled [DONE 2025-06-20]
-
-- in each of the features, if a specific route isn't enabled, it shouldn't show that "feature" tie in, i.e. todos shouldn't be able to create a metric if metrics are disabled, time tracking should be able to search for metrics to use as description if metrics are enabled ,etc.
-
 - update feature information in this README for the new features added so far
 
 ### DONE
 
+- fix the react bug on the home page about private content [DONE 2025-06-20]
+- in the feature selection, add the concept of dependencies, so that let's say I want to use experiments, I can only enable experiments if metrics are enabled [DONE 2025-06-20]
+- in each of the features, if a specific route isn't enabled, it shouldn't show that "feature" tie in, i.e. todos shouldn't be able to create a metric if metrics are disabled, time tracking should be able to search for metrics to use as description if metrics are enabled ,etc. [DONE 2025-06-20]
 - sometimes when you click on an autocomplete, it only shows a specific number of suggestions, rather than everything, allow to show all (maybe even virtualize it) [DONE 2025-06-20]
 - when using autocomplete usePortal, if the original UI changes, the portal doesn't move with it [DONE 2025-06-20]
 - with the select field, allow a prop that adds a search field at the top of the selections, and also allow the select items to be wider than the field [DONE 2025-06-20]

@@ -9,30 +9,36 @@ import TodoList from "@/features/todos/todo-list";
 import AddTodoButton from "@/features/todos/add-todo-button";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import { useState } from "react";
+import { useStore } from "@tanstack/react-store";
+import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
 
 export const Route = createFileRoute("/todos")({
   component: TodosPage,
 });
 
-const todosGuideContent = [
-  {
-    title: "Getting Started",
-    content: `
+function TodosPage() {
+  const [showPrivate, setShowPrivate] = useState(true);
+  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
+  const metricsEnabled = isMetricsEnabled(visibleRoutes);
+
+  const todosGuideContent = [
+    {
+      title: "Getting Started",
+      content: `
 ## Understanding Todos with Deadlines
 
 The Todos feature helps you:
 
 - Create tasks with specific deadlines
 - Track progress on your todos
-- Get alerted when deadlines are approaching or have passed
-- Connect todos with metrics to measure your work
+- Get alerted when deadlines are approaching or have passed${metricsEnabled ? "\n- Connect todos with metrics to measure your work" : ""}
 
 Use this feature to stay on top of important tasks and ensure you're making progress on your goals.
-    `,
-  },
-  {
-    title: "Creating Todos",
-    content: `
+      `,
+    },
+    {
+      title: "Creating Todos",
+      content: `
 ## Setting Up Effective Todos
 
 To create a well-defined todo:
@@ -40,32 +46,29 @@ To create a well-defined todo:
 1. Give it a clear, specific title
 2. Set a realistic deadline
 3. Assign an appropriate priority level
-4. Add descriptive tags for organization
-5. Optionally connect it to a tracking metric
-6. Set a reminder date if needed
+4. Add descriptive tags for organization${metricsEnabled ? "\n5. Optionally connect it to a tracking metric\n6. Set a reminder date if needed" : "\n5. Set a reminder date if needed"}
 
 The more detailed your todo, the easier it will be to track and complete.
-    `,
-  },
-  {
-    title: "Tracking Progress",
-    content: `
+      `,
+    },
+    {
+      title: "Tracking Progress",
+      content: `
 ## Monitoring Your Todos
 
 The Todos feature provides several ways to track your progress:
 
 - Filter todos by status (All, Active, Overdue, Completed)
-- View deadline status with visual indicators
-- Track metrics related to todo completion
+- View deadline status with visual indicators${metricsEnabled ? "\n- Track metrics related to todo completion" : ""}
 - See your history of deadline extensions
 - Receive alerts for overdue items
 
 Regularly review your todos to stay on track with your commitments.
-    `,
-  },
-  {
-    title: "Handling Overdue Todos",
-    content: `
+      `,
+    },
+    {
+      title: "Handling Overdue Todos",
+      content: `
 ## Managing Missed Deadlines
 
 When a todo becomes overdue:
@@ -77,12 +80,9 @@ When a todo becomes overdue:
 5. Previous deadlines are tracked in the todo history
 
 This approach helps you learn from missed deadlines while still making progress on important tasks.
-    `,
-  },
-];
-
-function TodosPage() {
-  const [showPrivate, setShowPrivate] = useState(true);
+      `,
+    },
+  ];
 
   return (
     <FeatureLayout
@@ -111,8 +111,7 @@ function TodosPage() {
           >
             Todos help you track tasks with specific deadlines. You'll receive
             alerts when deadlines approach or pass, and you can extend deadlines
-            if needed. Each todo can also track your progress through associated
-            metrics.
+            if needed.{metricsEnabled && " Each todo can also track your progress through associated metrics."}
           </CompactInfoPanel>
 
           <CompactInfoPanel
@@ -128,18 +127,20 @@ function TodosPage() {
             </ul>
           </CompactInfoPanel>
 
-          <CompactInfoPanel
-            title="Progress Tracking"
-            variant="info"
-            storageKey="todos-progress"
-          >
-            <ul className="mt-2 space-y-1">
-              <li>• Link todos to metrics for detailed tracking</li>
-              <li>• Choose between completion or time tracking</li>
-              <li>• View progress in the metrics dashboard</li>
-              <li>• Set goals to measure your success</li>
-            </ul>
-          </CompactInfoPanel>
+          {metricsEnabled && (
+            <CompactInfoPanel
+              title="Progress Tracking"
+              variant="info"
+              storageKey="todos-progress"
+            >
+              <ul className="mt-2 space-y-1">
+                <li>• Link todos to metrics for detailed tracking</li>
+                <li>• Choose between completion or time tracking</li>
+                <li>• View progress in the metrics dashboard</li>
+                <li>• Set goals to measure your success</li>
+              </ul>
+            </CompactInfoPanel>
+          )}
 
           <CompactInfoPanel
             title="Organization Tips"
