@@ -540,7 +540,11 @@ export default function MultiEntryTable({
                     {field.type === "date" ? (
                       <Input
                         type="date"
-                        value={row.data[field.key] || ""}
+                        value={
+                          row.data[field.key] 
+                            ? new Date(row.data[field.key]).toISOString().split('T')[0]
+                            : ""
+                        }
                         onChange={(e) =>
                           updateRowData(row.id, field.key, e.target.value)
                         }
@@ -561,7 +565,7 @@ export default function MultiEntryTable({
                           <Input
                             type="number"
                             step="0.01"
-                            value={row.data[field.key] || ""}
+                            value={row.data[field.key] ?? ""}
                             onChange={(e) =>
                               updateRowData(row.id, field.key, e.target.value)
                             }

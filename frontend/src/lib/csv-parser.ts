@@ -78,7 +78,7 @@ export async function parseCSV(
                         processedRow[field.key] = false;
                         break;
                       case "date":
-                        processedRow[field.key] = new Date();
+                        processedRow[field.key] = new Date().toISOString();
                         break;
                       case "markdown":
                         if (typeof value !== "string") {
@@ -354,7 +354,9 @@ export async function parseCSV(
                           );
                         }
 
-                        processedRow[field.key] = parsedDate;
+                        processedRow[field.key] = parsedDate.toISOString();
+                      } else if (value instanceof Date) {
+                        processedRow[field.key] = value.toISOString();
                       } else {
                         processedRow[field.key] = value;
                       }
@@ -447,7 +449,7 @@ export async function parseCSV(
                       processedRow[field.key] = false;
                       break;
                     case "date":
-                      processedRow[field.key] = new Date();
+                      processedRow[field.key] = new Date().toISOString();
                       break;
                     case "text":
                     default:

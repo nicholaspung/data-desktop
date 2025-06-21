@@ -16,7 +16,7 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { ApiService } from "@/services/api";
 import { MultiModeAddDialogProps, AddMode, MultiEntryRow } from "./types";
@@ -240,14 +240,21 @@ export default function MultiModeAddDialog({
     if (!fieldDef) return String(value || "");
 
     if (fieldDef.unit === "$") {
+      const numValue = Number(value);
+      if (isNaN(numValue)) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(0);
+      }
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
-      }).format(Number(value) || 0);
+      }).format(numValue);
     }
 
     if (fieldDef.type === "date") {
-      return format(new Date(value as string), "MMM d, yyyy");
+      return formatDate(value as string);
     }
 
     return String(value || "");
