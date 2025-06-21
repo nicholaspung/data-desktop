@@ -454,7 +454,6 @@ function TimeTrackerForm({
   const handleManualSave = async () => {
     if (!startTime || !endTime) return;
 
-    // Clear existing errors
     setStartTimeError("");
     setEndTimeError("");
 
@@ -464,19 +463,16 @@ function TimeTrackerForm({
 
     let hasError = false;
 
-    // Check if start time is in the future
     if (startDate > now) {
       setStartTimeError("Start time cannot be in the future");
       hasError = true;
     }
 
-    // Check if end time is in the future
     if (endDate > now) {
       setEndTimeError("End time cannot be in the future");
       hasError = true;
     }
 
-    // Check if start time is after end time
     if (startDate >= endDate) {
       setEndTimeError("End time must be after start time");
       hasError = true;
@@ -603,9 +599,9 @@ function TimeTrackerForm({
 
       if (response) {
         addEntry(response, "time_categories");
-        // Set the newly created category as selected
+
         handleCategoryChange(response.id);
-        onDataChange(); // Refresh data
+        onDataChange();
       }
     } catch (error) {
       console.error("Error creating category:", error);

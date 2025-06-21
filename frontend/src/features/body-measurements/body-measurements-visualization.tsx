@@ -127,7 +127,6 @@ export default function BodyMeasurementsVisualization({
             return null;
           }
 
-          // Check if this date has any body part measurements
           const measurements = measurementsByDate.get(dateString);
           if (!measurements) return null;
 

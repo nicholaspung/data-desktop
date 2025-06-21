@@ -30,7 +30,6 @@ const BodyMeasurementsCSVImport = () => {
 
     setIsProcessing(true);
     try {
-      // Create minimal field definitions for weight import
       const weightFields = [
         {
           key: "date",
@@ -53,7 +52,6 @@ const BodyMeasurementsCSVImport = () => {
         return;
       }
 
-      // Store the parsed data for confirmation
       setParsedData(data);
     } catch (error) {
       console.error("Error parsing CSV:", error);
@@ -68,7 +66,6 @@ const BodyMeasurementsCSVImport = () => {
 
     setIsProcessing(true);
     try {
-      // Transform weight data to body measurement format
       const transformedData = parsedData.map((record: Record<string, any>) => ({
         date: record.date,
         measurement: "Weight",
@@ -76,7 +73,6 @@ const BodyMeasurementsCSVImport = () => {
         unit: "lbs",
       }));
 
-      // Import the data
       const importedCount = await ApiService.importRecords(
         "body_measurements",
         transformedData
@@ -86,10 +82,8 @@ const BodyMeasurementsCSVImport = () => {
         `Successfully imported ${importedCount} weight measurement${importedCount !== 1 ? "s" : ""}`
       );
 
-      // Reload data
       await loadData();
 
-      // Reset state
       setParsedData(null);
       setShowWeightImportDialog(false);
       if (fileInputRef.current) {
@@ -106,7 +100,6 @@ const BodyMeasurementsCSVImport = () => {
   const handleDialogClose = (open: boolean) => {
     setShowWeightImportDialog(open);
     if (!open) {
-      // Reset state when dialog closes
       setParsedData(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";

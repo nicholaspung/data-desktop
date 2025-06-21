@@ -408,11 +408,9 @@ export async function parseCSV(
                         field.type === "percentage" &&
                         typeof processedRow[field.key] === "number"
                       ) {
-                        if (processedRow[field.key] < 0) {
-                          processedRow[field.key] = 0;
-                        } else if (processedRow[field.key] > 100) {
+                        if (processedRow[field.key] > 100) {
                           if (
-                            processedRow[field.key] > 1 &&
+                            processedRow[field.key] > 0 &&
                             processedRow[field.key] <= 1
                           ) {
                             processedRow[field.key] *= 100;
