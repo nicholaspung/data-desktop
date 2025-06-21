@@ -74,12 +74,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- for file upload component, need to change the UI and fix it [DONE 2025-06-20]
-
-- in todos, add a filter for the priorities
-- in todos, allow user to search for the todos
-- in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section
-- in todos, it doesn't seem like a metric is created when I create a todo with a metric
 - make the dashboard layout icons for the routes the same in settings, and also within the routes
 - sometimes when you click on an autocomplete, it only shows a specific number of suggestions, rather than everything, allow to show all (maybe even virtualize it)
 - when using autocomplete usePortal, if the original UI changes, the portal doesn't move with it
@@ -93,6 +87,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- for file upload component, need to change the UI and fix it [DONE 2025-06-20]
+- in todos, add a filter for the priorities [DONE 2025-06-20]
+- in todos, allow user to search for the todos [DONE 2025-06-20]
+- in todos, allow a user to not select a "end date" and then it will just sit in a "need end date" section [DONE 2025-06-20] 
+- in todos, it doesn't seem like a metric is created when I create a todo with a metric [DONE 2025-06-20]
 - in bloodwork dashboard summary, can you allow the user to select bloodmarkers to be shown in there, a max of 5? [DONE 2025-06-20]
 - in time tracking, if I press play on a time entry, and the form is in manual mode, it doesn't change to timer mode [DONE 2025-06-20]
 - in time tracking, if I press play on the time tracker form at the current time, it sometimes goes back to the last time entry time [DONE 2025-06-20]

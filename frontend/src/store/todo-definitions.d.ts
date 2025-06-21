@@ -3,7 +3,7 @@ export interface Todo {
   id: string;
   title: string;
   description?: string;
-  deadline: Date;
+  deadline?: Date;
   createdAt: Date;
   lastModified: Date;
   status: TodoStatus;

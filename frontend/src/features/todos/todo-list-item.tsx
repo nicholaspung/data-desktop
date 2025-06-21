@@ -104,8 +104,8 @@ export default function TodoListItem({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getDeadlineStatus = (deadline: string, isComplete: boolean) => {
-    if (isComplete) return null;
+  const getDeadlineStatus = (deadline: string | undefined, isComplete: boolean) => {
+    if (isComplete || !deadline) return null;
 
     const deadlineDate = new Date(deadline);
     const isPastDeadline = isPast(deadlineDate);
@@ -187,7 +187,7 @@ export default function TodoListItem({
       cardClassName={`border-l-4 ${
         todo.isComplete
           ? "border-l-green-500"
-          : isPast(new Date(todo.deadline))
+          : todo.deadline && isPast(new Date(todo.deadline))
             ? "border-l-red-500"
             : "border-l-blue-500"
       }`}
@@ -219,7 +219,7 @@ export default function TodoListItem({
               <div className="flex flex-wrap gap-2 items-center">
                 {getPriorityBadge(todo.priority as TodoPriority)}
                 {getDeadlineStatus(
-                  todo.deadline.toISOString(),
+                  todo.deadline?.toISOString(),
                   todo.isComplete
                 )}
 
@@ -294,17 +294,23 @@ export default function TodoListItem({
           {/* Footer info */}
           <div className="mt-2 pt-2 border-t text-xs text-muted-foreground flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1">
             <div className="break-words">
-              Deadline: {new Date(todo.deadline).toLocaleDateString()}
-              {!todo.isComplete && (
-                <span>
-                  {" "}
-                  -{" "}
-                  <strong>
-                    {formatDistanceToNow(new Date(todo.deadline), {
-                      addSuffix: true,
-                    })}
-                  </strong>
-                </span>
+              {todo.deadline ? (
+                <>
+                  Deadline: {new Date(todo.deadline).toLocaleDateString()}
+                  {!todo.isComplete && (
+                    <span>
+                      {" "}
+                      -{" "}
+                      <strong>
+                        {formatDistanceToNow(new Date(todo.deadline), {
+                          addSuffix: true,
+                        })}
+                      </strong>
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground">Needs deadline</span>
               )}
             </div>
 

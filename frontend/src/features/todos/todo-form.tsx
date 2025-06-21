@@ -44,8 +44,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const [description, setDescription] = useState(
     existingTodo?.description || ""
   );
-  const [deadline, setDeadline] = useState<Date>(
-    existingTodo?.deadline ? new Date(existingTodo.deadline) : new Date()
+  const [deadline, setDeadline] = useState<Date | undefined>(
+    existingTodo?.deadline ? new Date(existingTodo.deadline) : undefined
   );
   const [priority, setPriority] = useState<TodoPriority>(
     (existingTodo?.priority as TodoPriority) || TodoPriority.MEDIUM
@@ -56,9 +56,9 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   const [relatedMetricId, setRelatedMetricId] = useState<string>(
     existingTodo?.relatedMetricId || ""
   );
-  const [metricType, setMetricType] = useState<
-    "completion" | "time" | undefined
-  >(existingTodo?.metricType as "completion" | "time" | undefined);
+  const [metricType, setMetricType] = useState<string>(
+    existingTodo?.metricType || "none"
+  );
   const [reminderDate, setReminderDate] = useState<Date | undefined>(
     existingTodo?.reminderDate ? new Date(existingTodo.reminderDate) : undefined
   );
@@ -88,11 +88,8 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
       newErrors.title = "Title is required";
     }
 
-    if (!deadline) {
-      newErrors.deadline = "Deadline is required";
-    }
 
-    if (createMetric && !metricType) {
+    if (createMetric && (!metricType || metricType === "none")) {
       newErrors.metricType = "Please select a metric type";
     }
 
@@ -115,7 +112,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
 
     try {
       let metricId = relatedMetricId;
-      if (createMetric && !isEditMode && metricType) {
+      if (createMetric && !isEditMode && metricType && metricType !== "none") {
         let todoCategoryId: string;
         const existingCategory = metricCategories.find(
           (cat) => cat.name === "Todo"
@@ -164,11 +161,11 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
       const todoData: any = {
         title,
         description: description || undefined,
-        deadline: deadline.toISOString(),
+        deadline: deadline?.toISOString(),
         priority,
         tags: tagsString,
         relatedMetricId: metricId || undefined,
-        metricType: metricType || undefined,
+        metricType: (metricType && metricType !== "none") ? metricType : undefined,
         reminderDate: reminderDate?.toISOString(),
         is_complete: false,
         status: TodoStatus.NOT_STARTED,
@@ -223,6 +220,7 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
   ];
 
   const metricTypeOptions = [
+    { id: "none", label: "Select metric type" },
     { id: "completion", label: "Completion (Yes/No)" },
     { id: "time", label: "Time Tracked (Minutes)" },
   ];
@@ -286,45 +284,40 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label
-            htmlFor="deadline"
-            className={errors.deadline ? "text-destructive" : ""}
-          >
-            Deadline <span className="text-destructive">*</span>
+          <Label htmlFor="deadline">
+            Deadline{" "}
+            <span className="text-xs text-muted-foreground">(optional)</span>
           </Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 id="deadline"
                 variant="outline"
-                className={`w-full justify-start text-left font-normal ${
-                  errors.deadline ? "border-destructive" : ""
-                }`}
+                className="w-full justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {deadline ? format(deadline, "PPP") : "Select deadline"}
+                {deadline ? format(deadline, "PPP") : "Select deadline (optional)"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
                 selected={deadline}
-                onSelect={(date) => {
-                  if (date) {
-                    setDeadline(date);
-                    setErrors((prev) => ({ ...prev, deadline: undefined }));
-                    setFormError(null);
-                  }
-                }}
+                onSelect={(date) => setDeadline(date || undefined)}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-          {errors.deadline && (
-            <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-              <AlertCircle className="h-3 w-3" />
-              {errors.deadline}
-            </p>
+          {deadline && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setDeadline(undefined)}
+              className="mt-2"
+            >
+              Clear deadline
+            </Button>
           )}
         </div>
 
@@ -389,9 +382,9 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
                   </Label>
                   <ReusableSelect
                     options={metricTypeOptions}
-                    value={metricType || ""}
+                    value={metricType}
                     onChange={(value) => {
-                      setMetricType(value as "completion" | "time" | undefined);
+                      setMetricType(value);
                       setErrors((prev) => ({ ...prev, metricType: undefined }));
                       setFormError(null);
                     }}
