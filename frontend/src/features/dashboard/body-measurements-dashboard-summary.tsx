@@ -3,7 +3,7 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Ruler } from "lucide-react";
+import { Search } from "lucide-react";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
@@ -219,5 +219,5 @@ registerDashboardSummary({
   datasets: ["body_measurements"],
   name: "Body Measurements",
   description: "Track body measurements and physical progress",
-  icon: Ruler,
+  icon: FEATURE_ICONS.BODY_MEASUREMENTS,
 });

@@ -327,7 +327,7 @@ export default function DailyTrackingDashboardSummary({
     <>
       <ReusableSummary
         title="Today's Tracking"
-        titleIcon={<FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />}
+        titleIcon={<FEATURE_ICONS.DAILY_TRACKER className="h-5 w-5" />}
         linkTo="/calendar"
         loading={isLoading}
         emptyState={

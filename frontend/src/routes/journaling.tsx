@@ -6,7 +6,7 @@ import {
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
-import { BookHeart, Lightbulb, HandHeart, Presentation } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import GratitudeJournalView from "@/features/journaling/gratitude-journal-view";
 import CreativityJournalView from "@/features/journaling/creativity-journal-view";
 import QuestionJournalView from "@/features/journaling/question-journal-view";
@@ -78,7 +78,7 @@ function JournalingPage() {
             id: "gratitude",
             label: (
               <span className="flex gap-2 items-center">
-                <HandHeart className="h-4 w-4" />
+                <FEATURE_ICONS.HAND_HEART className="h-4 w-4" />
                 <span className="hidden sm:inline">Gratitude</span>
               </span>
             ),
@@ -88,7 +88,7 @@ function JournalingPage() {
             id: "creativity",
             label: (
               <span className="flex gap-2 items-center">
-                <Lightbulb className="h-4 w-4" />
+                <FEATURE_ICONS.LIGHTBULB className="h-4 w-4" />
                 <span className="hidden sm:inline">Creativity</span>
               </span>
             ),
@@ -98,7 +98,7 @@ function JournalingPage() {
             id: "questions",
             label: (
               <span className="flex gap-2 items-center">
-                <Presentation className="h-4 w-4" />
+                <FEATURE_ICONS.PRESENTATION className="h-4 w-4" />
                 <span className="hidden sm:inline">Questions</span>
               </span>
             ),
@@ -108,7 +108,7 @@ function JournalingPage() {
             id: "affirmations",
             label: (
               <span className="flex gap-2 items-center">
-                <BookHeart className="h-4 w-4" />
+                <FEATURE_ICONS.BOOK_HEART className="h-4 w-4" />
                 <span className="hidden sm:inline">Affirmations</span>
               </span>
             ),

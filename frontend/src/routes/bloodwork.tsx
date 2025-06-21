@@ -16,7 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import BloodworkCSVImport from "@/features/bloodwork/advanced-csv-import";
 
@@ -39,7 +39,7 @@ export default function BloodworkPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="px-2 flex">
-                  <Settings className="h-4 w-4" />
+                  <FEATURE_ICONS.SETTINGS className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

@@ -6,7 +6,7 @@ import Logo from "@/assets/logo.svg";
 import { PinLockButton } from "../security/pin-lock-button";
 import HelpButton from "../onboarding/help-button";
 import { Button } from "../ui/button";
-import { Power } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import TimeTrackerHeaderButton from "@/features/time-tracker/time-tracker-header-button";
 import { useStore } from "@tanstack/react-store";
 import settingsStore from "@/store/settings-store";
@@ -32,7 +32,7 @@ export default function Header() {
           onClick={() => window.location.reload()}
           title="Reload"
         >
-          <Power className="h-5 w-5" />
+          <FEATURE_ICONS.POWER className="h-5 w-5" />
         </Button>
       </div>
       {visibleRoutes["/time-tracker"] && (

@@ -74,7 +74,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
-- make the dashboard layout icons for the routes the same in settings, and also within the routes
 - sometimes when you click on an autocomplete, it only shows a specific number of suggestions, rather than everything, allow to show all (maybe even virtualize it)
 - when using autocomplete usePortal, if the original UI changes, the portal doesn't move with it
 - with the select field, allow a prop that adds a search field at the top of the selections, and also allow the select items to be wider than the field
@@ -87,6 +86,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- make the dashboard layout icons for the routes the same in settings, and also within the routes [DONE 2025-06-20]
 - for file upload component, need to change the UI and fix it [DONE 2025-06-20]
 - in todos, add a filter for the priorities [DONE 2025-06-20]
 - in todos, allow user to search for the todos [DONE 2025-06-20]

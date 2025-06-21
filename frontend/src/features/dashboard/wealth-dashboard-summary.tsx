@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
+import { FEATURE_ICONS } from "@/lib/icons";
 import { DollarSign, TrendingUp } from "lucide-react";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import {
@@ -189,7 +190,7 @@ export default function WealthDashboardSummary() {
     return (
       <ReusableSummary
         title="Wealth Dashboard"
-        titleIcon={<DollarSign className="h-5 w-5 text-primary" />}
+        titleIcon={<FEATURE_ICONS.WEALTH className="h-5 w-5 text-primary" />}
         linkText="View Wealth"
         linkTo="/wealth"
         emptyState={{
@@ -440,5 +441,5 @@ registerDashboardSummary({
   ],
   name: "Wealth",
   description: "Track finances, income, expenses, and financial documents",
-  icon: DollarSign,
+  icon: FEATURE_ICONS.WEALTH,
 });

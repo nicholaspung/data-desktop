@@ -13,7 +13,7 @@ import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { findOverlappingEntries } from "@/lib/time-entry-utils";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export const Route = createFileRoute("/time-tracker")({
   component: TimeTrackerPage,
@@ -110,7 +110,7 @@ function TimeTrackerPage() {
               onClick={() => setShowConflictChecker(true)}
               className="gap-2 border-amber-400 text-amber-600 hover:bg-amber-50"
             >
-              <AlertTriangle className="h-4 w-4" />
+              <FEATURE_ICONS.ALERT_TRIANGLE className="h-4 w-4" />
               Resolve {overlappingEntries.length} Time Conflicts
             </Button>
           )}

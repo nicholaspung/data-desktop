@@ -14,10 +14,11 @@ import ReusableCard from "@/components/reusable/reusable-card";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { BodyMeasurementRecord } from "@/features/body-measurements/types";
-import { Scale, TrendingUp, BarChart3, User } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import BodyMeasurementManager from "@/features/body-measurements/body-measurement-manager";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 import { useState, useMemo } from "react";
+import { Scale, TrendingUp } from "lucide-react";
 
 export const Route = createFileRoute("/body-measurements")({
   component: BodyMeasurementsPage,
@@ -68,7 +69,7 @@ function BodyMeasurementsPage() {
     {
       id: "overview",
       label: "Overview",
-      icon: <BarChart3 className="h-4 w-4" />,
+      icon: <FEATURE_ICONS.BAR_CHART_3 className="h-4 w-4" />,
       content: (
         <ReusableCard
           title="Body Measurements Overview"
@@ -81,7 +82,7 @@ function BodyMeasurementsPage() {
     {
       id: "body-visualization",
       label: "Body Measurements",
-      icon: <User className="h-4 w-4" />,
+      icon: <FEATURE_ICONS.USER className="h-4 w-4" />,
       content: (
         <div className="space-y-6">
           <BodyMeasurementsVisualization data={filteredData} />

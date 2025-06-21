@@ -6,7 +6,6 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import { LayoutDashboard, ChevronUp, ChevronDown } from "lucide-react";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import settingsStore from "@/store/settings-store";
 import { Button } from "@/components/ui/button";
@@ -212,7 +211,7 @@ function SettingsPage() {
                 disabled={index === 0}
                 title="Move up"
               >
-                <ChevronUp className="h-3 w-3" />
+                <FEATURE_ICONS.CHEVRON_UP className="h-3 w-3" />
               </Button>
               <Button
                 variant="ghost"
@@ -222,7 +221,7 @@ function SettingsPage() {
                 disabled={index === orderedRoutes.length - 1}
                 title="Move down"
               >
-                <ChevronDown className="h-3 w-3" />
+                <FEATURE_ICONS.CHEVRON_DOWN className="h-3 w-3" />
               </Button>
             </div>
             <Switch
@@ -278,7 +277,7 @@ function SettingsPage() {
         <ReusableCard
           title={
             <div className="flex items-center gap-2">
-              <LayoutDashboard className="h-5 w-5" />
+              <FEATURE_ICONS.LAYOUT_DASHBOARD className="h-5 w-5" />
               Navigation Settings
             </div>
           }

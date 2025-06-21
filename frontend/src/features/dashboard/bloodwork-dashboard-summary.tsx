@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useStore } from "@tanstack/react-store";
+import { FEATURE_ICONS } from "@/lib/icons";
 import {
   TrendingDown,
   TrendingUp,
   AlertTriangle,
-  HeartPulse,
   Activity,
-  Settings,
 } from "lucide-react";
 import dataStore from "@/store/data-store";
 import { formatDate } from "@/lib/date-utils";
@@ -320,7 +319,7 @@ export default function BloodworkDashboardSummary() {
       title="Bloodwork Summary"
       linkTo="/bloodwork"
       loading={loading}
-      titleIcon={<HeartPulse className="h-5 w-5" />}
+      titleIcon={<FEATURE_ICONS.BLOODWORK className="h-5 w-5" />}
       emptyState={
         !latestTest
           ? {
@@ -379,7 +378,7 @@ export default function BloodworkDashboardSummary() {
                             className="ml-2 h-6 w-6"
                             title="Select markers to display"
                           >
-                            <Settings className="h-3.5 w-3.5" />
+                            <FEATURE_ICONS.SETTINGS className="h-3.5 w-3.5" />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-80" align="end">
@@ -535,5 +534,5 @@ registerDashboardSummary({
   datasets: ["bloodwork", "blood_markers", "blood_results"],
   name: "Bloodwork",
   description: "Track blood test results and markers",
-  icon: Activity,
+  icon: FEATURE_ICONS.BLOODWORK,
 });

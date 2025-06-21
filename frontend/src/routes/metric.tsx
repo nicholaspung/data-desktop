@@ -8,7 +8,8 @@ import CategoryManager from "@/features/daily-tracker/category-manager";
 import AddMetricModal from "@/features/daily-tracker/add-metric-modal";
 import MetricLogger from "@/features/daily-tracker/metric-logger";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarDays, Tag, PlusSquare, List, Grid } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
+import { PlusSquare, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/metric")({
   component: MetricInfoPage,
@@ -79,9 +80,9 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
             variant="info"
             storageKey="metric-logger-what-is-this-feature"
           >
-            The Metric Logger provides an alternative way to log and
-            manage your metrics outside the daily tracking calendar. It's
-            perfect for occasional events and metric administration.
+            The Metric Logger provides an alternative way to log and manage your
+            metrics outside the daily tracking calendar. It's perfect for
+            occasional events and metric administration.
           </CompactInfoPanel>
 
           <CompactInfoPanel
@@ -100,12 +101,14 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
               </li>
               <li>
                 3. Toggle visibility with{" "}
-                <CalendarDays className="inline h-3 w-3" /> to hide from daily
-                view
+                <FEATURE_ICONS.DAILY_TRACKER className="inline h-3 w-3" /> to
+                hide from daily view
               </li>
               <li>
-                4. Switch between <List className="inline h-3 w-3" /> or{" "}
-                <Grid className="inline h-3 w-3" /> views as needed
+                4. Switch between{" "}
+                <FEATURE_ICONS.LIST className="inline h-3 w-3" /> or{" "}
+                <FEATURE_ICONS.GRID className="inline h-3 w-3" /> views as
+                needed
               </li>
             </ol>
           </CompactInfoPanel>

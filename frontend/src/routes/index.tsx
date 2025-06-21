@@ -1,15 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import {
-  BarChart,
-  HeartPulse,
-  PieChart,
-  RefreshCcw,
-  Power,
-  Settings,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import { useState, useEffect, useCallback } from "react";
 import { useStore } from "@tanstack/react-store";
 import { ApiService } from "@/services/api";
@@ -206,11 +197,11 @@ function Home() {
   const getDatasetIcon = (type: string) => {
     switch (type) {
       case "dexa":
-        return <PieChart className="h-5 w-5" />;
+        return <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />;
       case "bloodwork":
-        return <HeartPulse className="h-5 w-5" />;
+        return <FEATURE_ICONS.BLOODWORK className="h-5 w-5" />;
       default:
-        return <BarChart className="h-5 w-5" />;
+        return <FEATURE_ICONS.BAR_CHART className="h-5 w-5" />;
     }
   };
 
@@ -296,7 +287,7 @@ function Home() {
             size="sm"
             variant={isEditMode ? "default" : "outline"}
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <FEATURE_ICONS.SETTINGS className="h-4 w-4 mr-2" />
             Customize
           </Button>
           <Button
@@ -305,7 +296,7 @@ function Home() {
             disabled={isLoading}
             onClick={handleRefresh}
           >
-            <RefreshCcw className="h-4 w-4" />
+            <FEATURE_ICONS.REFRESH className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -413,9 +404,9 @@ function Home() {
             className="h-8 w-8 p-0"
           >
             {showDatasetSummaries ? (
-              <ChevronUp className="h-4 w-4" />
+              <FEATURE_ICONS.CHEVRON_UP className="h-4 w-4" />
             ) : (
-              <ChevronDown className="h-4 w-4" />
+              <FEATURE_ICONS.CHEVRON_DOWN className="h-4 w-4" />
             )}
           </Button>
         </div>
@@ -479,7 +470,7 @@ function Home() {
                       onClick={() => window.location.reload()}
                       className="flex items-center gap-2"
                     >
-                      <Power className="h-4 w-4" />
+                      <FEATURE_ICONS.POWER className="h-4 w-4" />
                       Reload Application
                     </Button>
                   </div>

@@ -1,14 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
+import { FEATURE_ICONS } from "@/lib/icons";
 import {
-  Users,
-  Calendar,
-  NotebookPen,
-  Tag,
-  Gift,
-} from "lucide-react";
-import { FeatureLayout, FeatureHeader } from "@/components/layout/feature-layout";
+  FeatureLayout,
+  FeatureHeader,
+} from "@/components/layout/feature-layout";
 import EditPerson from "@/features/people-crm/edit-person";
 import { EditMeeting } from "@/features/people-crm/edit-meeting";
 import { EditNote } from "@/features/people-crm/edit-note";
@@ -23,6 +20,7 @@ import MeetingsList from "@/features/people-crm/meeting-list";
 import PersonNotesList from "@/features/people-crm/notes-list";
 import PersonAttributesList from "@/features/people-crm/attributes-list";
 import BirthdaysList from "@/features/people-crm/birthdays-list";
+import { Calendar } from "lucide-react";
 
 interface PeopleCRMSearch {
   tab?: string;
@@ -150,7 +148,7 @@ function PeopleCRM() {
       {
         id: "people",
         label: "People",
-        icon: <Users className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.USER className="h-4 w-4" />,
         content: <PeopleList onShowDetail={handleShowDetail} />,
       },
       {
@@ -162,19 +160,19 @@ function PeopleCRM() {
       {
         id: "notes",
         label: "Notes",
-        icon: <NotebookPen className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.PERSON_NOTES className="h-4 w-4" />,
         content: <PersonNotesList onShowDetail={handleShowDetail} />,
       },
       {
         id: "attributes",
         label: "Attributes",
-        icon: <Tag className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.TAG className="h-4 w-4" />,
         content: <PersonAttributesList onShowDetail={handleShowDetail} />,
       },
       {
         id: "birthdays",
         label: "Birthdays",
-        icon: <Gift className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.BIRTHDAY_REMINDERS className="h-4 w-4" />,
         content: <BirthdaysList onShowDetail={handleShowDetail} />,
       },
     ],
@@ -198,7 +196,7 @@ function PeopleCRM() {
               helpVariant="info"
               storageKey="people-crm-feature"
             >
-              <Users className="h-8 w-8" />
+              <FEATURE_ICONS.USER className="h-8 w-8" />
             </FeatureHeader>
           }
         >

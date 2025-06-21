@@ -32,7 +32,7 @@ const defaultSidebarItems: SidebarItem[] = [
   },
   {
     title: "Daily Tracker",
-    icon: <FEATURE_ICONS.DAILY_TRACkER className="h-5 w-5" />,
+    icon: <FEATURE_ICONS.DAILY_TRACKER className="h-5 w-5" />,
     href: "/calendar",
   },
   {

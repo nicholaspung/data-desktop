@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
-import { Banknote, Receipt, Scale, FileText, Plus } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import dataStore from "@/store/data-store";
@@ -94,7 +94,7 @@ function WealthPage() {
       {
         id: "logs",
         label: "Logs",
-        icon: <Receipt className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.RECEIPT className="h-4 w-4" />,
         content: (
           <>
             <div className="flex justify-between items-center my-4">
@@ -105,7 +105,7 @@ function WealthPage() {
                 }
                 size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <FEATURE_ICONS.PLUS className="h-4 w-4 mr-2" />
                 Add Transaction
               </Button>
             </div>
@@ -134,7 +134,7 @@ function WealthPage() {
       {
         id: "balances",
         label: "Balances",
-        icon: <Scale className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.SCALE className="h-4 w-4" />,
         content: (
           <>
             <div className="flex justify-between items-center my-4">
@@ -145,7 +145,7 @@ function WealthPage() {
                 }
                 size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <FEATURE_ICONS.PLUS className="h-4 w-4 mr-2" />
                 Add Balance
               </Button>
             </div>
@@ -182,7 +182,7 @@ function WealthPage() {
       {
         id: "paycheck",
         label: "Paycheck",
-        icon: <Banknote className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.BANKNOTE className="h-4 w-4" />,
         content: (
           <>
             <div className="flex justify-between items-center my-4">
@@ -191,7 +191,7 @@ function WealthPage() {
                 onClick={() => handleAddNew("paycheck_info", "Paycheck Item")}
                 size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <FEATURE_ICONS.PLUS className="h-4 w-4 mr-2" />
                 Add Paycheck Item
               </Button>
             </div>
@@ -220,7 +220,7 @@ function WealthPage() {
       {
         id: "files",
         label: "Files",
-        icon: <FileText className="h-4 w-4" />,
+        icon: <FEATURE_ICONS.FILE_TEXT className="h-4 w-4" />,
         content: (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -231,7 +231,7 @@ function WealthPage() {
                 }
                 size="sm"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <FEATURE_ICONS.PLUS className="h-4 w-4 mr-2" />
                 Add Files
               </Button>
             </div>
