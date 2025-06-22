@@ -314,13 +314,13 @@ function WealthPage() {
           onSuccess={() => handleAddSuccess()}
           recentEntries={
             currentDataset === "financial_logs"
-              ? financialLogs.slice(0, 10)
+              ? financialLogs
               : currentDataset === "financial_balances"
-                ? financialBalances.slice(0, 10)
+                ? financialBalances
                 : currentDataset === "paycheck_info"
-                  ? paycheckInfo.slice(0, 10)
+                  ? paycheckInfo
                   : currentDataset === "financial_files"
-                    ? financialFiles.slice(0, 10)
+                    ? financialFiles
                     : []
           }
           existingEntries={
