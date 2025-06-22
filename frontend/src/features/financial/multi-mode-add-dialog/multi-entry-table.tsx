@@ -80,16 +80,14 @@ export default function MultiEntryTable({
       }
 
       const uniqueValues = new Map<string, any>();
-      
-      // Check if this field has enhanced autocomplete settings
+
       const enhancedSettings = enhancedAutocompleteFields[field.key];
-      
+
       existingEntries.forEach((entry) => {
         const value = entry[field.key];
         if (value && typeof value === "string" && value.trim()) {
           const trimmedValue = value.trim();
-          
-          // For enhanced autocomplete fields, create a unique key based on all related fields
+
           if (enhancedSettings && enhancedSettings.displayFields.length > 0) {
             const relatedValues = [trimmedValue];
             enhancedSettings.displayFields.forEach((relatedField) => {
@@ -98,13 +96,12 @@ export default function MultiEntryTable({
                 relatedValues.push(String(relatedValue).trim());
               }
             });
-            const uniqueKey = relatedValues.join('|||');
-            
+            const uniqueKey = relatedValues.join("|||");
+
             if (!uniqueValues.has(uniqueKey)) {
               uniqueValues.set(uniqueKey, entry);
             }
           } else {
-            // For regular fields, just use the value itself
             if (!uniqueValues.has(trimmedValue)) {
               uniqueValues.set(trimmedValue, entry);
             }
@@ -219,7 +216,6 @@ export default function MultiEntryTable({
 
     updatedData[fieldKey] = option.label;
 
-    // Use the enhancedAutocompleteFields configuration for auto-filling
     const enhancedSettings = enhancedAutocompleteFields[fieldKey];
     if (enhancedSettings && option.entry) {
       enhancedSettings.autoFillFields.forEach((autoFillField) => {
@@ -352,11 +348,19 @@ export default function MultiEntryTable({
     const errors: Record<string, string> = {};
 
     editableFields.forEach((field) => {
-      if (!field.isOptional && !data[field.key]) {
-        errors[field.key] = "Required";
+      if (!field.isOptional) {
+        const value = data[field.key];
+        if (value === undefined || value === null || value === "") {
+          errors[field.key] = "Required";
+        }
       }
 
-      if (field.type === "number" && data[field.key]) {
+      if (
+        field.type === "number" &&
+        data[field.key] !== "" &&
+        data[field.key] !== undefined &&
+        data[field.key] !== null
+      ) {
         const num = Number(data[field.key]);
         if (isNaN(num)) {
           errors[field.key] = "Must be a number";

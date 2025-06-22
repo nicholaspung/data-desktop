@@ -99,9 +99,11 @@ export default function MultiModeAddDialog({
   const handleMultipleSave = async () => {
     const validRows = multipleRows.filter((row) => row.isValid);
     const invalidRows = multipleRows.filter((row) => !row.isValid);
-    
+
     if (validRows.length === 0) {
-      toast.error("No valid entries to save. Please fix the errors and try again.");
+      toast.error(
+        "No valid entries to save. Please fix the errors and try again."
+      );
       return;
     }
 
@@ -132,28 +134,31 @@ export default function MultiModeAddDialog({
         }
       }
 
-      // Remove successfully saved rows, keep invalid and failed rows
       const remainingRows = multipleRows.filter(
         (row) => !savedRows.includes(row.id)
       );
 
       if (savedRows.length > 0) {
-        toast.success(`${savedRows.length} ${title} entries added successfully`);
+        toast.success(
+          `${savedRows.length} ${title} entries added successfully`
+        );
         onSuccess?.();
       }
 
       if (failedRows.length > 0) {
-        toast.error(`${failedRows.length} entries failed to save. Please try again.`);
+        toast.error(
+          `${failedRows.length} entries failed to save. Please try again.`
+        );
       }
 
-      // If all rows were saved successfully, close the dialog
       if (remainingRows.length === 0) {
         onOpenChange(false);
         setMultipleRows([]);
       } else {
-        // Keep the dialog open with remaining rows
         setMultipleRows(remainingRows);
-        toast.info(`${remainingRows.length} row(s) remaining. Fix errors and try again.`);
+        toast.info(
+          `${remainingRows.length} row(s) remaining. Fix errors and try again.`
+        );
       }
     } catch (error) {
       toast.error("Failed to save entries");
@@ -166,9 +171,11 @@ export default function MultiModeAddDialog({
   const handleBulkSave = async () => {
     const validRows = bulkRows.filter((row) => row.isValid);
     const invalidRows = bulkRows.filter((row) => !row.isValid);
-    
+
     if (validRows.length === 0) {
-      toast.error("No valid entries to save. Please fix the errors and try again.");
+      toast.error(
+        "No valid entries to save. Please fix the errors and try again."
+      );
       return;
     }
 
@@ -199,28 +206,31 @@ export default function MultiModeAddDialog({
         }
       }
 
-      // Remove successfully saved rows, keep invalid and failed rows
       const remainingRows = bulkRows.filter(
         (row) => !savedRows.includes(row.id)
       );
 
       if (savedRows.length > 0) {
-        toast.success(`${savedRows.length} ${title} entries added successfully`);
+        toast.success(
+          `${savedRows.length} ${title} entries added successfully`
+        );
         onSuccess?.();
       }
 
       if (failedRows.length > 0) {
-        toast.error(`${failedRows.length} entries failed to save. Please try again.`);
+        toast.error(
+          `${failedRows.length} entries failed to save. Please try again.`
+        );
       }
 
-      // If all rows were saved successfully, close the dialog
       if (remainingRows.length === 0) {
         onOpenChange(false);
         setBulkRows([]);
       } else {
-        // Keep the dialog open with remaining rows
         setBulkRows(remainingRows);
-        toast.info(`${remainingRows.length} row(s) remaining. Fix errors and try again.`);
+        toast.info(
+          `${remainingRows.length} row(s) remaining. Fix errors and try again.`
+        );
       }
     } catch (error) {
       toast.error("Failed to save entries");
