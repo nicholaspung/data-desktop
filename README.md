@@ -72,11 +72,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - in multi-mode-add-dialog, test bulk imports
 - sometimes the date/amount are filled, but a lot of the times they are not
+- in financial records bulk imports, the recent entries are not the recent entries
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
 - update feature information in this README for the new features added so far
 - in dataset table visual, the currency is showing incorrectly
+
+- in the sidebar, add a search bar that is an autocomplete to select a route
 
 ### DONE
 

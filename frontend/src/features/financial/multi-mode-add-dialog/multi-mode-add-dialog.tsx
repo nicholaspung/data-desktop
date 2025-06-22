@@ -381,7 +381,16 @@ export default function MultiModeAddDialog({
               </h4>
               <div className="rounded-md border p-2 max-h-[200px] overflow-y-auto bg-muted/30">
                 <div className="space-y-1">
-                  {recentEntries.slice(0, 10).map((entry, index) => (
+                  {recentEntries
+                    .sort((a, b) => {
+                      const dateField = fieldDefinitions.find(f => f.type === 'date')?.key;
+                      if (!dateField) return 0;
+                      const dateA = new Date(a[dateField] as string);
+                      const dateB = new Date(b[dateField] as string);
+                      return dateB.getTime() - dateA.getTime(); // Sort newest first
+                    })
+                    .slice(0, 10)
+                    .map((entry, index) => (
                     <div
                       key={entry.id || index}
                       className={cn(
