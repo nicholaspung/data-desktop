@@ -98,29 +98,63 @@ export default function MultiModeAddDialog({
 
   const handleMultipleSave = async () => {
     const validRows = multipleRows.filter((row) => row.isValid);
+    const invalidRows = multipleRows.filter((row) => !row.isValid);
+    
     if (validRows.length === 0) {
-      toast.error("No valid entries to save");
+      toast.error("No valid entries to save. Please fix the errors and try again.");
       return;
     }
 
-    if (validRows.length < multipleRows.length) {
-      const invalidCount = multipleRows.length - validRows.length;
-      toast.warning(`${invalidCount} invalid row(s) will be skipped`);
+    if (invalidRows.length > 0) {
+      const confirmSave = window.confirm(
+        `${invalidRows.length} row(s) have errors and will not be saved. Do you want to continue and save only the ${validRows.length} valid row(s)?`
+      );
+      if (!confirmSave) {
+        return;
+      }
     }
 
     setIsSaving(true);
     try {
+      const savedRows: string[] = [];
+      const failedRows: MultiEntryRow[] = [];
+
       for (const row of validRows) {
-        const savedRecord = await ApiService.addRecord(datasetId, row.data);
-        if (savedRecord) {
-          addEntry(savedRecord, datasetId as DataStoreName);
+        try {
+          const savedRecord = await ApiService.addRecord(datasetId, row.data);
+          if (savedRecord) {
+            addEntry(savedRecord, datasetId as DataStoreName);
+            savedRows.push(row.id);
+          }
+        } catch (error) {
+          console.error(`Failed to save row ${row.id}:`, error);
+          failedRows.push(row);
         }
       }
 
-      toast.success(`${validRows.length} ${title} entries added successfully`);
-      onSuccess?.();
-      onOpenChange(false);
-      setMultipleRows([]);
+      // Remove successfully saved rows, keep invalid and failed rows
+      const remainingRows = multipleRows.filter(
+        (row) => !savedRows.includes(row.id)
+      );
+
+      if (savedRows.length > 0) {
+        toast.success(`${savedRows.length} ${title} entries added successfully`);
+        onSuccess?.();
+      }
+
+      if (failedRows.length > 0) {
+        toast.error(`${failedRows.length} entries failed to save. Please try again.`);
+      }
+
+      // If all rows were saved successfully, close the dialog
+      if (remainingRows.length === 0) {
+        onOpenChange(false);
+        setMultipleRows([]);
+      } else {
+        // Keep the dialog open with remaining rows
+        setMultipleRows(remainingRows);
+        toast.info(`${remainingRows.length} row(s) remaining. Fix errors and try again.`);
+      }
     } catch (error) {
       toast.error("Failed to save entries");
       console.error(error);
@@ -131,29 +165,63 @@ export default function MultiModeAddDialog({
 
   const handleBulkSave = async () => {
     const validRows = bulkRows.filter((row) => row.isValid);
+    const invalidRows = bulkRows.filter((row) => !row.isValid);
+    
     if (validRows.length === 0) {
-      toast.error("No valid entries to save");
+      toast.error("No valid entries to save. Please fix the errors and try again.");
       return;
     }
 
-    if (validRows.length < bulkRows.length) {
-      const invalidCount = bulkRows.length - validRows.length;
-      toast.warning(`${invalidCount} invalid row(s) will be skipped`);
+    if (invalidRows.length > 0) {
+      const confirmSave = window.confirm(
+        `${invalidRows.length} row(s) have errors and will not be saved. Do you want to continue and save only the ${validRows.length} valid row(s)?`
+      );
+      if (!confirmSave) {
+        return;
+      }
     }
 
     setIsSaving(true);
     try {
+      const savedRows: string[] = [];
+      const failedRows: MultiEntryRow[] = [];
+
       for (const row of validRows) {
-        const savedRecord = await ApiService.addRecord(datasetId, row.data);
-        if (savedRecord) {
-          addEntry(savedRecord, datasetId as DataStoreName);
+        try {
+          const savedRecord = await ApiService.addRecord(datasetId, row.data);
+          if (savedRecord) {
+            addEntry(savedRecord, datasetId as DataStoreName);
+            savedRows.push(row.id);
+          }
+        } catch (error) {
+          console.error(`Failed to save row ${row.id}:`, error);
+          failedRows.push(row);
         }
       }
 
-      toast.success(`${validRows.length} ${title} entries added successfully`);
-      onSuccess?.();
-      onOpenChange(false);
-      setBulkRows([]);
+      // Remove successfully saved rows, keep invalid and failed rows
+      const remainingRows = bulkRows.filter(
+        (row) => !savedRows.includes(row.id)
+      );
+
+      if (savedRows.length > 0) {
+        toast.success(`${savedRows.length} ${title} entries added successfully`);
+        onSuccess?.();
+      }
+
+      if (failedRows.length > 0) {
+        toast.error(`${failedRows.length} entries failed to save. Please try again.`);
+      }
+
+      // If all rows were saved successfully, close the dialog
+      if (remainingRows.length === 0) {
+        onOpenChange(false);
+        setBulkRows([]);
+      } else {
+        // Keep the dialog open with remaining rows
+        setBulkRows(remainingRows);
+        toast.info(`${remainingRows.length} row(s) remaining. Fix errors and try again.`);
+      }
     } catch (error) {
       toast.error("Failed to save entries");
       console.error(error);
@@ -305,6 +373,7 @@ export default function MultiModeAddDialog({
             rows={multipleRows}
             onRowsChange={setMultipleRows}
             existingEntries={existingEntries}
+            enhancedAutocompleteFields={enhancedAutocompleteFields}
           />
         </div>
       ),
@@ -395,7 +464,7 @@ export default function MultiModeAddDialog({
                       if (!dateField) return 0;
                       const dateA = new Date(a[dateField] as string);
                       const dateB = new Date(b[dateField] as string);
-                      return dateB.getTime() - dateA.getTime(); // Sort newest first
+                      return dateB.getTime() - dateA.getTime();
                     })
                     .slice(0, 10)
                     .map((entry, index) => (
@@ -434,6 +503,7 @@ export default function MultiModeAddDialog({
               rows={bulkRows}
               onRowsChange={setBulkRows}
               existingEntries={existingEntries}
+              enhancedAutocompleteFields={enhancedAutocompleteFields}
             />
           </div>
         </div>

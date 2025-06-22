@@ -37,6 +37,13 @@ interface MultiEntryTableProps {
   onRowsChange: (rows: MultiEntryRow[]) => void;
   showActions?: boolean;
   existingEntries?: any[];
+  enhancedAutocompleteFields?: Record<
+    string,
+    {
+      displayFields: string[];
+      autoFillFields: string[];
+    }
+  >;
 }
 
 export default function MultiEntryTable({
@@ -45,6 +52,7 @@ export default function MultiEntryTable({
   onRowsChange,
   showActions = true,
   existingEntries = [],
+  enhancedAutocompleteFields = {},
 }: MultiEntryTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -72,27 +80,49 @@ export default function MultiEntryTable({
       }
 
       const uniqueValues = new Map<string, any>();
+      
+      // Check if this field has enhanced autocomplete settings
+      const enhancedSettings = enhancedAutocompleteFields[field.key];
+      
       existingEntries.forEach((entry) => {
         const value = entry[field.key];
         if (value && typeof value === "string" && value.trim()) {
           const trimmedValue = value.trim();
-          if (!uniqueValues.has(trimmedValue)) {
-            uniqueValues.set(trimmedValue, entry);
+          
+          // For enhanced autocomplete fields, create a unique key based on all related fields
+          if (enhancedSettings && enhancedSettings.displayFields.length > 0) {
+            const relatedValues = [trimmedValue];
+            enhancedSettings.displayFields.forEach((relatedField) => {
+              const relatedValue = entry[relatedField];
+              if (relatedValue) {
+                relatedValues.push(String(relatedValue).trim());
+              }
+            });
+            const uniqueKey = relatedValues.join('|||');
+            
+            if (!uniqueValues.has(uniqueKey)) {
+              uniqueValues.set(uniqueKey, entry);
+            }
+          } else {
+            // For regular fields, just use the value itself
+            if (!uniqueValues.has(trimmedValue)) {
+              uniqueValues.set(trimmedValue, entry);
+            }
           }
         }
       });
 
       fieldOptionsMap[field.key] = Array.from(uniqueValues.entries())
-        .map(([value, entry]) => ({
-          id: `${field.key}-${value}`,
-          label: value,
+        .map(([key, entry]) => ({
+          id: `${field.key}-${key}`,
+          label: entry[field.key] || "",
           entry: entry,
         }))
         .sort((a, b) => a.label.localeCompare(b.label));
     });
 
     return fieldOptionsMap;
-  }, [existingEntries, editableFields]);
+  }, [existingEntries, editableFields, enhancedAutocompleteFields]);
 
   const handleKeyDown = (
     e: React.KeyboardEvent,
@@ -189,24 +219,14 @@ export default function MultiEntryTable({
 
     updatedData[fieldKey] = option.label;
 
-    if (fieldKey === "description" && option.entry) {
-      if (option.entry.category) {
-        updatedData.category = option.entry.category;
-      }
-      if (option.entry.tags) {
-        updatedData.tags = option.entry.tags;
-      }
-    } else if (fieldKey === "account_name" && option.entry) {
-      if (option.entry.account_type) {
-        updatedData.account_type = option.entry.account_type;
-      }
-      if (option.entry.account_owner) {
-        updatedData.account_owner = option.entry.account_owner;
-      }
-    } else if (fieldKey === "deduction_type" && option.entry) {
-      if (option.entry.category) {
-        updatedData.category = option.entry.category;
-      }
+    // Use the enhancedAutocompleteFields configuration for auto-filling
+    const enhancedSettings = enhancedAutocompleteFields[fieldKey];
+    if (enhancedSettings && option.entry) {
+      enhancedSettings.autoFillFields.forEach((autoFillField) => {
+        if (option.entry[autoFillField] !== undefined) {
+          updatedData[autoFillField] = option.entry[autoFillField];
+        }
+      });
     }
 
     onRowsChange(
@@ -229,14 +249,8 @@ export default function MultiEntryTable({
     fieldKey: string,
     option: SelectOption & { [key: string]: any }
   ) => {
-    const relatedFields =
-      fieldKey === "description"
-        ? ["category", "tags"]
-        : fieldKey === "account_name"
-          ? ["account_type", "account_owner"]
-          : fieldKey === "deduction_type"
-            ? ["category"]
-            : [];
+    const enhancedSettings = enhancedAutocompleteFields[fieldKey];
+    const relatedFields = enhancedSettings?.displayFields || [];
 
     return (
       <div className="flex flex-col gap-1">
@@ -541,8 +555,10 @@ export default function MultiEntryTable({
                       <Input
                         type="date"
                         value={
-                          row.data[field.key] 
-                            ? new Date(row.data[field.key]).toISOString().split('T')[0]
+                          row.data[field.key]
+                            ? new Date(row.data[field.key])
+                                .toISOString()
+                                .split("T")[0]
                             : ""
                         }
                         onChange={(e) =>
@@ -568,8 +584,8 @@ export default function MultiEntryTable({
                             value={row.data[field.key] ?? ""}
                             onChange={(e) => {
                               const value = e.target.value;
-                              // Convert to number if not empty, otherwise keep as empty string
-                              const numValue = value === "" ? "" : parseFloat(value);
+                              const numValue =
+                                value === "" ? "" : parseFloat(value);
                               updateRowData(row.id, field.key, numValue);
                             }}
                             onKeyDown={(e) =>
@@ -620,9 +636,7 @@ export default function MultiEntryTable({
                           setFocusedCell({ rowId: row.id, fieldKey: field.key })
                         }
                       />
-                    ) : field.key === "description" ||
-                      field.key === "account_name" ||
-                      field.key === "deduction_type" ? (
+                    ) : enhancedAutocompleteFields[field.key] ? (
                       <AutocompleteInput
                         value={row.data[field.key] || ""}
                         onChange={(value) =>
