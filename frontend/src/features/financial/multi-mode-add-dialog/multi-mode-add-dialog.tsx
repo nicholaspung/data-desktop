@@ -20,7 +20,7 @@ import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import { ApiService } from "@/services/api";
 import { MultiModeAddDialogProps, AddMode, MultiEntryRow } from "./types";
-import { DataStoreName } from "@/store/data-store";
+import { DataStoreName, addEntry } from "@/store/data-store";
 import MultiEntryTable from "./multi-entry-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { parseCSV, createCSVTemplate, validateCSV } from "@/lib/csv-parser";
@@ -111,7 +111,10 @@ export default function MultiModeAddDialog({
     setIsSaving(true);
     try {
       for (const row of validRows) {
-        await ApiService.addRecord(datasetId, row.data);
+        const savedRecord = await ApiService.addRecord(datasetId, row.data);
+        if (savedRecord) {
+          addEntry(savedRecord, datasetId as DataStoreName);
+        }
       }
 
       toast.success(`${validRows.length} ${title} entries added successfully`);
@@ -141,7 +144,10 @@ export default function MultiModeAddDialog({
     setIsSaving(true);
     try {
       for (const row of validRows) {
-        await ApiService.addRecord(datasetId, row.data);
+        const savedRecord = await ApiService.addRecord(datasetId, row.data);
+        if (savedRecord) {
+          addEntry(savedRecord, datasetId as DataStoreName);
+        }
       }
 
       toast.success(`${validRows.length} ${title} entries added successfully`);
@@ -186,10 +192,10 @@ export default function MultiModeAddDialog({
         errors: {},
       }));
 
-      setBulkRows((prev) => [...prev, ...csvRows]);
+      setBulkRows(csvRows);
 
       toast.success("CSV imported successfully", {
-        description: `Added ${csvRows.length} entries to the table`,
+        description: `Loaded ${csvRows.length} entries`,
       });
     } catch (error) {
       console.error("Error importing CSV:", error);
@@ -383,7 +389,9 @@ export default function MultiModeAddDialog({
                 <div className="space-y-1">
                   {recentEntries
                     .sort((a, b) => {
-                      const dateField = fieldDefinitions.find(f => f.type === 'date')?.key;
+                      const dateField = fieldDefinitions.find(
+                        (f) => f.type === "date"
+                      )?.key;
                       if (!dateField) return 0;
                       const dateA = new Date(a[dateField] as string);
                       const dateB = new Date(b[dateField] as string);
@@ -391,28 +399,29 @@ export default function MultiModeAddDialog({
                     })
                     .slice(0, 10)
                     .map((entry, index) => (
-                    <div
-                      key={entry.id || index}
-                      className={cn(
-                        "text-sm p-2 rounded",
-                        index % 2 === 0 ? "bg-background" : "bg-muted/50"
-                      )}
-                    >
-                      {fieldDefinitions
-                        .filter(
-                          (f) => !f.isRelation && f.key !== "id" && entry[f.key]
-                        )
-                        .map((field, i) => (
-                          <span key={field.key}>
-                            {i > 0 && " • "}
-                            <span className="font-medium">
-                              {field.displayName}:
-                            </span>{" "}
-                            {formatValue(entry[field.key], field.key, entry)}
-                          </span>
-                        ))}
-                    </div>
-                  ))}
+                      <div
+                        key={entry.id || index}
+                        className={cn(
+                          "text-sm p-2 rounded",
+                          index % 2 === 0 ? "bg-background" : "bg-muted/50"
+                        )}
+                      >
+                        {fieldDefinitions
+                          .filter(
+                            (f) =>
+                              !f.isRelation && f.key !== "id" && entry[f.key]
+                          )
+                          .map((field, i) => (
+                            <span key={field.key}>
+                              {i > 0 && " • "}
+                              <span className="font-medium">
+                                {field.displayName}:
+                              </span>{" "}
+                              {formatValue(entry[field.key], field.key, entry)}
+                            </span>
+                          ))}
+                      </div>
+                    ))}
                 </div>
               </div>
             </div>

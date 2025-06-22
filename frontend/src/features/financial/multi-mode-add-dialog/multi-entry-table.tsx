@@ -566,9 +566,12 @@ export default function MultiEntryTable({
                             type="number"
                             step="0.01"
                             value={row.data[field.key] ?? ""}
-                            onChange={(e) =>
-                              updateRowData(row.id, field.key, e.target.value)
-                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Convert to number if not empty, otherwise keep as empty string
+                              const numValue = value === "" ? "" : parseFloat(value);
+                              updateRowData(row.id, field.key, numValue);
+                            }}
                             onKeyDown={(e) =>
                               handleKeyDown(e, row.id, field.key)
                             }
