@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { differenceInDays, isAfter } from "date-fns";
+import { differenceInDays, isAfter, format } from "date-fns";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Loader2, Target, BarChart, Calendar } from "lucide-react";
@@ -126,6 +126,34 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
       : 0;
     const daysRemaining = Math.max(0, totalDays - daysElapsed);
 
+    const toLocalDate = (dateInput: string | Date) => {
+      let dateStr: string;
+      if (typeof dateInput === "string") {
+        dateStr = dateInput;
+      } else {
+        dateStr = format(dateInput, "yyyy-MM-dd");
+      }
+
+      if (dateStr.includes("T00:00:00.000Z")) {
+        const datePart = dateStr.split("T")[0];
+        const [year, month, day] = datePart.split("-");
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      } else {
+        const [year, month, day] = dateStr.split("-");
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      }
+    };
+
+    const normalizedStartDate = toLocalDate(experiment.start_date);
+    const normalizedEndDate = toLocalDate(
+      experiment.end_date || format(endDate, "yyyy-MM-dd")
+    );
+
+    const logsInRange = logs.filter((log) => {
+      const logDate = toLocalDate(log.date);
+      return logDate >= normalizedStartDate && logDate <= normalizedEndDate;
+    });
+
     const metricProgress: Record<string, number> = {};
     const completionRate: Record<string, number> = {};
 
@@ -138,7 +166,7 @@ const ExperimentDashboard = ({ experimentId }: { experimentId: string }) => {
       const metric = allMetrics.find((m) => m.id === expMetric.metric_id);
       if (!metric || metric.type !== "boolean") return;
 
-      const metricLogs = logs.filter(
+      const metricLogs = logsInRange.filter(
         (log) => log.metric_id === expMetric.metric_id
       );
 

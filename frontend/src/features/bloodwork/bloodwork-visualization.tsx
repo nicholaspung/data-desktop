@@ -122,6 +122,15 @@ const BloodworkVisualizations: React.FC = () => {
         value <= marker.optimal_high
       ) {
         optimal++;
+      } else if (
+        marker.optimal_low === undefined &&
+        marker.optimal_high === undefined &&
+        marker.lower_reference !== undefined &&
+        marker.upper_reference !== undefined &&
+        value >= marker.lower_reference &&
+        value <= marker.upper_reference
+      ) {
+        optimal++;
       } else {
         outOfRange++;
       }
@@ -208,11 +217,22 @@ const BloodworkVisualizations: React.FC = () => {
             marker.optimal_general || marker.general_reference
           );
         } else if (statusFilter === "optimal") {
-          matchesStatus =
+          if (
             marker.optimal_low !== undefined &&
-            marker.optimal_high !== undefined &&
-            value >= marker.optimal_low &&
-            value <= marker.optimal_high;
+            marker.optimal_high !== undefined
+          ) {
+            matchesStatus =
+              value >= marker.optimal_low && value <= marker.optimal_high;
+          } else if (
+            marker.lower_reference !== undefined &&
+            marker.upper_reference !== undefined
+          ) {
+            matchesStatus =
+              value >= marker.lower_reference &&
+              value <= marker.upper_reference;
+          } else {
+            matchesStatus = false;
+          }
         } else if (statusFilter === "outOfRange") {
           if (
             latestResult.value_text &&
@@ -239,11 +259,22 @@ const BloodworkVisualizations: React.FC = () => {
                 !optimalText.includes(valueText);
             }
           } else {
-            matchesStatus =
-              hasAnyRangeDefined(marker) &&
+            if (
               marker.optimal_low !== undefined &&
-              marker.optimal_high !== undefined &&
-              (value < marker.optimal_low || value > marker.optimal_high);
+              marker.optimal_high !== undefined
+            ) {
+              matchesStatus =
+                value < marker.optimal_low || value > marker.optimal_high;
+            } else if (
+              marker.lower_reference !== undefined &&
+              marker.upper_reference !== undefined
+            ) {
+              matchesStatus =
+                value < marker.lower_reference ||
+                value > marker.upper_reference;
+            } else {
+              matchesStatus = false;
+            }
           }
         }
       }

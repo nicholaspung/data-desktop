@@ -17,18 +17,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import CustomLineChart from "@/components/charts/line-chart";
 import { formatChartDate } from "@/components/charts/chart-utils";
 import { BodyMeasurementRecord } from "./types";
 import { Scale, Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { CustomTooltip } from "@/components/charts/custom-tooltip";
 
 type AveragingPeriod = "daily" | "weekly" | "biweekly" | "monthly";
 type TimeRange = "all" | "3m" | "6m" | "1y" | "2y" | "custom";
 
 interface ChartDataPoint {
   date: string;
-  weight: number;
+  weight: number | null;
   dateObj: Date;
 }
 
@@ -130,7 +140,7 @@ export default function BodyweightChart({
         {} as Record<string, typeof weightData>
       );
 
-      return Object.entries(dailyGroups)
+      const averagedData = Object.entries(dailyGroups)
         .map(([date, measurements]) => {
           const avgWeight =
             measurements.reduce((sum, m) => sum + m.weight, 0) /
@@ -142,6 +152,37 @@ export default function BodyweightChart({
           };
         })
         .sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+      if (averagedData.length > 1) {
+        const filledData: ChartDataPoint[] = [];
+        const startDate = new Date(averagedData[0].dateObj);
+        const endDate = new Date(averagedData[averagedData.length - 1].dateObj);
+
+        const dataMap = new Map(averagedData.map((d) => [d.date, d]));
+
+        for (
+          let date = new Date(startDate);
+          date <= endDate;
+          date.setDate(date.getDate() + 1)
+        ) {
+          const dateStr = formatChartDate(date.toISOString());
+          const existingData = dataMap.get(dateStr);
+
+          if (existingData) {
+            filledData.push(existingData);
+          } else {
+            filledData.push({
+              date: dateStr,
+              weight: null as any,
+              dateObj: new Date(date),
+            });
+          }
+        }
+
+        return filledData;
+      }
+
+      return averagedData;
     }
 
     if (!effectiveStartDate) return [];
@@ -229,6 +270,12 @@ export default function BodyweightChart({
         result.push({
           date: formatChartDate(period.displayDate.toISOString()),
           weight: Number(avgWeight.toFixed(1)),
+          dateObj: period.displayDate,
+        });
+      } else {
+        result.push({
+          date: formatChartDate(period.displayDate.toISOString()),
+          weight: null,
           dateObj: period.displayDate,
         });
       }
@@ -426,27 +473,48 @@ export default function BodyweightChart({
           </p>
         </div>
         {chartData.length > 0 ? (
-          <CustomLineChart
-            data={chartData}
-            lines={[
-              {
-                dataKey: "weight",
-                color: "#8884d8",
-                strokeWidth: 2,
-                type: "monotone",
-                name: `Weight`,
-                unit: unit,
-              },
-            ]}
-            xAxisKey="date"
-            yAxisUnit=""
-            yAxisDomain={["auto", "auto"]}
-            tooltipFormatter={(value: number | string) => [
-              `${value} ${unit}`,
-              `Weight`,
-            ]}
-            height={400}
-          />
+          <div style={{ height: "400px" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis domain={["auto", "auto"]} />
+                <Tooltip
+                  content={(props) => (
+                    <CustomTooltip
+                      {...props}
+                      formatter={(value: number | string) =>
+                        value === null ? null : [`${value} ${unit}`]
+                      }
+                    />
+                  )}
+                />
+                <Legend />
+                {/* Render connected line with dotted style for null connections */}
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  name="Weight (interpolated)"
+                  stroke="#8884d8"
+                  strokeWidth={2}
+                  connectNulls={true}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  legendType="none"
+                />
+                {/* Render solid line segments over actual data */}
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  name="Weight"
+                  stroke="#8884d8"
+                  strokeWidth={2}
+                  connectNulls={false}
+                  dot={{ r: 4, fill: "#8884d8" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <div className="text-center py-12">
             <Scale className="h-16 w-16 mx-auto text-muted-foreground mb-4" />

@@ -8,6 +8,16 @@ import { parseCSV } from "@/lib/csv-parser";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useLoadData from "@/hooks/useLoadData";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const BodyMeasurementsCSVImport = () => {
   const [showWeightImportDialog, setShowWeightImportDialog] = useState(false);
@@ -15,6 +25,7 @@ const BodyMeasurementsCSVImport = () => {
   const [parsedData, setParsedData] = useState<Record<string, any>[] | null>(
     null
   );
+  const [convertToKg, setConvertToKg] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { loadData } = useLoadData({
     fields: BODY_MEASUREMENTS_FIELD_DEFINITIONS.fields,
@@ -69,8 +80,8 @@ const BodyMeasurementsCSVImport = () => {
       const transformedData = parsedData.map((record: Record<string, any>) => ({
         date: record.date,
         measurement: "Weight",
-        value: record.weight,
-        unit: "lbs",
+        value: convertToKg ? record.weight * 0.453592 : record.weight,
+        unit: convertToKg ? "kg" : "lbs",
       }));
 
       const importedCount = await ApiService.importRecords(
@@ -86,6 +97,7 @@ const BodyMeasurementsCSVImport = () => {
 
       setParsedData(null);
       setShowWeightImportDialog(false);
+      setConvertToKg(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -101,6 +113,7 @@ const BodyMeasurementsCSVImport = () => {
     setShowWeightImportDialog(open);
     if (!open) {
       setParsedData(null);
+      setConvertToKg(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -141,48 +154,100 @@ const BodyMeasurementsCSVImport = () => {
         }
         customContent={
           <div className="space-y-4">
-            <Alert>
-              <AlertDescription>
-                {parsedData ? (
-                  <div className="space-y-2">
-                    <p>
-                      Ready to import {parsedData.length} weight measurement
-                      {parsedData.length !== 1 ? "s" : ""}.
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      All entries will be imported as "Weight" measurements in
-                      lbs.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p>Upload a CSV file with two columns:</p>
-                    <ul className="list-disc pl-5 text-sm">
-                      <li>
-                        <strong>date</strong>: Measurement date (YYYY-MM-DD)
-                      </li>
-                      <li>
-                        <strong>weight</strong>: Weight value (will use lbs as
-                        unit)
-                      </li>
-                    </ul>
-                  </div>
-                )}
-              </AlertDescription>
-            </Alert>
+            {parsedData ? (
+              <>
+                <Alert>
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p>
+                        Found {parsedData.length} weight measurement
+                        {parsedData.length !== 1 ? "s" : ""} in your CSV file.
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Review the data below before importing.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
 
-            {!parsedData && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={downloadWeightTemplate}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download Template
-                </Button>
-              </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="convert-to-kg"
+                    checked={convertToKg}
+                    onCheckedChange={(checked) => setConvertToKg(!!checked)}
+                  />
+                  <label
+                    htmlFor="convert-to-kg"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Convert to kilograms (assumes CSV values are in lbs)
+                  </label>
+                </div>
+
+                <div className="border rounded-lg">
+                  <ScrollArea className="h-[300px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Weight</TableHead>
+                          <TableHead>Unit</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {parsedData.slice(0, 100).map((record, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              {new Date(record.date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {convertToKg
+                                ? (record.weight * 0.453592).toFixed(1)
+                                : record.weight}
+                            </TableCell>
+                            <TableCell>{convertToKg ? "kg" : "lbs"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {parsedData.length > 100 && (
+                      <div className="p-4 text-center text-sm text-muted-foreground">
+                        Showing first 100 of {parsedData.length} entries
+                      </div>
+                    )}
+                  </ScrollArea>
+                </div>
+              </>
+            ) : (
+              <>
+                <Alert>
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p>Upload a CSV file with two columns:</p>
+                      <ul className="list-disc pl-5 text-sm">
+                        <li>
+                          <strong>date</strong>: Measurement date (YYYY-MM-DD)
+                        </li>
+                        <li>
+                          <strong>weight</strong>: Weight value (assumes lbs by default)
+                        </li>
+                      </ul>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={downloadWeightTemplate}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Template
+                  </Button>
+                </div>
+              </>
             )}
 
             <input
@@ -201,6 +266,7 @@ const BodyMeasurementsCSVImport = () => {
                 variant="outline"
                 onClick={() => {
                   setParsedData(null);
+                  setConvertToKg(false);
                   if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                   }

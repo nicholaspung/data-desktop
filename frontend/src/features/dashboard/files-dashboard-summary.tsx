@@ -31,7 +31,6 @@ export default function FilesDashboardSummary() {
     const yearStart = new Date(currentYear, 0, 1);
     const yearEnd = new Date(currentYear, 11, 31, 23, 59, 59);
 
-    // Count total files for each category
     const financialFileCount = financialFiles.reduce((sum, record) => {
       return sum + (record.files?.length || 0);
     }, 0);
@@ -40,7 +39,6 @@ export default function FilesDashboardSummary() {
       return sum + (record.files?.length || 0);
     }, 0);
 
-    // Count files uploaded this year
     const yearlyFinancialFiles = financialFiles.filter((file) => {
       const fileDate = new Date(file.date);
       return fileDate >= yearStart && fileDate <= yearEnd;
@@ -62,7 +60,6 @@ export default function FilesDashboardSummary() {
       return sum + (record.files?.length || 0);
     }, 0);
 
-    // Find most recent file dates
     const latestFinancialDate = financialFiles.length
       ? new Date(
           Math.max(
@@ -169,9 +166,7 @@ export default function FilesDashboardSummary() {
           label: "All Files",
           value: (
             <div className="flex items-center gap-2">
-              <span className="text-primary">
-                {fileSummary.totalFileCount}
-              </span>
+              <span className="text-primary">{fileSummary.totalFileCount}</span>
               <Badge variant="outline" className="text-xs">
                 Total
               </Badge>

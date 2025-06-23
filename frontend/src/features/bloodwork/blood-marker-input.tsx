@@ -74,20 +74,16 @@ export default function BloodMarkerInput({
     if (disabled) return;
     const newTypecast = newType as "number" | "text";
     setActiveType(newTypecast);
-    
-    // Try to preserve the current value when switching types
+
     let preservedValue = value;
-    
-    // If switching from text to number, try to parse the text as a number
+
     if (newTypecast === "number" && typeof value === "string") {
       const numValue = parseFloat(value);
       preservedValue = isNaN(numValue) ? "" : numValue;
-    }
-    // If switching from number to text, convert the number to string
-    else if (newTypecast === "text" && typeof value === "number") {
+    } else if (newTypecast === "text" && typeof value === "number") {
       preservedValue = value.toString();
     }
-    
+
     onChange(preservedValue, newTypecast);
   };
 
@@ -156,9 +152,13 @@ export default function BloodMarkerInput({
               value={value}
               onChange={(e) => {
                 const inputValue = e.target.value;
-                // For number inputs, convert to number if valid, otherwise keep as string for partial inputs
-                const numValue = inputValue === "" ? "" : parseFloat(inputValue);
-                onChange(isNaN(numValue as number) ? inputValue : numValue, "number");
+
+                const numValue =
+                  inputValue === "" ? "" : parseFloat(inputValue);
+                onChange(
+                  isNaN(numValue as number) ? inputValue : numValue,
+                  "number"
+                );
               }}
               placeholder="0.0"
               className="h-8"

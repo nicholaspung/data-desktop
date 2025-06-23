@@ -7,6 +7,7 @@ export interface LineConfig {
   type?: "monotone" | "linear" | "step" | "basis" | "natural";
   activeDot?: boolean | object;
   connectNulls?: boolean;
+  strokeDasharray?: string;
 }
 
 export interface ReferenceLineConfig {

@@ -29,6 +29,8 @@ import { DailyLog } from "@/store/experiment-definitions";
 import { format } from "date-fns";
 import { addEntry, updateEntry } from "@/store/data-store";
 import { Textarea } from "@/components/ui/textarea";
+import dataStore from "@/store/data-store";
+import { useStore } from "@tanstack/react-store";
 import {
   Popover,
   PopoverContent,
@@ -65,6 +67,26 @@ export default function MetricLoggerListItem({
   const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const experimentMetrics =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
+  const experiments = useStore(dataStore, (state) => state.experiments) || [];
+
+  const findExperimentForMetric = (metricId: string): string | undefined => {
+    const metricExperiments = experimentMetrics.filter(
+      (em) => em.metric_id === metricId
+    );
+
+    const activeExperiments = experiments.filter(
+      (exp) => exp.status === "active"
+    );
+
+    const activeExperimentMetric = metricExperiments.find((em) =>
+      activeExperiments.some((exp) => exp.id === em.experiment_id)
+    );
+
+    return activeExperimentMetric?.experiment_id;
+  };
 
   useEffect(() => {
     return () => {
@@ -164,9 +186,11 @@ export default function MetricLoggerListItem({
       }
 
       if (todayLog) {
+        const experimentId = findExperimentForMetric(metric.id);
         const response = await ApiService.updateRecord(todayLog.id, {
           ...todayLog,
           value: JSON.stringify(parsedValue),
+          experiment_id: experimentId,
         });
 
         if (response) {
@@ -174,9 +198,11 @@ export default function MetricLoggerListItem({
           toast.success(`${metric.name} updated successfully`);
         }
       } else {
+        const experimentId = findExperimentForMetric(metric.id);
         const newLog = {
           date: selectedDate,
           metric_id: metric.id,
+          experiment_id: experimentId,
           value: JSON.stringify(parsedValue),
           notes: "",
         };
@@ -205,9 +231,11 @@ export default function MetricLoggerListItem({
 
     try {
       if (todayLog) {
+        const experimentId = findExperimentForMetric(metric.id);
         const response = await ApiService.updateRecord(todayLog.id, {
           ...todayLog,
           notes: noteValue,
+          experiment_id: experimentId,
         });
 
         if (response) {
@@ -228,9 +256,11 @@ export default function MetricLoggerListItem({
           defaultValue = "";
         }
 
+        const experimentId = findExperimentForMetric(metric.id);
         const newLog = {
           date: selectedDate,
           metric_id: metric.id,
+          experiment_id: experimentId,
           value: JSON.stringify(defaultValue),
           notes: noteValue,
         };

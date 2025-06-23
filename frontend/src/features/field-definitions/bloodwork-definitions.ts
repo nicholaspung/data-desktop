@@ -154,12 +154,14 @@ export const BLOOD_RESULTS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       type: "number",
       displayName: "Value (Number)",
       description: "Measured number result value",
+      isOptional: true,
     },
     {
       key: "value_text",
       type: "text",
       displayName: "Value (Text)",
       description: "Measured text result value",
+      isOptional: true,
     },
     {
       key: "notes",

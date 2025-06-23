@@ -197,17 +197,25 @@ const mergeSettingsWithDefaults = () => {
     enabledDatasets: defaultDatasets,
     dashboardSummaryConfigs: getDefaultDashboardSummaries(),
   };
-  
+
   const savedSettings = getInitialState();
-  
-  // Merge visibleRoutes and routeConfigs to ensure new routes are included
+
   return {
     ...defaults,
     ...savedSettings,
-    visibleRoutes: { ...defaults.visibleRoutes, ...savedSettings.visibleRoutes },
+    visibleRoutes: {
+      ...defaults.visibleRoutes,
+      ...savedSettings.visibleRoutes,
+    },
     routeConfigs: { ...defaults.routeConfigs, ...savedSettings.routeConfigs },
-    enabledDatasets: { ...defaults.enabledDatasets, ...savedSettings.enabledDatasets },
-    dashboardSummaryConfigs: { ...defaults.dashboardSummaryConfigs, ...savedSettings.dashboardSummaryConfigs },
+    enabledDatasets: {
+      ...defaults.enabledDatasets,
+      ...savedSettings.enabledDatasets,
+    },
+    dashboardSummaryConfigs: {
+      ...defaults.dashboardSummaryConfigs,
+      ...savedSettings.dashboardSummaryConfigs,
+    },
   };
 };
 

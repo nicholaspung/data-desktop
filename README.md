@@ -53,10 +53,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - refactor application to use reusable components
 
 - add inventory management system
-- add a "taking current supplements" section - supplements and medication
-  - allow user to select supplements based on what's in inventory
-  - allow user to check if the user took a supplement or medication for the day
-  - add a way for the user to select grouped supplements/medications taken at a specific time to be checked with a single button, but also allow the user to deselect a taken supplement/medication afterwards
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
@@ -70,20 +66,28 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in body measurements, body weight trends, for the missing graph, can it show a "dotted line" or at least take into account the missing data in the graph?
-- in body measurements, when importing weight csv, make it the added data goes to the data store, and that the "latest weight" data gets updated
-- in body measurements, when importing weight csv, allow the user to view the data going in and also add a checkbox to switch between lbs and kgs for the unit
-- add a route for misc files, first one is for health files, also put in the financial files there too as a duplicate
-
-- user still needs to disable/enable in settings a route in order to view the new dashbaord summary
+- user still needs to disable/enable in settings a route in order to view the tile in dashboard summary information
 
 - update feature information in this README for the new features added so far
-- in dataset table visual, the currency is showing incorrectly
+- in dataset table visual, the currency is showing incorrectlyw
 
 - in the sidebar, add a search bar that is an autocomplete to select a route
 
+- add a "taking current supplements" section - supplements and medication
+  - allow user to select supplements based on what's in inventory
+  - allow user to check if the user took a supplement or medication for the day
+  - add a way for the user to select grouped supplements/medications taken at a specific time to be checked with a single button, but also allow the user to deselect a taken supplement/medication afterwards
+
 ### DONE
 
+- in body measurements, body weight trends, for the missing graph, can it show a "dotted line" or at least take into account the missing data in the graph? [DONE 2025-06-23]
+- in body measurements, when importing weight csv, make it the added data goes to the data store, and that the "latest weight" data gets updated [DONE 2025-06-23]
+- in body measurements, when importing weight csv, allow the user to view the data going in and also add a checkbox to switch between lbs and kgs for the unit [DONE 2025-06-23]
+- in bloodwork, if a blood marker doesn't have optimal ranges, but still in general ranges, it will show as out of range, but that's incorrect [DONE 2025-06-23]
+- in blood results manager, it's making me put a "value (text)" value when I don't need it [DONE 2025-06-23]
+- in experiments with no end date, for the "overall completion" card, it should instead show the total amount of logs from the start date to today [DONE 2025-06-23]
+- user still needs to disable/enable in settings a route in order to view the new dashbaord summary [DONE 2025-06-22]
+- add a route for misc files, first one is for health files, also put in the financial files there too as a duplicate [DONE 2025-06-22]
 - in wealth dashboard summary, for the balances net worth account type seleciton, it should be a multi-select [DONE 2025-06-22]
 - in metric calendar, add a search bar for the user to be able to find the metric to select/deselect [DONE 2025-06-22]
 - in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed" [DONE 2025-06-22]

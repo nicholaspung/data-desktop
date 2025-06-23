@@ -73,6 +73,7 @@ export default function CustomLineChart({
                   strokeWidth={line.strokeWidth || 2}
                   activeDot={line.activeDot || { r: 6 }}
                   connectNulls={line.connectNulls || false}
+                  strokeDasharray={line.strokeDasharray}
                 />
               ))}
               {referenceLines.map((refLine, index) => (

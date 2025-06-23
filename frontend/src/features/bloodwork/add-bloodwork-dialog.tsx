@@ -86,26 +86,30 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     setExistingBloodworkId(null);
   };
 
-  const existingDates = useMemo(() => [
-    ...new Set(
-      existingBloodwork.map((test) => {
-        const testDate =
-          test.date instanceof Date ? test.date : new Date(test.date);
+  const existingDates = useMemo(
+    () =>
+      [
+        ...new Set(
+          existingBloodwork.map((test) => {
+            const testDate =
+              test.date instanceof Date ? test.date : new Date(test.date);
 
-        return new Date(
-          Date.UTC(
-            testDate.getFullYear(),
-            testDate.getMonth(),
-            testDate.getDate()
-          )
-        )
-          .toISOString()
-          .split("T")[0];
-      })
-    ),
-  ]
-    .sort()
-    .reverse(), [existingBloodwork]);
+            return new Date(
+              Date.UTC(
+                testDate.getFullYear(),
+                testDate.getMonth(),
+                testDate.getDate()
+              )
+            )
+              .toISOString()
+              .split("T")[0];
+          })
+        ),
+      ]
+        .sort()
+        .reverse(),
+    [existingBloodwork]
+  );
 
   useEffect(() => {
     const currentDateStr = new Date(
@@ -170,7 +174,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
         }
       }
     } else if (wasExisting && !exists) {
-      // Only reset when transitioning from existing to non-existing date
       resetFormData();
     }
   }, [date, existingDates]);

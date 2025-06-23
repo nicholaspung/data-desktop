@@ -28,7 +28,35 @@ export default function ExperimentDashboardProgress({
   const generateCompletionChartData = () => {
     if (!experiment || dailyLogs.length === 0) return [];
 
-    const logsByDate = dailyLogs.reduce((acc: Record<string, any[]>, log) => {
+    const toLocalDate = (dateInput: string | Date) => {
+      let dateStr: string;
+      if (typeof dateInput === "string") {
+        dateStr = dateInput;
+      } else {
+        dateStr = format(dateInput, "yyyy-MM-dd");
+      }
+
+      if (dateStr.includes("T00:00:00.000Z")) {
+        const datePart = dateStr.split("T")[0];
+        const [year, month, day] = datePart.split("-");
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      } else {
+        const [year, month, day] = dateStr.split("-");
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      }
+    };
+
+    const startDate = toLocalDate(experiment.start_date);
+    const endDate = experiment.end_date
+      ? toLocalDate(experiment.end_date)
+      : toLocalDate(format(new Date(), "yyyy-MM-dd"));
+
+    const logsInRange = dailyLogs.filter((log) => {
+      const logDate = toLocalDate(log.date);
+      return logDate >= startDate && logDate <= endDate;
+    });
+
+    const logsByDate = logsInRange.reduce((acc: Record<string, any[]>, log) => {
       const dateStr = format(new Date(log.date), "yyyy-MM-dd");
       if (!acc[dateStr]) acc[dateStr] = [];
       acc[dateStr].push(log);

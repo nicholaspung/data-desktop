@@ -58,10 +58,29 @@ const MetricLogger = () => {
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
+  const experimentMetrics =
+    useStore(dataStore, (state) => state.experiment_metrics) || [];
+  const experiments = useStore(dataStore, (state) => state.experiments) || [];
 
   useEffect(() => {
     setSelectedDate(startOfDay(selectedDate));
   }, []);
+
+  const findExperimentForMetric = (metricId: string): string | undefined => {
+    const metricExperiments = experimentMetrics.filter(
+      (em) => em.metric_id === metricId
+    );
+
+    const activeExperiments = experiments.filter(
+      (exp) => exp.status === "active"
+    );
+
+    const activeExperimentMetric = metricExperiments.find((em) =>
+      activeExperiments.some((exp) => exp.id === em.experiment_id)
+    );
+
+    return activeExperimentMetric?.experiment_id;
+  };
 
   const uniqueCategories = useMemo(() => {
     const categorySet = new Set<string>();
@@ -270,25 +289,24 @@ const MetricLogger = () => {
       }
     }
 
-    // For metrics without goals, determine completion based on metric type
-    if (metric.type === "number" || metric.type === "percentage" || metric.type === "time") {
+    if (
+      metric.type === "number" ||
+      metric.type === "percentage" ||
+      metric.type === "time"
+    ) {
       const numericValue = parseFloat(String(loggedValue)) || 0;
-      
-      // Special case: if goal_value or default_value is "0", metric is completed when value equals 0
+
       if (metric.goal_value === "0" || metric.default_value === "0") {
         return numericValue === 0;
       }
-      
-      // Otherwise, metric is completed when value is greater than 0
+
       return numericValue > 0;
     }
-    
-    // For text metrics without goals, completed if non-empty
+
     if (metric.type === "text") {
       return String(loggedValue).trim() !== "";
     }
-    
-    // Default fallback for other metric types
+
     return false;
   };
 
@@ -317,9 +335,11 @@ const MetricLogger = () => {
 
         const newValue = !currentValue;
 
+        const experimentId = findExperimentForMetric(metric.id);
         const updatedLog = {
           ...todayLog,
           value: JSON.stringify(newValue),
+          experiment_id: experimentId,
         };
 
         const response = await ApiService.updateRecord(todayLog.id, updatedLog);
@@ -330,9 +350,11 @@ const MetricLogger = () => {
           );
         }
       } else {
+        const experimentId = findExperimentForMetric(metric.id);
         const newLog = {
           date: selectedDate,
           metric_id: metric.id,
+          experiment_id: experimentId,
           value: "true",
           notes: "",
         };

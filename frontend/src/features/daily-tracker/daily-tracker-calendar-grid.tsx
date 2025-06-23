@@ -50,7 +50,6 @@ export default function DailyTrackerCalendarGrid({
         return logValue === true || hasNotes || logValue !== defaultValue;
       }
 
-      // Check if metric has a goal (consistent with MetricLogger logic)
       const hasGoal =
         metric.goal_value !== undefined &&
         metric.goal_value !== null &&
@@ -64,32 +63,28 @@ export default function DailyTrackerCalendarGrid({
         metric.type === "percentage" ||
         metric.type === "time"
       ) {
-        // If has notes, always consider meaningful
         if (hasNotes) return true;
-        
-        // For metrics without goals, determine completion based on metric type
+
         if (!hasGoal) {
           const numericValue = parseFloat(String(logValue)) || 0;
-          
-          // Special case: if goal_value or default_value is "0", metric is completed when value equals 0
+
           if (metric.goal_value === "0" || metric.default_value === "0") {
             return numericValue === 0;
           }
-          
-          // Otherwise, metric is completed when value is greater than 0
+
           return numericValue > 0;
         }
-        
-        // For metrics with goals, use original logic (differs from default or is non-zero when default is zero)
+
         return (
-          logValue !== defaultValue ||
-          (logValue !== 0 && defaultValue === 0)
+          logValue !== defaultValue || (logValue !== 0 && defaultValue === 0)
         );
       }
 
-      // For text metrics and others
       if (metric.type === "text") {
-        return hasNotes || (String(logValue).trim() !== "" && logValue !== defaultValue);
+        return (
+          hasNotes ||
+          (String(logValue).trim() !== "" && logValue !== defaultValue)
+        );
       }
 
       return logValue !== defaultValue && logValue !== "" && logValue !== null;
