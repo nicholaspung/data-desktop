@@ -46,6 +46,65 @@ export default function DailyTrackerViewCard({
     metric.goal_type !== null &&
     !(metric.goal_value === "" || metric.goal_value === "0");
 
+  // Determine if metric is completed based on consistent logic
+  const isMetricCompleted = () => {
+    if (!metric.log) return false;
+
+    let loggedValue;
+    try {
+      loggedValue = JSON.parse(metric.log.value);
+    } catch {
+      loggedValue = metric.log.value;
+    }
+
+    if (metric.type === "boolean") {
+      return loggedValue === true;
+    }
+
+    if (hasGoal) {
+      let goalValue;
+      try {
+        goalValue = parseFloat(metric.goal_value!);
+      } catch {
+        goalValue = 0;
+      }
+
+      const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
+
+      switch (metric.goal_type) {
+        case "minimum":
+          return numericLoggedValue >= goalValue;
+        case "maximum":
+          return numericLoggedValue <= goalValue;
+        case "exact":
+          return numericLoggedValue === goalValue;
+        default:
+          return numericLoggedValue >= goalValue;
+      }
+    }
+
+    // For metrics without goals, determine completion based on metric type
+    if (metric.type === "number" || metric.type === "percentage" || metric.type === "time") {
+      const numericValue = parseFloat(String(loggedValue)) || 0;
+      
+      // Special case: if goal_value or default_value is "0", metric is completed when value equals 0
+      if (metric.goal_value === "0" || metric.default_value === "0") {
+        return numericValue === 0;
+      }
+      
+      // Otherwise, metric is completed when value is greater than 0
+      return numericValue > 0;
+    }
+    
+    // For text metrics without goals, completed if non-empty
+    if (metric.type === "text") {
+      return String(loggedValue).trim() !== "";
+    }
+    
+    // Default fallback for other metric types
+    return false;
+  };
+
   const getGoalProgress = () => {
     if (!hasGoal) return null;
 
@@ -254,7 +313,7 @@ export default function DailyTrackerViewCard({
   return (
     <Card
       className={`
-        ${!!metric.value && metric.log ? "border-green-500 border" : ""}
+        ${isMetricCompleted() ? "border-green-500 border" : ""}
         ${!isScheduled ? "border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900" : ""}
         ${hasGoal && goalProgress?.progress === 100 ? "border-green-500 border-2" : ""}
       `}

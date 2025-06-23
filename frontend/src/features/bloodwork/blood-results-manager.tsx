@@ -173,7 +173,9 @@ export default function BloodResultsManager() {
                             value={selectedResult}
                             onChange={setSelectedResult}
                             title="Blood Result"
-                            placeholder="Select a blood result..."
+                            placeholder="Search blood results..."
+                            searchSelect={true}
+                            usePortal={true}
                           />
                           {selectedResult && (
                             <div className="mt-3">

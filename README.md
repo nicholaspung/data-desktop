@@ -70,9 +70,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed"
-- in adding a bloodwork result, I can't seem to adjust the values for both number/text, or anything in that component
-- in bloodwork managers, when trying to select options, it's hard to find them - sort alphabetically
+- in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed" [DONE 2025-06-22]
+- in adding a bloodwork result, I can't seem to adjust the values for both number/text, or anything in that component [DONE 2025-06-22]
+- in bloodwork managers, when trying to select options, it's hard to find them - sort alphabetically [DONE 2025-06-22]
 - in wealth dashboard summary, for the balances net worth account type seleciton, it should be a multi-select
 - in metric calendar, add a search bar for the user to be able to find the metric to select/deselect
 - in body measurements, body weight trends, for the missing graph, can it show a "dotted line" or at least take into account the missing data in the graph?

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PlusCircle, Search, CalendarIcon } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
@@ -86,7 +86,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     setExistingBloodworkId(null);
   };
 
-  const existingDates = [
+  const existingDates = useMemo(() => [
     ...new Set(
       existingBloodwork.map((test) => {
         const testDate =
@@ -105,7 +105,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     ),
   ]
     .sort()
-    .reverse();
+    .reverse(), [existingBloodwork]);
 
   useEffect(() => {
     const currentDateStr = new Date(
@@ -115,6 +115,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       .split("T")[0];
 
     const exists = existingDates.includes(currentDateStr);
+    const wasExisting = isExistingDate;
     setIsExistingDate(exists);
 
     if (exists) {
@@ -144,8 +145,6 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             (result) => result.blood_test_id === existingRecord.id
           );
 
-          setMarkerValues({});
-
           const newMarkerValues: Record<
             string,
             { value: string | number; valueType: "number" | "text" }
@@ -170,10 +169,11 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           setMarkerValues(newMarkerValues);
         }
       }
-    } else {
+    } else if (wasExisting && !exists) {
+      // Only reset when transitioning from existing to non-existing date
       resetFormData();
     }
-  }, [date, existingDates, existingBloodwork, bloodResults]);
+  }, [date, existingDates]);
 
   useEffect(() => {
     if (showAddDialog) {

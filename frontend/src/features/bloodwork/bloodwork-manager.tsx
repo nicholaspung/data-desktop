@@ -138,7 +138,9 @@ export default function BloodworkManager() {
                             value={selectedTest}
                             onChange={setSelectedTest}
                             title="Bloodwork Test"
-                            placeholder="Select a bloodwork test..."
+                            placeholder="Search bloodwork tests..."
+                            searchSelect={true}
+                            usePortal={true}
                           />
                           {selectedTest && (
                             <div className="mt-3">

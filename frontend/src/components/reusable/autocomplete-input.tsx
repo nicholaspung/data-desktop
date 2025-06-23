@@ -232,6 +232,7 @@ export default function AutocompleteInput({
           ? window.innerHeight - dropdownRect.top + 4
           : "auto",
       left: dropdownRect.left,
+      width: wider ? dropdownRect.width : undefined,
       minWidth: dropdownRect.width,
       zIndex: 9999,
     };
@@ -251,7 +252,7 @@ export default function AutocompleteInput({
             className={cn(
               "bg-popover border rounded-md shadow-md overflow-hidden pointer-events-auto",
               wider
-                ? "min-w-[300px] w-max max-w-[600px]"
+                ? "w-full min-w-[300px]"
                 : "min-w-[200px] w-max max-w-[500px]"
             )}
             onMouseDown={(e) => e.stopPropagation()}
@@ -328,7 +329,7 @@ export default function AutocompleteInput({
             className={cn(
               "bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground pointer-events-auto",
               wider
-                ? "min-w-[300px] w-max max-w-[600px]"
+                ? "w-full min-w-[300px]"
                 : "w-max max-w-[500px]"
             )}
           >
@@ -352,7 +353,7 @@ export default function AutocompleteInput({
             className={cn(
               "absolute left-0 z-50 bg-popover border rounded-md shadow-md overflow-hidden",
               wider
-                ? "min-w-[300px] w-max max-w-[600px]"
+                ? "w-full min-w-[300px]"
                 : "min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}
@@ -429,7 +430,7 @@ export default function AutocompleteInput({
             className={cn(
               "absolute left-0 z-50 bg-popover border rounded-md shadow-md p-3 text-center text-sm text-muted-foreground",
               wider
-                ? "min-w-[300px] w-max max-w-[600px]"
+                ? "w-full min-w-[300px]"
                 : "min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}

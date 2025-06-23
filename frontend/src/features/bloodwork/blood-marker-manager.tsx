@@ -168,7 +168,9 @@ export default function BloodMarkerManager() {
                                   setSelectedMarker("");
                                 }}
                                 title="Category"
-                                placeholder="All Categories"
+                                placeholder="Search or select category..."
+                                searchSelect={true}
+                                usePortal={true}
                               />
                             </div>
                           )}
@@ -181,7 +183,9 @@ export default function BloodMarkerManager() {
                               value={selectedMarker}
                               onChange={setSelectedMarker}
                               title="Blood Marker"
-                              placeholder="Select a blood marker..."
+                              placeholder="Search blood markers..."
+                              searchSelect={true}
+                              usePortal={true}
                               renderItem={(option) => (
                                 <div className="flex flex-row items-center gap-2">
                                   <span>{option.label}</span>

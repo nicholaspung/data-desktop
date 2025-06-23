@@ -270,13 +270,26 @@ const MetricLogger = () => {
       }
     }
 
-    const numericValue = parseFloat(String(loggedValue)) || 0;
-
-    if (metric.goal_value === "0" || metric.default_value === "0") {
-      return numericValue === 0;
+    // For metrics without goals, determine completion based on metric type
+    if (metric.type === "number" || metric.type === "percentage" || metric.type === "time") {
+      const numericValue = parseFloat(String(loggedValue)) || 0;
+      
+      // Special case: if goal_value or default_value is "0", metric is completed when value equals 0
+      if (metric.goal_value === "0" || metric.default_value === "0") {
+        return numericValue === 0;
+      }
+      
+      // Otherwise, metric is completed when value is greater than 0
+      return numericValue > 0;
     }
-
-    return numericValue > 0;
+    
+    // For text metrics without goals, completed if non-empty
+    if (metric.type === "text") {
+      return String(loggedValue).trim() !== "";
+    }
+    
+    // Default fallback for other metric types
+    return false;
   };
 
   const toggleMetricCompletion = async (metric: Metric) => {

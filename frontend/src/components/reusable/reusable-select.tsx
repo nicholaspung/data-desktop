@@ -30,6 +30,7 @@ export default function ReusableSelect({
   onCreateNew,
   createNewLabel = "Create new",
   label,
+  usePortal = false,
 }: {
   options: any[];
   value: any;
@@ -47,6 +48,7 @@ export default function ReusableSelect({
   onCreateNew?: (value: string) => Promise<void> | void;
   createNewLabel?: string;
   label?: string;
+  usePortal?: boolean;
 }) {
   const [searchValue, setSearchValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -161,6 +163,7 @@ export default function ReusableSelect({
         className={triggerClassName}
         disabled={disabled || isLoading || isCreating}
         emptyMessage="No options available."
+        usePortal={usePortal}
         renderItem={(option) => {
           if ((option as any).isCreateNew) {
             return (
