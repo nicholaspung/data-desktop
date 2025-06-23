@@ -198,6 +198,13 @@ func GetAllDatasetDefinitions() []DatasetConfig {
 			Type:        DatasetTypeFinancial,
 			Fields:      getFinancialFilesFieldsInline(),
 		},
+		{
+			ID:          DatasetIDHealthFiles,
+			Name:        "Health Files",
+			Description: "Health document storage and management",
+			Type:        DatasetTypeHealth,
+			Fields:      getHealthFilesFieldsInline(),
+		},
 	}
 }
 
@@ -242,6 +249,13 @@ func getPaycheckInfoFieldsInline() []FieldDefinition {
 }
 
 func getFinancialFilesFieldsInline() []FieldDefinition {
+	return []FieldDefinition{
+		{Key: "date", Type: FieldTypeDate, DisplayName: "Date"},
+		{Key: "files", Type: FieldTypeFileMultiple, DisplayName: "Files"},
+	}
+}
+
+func getHealthFilesFieldsInline() []FieldDefinition {
 	return []FieldDefinition{
 		{Key: "date", Type: FieldTypeDate, DisplayName: "Date"},
 		{Key: "files", Type: FieldTypeFileMultiple, DisplayName: "Files"},

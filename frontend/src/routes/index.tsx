@@ -43,6 +43,7 @@ import "@/features/todos/todo-dashboard-summary";
 import "@/features/dashboard/people-crm-dashboard-summary";
 import "@/features/dashboard/wealth-dashboard-summary";
 import "@/features/dashboard/body-measurements-dashboard-summary";
+import "@/features/dashboard/files-dashboard-summary";
 
 const sizeClasses = {
   small: "col-span-1",
@@ -190,6 +191,9 @@ function Home() {
       datasetId === "birthday_reminders"
     ) {
       return "/people-crm";
+    }
+    if (datasetId.includes("_files")) {
+      return "/files";
     }
     return "/dataset";
   };

@@ -70,11 +70,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed" [DONE 2025-06-22]
-- in adding a bloodwork result, I can't seem to adjust the values for both number/text, or anything in that component [DONE 2025-06-22]
-- in bloodwork managers, when trying to select options, it's hard to find them - sort alphabetically [DONE 2025-06-22]
-- in wealth dashboard summary, for the balances net worth account type seleciton, it should be a multi-select
-- in metric calendar, add a search bar for the user to be able to find the metric to select/deselect
 - in body measurements, body weight trends, for the missing graph, can it show a "dotted line" or at least take into account the missing data in the graph?
 - in body measurements, when importing weight csv, make it the added data goes to the data store, and that the "latest weight" data gets updated
 - in body measurements, when importing weight csv, allow the user to view the data going in and also add a checkbox to switch between lbs and kgs for the unit
@@ -89,6 +84,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in wealth dashboard summary, for the balances net worth account type seleciton, it should be a multi-select [DONE 2025-06-22]
+- in metric calendar, add a search bar for the user to be able to find the metric to select/deselect [DONE 2025-06-22]
+- in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed" [DONE 2025-06-22]
+- in adding a bloodwork result, I can't seem to adjust the values for both number/text, or anything in that component [DONE 2025-06-22]
+- in bloodwork managers, when trying to select options, it's hard to find them - sort alphabetically [DONE 2025-06-22]
 - in wealth, multiple entries, when I add the record, it is incorrect [DONE 2025-06-22]
 - in daily tracker dashboard summary, the "this week" percentage is incorrect [DONE 2025-06-22]
 - in financial balances, the graph for split/total is incorrect [DONE 2025-06-22]

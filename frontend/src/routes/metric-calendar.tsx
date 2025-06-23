@@ -9,11 +9,12 @@ import dataStore from "@/store/data-store";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CalendarView from "@/features/daily-tracker/calendar-view";
 import { Metric } from "@/store/experiment-definitions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Filter } from "lucide-react";
+import { Calendar, Filter, Search } from "lucide-react";
 import PrivateToggleButton from "@/components/reusable/private-toggle-button";
 
 export const Route = createFileRoute("/metric-calendar")({
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/metric-calendar")({
 function MetricCalendarPage() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [showPrivateMetrics, setShowPrivateMetrics] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const metrics = useStore(dataStore, (state) => state.metrics) || [];
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
@@ -30,6 +32,13 @@ function MetricCalendarPage() {
   const visibleMetrics = metrics.filter((metric) => {
     if (!metric.active) return false;
     if (metric.private && !showPrivateMetrics) return false;
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const metricNameMatch = metric.name.toLowerCase().includes(searchLower);
+      const category = categories.find((c) => c.id === metric.category_id);
+      const categoryNameMatch = category?.name.toLowerCase().includes(searchLower) || false;
+      if (!metricNameMatch && !categoryNameMatch) return false;
+    }
     return true;
   });
 
@@ -183,30 +192,39 @@ The calendar view works best when you're consistent in logging your metrics each
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {Object.keys(metricsByCategory).length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  No active metrics found. Please add metrics first.
-                </p>
-              ) : (
-                <div className="flex flex-col h-full">
-                  <div className="flex gap-2 mb-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={selectAllMetrics}
-                      className="flex-1"
-                    >
-                      Select All
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedMetrics([])}
-                      className="flex-1"
-                    >
-                      Clear Selection
-                    </Button>
-                  </div>
+              <div className="flex flex-col h-full">
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search metrics and categories..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllMetrics}
+                    className="flex-1"
+                  >
+                    Select All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedMetrics([])}
+                    className="flex-1"
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+                {Object.keys(metricsByCategory).length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">
+                    {searchTerm ? "No metrics found matching your search." : "No active metrics found. Please add metrics first."}
+                  </p>
+                ) : (
                   <ScrollArea className="h-[calc(100vh-280px)]">
                     <div className="space-y-6 pr-4">
                       {Object.entries(metricsByCategory).map(
@@ -256,8 +274,8 @@ The calendar view works best when you're consistent in logging your metrics each
                       )}
                     </div>
                   </ScrollArea>
-                </div>
-              )}
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>

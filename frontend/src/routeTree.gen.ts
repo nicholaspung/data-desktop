@@ -21,6 +21,7 @@ import { Route as MultiMeasurementsImport } from './routes/multi-measurements'
 import { Route as MetricCalendarImport } from './routes/metric-calendar'
 import { Route as MetricImport } from './routes/metric'
 import { Route as JournalingImport } from './routes/journaling'
+import { Route as FilesImport } from './routes/files'
 import { Route as ExperimentsImport } from './routes/experiments'
 import { Route as DexaImport } from './routes/dexa'
 import { Route as DebugImport } from './routes/debug'
@@ -89,6 +90,12 @@ const MetricRoute = MetricImport.update({
 const JournalingRoute = JournalingImport.update({
   id: '/journaling',
   path: '/journaling',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const FilesRoute = FilesImport.update({
+  id: '/files',
+  path: '/files',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -200,6 +207,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExperimentsImport
       parentRoute: typeof rootRoute
     }
+    '/files': {
+      id: '/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof FilesImport
+      parentRoute: typeof rootRoute
+    }
     '/journaling': {
       id: '/journaling'
       path: '/journaling'
@@ -284,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/files': typeof FilesRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
@@ -305,6 +320,7 @@ export interface FileRoutesByTo {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/files': typeof FilesRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
@@ -327,6 +343,7 @@ export interface FileRoutesById {
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
   '/experiments': typeof ExperimentsRoute
+  '/files': typeof FilesRoute
   '/journaling': typeof JournalingRoute
   '/metric': typeof MetricRoute
   '/metric-calendar': typeof MetricCalendarRoute
@@ -350,6 +367,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/files'
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
@@ -370,6 +388,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/files'
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
@@ -390,6 +409,7 @@ export interface FileRouteTypes {
     | '/debug'
     | '/dexa'
     | '/experiments'
+    | '/files'
     | '/journaling'
     | '/metric'
     | '/metric-calendar'
@@ -412,6 +432,7 @@ export interface RootRouteChildren {
   DebugRoute: typeof DebugRoute
   DexaRoute: typeof DexaRoute
   ExperimentsRoute: typeof ExperimentsRoute
+  FilesRoute: typeof FilesRoute
   JournalingRoute: typeof JournalingRoute
   MetricRoute: typeof MetricRoute
   MetricCalendarRoute: typeof MetricCalendarRoute
@@ -433,6 +454,7 @@ const rootRouteChildren: RootRouteChildren = {
   DebugRoute: DebugRoute,
   DexaRoute: DexaRoute,
   ExperimentsRoute: ExperimentsRoute,
+  FilesRoute: FilesRoute,
   JournalingRoute: JournalingRoute,
   MetricRoute: MetricRoute,
   MetricCalendarRoute: MetricCalendarRoute,
@@ -463,6 +485,7 @@ export const routeTree = rootRoute
         "/debug",
         "/dexa",
         "/experiments",
+        "/files",
         "/journaling",
         "/metric",
         "/metric-calendar",
@@ -498,6 +521,9 @@ export const routeTree = rootRoute
     },
     "/experiments": {
       "filePath": "experiments.tsx"
+    },
+    "/files": {
+      "filePath": "files.tsx"
     },
     "/journaling": {
       "filePath": "journaling.tsx"

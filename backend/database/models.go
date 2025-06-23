@@ -21,6 +21,7 @@ const (
 	DatasetTypeTodo         DatasetType = "todos"
 	DatasetTypePeopleCRM    DatasetType = "people_crm"
 	DatasetTypeFinancial    DatasetType = "financial"
+	DatasetTypeHealth       DatasetType = "health"
 )
 
 type FieldType string

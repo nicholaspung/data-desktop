@@ -29,4 +29,5 @@ const (
 	DatasetIDFinancialBalances   = "financial_balances"
 	DatasetIDPaycheckInfo        = "paycheck_info"
 	DatasetIDFinancialFiles      = "financial_files"
+	DatasetIDHealthFiles         = "health_files"
 )

@@ -46,6 +46,7 @@ import {
   PAYCHECK_INFO_FIELD_DEFINITIONS,
   FINANCIAL_FILES_FIELD_DEFINITIONS,
 } from "./financial-definitions";
+import { HEALTH_FILES_FIELD_DEFINITIONS } from "./health-definitions";
 import { DataStoreName } from "@/store/data-store";
 
 const ALL_DEFINITIONS = [
@@ -77,6 +78,7 @@ const ALL_DEFINITIONS = [
   FINANCIAL_BALANCES_FIELD_DEFINITIONS,
   PAYCHECK_INFO_FIELD_DEFINITIONS,
   FINANCIAL_FILES_FIELD_DEFINITIONS,
+  HEALTH_FILES_FIELD_DEFINITIONS,
 ];
 
 const initialState: FieldDefinitionsState = {

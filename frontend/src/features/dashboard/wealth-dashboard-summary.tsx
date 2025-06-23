@@ -10,10 +10,11 @@ import {
   PaycheckInfo,
 } from "@/features/financial/types";
 import { formatCurrency } from "@/lib/data-utils";
-import ReusableSelect from "@/components/reusable/reusable-select";
+import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
+import ReusableSelect from "@/components/reusable/reusable-select";
 
 export default function WealthDashboardSummary() {
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>(
@@ -202,10 +203,10 @@ export default function WealthDashboardSummary() {
     );
   }
 
-  const accountTypeOptions = [
-    { id: "all-types", label: "All Types" },
-    ...netWorthSummary.accountTypes.map((type) => ({ id: type, label: type })),
-  ];
+  const accountTypeOptions = netWorthSummary.accountTypes.map((type) => ({
+    id: type,
+    label: type,
+  }));
 
   const accountOwnerOptions = [
     { id: "all-owners", label: "All Owners" },
@@ -219,21 +220,13 @@ export default function WealthDashboardSummary() {
     <div className="space-y-2">
       <div className="text-xs text-muted-foreground">Net Worth Filters:</div>
       <div className="flex flex-wrap gap-2">
-        <ReusableSelect
+        <ReusableMultiSelect
           options={accountTypeOptions}
-          value={
-            selectedAccountTypes.length === 0
-              ? "all-types"
-              : selectedAccountTypes.join(",")
-          }
-          onChange={(value) =>
-            setSelectedAccountTypes(
-              value === "all-types" ? [] : value ? value.split(",") : []
-            )
-          }
+          selected={selectedAccountTypes}
+          onChange={setSelectedAccountTypes}
           placeholder="Account Types"
-          triggerClassName="w-32 h-7 text-xs"
-          noDefault={false}
+          className="w-32 h-7 text-xs"
+          maxDisplay={0}
         />
         <ReusableSelect
           options={accountOwnerOptions}

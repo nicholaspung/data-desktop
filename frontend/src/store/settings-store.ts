@@ -73,10 +73,11 @@ const defaultRouteConfigs: Record<string, RouteConfig> = {
     visible: true,
   },
   "/wealth": { href: "/wealth", order: 11, visible: true },
-  "/dexa": { href: "/dexa", order: 12, visible: true },
-  "/bloodwork": { href: "/bloodwork", order: 13, visible: true },
-  "/dataset": { href: "/dataset", order: 14, visible: true },
-  "/settings": { href: "/settings", order: 15, visible: true },
+  "/files": { href: "/files", order: 12, visible: true },
+  "/dexa": { href: "/dexa", order: 13, visible: true },
+  "/bloodwork": { href: "/bloodwork", order: 14, visible: true },
+  "/dataset": { href: "/dataset", order: 15, visible: true },
+  "/settings": { href: "/settings", order: 16, visible: true },
 };
 
 const defaultDatasets = {
@@ -109,11 +110,13 @@ const defaultDatasets = {
   financial_balances: true,
   paycheck_info: true,
   financial_files: true,
+  health_files: true,
 };
 
 export const getRouteDatasetMapping = (): Record<string, string[]> => {
   const baseMapping: Record<string, string[]> = {
     "/people": ["people", "person_attributes"],
+    "/files": ["financial_files", "health_files"],
   };
 
   const registryMapping = dashboardRegistry.getRouteDatasetMapping();
@@ -186,13 +189,30 @@ const getInitialState = (): Partial<SettingsState> => {
   };
 };
 
+const mergeSettingsWithDefaults = () => {
+  const defaults = {
+    visibleRoutes: getDefaultRoutes(),
+    routeConfigs: defaultRouteConfigs,
+    defaultDatasetView: "card" as const,
+    enabledDatasets: defaultDatasets,
+    dashboardSummaryConfigs: getDefaultDashboardSummaries(),
+  };
+  
+  const savedSettings = getInitialState();
+  
+  // Merge visibleRoutes and routeConfigs to ensure new routes are included
+  return {
+    ...defaults,
+    ...savedSettings,
+    visibleRoutes: { ...defaults.visibleRoutes, ...savedSettings.visibleRoutes },
+    routeConfigs: { ...defaults.routeConfigs, ...savedSettings.routeConfigs },
+    enabledDatasets: { ...defaults.enabledDatasets, ...savedSettings.enabledDatasets },
+    dashboardSummaryConfigs: { ...defaults.dashboardSummaryConfigs, ...savedSettings.dashboardSummaryConfigs },
+  };
+};
+
 const initialState: SettingsState = {
-  visibleRoutes: getDefaultRoutes(),
-  routeConfigs: defaultRouteConfigs,
-  defaultDatasetView: "card",
-  enabledDatasets: defaultDatasets,
-  dashboardSummaryConfigs: getDefaultDashboardSummaries(),
-  ...getInitialState(),
+  ...mergeSettingsWithDefaults(),
   setVisibleRoute: (route: string, visible: boolean) => {
     settingsStore.setState((state) => {
       const newVisibleRoutes = { ...state.visibleRoutes, [route]: visible };

@@ -35,6 +35,7 @@ import {
   PaycheckInfo,
   FinancialFile,
 } from "@/features/financial/types";
+import { HealthFile } from "@/features/health/types";
 
 export type DatasetId =
   | "bloodwork"
@@ -64,7 +65,8 @@ export type DatasetId =
   | "financial_logs"
   | "financial_balances"
   | "paycheck_info"
-  | "financial_files";
+  | "financial_files"
+  | "health_files";
 
 export const DATASET_REFERENCES = {
   BLOODWORK: { dataset: "bloodwork" as DatasetId, field: "id" },
@@ -107,6 +109,7 @@ export const DATASET_REFERENCES = {
   FINANCIAL_BALANCES: { dataset: "financial_balances" as DatasetId, field: "id" },
   PAYCHECK_INFO: { dataset: "paycheck_info" as DatasetId, field: "id" },
   FINANCIAL_FILES: { dataset: "financial_files" as DatasetId, field: "id" },
+  HEALTH_FILES: { dataset: "health_files" as DatasetId, field: "id" },
 } as const;
 
 export type DatasetTypeMap = {
@@ -138,6 +141,7 @@ export type DatasetTypeMap = {
   financial_balances: FinancialBalance;
   paycheck_info: PaycheckInfo;
   financial_files: FinancialFile;
+  health_files: HealthFile;
 };
 
 export interface DatasetSummary {

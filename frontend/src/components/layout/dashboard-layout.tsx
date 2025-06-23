@@ -81,6 +81,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/wealth",
   },
   {
+    title: "Files",
+    icon: <FEATURE_ICONS.FILE_TEXT className="h-5 w-5" />,
+    href: "/files",
+  },
+  {
     title: "DEXA Scans",
     icon: <FEATURE_ICONS.DEXA_SCAN className="h-5 w-5" />,
     href: "/dexa",

@@ -34,6 +34,7 @@ func CleanupUnusedTables() error {
 		DatasetIDFinancialBalances,
 		DatasetIDPaycheckInfo,
 		DatasetIDFinancialFiles,
+		DatasetIDHealthFiles,
 	}
 
 	rows, err := DB.Query("SELECT id FROM datasets")
