@@ -20,6 +20,7 @@ import {
 import ReusableSelect from "@/components/reusable/reusable-select";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import TagInput from "@/components/reusable/tag-input";
+import ReusableDatePicker from "@/components/reusable/reusable-date-picker";
 import { FieldDefinition, SelectOption } from "@/types/types";
 import { MultiEntryRow } from "./types";
 import { format } from "date-fns";
@@ -522,7 +523,7 @@ export default function MultiEntryTable({
         </div>
       </div>
 
-      <div className="rounded-md border max-h-[40vh] overflow-auto pr-2">
+      <div className="rounded-md border max-h-[60vh] overflow-auto pr-2">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>
@@ -556,25 +557,58 @@ export default function MultiEntryTable({
                     data-cell={`${row.id}-${field.key}`}
                   >
                     {field.type === "date" ? (
-                      <Input
-                        type="date"
-                        value={
-                          row.data[field.key]
-                            ? new Date(row.data[field.key])
-                                .toISOString()
-                                .split("T")[0]
-                            : ""
-                        }
-                        onChange={(e) =>
-                          updateRowData(row.id, field.key, e.target.value)
-                        }
-                        onKeyDown={(e) => handleKeyDown(e, row.id, field.key)}
-                        onFocus={() =>
-                          setFocusedCell({ rowId: row.id, fieldKey: field.key })
-                        }
-                        className={
+                      <ReusableDatePicker
+                        value={(() => {
+                          const dateValue = row.data[field.key];
+                          if (dateValue) {
+                            try {
+                              let date;
+
+                              if (dateValue instanceof Date) {
+                                date = dateValue;
+                              } else if (typeof dateValue === "string") {
+                                if (dateValue.includes("T")) {
+                                  date = new Date(dateValue);
+                                } else {
+                                  const [year, month, day] = dateValue
+                                    .split("-")
+                                    .map(Number);
+                                  date = new Date(year, month - 1, day);
+                                }
+                              } else {
+                                return undefined;
+                              }
+
+                              if (!isNaN(date.getTime())) {
+                                return date;
+                              }
+                            } catch (error) {
+                              console.error("Error in date conversion:", error);
+                            }
+                          }
+                          return undefined;
+                        })()}
+                        onChange={(date) => {
+                          const dateString = date
+                            ? (() => {
+                                const year = date.getFullYear();
+                                const month = String(
+                                  date.getMonth() + 1
+                                ).padStart(2, "0");
+                                const day = String(date.getDate()).padStart(
+                                  2,
+                                  "0"
+                                );
+                                return `${year}-${month}-${day}`;
+                              })()
+                            : "";
+                          updateRowData(row.id, field.key, dateString);
+                        }}
+                        placeholder="Select date"
+                        className={cn(
+                          "w-full",
                           row.errors[field.key] ? "border-red-500" : ""
-                        }
+                        )}
                       />
                     ) : field.type === "number" ? (
                       <div className="space-y-1">

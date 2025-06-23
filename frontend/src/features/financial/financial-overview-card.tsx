@@ -212,21 +212,30 @@ export function FinancialOverviewCard({
         (log) => filterByDate(log.date) && filterByContent(log)
       );
     } else if (type === "balances" && balances) {
-      const latestBalances = new Map<string, FinancialBalance>();
+      let latestDate: Date | null = null;
 
-      balances
-        .filter(
-          (balance) => filterByDate(balance.date) && filterByContent(balance)
-        )
-        .forEach((balance) => {
-          const key = `${balance.account_name}-${balance.account_type}-${balance.account_owner}`;
-          const existing = latestBalances.get(key);
-          if (!existing || new Date(balance.date) > new Date(existing.date)) {
-            latestBalances.set(key, balance);
-          }
+      const filteredBalances = balances.filter(
+        (balance) => filterByDate(balance.date) && filterByContent(balance)
+      );
+
+      filteredBalances.forEach((balance) => {
+        const balanceDate = new Date(balance.date);
+        if (!latestDate || balanceDate > latestDate) {
+          latestDate = balanceDate;
+        }
+      });
+
+      if (latestDate) {
+        return filteredBalances.filter((balance) => {
+          const balanceDate = new Date(balance.date);
+          return (
+            latestDate &&
+            balanceDate.toDateString() === latestDate.toDateString()
+          );
         });
+      }
 
-      return Array.from(latestBalances.values());
+      return [];
     } else if (type === "paycheck" && paychecks) {
       return paychecks.filter(
         (paycheck) => filterByDate(paycheck.date) && filterByContent(paycheck)
@@ -456,62 +465,43 @@ export function FinancialOverviewCard({
         );
     } else if (type === "balances") {
       if (chartViewMode === "split") {
-        let categoriesWithTotals;
-
         if (balanceViewMode === "totals") {
-          categoriesWithTotals = [
-            ...summaryData.categories.map(({ category, total }) => ({
-              category,
-              [summaryData.positiveLabel]: total > 0 ? total : 0,
-              [summaryData.negativeLabel]: total < 0 ? total : 0,
-              total: total,
-            })),
+          return [
             {
-              category: summaryData.totalLabel,
-              [summaryData.positiveLabel]:
-                summaryData.total > 0 ? summaryData.total : 0,
-              [summaryData.negativeLabel]:
-                summaryData.total < 0 ? summaryData.total : 0,
-              total: summaryData.total,
-            },
-          ];
-        } else {
-          categoriesWithTotals = [
-            ...summaryData.categories.map(({ category, total }) => ({
-              category,
-              [summaryData.positiveLabel]: total > 0 ? total : 0,
-              [summaryData.negativeLabel]: total < 0 ? total : 0,
-              total: total,
-            })),
-            {
-              category: summaryData.positiveLabel,
+              category: "Assets",
               [summaryData.positiveLabel]: summaryData.positiveTotal,
               [summaryData.negativeLabel]: 0,
               total: summaryData.positiveTotal,
             },
             {
-              category: summaryData.negativeLabel,
+              category: "Liabilities",
               [summaryData.positiveLabel]: 0,
               [summaryData.negativeLabel]: summaryData.negativeTotal,
               total: summaryData.negativeTotal,
             },
+          ];
+        } else {
+          return summaryData.categories.map(({ category, total }) => ({
+            category,
+            [summaryData.positiveLabel]: total > 0 ? total : 0,
+            [summaryData.negativeLabel]: total < 0 ? total : 0,
+            total: total,
+          }));
+        }
+      } else {
+        if (balanceViewMode === "totals") {
+          return [
             {
-              category: summaryData.totalLabel,
-              [summaryData.positiveLabel]:
-                summaryData.total > 0 ? summaryData.total : 0,
-              [summaryData.negativeLabel]:
-                summaryData.total < 0 ? summaryData.total : 0,
+              category: "Net Worth",
               total: summaryData.total,
             },
           ];
+        } else {
+          return summaryData.categories.map(({ category, total }) => ({
+            category,
+            total,
+          }));
         }
-
-        return categoriesWithTotals;
-      } else {
-        return summaryData.categories.map(({ category, total }) => ({
-          category,
-          total,
-        }));
       }
     } else if (type === "paycheck") {
       const monthlyData = new Map<

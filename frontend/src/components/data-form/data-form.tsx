@@ -623,6 +623,15 @@ export default function DataForm({
 
       fields.forEach((field) => {
         if (
+          field.type === "date" &&
+          processedValues[field.key] instanceof Date
+        ) {
+          processedValues[field.key] = (
+            processedValues[field.key] as Date
+          ).toISOString();
+        }
+
+        if (
           field.type === "file" &&
           typeof processedValues[field.key] === "object" &&
           processedValues[field.key] !== null

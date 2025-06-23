@@ -19,10 +19,16 @@ export const formatDate = (date: Date | string): string => {
   let dateObj: Date;
 
   if (typeof date === "string") {
-    dateObj = parseISO(date);
+    if (date.includes("T00:00:00.000Z")) {
+      const datePart = date.split("T")[0];
+      const [year, month, day] = datePart.split("-");
+      dateObj = new Date(Number(year), Number(month) - 1, Number(day));
+    } else {
+      dateObj = parseISO(date);
 
-    if (!isValid(dateObj)) {
-      dateObj = new Date(date);
+      if (!isValid(dateObj)) {
+        dateObj = new Date(date);
+      }
     }
   } else {
     dateObj = date;

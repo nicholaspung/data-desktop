@@ -305,64 +305,74 @@ export default function DailyTrackingDashboardSummary({
   } => {
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
 
     let completedThisWeek = 0;
-    let totalThisWeek = 0;
+    let expectedThisWeek = 0;
 
-    const weekLogs = dailyLogs.filter((log) => {
-      const logDate = new Date(log.date);
-      return (
-        logDate >= startOfWeek &&
-        logDate <= today &&
-        metrics.some((m) => m.id === log.metric_id)
-      );
-    });
+    for (
+      let d = new Date(startOfWeek);
+      d <= today;
+      d.setDate(d.getDate() + 1)
+    ) {
+      const dayOfWeek = d.getDay();
 
-    weekLogs.forEach((log) => {
-      const metric = metrics.find((m) => m.id === log.metric_id);
-      if (!metric) return;
+      metrics.forEach((metric) => {
+        const scheduleDays = metric.schedule_days || [0, 1, 2, 3, 4, 5, 6];
+        if (scheduleDays.includes(dayOfWeek)) {
+          expectedThisWeek++;
 
-      totalThisWeek++;
+          const log = dailyLogs.find(
+            (l) => l.metric_id === metric.id && isSameDay(new Date(l.date), d)
+          );
 
-      const metricWithLog = {
-        ...metric,
-        log: log,
-        value: log.value,
-        notes: log.notes || "",
-        hasChanged: false,
-        goal_type: metric.goal_type as GoalType | undefined,
-      };
+          if (log) {
+            const metricWithLog = {
+              ...metric,
+              log: log,
+              value: log.value,
+              notes: log.notes || "",
+              hasChanged: false,
+              goal_type: metric.goal_type as GoalType | undefined,
+            };
 
-      if (metric.type === "boolean") {
-        try {
-          const completed = JSON.parse(log.value) === true;
-          if (completed) completedThisWeek++;
-        } catch {
-          if (log.value === "true") completedThisWeek++;
-        }
-      } else {
-        const goalProgress = calculateGoalProgress(metricWithLog);
-        const hasGoalCompleted = goalProgress?.isComplete || false;
+            if (metric.type === "boolean") {
+              try {
+                const completed = JSON.parse(log.value) === true;
+                if (completed) completedThisWeek++;
+              } catch {
+                if (log.value === "true") completedThisWeek++;
+              }
+            } else {
+              const goalProgress = calculateGoalProgress(metricWithLog);
+              const hasGoalCompleted = goalProgress?.isComplete || false;
 
-        const hasValue = (() => {
-          try {
-            const value = JSON.parse(log.value);
-            return typeof value === "number" ? value !== 0 : !!value;
-          } catch {
-            return log.value !== "0" && !!log.value;
+              const hasValue = (() => {
+                try {
+                  const value = JSON.parse(log.value);
+                  return typeof value === "number" ? value !== 0 : !!value;
+                } catch {
+                  return log.value !== "0" && !!log.value;
+                }
+              })();
+
+              if (hasGoalCompleted || (!hasGoal(metric) && hasValue)) {
+                completedThisWeek++;
+              }
+            }
           }
-        })();
-
-        if (hasGoalCompleted || (!hasGoal(metric) && hasValue)) {
-          completedThisWeek++;
         }
-      }
-    });
+      });
+    }
 
     const weekPercentage =
-      totalThisWeek > 0 ? (completedThisWeek / totalThisWeek) * 100 : 0;
+      expectedThisWeek > 0 ? (completedThisWeek / expectedThisWeek) * 100 : 0;
 
-    return { completedThisWeek, totalThisWeek, weekPercentage };
+    return {
+      completedThisWeek,
+      totalThisWeek: expectedThisWeek,
+      weekPercentage,
+    };
   };
 
   const weekProgress = getWeekProgress();

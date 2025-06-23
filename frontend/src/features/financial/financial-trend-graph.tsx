@@ -536,7 +536,7 @@ export default function FinancialTrendGraph({
       color: COLORS[index % COLORS.length],
       stackId: undefined,
     }));
-  }, [trendData, chartType]);
+  }, [trendData]);
 
   const totals = useMemo(() => {
     let positiveTotal = 0;
@@ -985,63 +985,65 @@ export default function FinancialTrendGraph({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                {/* Positive Total */}
-                {totals.positiveTotal > 0 && (
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                      {totals.positiveLabel}
-                      <TrendingUp className="h-3 w-3 text-green-600" />
-                    </p>
-                    <p className="text-lg font-semibold text-green-600">
-                      $
-                      {totals.positiveTotal.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                )}
-
-                {/* Negative Total */}
-                {totals.negativeTotal < 0 && (
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
-                      {totals.negativeLabel}
-                      <TrendingDown className="h-3 w-3 text-red-600" />
-                    </p>
-                    <p className="text-lg font-semibold text-red-600">
-                      $
-                      {Math.abs(totals.negativeTotal).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                )}
-
-                {/* Net Total */}
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">
-                    {totals.totalLabel}
-                  </p>
-                  <p
-                    className={`text-lg font-semibold ${
-                      totals.total >= 0 ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    {totals.total < 0
-                      ? `-$${Math.abs(totals.total).toLocaleString("en-US", {
+              {viewMode === "net" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  {/* Positive Total */}
+                  {totals.positiveTotal > 0 && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                        {totals.positiveLabel}
+                        <TrendingUp className="h-3 w-3 text-green-600" />
+                      </p>
+                      <p className="text-lg font-semibold text-green-600">
+                        $
+                        {totals.positiveTotal.toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}`
-                      : `$${totals.total.toLocaleString("en-US", {
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Negative Total */}
+                  {totals.negativeTotal < 0 && (
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                        {totals.negativeLabel}
+                        <TrendingDown className="h-3 w-3 text-red-600" />
+                      </p>
+                      <p className="text-lg font-semibold text-red-600">
+                        $
+                        {Math.abs(totals.negativeTotal).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}`}
-                  </p>
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Net Total */}
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {totals.totalLabel}
+                    </p>
+                    <p
+                      className={`text-lg font-semibold ${
+                        totals.total >= 0 ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      {totals.total < 0
+                        ? `-$${Math.abs(totals.total).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : `$${totals.total.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">

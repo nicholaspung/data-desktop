@@ -196,12 +196,12 @@ export default function AutocompleteInput({
   }, [showSuggestions]);
 
   useEffect(() => {
-    if (activeIndex >= 0) {
+    if (activeIndex >= 0 && activeIndex < finalOptions.length && finalOptions.length > 0) {
       virtualizer.scrollToIndex(activeIndex, {
         align: "auto",
       });
     }
-  }, [activeIndex, virtualizer]);
+  }, [activeIndex, virtualizer, finalOptions.length]);
 
   const handleSelect = (option: SelectOption & { [key: string]: unknown }) => {
     if (onSelect) {
@@ -249,19 +249,24 @@ export default function AutocompleteInput({
             ref={suggestionsRef}
             style={getDropdownStyle()}
             className={cn(
-              "bg-popover border rounded-md shadow-md max-h-72 overflow-hidden pointer-events-auto",
+              "bg-popover border rounded-md shadow-md overflow-hidden pointer-events-auto",
               wider
                 ? "min-w-[300px] w-max max-w-[600px]"
                 : "min-w-[200px] w-max max-w-[500px]"
             )}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
               {value.length > 0 ? "Search results" : "Recent entries"}
             </div>
             <div
               ref={listRef}
-              className="overflow-y-auto py-1"
-              style={{ height: Math.min(finalOptions.length * 50, 300) + "px" }}
+              className="overflow-y-auto overflow-x-hidden py-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+              style={{ 
+                height: Math.min(finalOptions.length * 50, 300) + "px",
+                maxHeight: "300px"
+              }}
+              onWheel={(e) => e.stopPropagation()}
             >
               <div
                 style={{
@@ -345,20 +350,25 @@ export default function AutocompleteInput({
           <div
             ref={suggestionsRef}
             className={cn(
-              "absolute left-0 z-50 bg-popover border rounded-md shadow-md max-h-72 overflow-hidden",
+              "absolute left-0 z-50 bg-popover border rounded-md shadow-md overflow-hidden",
               wider
                 ? "min-w-[300px] w-max max-w-[600px]"
                 : "min-w-full w-max max-w-[500px]",
               dropdownPosition === "top" ? "bottom-full mb-1" : "top-full mt-1"
             )}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="p-1 text-xs text-muted-foreground border-b">
               {value.length > 0 ? "Search results" : "Recent entries"}
             </div>
             <div
               ref={listRef}
-              className="overflow-y-auto py-1"
-              style={{ height: Math.min(finalOptions.length * 50, 300) + "px" }}
+              className="overflow-y-auto overflow-x-hidden py-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
+              style={{ 
+                height: Math.min(finalOptions.length * 50, 300) + "px",
+                maxHeight: "300px"
+              }}
+              onWheel={(e) => e.stopPropagation()}
             >
               <div
                 style={{
@@ -442,6 +452,13 @@ export default function AutocompleteInput({
     }
 
     if (e.key === "Escape") {
+      if (showSuggestions) {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowSuggestions(false);
+        setActiveIndex(-1);
+        return;
+      }
       onKeyDown?.(e);
       return;
     }
@@ -459,25 +476,30 @@ export default function AutocompleteInput({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setActiveIndex((prev) =>
-          prev < finalOptions.length - 1 ? prev + 1 : 0
-        );
+        e.stopPropagation();
+        setActiveIndex((prev) => {
+          const nextIndex = prev < finalOptions.length - 1 ? prev + 1 : 0;
+          return nextIndex;
+        });
         break;
       case "ArrowUp":
         e.preventDefault();
-        setActiveIndex((prev) =>
-          prev > 0 ? prev - 1 : finalOptions.length - 1
-        );
+        e.stopPropagation();
+        setActiveIndex((prev) => {
+          const nextIndex = prev > 0 ? prev - 1 : finalOptions.length - 1;
+          return nextIndex;
+        });
         break;
       case "Enter":
-        e.preventDefault();
-        if (activeIndex >= 0) {
+        if (activeIndex >= 0 && activeIndex < finalOptions.length) {
+          e.preventDefault();
+          e.stopPropagation();
           handleSelect(finalOptions[activeIndex]);
         }
         break;
       case "Tab":
         setShowSuggestions(false);
-
+        setActiveIndex(-1);
         onKeyDown?.(e);
         break;
       default:

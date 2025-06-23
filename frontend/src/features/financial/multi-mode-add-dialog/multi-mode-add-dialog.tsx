@@ -96,6 +96,29 @@ export default function MultiModeAddDialog({
     toast.success(`${title} added successfully`);
   };
 
+  const processDataForSave = (data: Record<string, unknown>) => {
+    const processed = { ...data };
+
+    fieldDefinitions.forEach((field) => {
+      if (field.type === "date" && processed[field.key]) {
+        const dateValue = processed[field.key] as string;
+        console.log(
+          `Processing date field ${field.key}:`,
+          dateValue,
+          typeof dateValue
+        );
+        if (dateValue) {
+          const localDate = new Date(dateValue + "T00:00:00");
+          console.log(`Local date created:`, localDate);
+          console.log(`ISO string:`, localDate.toISOString());
+          processed[field.key] = localDate.toISOString();
+        }
+      }
+    });
+
+    return processed;
+  };
+
   const handleMultipleSave = async () => {
     const validRows = multipleRows.filter((row) => row.isValid);
     const invalidRows = multipleRows.filter((row) => !row.isValid);
@@ -123,7 +146,11 @@ export default function MultiModeAddDialog({
 
       for (const row of validRows) {
         try {
-          const savedRecord = await ApiService.addRecord(datasetId, row.data);
+          const processedData = processDataForSave(row.data);
+          const savedRecord = await ApiService.addRecord(
+            datasetId,
+            processedData
+          );
           if (savedRecord) {
             addEntry(savedRecord, datasetId as DataStoreName);
             savedRows.push(row.id);
@@ -195,7 +222,11 @@ export default function MultiModeAddDialog({
 
       for (const row of validRows) {
         try {
-          const savedRecord = await ApiService.addRecord(datasetId, row.data);
+          const processedData = processDataForSave(row.data);
+          const savedRecord = await ApiService.addRecord(
+            datasetId,
+            processedData
+          );
           if (savedRecord) {
             addEntry(savedRecord, datasetId as DataStoreName);
             savedRows.push(row.id);

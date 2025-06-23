@@ -8,6 +8,7 @@ import ReusableCard from "@/components/reusable/reusable-card";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import AutocompleteInput from "@/components/reusable/autocomplete-input";
 import TagInput from "@/components/reusable/tag-input";
+import ReusableDatePicker from "@/components/reusable/reusable-date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
@@ -343,7 +344,24 @@ export default function DataLogsManager<T extends Record<string, any>>({
     const editData: Partial<T> = {};
     fieldDefinitions.forEach((field) => {
       if (field.key in log) {
-        editData[field.key as keyof T] = log[field.key];
+        let value = log[field.key];
+
+        if (field.type === "date" && value && typeof value === "string") {
+          try {
+            const date = new Date(value);
+
+            if (!isNaN(date.getTime())) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              value = `${year}-${month}-${day}`;
+            }
+          } catch (error) {
+            console.error("Error converting date:", value, error);
+          }
+        }
+
+        editData[field.key as keyof T] = value;
       }
     });
     setEditedLog(editData);
@@ -360,9 +378,21 @@ export default function DataLogsManager<T extends Record<string, any>>({
     if (!editingLogId || !editedLog) return;
 
     try {
+      const processedData = { ...editedLog };
+      fieldDefinitions.forEach((field) => {
+        if (field.type === "date" && processedData[field.key as keyof T]) {
+          const dateValue = processedData[field.key as keyof T] as string;
+          if (dateValue && !dateValue.includes("T")) {
+            const localDate = new Date(dateValue + "T00:00:00");
+            processedData[field.key as keyof T] =
+              localDate.toISOString() as T[keyof T];
+          }
+        }
+      });
+
       const updatedRecord = await ApiService.updateRecord(
         editingLogId,
-        editedLog
+        processedData
       );
       if (updatedRecord) {
         updateEntry(editingLogId, updatedRecord, datasetId as DataStoreName);
@@ -927,19 +957,64 @@ export default function DataLogsManager<T extends Record<string, any>>({
                         </Label>
                         {field.type === "date" ? (
                           <>
-                            <Input
-                              id={`edit-${field.key}`}
-                              type="date"
-                              value={
-                                (editedLog[field.key as keyof T] as string) ||
-                                ""
-                              }
-                              onChange={(e) =>
+                            <ReusableDatePicker
+                              value={(() => {
+                                const editedValue =
+                                  editedLog[field.key as keyof T];
+                                const valueToUse =
+                                  editedValue !== undefined
+                                    ? editedValue
+                                    : editingLog[field.key];
+
+                                if (valueToUse) {
+                                  try {
+                                    let date;
+
+                                    if (valueToUse instanceof Date) {
+                                      date = valueToUse;
+                                    } else if (typeof valueToUse === "string") {
+                                      if (valueToUse.includes("T")) {
+                                        date = new Date(valueToUse);
+                                      } else {
+                                        const [year, month, day] = valueToUse
+                                          .split("-")
+                                          .map(Number);
+                                        date = new Date(year, month - 1, day);
+                                      }
+                                    } else {
+                                      return undefined;
+                                    }
+
+                                    if (!isNaN(date.getTime())) {
+                                      return date;
+                                    }
+                                  } catch (error) {
+                                    console.error(
+                                      "Error in date conversion:",
+                                      error
+                                    );
+                                  }
+                                }
+                                return undefined;
+                              })()}
+                              onChange={(date) =>
                                 setEditedLog({
                                   ...editedLog,
-                                  [field.key]: e.target.value,
+                                  [field.key]: date
+                                    ? (() => {
+                                        const year = date.getFullYear();
+                                        const month = String(
+                                          date.getMonth() + 1
+                                        ).padStart(2, "0");
+                                        const day = String(
+                                          date.getDate()
+                                        ).padStart(2, "0");
+                                        return `${year}-${month}-${day}`;
+                                      })()
+                                    : "",
                                 })
                               }
+                              placeholder="Select date"
                               className="mt-1"
                             />
                             <p className="text-xs text-muted-foreground mt-1">

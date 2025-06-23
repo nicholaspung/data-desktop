@@ -70,9 +70,15 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in multi-mode-add-dialog, test bulk imports
-- sometimes the date/amount are filled, but a lot of the times they are not
-- in financial records bulk imports, the recent entries are not the recent entries
+- in metric logger, if a metric does not have a goal and is a number type, and the value is not 0, it should show "completed"
+- in adding a bloodwork result, I can't seem to adjust the values for both number/text, or anything in that component
+- in bloodwork managers, when trying to select options, it's hard to find them - sort alphabetically
+- in wealth dashboard summary, for the balances net worth account type seleciton, it should be a multi-select
+- in metric calendar, add a search bar for the user to be able to find the metric to select/deselect
+- in body measurements, body weight trends, for the missing graph, can it show a "dotted line" or at least take into account the missing data in the graph?
+- in body measurements, when importing weight csv, make it the added data goes to the data store, and that the "latest weight" data gets updated
+- in body measurements, when importing weight csv, allow the user to view the data going in and also add a checkbox to switch between lbs and kgs for the unit
+- add a route for misc files, first one is for health files, also put in the financial files there too as a duplicate
 
 - user still needs to disable/enable in settings a route in order to view the new dashbaord summary
 
@@ -83,6 +89,14 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in wealth, multiple entries, when I add the record, it is incorrect [DONE 2025-06-22]
+- in daily tracker dashboard summary, the "this week" percentage is incorrect [DONE 2025-06-22]
+- in financial balances, the graph for split/total is incorrect [DONE 2025-06-22]
+- in financial balances, it looks for the latest entries, but really it should look for the latest dates - and if there are multiple of the same unique combo entries with the same date, it should still show up [DONE 2025-06-22]
+- in wealth, the bulk import, see if there's a way to "expand the height of the container of the input table" [DONE 2025-06-22]
+- in multi-mode-add-dialog, test bulk imports [DONE 2025-06-21]
+- sometimes the date/amount are filled, but a lot of the times they are not [DONE 2025-06-21]
+- in financial records bulk imports, the recent entries are not the recent entries [DONE 2025-06-21]
 - in financial balances, add a button to show between individual sum records or the total sum records [DONE 2025-06-21]
 - in wealth summary, add a "sort" button" for the totals [DONE 2025-06-21]
 - in financial log summary, if the value is negative it should be red, and if positive, it should be green [DONE 2025-06-21]
