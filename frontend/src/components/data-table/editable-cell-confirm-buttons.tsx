@@ -16,7 +16,10 @@ export default function EditableCellConfirmButtons({
         variant="ghost"
         size="icon"
         className="h-6 w-6"
-        onClick={handleSave}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleSave();
+        }}
         disabled={isSubmitting}
       >
         {isSubmitting ? (
@@ -29,7 +32,10 @@ export default function EditableCellConfirmButtons({
         variant="ghost"
         size="icon"
         className="h-6 w-6"
-        onClick={handleCancel}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleCancel();
+        }}
         disabled={isSubmitting}
       >
         <X className="h-3 w-3 text-red-500" />

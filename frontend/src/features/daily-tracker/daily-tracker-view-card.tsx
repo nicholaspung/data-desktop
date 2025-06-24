@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useState } from "react";
+import { useRef } from "react";
 import EditableCellConfirmButtons from "@/components/data-table/editable-cell-confirm-buttons";
 import { Badge } from "@/components/ui/badge";
 import { Target } from "lucide-react";
@@ -29,7 +29,7 @@ export default function DailyTrackerViewCard({
   ) => Promise<void>;
   isScheduled?: boolean;
 }) {
-  const [notes, setNotes] = useState(metric.notes || "");
+  const notesInputRef = useRef<HTMLInputElement>(null);
 
   const startDateText = metric.schedule_start_date
     ? format(new Date(metric.schedule_start_date), "MMM d")
@@ -291,14 +291,22 @@ export default function DailyTrackerViewCard({
           <Label htmlFor={`notes-${metric.id}`}>Notes (Optional)</Label>
           <div className="flex flex-row gap-2 items-center">
             <Input
+              ref={notesInputRef}
+              key={`notes-${metric.id}`}
               id={`notes-${metric.id}`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              defaultValue={metric.notes || ""}
               placeholder="Add notes..."
             />
             <EditableCellConfirmButtons
-              handleSave={() => saveChanges(metric.id, "notes", notes)}
-              handleCancel={() => setNotes(metric.notes || "")}
+              handleSave={() => {
+                const noteValue = notesInputRef.current?.value || "";
+                saveChanges(metric.id, "notes", noteValue);
+              }}
+              handleCancel={() => {
+                if (notesInputRef.current) {
+                  notesInputRef.current.value = metric.notes || "";
+                }
+              }}
               isSubmitting={false}
             />
           </div>

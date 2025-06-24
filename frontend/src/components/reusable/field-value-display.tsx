@@ -2,6 +2,7 @@ import { FieldDefinition } from "@/types/types";
 import { format } from "date-fns";
 import { Badge } from "../ui/badge";
 import FileViewer from "./file-viewer";
+import { formatCurrency } from "@/lib/data-utils";
 
 interface FieldValueDisplayProps {
   field: FieldDefinition;
@@ -33,14 +34,20 @@ export default function FieldValueDisplay({
       return <span>{value ? "Yes" : "No"}</span>;
 
     case "number":
-      return (
-        <span>
-          {typeof value === "number" ? value.toLocaleString() : value}
-          {field.unit && (
-            <span className="ml-1 text-muted-foreground">{field.unit}</span>
-          )}
-        </span>
-      );
+      if (typeof value === "number") {
+        if (field.unit === "$") {
+          return <span>{formatCurrency(value)}</span>;
+        }
+        return (
+          <span>
+            {value.toLocaleString()}
+            {field.unit && (
+              <span className="ml-1 text-muted-foreground">{field.unit}</span>
+            )}
+          </span>
+        );
+      }
+      return <span>{value}</span>;
 
     case "percentage":
       return (

@@ -2,6 +2,7 @@ import { ColumnMeta, FieldDefinition } from "@/types/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { getFilterFunctionForField } from "./table-filter-utils";
 import { formatDate } from "./date-utils";
+import { formatCurrency } from "./data-utils";
 import { getNestedValue } from "./utils";
 import JsonViewCell from "@/components/data-table/json-view-cell";
 import FileViewCell from "@/components/data-table/file-view-cell";
@@ -20,9 +21,13 @@ export const formatCellValue = (value: any, meta?: ColumnMeta) => {
     case "boolean":
       return value ? "Yes" : "No";
     case "number":
-      return typeof value === "number"
-        ? `${value.toLocaleString()}${meta.unit ? ` ${meta.unit}` : ""}`
-        : value;
+      if (typeof value === "number") {
+        if (meta.unit === "$") {
+          return formatCurrency(value);
+        }
+        return `${value.toLocaleString()}${meta.unit ? ` ${meta.unit}` : ""}`;
+      }
+      return value;
     case "percentage":
       return typeof value === "number"
         ? `${(value * 100).toLocaleString()}%`

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useMatches } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, MenuIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, MenuIcon, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -117,6 +118,7 @@ export default function DashboardLayout({
     matches.length > 0 ? matches[matches.length - 1].pathname : "";
 
   const [isExpanded, setIsExpanded] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
   const routeConfigs = useStore(settingsStore, (state) => state.routeConfigs);
@@ -148,6 +150,10 @@ export default function DashboardLayout({
       return routeConfig
         ? routeConfig.visible && visibleRoutes[item.href] !== false
         : visibleRoutes[item.href] !== false;
+    })
+    .filter((item) => {
+      if (!searchQuery.trim()) return true;
+      return item.title.toLowerCase().includes(searchQuery.toLowerCase());
     })
     .sort((a, b) => {
       if (a.href === "/") return -1;
@@ -215,6 +221,19 @@ export default function DashboardLayout({
             )}
           </Button>
         </div>
+        {isExpanded && (
+          <div className="p-2 border-b">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search features..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-8"
+              />
+            </div>
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto">
           <div
             className={cn(
@@ -274,7 +293,18 @@ export default function DashboardLayout({
             <ChevronLeft className="h-5 w-5" />
           </Button>
         </div>
-        <div className="overflow-y-auto h-[calc(100vh-4rem-64px)]">
+        <div className="p-2 border-b">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search features..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-8"
+            />
+          </div>
+        </div>
+        <div className="overflow-y-auto h-[calc(100vh-4rem-64px-48px)]">
           <div className="space-y-1 p-2">
             {finalSidebarItems.map((item) => (
               <Link

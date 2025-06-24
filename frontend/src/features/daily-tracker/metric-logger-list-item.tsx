@@ -299,23 +299,39 @@ export default function MetricLoggerListItem({
   }: {
     isEditingNote: boolean;
     metric: Metric;
-  }) =>
-    isEditingNote && (
-      <div className="mt-2">
+  }) => {
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    
+    useEffect(() => {
+      if (isEditingNote && textareaRef.current) {
+        textareaRef.current.focus();
+        // Set cursor to end of text
+        const length = textareaRef.current.value.length;
+        textareaRef.current.setSelectionRange(length, length);
+      }
+    }, [isEditingNote]);
+    
+    return isEditingNote ? (
+      <div className="mt-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-2 mt-2">
           <Textarea
+            ref={textareaRef}
             placeholder="Add a note for today..."
             value={noteValue}
             onChange={(e) => setNoteValue(e.target.value)}
             rows={3}
             className="min-h-[80px] text-sm"
             disabled={isSubmittingNote}
+            onClick={(e) => e.stopPropagation()}
           />
           <div className="flex justify-end gap-1">
             <Button
               variant="outline"
               size="sm"
-              onClick={cancelEditingNote}
+              onClick={(e) => {
+                e.stopPropagation();
+                cancelEditingNote();
+              }}
               disabled={isSubmittingNote}
             >
               Cancel
@@ -323,7 +339,10 @@ export default function MetricLoggerListItem({
             <Button
               variant="default"
               size="sm"
-              onClick={() => saveEditedNote(metric)}
+              onClick={(e) => {
+                e.stopPropagation();
+                saveEditedNote(metric);
+              }}
               disabled={isSubmittingNote}
             >
               {isSubmittingNote ? (
@@ -338,7 +357,8 @@ export default function MetricLoggerListItem({
           </div>
         </div>
       </div>
-    );
+    ) : null;
+  };
 
   return Object.keys(groupedMetrics)
     .sort()

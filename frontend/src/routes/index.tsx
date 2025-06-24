@@ -99,13 +99,13 @@ function Home() {
       const routeDatasetMapping = getRouteDatasetMapping();
       const filteredDatasets = allDatasets.filter((dataset) => {
         for (const [route, datasets] of Object.entries(routeDatasetMapping)) {
-          if (datasets.includes(dataset.id) && visibleRoutes[route]) {
+          if (datasets.includes(dataset.id) && (visibleRoutes[route] !== false)) {
             return true;
           }
         }
 
         const route = getDatasetRoute(dataset.id);
-        return visibleRoutes[route];
+        return visibleRoutes[route] !== false;
       });
 
       const countPromises = filteredDatasets.map(async (dataset) => {

@@ -296,6 +296,16 @@ const MetricLogger = () => {
     ) {
       const numericValue = parseFloat(String(loggedValue)) || 0;
 
+      // Don't mark as complete if this is just a note-only entry
+      // (i.e., value is 0 and there's a note, suggesting the value wasn't explicitly set)
+      if (todayLog.notes && todayLog.notes.trim() && numericValue === 0) {
+        // Check if this matches the default value, suggesting it wasn't explicitly set
+        const defaultValue = parseFloat(metric.default_value || "0") || 0;
+        if (numericValue === defaultValue) {
+          return false;
+        }
+      }
+
       if (metric.goal_value === "0" || metric.default_value === "0") {
         return numericValue === 0;
       }
