@@ -61,6 +61,7 @@ export const FEATURE_ICONS = {
   METRIC_CALENDAR: Calendar,
   EXPERIMENTS: FlaskConical,
   JOURNALING: BookOpen,
+  BOOK_OPEN: BookOpen,
   TIME_PLANNER: Timer,
   DEXA_SCAN: PieChart,
   BLOODWORK: Activity,

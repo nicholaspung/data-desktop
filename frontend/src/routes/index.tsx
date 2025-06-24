@@ -38,6 +38,7 @@ import "@/features/dashboard/experiment-dashboard-summary";
 import "@/features/dashboard/daily-tracking-dashboard-summary";
 import "@/features/dashboard/metric-logger-dashboard-summary";
 import "@/features/dashboard/journaling-dashboard-summary";
+import "@/features/dashboard/daily-journal-dashboard-summary-registry";
 import "@/features/dashboard/time-tracker-dashboard-summary";
 import "@/features/todos/todo-dashboard-summary";
 import "@/features/dashboard/people-crm-dashboard-summary";

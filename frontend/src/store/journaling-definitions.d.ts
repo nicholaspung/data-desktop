@@ -74,3 +74,22 @@ export type AffirmationInput = Omit<
   Affirmation,
   "id" | "createdAt" | "lastModified"
 >;
+
+export interface DailyJournalEntry {
+  date: Date;
+  entry: string;
+
+  // Metadata fields
+  id: string;
+  createdAt?: Date;
+  lastModified?: Date;
+}
+
+// Partial type for form handling and updates
+export type PartialDailyJournalEntry = Partial<DailyJournalEntry>;
+
+// Input type for creating new records (without metadata)
+export type DailyJournalEntryInput = Omit<
+  DailyJournalEntry,
+  "id" | "createdAt" | "lastModified"
+>;

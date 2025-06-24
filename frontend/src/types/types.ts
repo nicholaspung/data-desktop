@@ -16,6 +16,7 @@ import {
   CreativityJournalEntry,
   QuestionJournalEntry,
   Affirmation,
+  DailyJournalEntry,
 } from "@/store/journaling-definitions";
 import {
   Person,
@@ -50,6 +51,7 @@ export type DatasetId =
   | "gratitude_journal"
   | "creativity_journal"
   | "question_journal"
+  | "daily_journal"
   | "affirmation"
   | "people"
   | "meetings"
@@ -87,6 +89,7 @@ export const DATASET_REFERENCES = {
     field: "id",
   },
   QUESTION_JOURNAL: { dataset: "question_journal" as DatasetId, field: "id" },
+  DAILY_JOURNAL: { dataset: "daily_journal" as DatasetId, field: "id" },
   AFFIRMATION: { dataset: "affirmation" as DatasetId, field: "id" },
   PEOPLE: { dataset: "people" as DatasetId, field: "id" },
   MEETINGS: { dataset: "meetings" as DatasetId, field: "id" },
@@ -125,6 +128,7 @@ export type DatasetTypeMap = {
   gratitude_journal: GratitudeJournalEntry;
   creativity_journal: CreativityJournalEntry;
   question_journal: QuestionJournalEntry;
+  daily_journal: DailyJournalEntry;
   affirmation: Affirmation;
   people: Person;
   meetings: Meeting;

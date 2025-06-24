@@ -62,6 +62,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/journaling",
   },
   {
+    title: "Daily Journal",
+    icon: <FEATURE_ICONS.BOOK_OPEN className="h-5 w-5" />,
+    href: "/daily-journal",
+  },
+  {
     title: "Time Planner",
     icon: <FEATURE_ICONS.TIME_PLANNER className="h-5 w-5" />,
     href: "/time-planner",

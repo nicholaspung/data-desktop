@@ -94,6 +94,13 @@ func GetAllDatasetDefinitions() []DatasetConfig {
 			Fields:      GetQuestionJournalFields(),
 		},
 		{
+			ID:          DatasetIDDailyJournal,
+			Name:        "Daily Journal",
+			Description: "Daily journal entries for personal reflection and documentation",
+			Type:        DatasetTypeJournaling,
+			Fields:      GetDailyJournalFields(),
+		},
+		{
 			ID:          DatasetIDTimeEntries,
 			Name:        "Time Entries",
 			Description: "Time tracking entries for productivity analysis",

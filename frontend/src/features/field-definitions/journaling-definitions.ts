@@ -83,3 +83,25 @@ export const AFFIRMATION_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
     },
   ],
 };
+
+export const DAILY_JOURNAL_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
+  id: "daily_journal",
+  name: "Daily Journal",
+  description: "Daily journal entries for personal reflection and documentation",
+  fields: [
+    {
+      key: "date",
+      type: "date",
+      displayName: "Date",
+      description: "Date of the journal entry",
+      isSearchable: true,
+      isUnique: true,
+    },
+    {
+      key: "entry",
+      type: "markdown",
+      displayName: "Journal Entry",
+      description: "Your daily journal entry",
+    },
+  ],
+};

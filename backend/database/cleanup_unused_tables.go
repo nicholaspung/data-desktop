@@ -19,6 +19,7 @@ func CleanupUnusedTables() error {
 		DatasetIDAffirmation,
 		DatasetIDCreativityJournal,
 		DatasetIDQuestionJournal,
+		DatasetIDDailyJournal,
 		DatasetIDTimeEntries,
 		DatasetIDTimeCategories,
 		DatasetIDTimePlannerConfig,

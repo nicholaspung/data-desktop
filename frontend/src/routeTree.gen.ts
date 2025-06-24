@@ -26,6 +26,7 @@ import { Route as ExperimentsImport } from './routes/experiments'
 import { Route as DexaImport } from './routes/dexa'
 import { Route as DebugImport } from './routes/debug'
 import { Route as DatasetImport } from './routes/dataset'
+import { Route as DailyJournalImport } from './routes/daily-journal'
 import { Route as CalendarImport } from './routes/calendar'
 import { Route as BodyMeasurementsImport } from './routes/body-measurements'
 import { Route as BloodworkImport } from './routes/bloodwork'
@@ -123,6 +124,12 @@ const DatasetRoute = DatasetImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const DailyJournalRoute = DailyJournalImport.update({
+  id: '/daily-journal',
+  path: '/daily-journal',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const CalendarRoute = CalendarImport.update({
   id: '/calendar',
   path: '/calendar',
@@ -177,6 +184,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof CalendarImport
+      parentRoute: typeof rootRoute
+    }
+    '/daily-journal': {
+      id: '/daily-journal'
+      path: '/daily-journal'
+      fullPath: '/daily-journal'
+      preLoaderRoute: typeof DailyJournalImport
       parentRoute: typeof rootRoute
     }
     '/dataset': {
@@ -294,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/bloodwork': typeof BloodworkRoute
   '/body-measurements': typeof BodyMeasurementsRoute
   '/calendar': typeof CalendarRoute
+  '/daily-journal': typeof DailyJournalRoute
   '/dataset': typeof DatasetRoute
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
@@ -316,6 +331,7 @@ export interface FileRoutesByTo {
   '/bloodwork': typeof BloodworkRoute
   '/body-measurements': typeof BodyMeasurementsRoute
   '/calendar': typeof CalendarRoute
+  '/daily-journal': typeof DailyJournalRoute
   '/dataset': typeof DatasetRoute
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
@@ -339,6 +355,7 @@ export interface FileRoutesById {
   '/bloodwork': typeof BloodworkRoute
   '/body-measurements': typeof BodyMeasurementsRoute
   '/calendar': typeof CalendarRoute
+  '/daily-journal': typeof DailyJournalRoute
   '/dataset': typeof DatasetRoute
   '/debug': typeof DebugRoute
   '/dexa': typeof DexaRoute
@@ -363,6 +380,7 @@ export interface FileRouteTypes {
     | '/bloodwork'
     | '/body-measurements'
     | '/calendar'
+    | '/daily-journal'
     | '/dataset'
     | '/debug'
     | '/dexa'
@@ -384,6 +402,7 @@ export interface FileRouteTypes {
     | '/bloodwork'
     | '/body-measurements'
     | '/calendar'
+    | '/daily-journal'
     | '/dataset'
     | '/debug'
     | '/dexa'
@@ -405,6 +424,7 @@ export interface FileRouteTypes {
     | '/bloodwork'
     | '/body-measurements'
     | '/calendar'
+    | '/daily-journal'
     | '/dataset'
     | '/debug'
     | '/dexa'
@@ -428,6 +448,7 @@ export interface RootRouteChildren {
   BloodworkRoute: typeof BloodworkRoute
   BodyMeasurementsRoute: typeof BodyMeasurementsRoute
   CalendarRoute: typeof CalendarRoute
+  DailyJournalRoute: typeof DailyJournalRoute
   DatasetRoute: typeof DatasetRoute
   DebugRoute: typeof DebugRoute
   DexaRoute: typeof DexaRoute
@@ -450,6 +471,7 @@ const rootRouteChildren: RootRouteChildren = {
   BloodworkRoute: BloodworkRoute,
   BodyMeasurementsRoute: BodyMeasurementsRoute,
   CalendarRoute: CalendarRoute,
+  DailyJournalRoute: DailyJournalRoute,
   DatasetRoute: DatasetRoute,
   DebugRoute: DebugRoute,
   DexaRoute: DexaRoute,
@@ -481,6 +503,7 @@ export const routeTree = rootRoute
         "/bloodwork",
         "/body-measurements",
         "/calendar",
+        "/daily-journal",
         "/dataset",
         "/debug",
         "/dexa",
@@ -509,6 +532,9 @@ export const routeTree = rootRoute
     },
     "/calendar": {
       "filePath": "calendar.tsx"
+    },
+    "/daily-journal": {
+      "filePath": "daily-journal.tsx"
     },
     "/dataset": {
       "filePath": "dataset.tsx"

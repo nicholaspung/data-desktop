@@ -71,3 +71,21 @@ func GetQuestionJournalFields() []FieldDefinition {
 		},
 	}
 }
+
+func GetDailyJournalFields() []FieldDefinition {
+	return []FieldDefinition{
+		{
+			Key:          "date",
+			Type:         FieldTypeDate,
+			DisplayName:  "Date",
+			Description:  "Date of the daily journal entry",
+			IsSearchable: true,
+		},
+		{
+			Key:         "entry",
+			Type:        FieldTypeMarkdown,
+			DisplayName: "Entry",
+			Description: "Daily journal entry content",
+		},
+	}
+}
