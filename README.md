@@ -8,6 +8,11 @@ This application helps track any sort of data that I want to track. The current 
 - Experiments tied to metrics that I want to be tracked
 - Journaling that can be tied to metrics
 - Time tracking that can be tied to metrics
+- General files
+- Body measurement information
+- People CRM (alpha)
+- Time planner
+- Todos section
 
 The idea is to create a desktop application where all your data is stored locally, not encrypted, so that the user is able to aggregate any data they want to track.
 
@@ -15,9 +20,10 @@ Application is built for my own personal use, but may be useful to others if the
 
 - DEXA Scan information is using data from BodySpec scans
 - Bloodwork information requires you to input your blood markers before anything. This is because multiple lab providers have different bloodmarker names for the same blood marker. You have to decide which one you want to use and then track it accordingly
-- For metrics and experiments, it's been tested to use true/false values. The other inputs have not been tested yet
+- For metrics and experiments, 
 - For journaling, the idea is to do those actions if only to give some time for yourself to reflect and also exercise some thinking muscles
 - Time tracking is for you to understand how much time you spend on what task
+- General files for financial/wealth  information
 - We recommend you add a PIN if you want to track data that should be private if you have the application opened, but leave the computer for a while, and you don't want people to look at it
   - Although visually, the data seems to be protected, if someone accessed your database, they will be able to view it
 
@@ -70,8 +76,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the tile in dashboard summary information
 
-- update feature information in this README for the new features added so far
-
 - add a "daily journal" that is able to do like "@feature" for tracking metrics
   - also adding templates for the user to be able to select that is added to the journal
 - in daily journal, remove the "today's entries" section
@@ -86,8 +90,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically
 - in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
 
+- make it so that daily journal has "optional" dependencies for basically all the other features
+- in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing
+
 ### DONE
 
+- update feature information in this README for the new features added so far [DONE 2025-06-23]
 - in the sidebar, add a search bar that is an autocomplete to select a route [DONE 2025-06-23]
 - in dataset table visual, the currency is showing incorrectly [DONE 2025-06-23]
 - in time tracking form, when a user flips to timer mode, it should automatically make the start time the current time [DONE 2025-06-23]
