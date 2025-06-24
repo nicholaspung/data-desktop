@@ -5,8 +5,6 @@ import { DailyJournalEntry } from "@/store/journaling-definitions";
 import ReactMarkdown from "react-markdown";
 import { format, isToday, isYesterday } from "date-fns";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { parseMetricsFromText } from "./metric-parser";
 
 interface DailyJournalHistoryProps {
   entries: DailyJournalEntry[];
@@ -15,11 +13,11 @@ interface DailyJournalHistoryProps {
   selectedDate?: Date;
 }
 
-export default function DailyJournalHistory({ 
-  entries, 
+export default function DailyJournalHistory({
+  entries,
   showDate = true,
   onDateSelect,
-  selectedDate
+  selectedDate,
 }: DailyJournalHistoryProps) {
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
 
@@ -71,14 +69,15 @@ export default function DailyJournalHistory({
       {sortedEntries.map((entry) => {
         const entryDate = new Date(entry.date);
         const isExpanded = expandedEntry === entry.id;
-        const parsedMetrics = parseMetricsFromText(entry.entry);
-        const isSelectedDate = selectedDate && 
-          entryDate.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0];
-        
+        const isSelectedDate =
+          selectedDate &&
+          entryDate.toISOString().split("T")[0] ===
+            selectedDate.toISOString().split("T")[0];
+
         return (
-          <Card 
-            key={entry.id} 
-            className={`transition-all hover:shadow-md ${isSelectedDate ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
+          <Card
+            key={entry.id}
+            className={`transition-all hover:shadow-md ${isSelectedDate ? "ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20" : ""}`}
           >
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -97,11 +96,6 @@ export default function DailyJournalHistory({
                   <span className="text-sm text-muted-foreground">
                     {getTimeLabel(entryDate)}
                   </span>
-                  {parsedMetrics.length > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {parsedMetrics.length} metrics
-                    </Badge>
-                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button
@@ -114,7 +108,11 @@ export default function DailyJournalHistory({
                   <Button variant="ghost" size="sm">
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-destructive">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-destructive"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -126,26 +124,6 @@ export default function DailyJournalHistory({
                   {isExpanded ? entry.entry : getPreviewText(entry.entry)}
                 </ReactMarkdown>
               </div>
-              
-              {/* Show parsed metrics if any */}
-              {isExpanded && parsedMetrics.length > 0 && (
-                <div className="mt-4 pt-4 border-t">
-                  <h4 className="text-sm font-medium mb-2">Detected Metrics:</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {parsedMetrics.map((metric, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center justify-between p-2 bg-muted rounded text-sm"
-                      >
-                        <span className="font-medium">{metric.name}</span>
-                        <span>
-                          {metric.value} {metric.unit}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         );

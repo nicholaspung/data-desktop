@@ -1,12 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, TrendingDown, Activity, BookOpen } from "lucide-react";
+import {
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  BookOpen,
+} from "lucide-react";
 import { DailyJournalEntry } from "@/store/journaling-definitions";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { format, isToday } from "date-fns";
-import { parseMetricsFromText } from "./metric-parser";
-import { MetricPreview } from "./metric-preview";
 import DailyJournalHistory from "./daily-journal-history";
 import { useState } from "react";
 
@@ -15,18 +19,21 @@ interface DailySummaryViewProps {
   entries: DailyJournalEntry[];
 }
 
-export default function DailySummaryView({ selectedDate, entries }: DailySummaryViewProps) {
-  const [dateInput, setDateInput] = useState(format(selectedDate, "yyyy-MM-dd"));
-  
-  // Get all metrics and related data
+export default function DailySummaryView({
+  selectedDate,
+  entries,
+}: DailySummaryViewProps) {
+  const [dateInput, setDateInput] = useState(
+    format(selectedDate, "yyyy-MM-dd")
+  );
+
   const dailyLogs = useStore(dataStore, (state) => state.daily_logs || []);
-  const bodyMeasurements = useStore(dataStore, (state) => state.body_measurements || []);
-  
-  // Parse metrics from today's journal entries
-  const todaysMetrics = entries.flatMap(entry => parseMetricsFromText(entry.entry));
-  
-  // Get metrics from the selected date from other datasets
-  const selectedDateMetrics = dailyLogs.filter(log => {
+  const bodyMeasurements = useStore(
+    dataStore,
+    (state) => state.body_measurements || []
+  );
+
+  const selectedDateMetrics = dailyLogs.filter((log) => {
     const logDate = new Date(log.date);
     return (
       logDate.getDate() === selectedDate.getDate() &&
@@ -35,7 +42,7 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
     );
   });
 
-  const selectedDateMeasurements = bodyMeasurements.filter(measurement => {
+  const selectedDateMeasurements = bodyMeasurements.filter((measurement) => {
     const measurementDate = new Date(measurement.date);
     return (
       measurementDate.getDate() === selectedDate.getDate() &&
@@ -44,9 +51,6 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
     );
   });
 
-  // TODO: Get previous day's data for comparison trends
-  // const previousDay = subDays(selectedDate, 1);
-
   const getDateLabel = (date: Date) => {
     if (isToday(date)) return "Today";
     return format(date, "EEEE, MMMM d, yyyy");
@@ -54,12 +58,13 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
 
   const handleDateChange = (newDate: string) => {
     setDateInput(newDate);
-    // You could emit this to parent component if needed
   };
 
   const getTrendIcon = (current: number, previous: number) => {
-    if (current > previous) return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (current < previous) return <TrendingDown className="h-4 w-4 text-red-600" />;
+    if (current > previous)
+      return <TrendingUp className="h-4 w-4 text-green-600" />;
+    if (current < previous)
+      return <TrendingDown className="h-4 w-4 text-red-600" />;
     return <Activity className="h-4 w-4 text-gray-600" />;
   };
 
@@ -76,7 +81,9 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
         <CardContent>
           <div className="flex items-center gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Select Date</label>
+              <label className="text-sm font-medium mb-1 block">
+                Select Date
+              </label>
               <input
                 type="date"
                 value={dateInput}
@@ -85,10 +92,9 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
               />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold">{getDateLabel(selectedDate)}</h3>
-              <p className="text-sm text-muted-foreground">
-                {entries.length} journal entries • {todaysMetrics.length} auto-detected metrics
-              </p>
+              <h3 className="text-lg font-semibold">
+                {getDateLabel(selectedDate)}
+              </h3>
             </div>
           </div>
         </CardContent>
@@ -109,23 +115,6 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
         </Card>
       )}
 
-      {/* Auto-detected Metrics */}
-      {todaysMetrics.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Auto-detected Metrics ({todaysMetrics.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {todaysMetrics.map((metric, index) => (
-              <MetricPreview key={index} metric={metric} />
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Existing Metrics for the Day */}
       {selectedDateMetrics.length > 0 && (
         <Card>
@@ -140,11 +129,15 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
               {selectedDateMetrics.map((metric) => (
                 <div key={metric.id} className="p-3 border rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{metric.metric_id_data?.name || 'Metric'}</span>
+                    <span className="font-medium">
+                      {metric.metric_id_data?.name || "Metric"}
+                    </span>
                     <span className="text-lg font-bold">{metric.value}</span>
                   </div>
                   {metric.notes && (
-                    <p className="text-sm text-muted-foreground mt-1">{metric.notes}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {metric.notes}
+                    </p>
                   )}
                 </div>
               ))}
@@ -167,7 +160,9 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
               {selectedDateMeasurements.map((measurement) => (
                 <div key={measurement.id} className="p-3 border rounded-lg">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{measurement.measurement || 'Measurement'}</span>
+                    <span className="font-medium">
+                      {measurement.measurement || "Measurement"}
+                    </span>
                     <div className="flex items-center gap-2">
                       <span className="text-lg font-bold">
                         {measurement.value} {measurement.unit}
@@ -185,20 +180,28 @@ export default function DailySummaryView({ selectedDate, entries }: DailySummary
       )}
 
       {/* Empty State */}
-      {entries.length === 0 && selectedDateMetrics.length === 0 && selectedDateMeasurements.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Data for This Date</h3>
-            <p className="text-muted-foreground">
-              No journal entries, metrics, or measurements recorded for {format(selectedDate, "MMMM d, yyyy")}.
-            </p>
-            <Button className="mt-4" onClick={() => setDateInput(format(new Date(), "yyyy-MM-dd"))}>
-              Go to Today
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {entries.length === 0 &&
+        selectedDateMetrics.length === 0 &&
+        selectedDateMeasurements.length === 0 && (
+          <Card>
+            <CardContent className="text-center py-8">
+              <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                No Data for This Date
+              </h3>
+              <p className="text-muted-foreground">
+                No journal entries, metrics, or measurements recorded for{" "}
+                {format(selectedDate, "MMMM d, yyyy")}.
+              </p>
+              <Button
+                className="mt-4"
+                onClick={() => setDateInput(format(new Date(), "yyyy-MM-dd"))}
+              >
+                Go to Today
+              </Button>
+            </CardContent>
+          </Card>
+        )}
     </div>
   );
 }

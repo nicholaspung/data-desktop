@@ -20,7 +20,6 @@ interface DailyRecordsPanelProps {
   selectedDate: Date;
 }
 
-// Icons for different dataset types
 const DATASET_ICONS: Record<string, any> = {
   daily_journal: BookOpen,
   gratitude_journal: Heart,
@@ -47,7 +46,6 @@ export default function DailyRecordsPanel({
     (state) => state.datasets
   );
 
-  // Get all records for the selected date across all datasets
   const getRecordsForDate = () => {
     const selectedDateString = selectedDate.toISOString().split("T")[0];
     const recordsByDataset: Array<{
@@ -63,11 +61,9 @@ export default function DailyRecordsPanel({
       const dataset = fieldDefinitions[datasetId];
       if (!dataset) return;
 
-      // Find date field in this dataset
       const dateField = dataset.fields.find((field) => field.type === "date");
       if (!dateField) return;
 
-      // Filter records for the selected date
       const dateRecords = records.filter((record: any) => {
         if (!record[dateField.key]) return false;
         const recordDate = new Date(record[dateField.key]);
@@ -160,7 +156,7 @@ export default function DailyRecordsPanel({
                               record[field.key] !== null &&
                               record[field.key] !== ""
                           )
-                          .slice(0, 3) // Show only first 3 non-date fields to keep it compact
+                          .slice(0, 3)
                           .map((field) => (
                             <div
                               key={field.key}

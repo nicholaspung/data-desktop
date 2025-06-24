@@ -74,6 +74,17 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add a "daily journal" that is able to do like "@feature" for tracking metrics
   - also adding templates for the user to be able to select that is added to the journal
+- in daily journal, remove the "today's entries" section
+- in daily journal, when the user is looking at all the records for that date, make sure it's looking at the local date, and also add a way to display specific features, using a multi-select
+- in daily journal, the "entries" should be the full width
+- in daily journal, it shouldn't show the current daily journal entry
+- in daily journal, when displayed the records with relational data, it should show the relational data display fields
+- in daily journal, the user should be able to collapse/uncollapse a particular feature
+- in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date
+- in daily journal, when the user selects which feature to view, the config should be stored locally
+- in daily journal, it shouldn't show the "files" datasets
+- in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically
+- in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
 
 ### DONE
 

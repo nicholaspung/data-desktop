@@ -181,7 +181,6 @@ function TimeTrackerForm({
         setEndTime(formattedNow);
       }
     } else if (addState === "timer") {
-      // Always set current time as start time when switching to timer mode
       setCurrentTimeAsStartTime();
     }
   }, [addState]);

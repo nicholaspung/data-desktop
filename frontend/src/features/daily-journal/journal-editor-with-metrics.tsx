@@ -1,16 +1,23 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Zap, Search, ArrowRight, X, Edit, Eye } from "lucide-react";
+import {
+  Edit,
+  Eye,
+  Plus,
+  Trash2,
+  Zap,
+  Search,
+  ArrowRight,
+  X,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Metric } from "@/store/experiment-definitions";
 
-// Helper function to convert metric type to value examples
 const getMetricExamples = (metric: Metric): string[] => {
   switch (metric.type) {
     case "number":
@@ -32,7 +39,12 @@ interface JournalEditorWithMetricsProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  minHeight?: string;
+}
+
+interface Block {
+  id: string;
+  content: string;
+  contentHistory?: string[];
 }
 
 interface InlineMetricsPanelProps {
@@ -44,6 +56,8 @@ interface InlineMetricsPanelProps {
   metricValue: string;
   onMetricValueChange: (value: string) => void;
   searchQuery: string;
+  onSelectMetric: (metric: Metric) => void;
+  onConfirmValue: () => void;
 }
 
 function InlineMetricsPanel({
@@ -55,10 +69,24 @@ function InlineMetricsPanel({
   metricValue,
   onMetricValueChange,
   searchQuery,
+  onSelectMetric,
+  onConfirmValue,
 }: InlineMetricsPanelProps) {
+  useEffect(() => {
+    if (!isInValueMode && filteredMetrics.length > 0) {
+      const selectedElement = document.getElementById(
+        `metric-option-${selectedIndex}`
+      );
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+    }
+  }, [selectedIndex, isInValueMode, filteredMetrics.length]);
 
-
-  // Generate value input placeholder based on metric type
   const getValuePlaceholder = (metric: Metric) => {
     switch (metric.type) {
       case "number":
@@ -76,14 +104,13 @@ function InlineMetricsPanel({
     }
   };
 
-  // Get value suggestions based on metric
   const getValueSuggestions = (metric: Metric) => {
     return getMetricExamples(metric).slice(0, 5);
   };
 
   return (
-    <Card className="w-80 h-fit absolute right-0 top-0 z-10 shadow-lg border-l-2 border-blue-500">
-      <CardContent className="p-4 space-y-4">
+    <div className="w-full h-fit shadow-lg border-l-2 border-blue-500 bg-blue-50/30 dark:bg-blue-950/30 rounded-lg">
+      <div className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-blue-600" />
@@ -102,7 +129,6 @@ function InlineMetricsPanel({
         </div>
 
         {!isInValueMode ? (
-          // Metric selection view
           <>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
@@ -115,18 +141,19 @@ function InlineMetricsPanel({
               {filteredMetrics.length} metrics available
             </div>
 
-            <ScrollArea className="h-64">
+            <ScrollArea className="h-64" id="metrics-scroll-area">
               <div className="space-y-1">
                 {filteredMetrics.map((metric, index) => (
                   <Button
                     key={metric.id}
+                    id={`metric-option-${index}`}
                     variant="ghost"
                     className={`w-full justify-start p-2 h-auto text-left ${
                       index === selectedIndex
                         ? "bg-accent text-accent-foreground"
                         : "hover:bg-accent"
                     }`}
-                    onClick={() => {}} // Handled by keyboard in parent
+                    onClick={() => onSelectMetric(metric)}
                   >
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-1">
@@ -167,7 +194,6 @@ function InlineMetricsPanel({
             )}
           </>
         ) : (
-          // Value input view
           <>
             {selectedMetric && (
               <>
@@ -192,23 +218,31 @@ function InlineMetricsPanel({
                     onChange={(e) => onMetricValueChange(e.target.value)}
                     className="text-sm h-8"
                     autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        onConfirmValue();
+                      }
+                    }}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <div className="text-sm font-medium">Suggestions</div>
                   <div className="flex flex-wrap gap-1">
-                    {getValueSuggestions(selectedMetric).map((example, index) => (
-                      <Button
-                        key={index}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-6"
-                        onClick={() => onMetricValueChange(example)}
-                      >
-                        {example}
-                      </Button>
-                    ))}
+                    {getValueSuggestions(selectedMetric).map(
+                      (example, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-6"
+                          onClick={() => onMetricValueChange(example)}
+                        >
+                          {example}
+                        </Button>
+                      )
+                    )}
                   </div>
                 </div>
               </>
@@ -217,9 +251,11 @@ function InlineMetricsPanel({
             <div className="space-y-2">
               <div className="text-sm font-medium">Preview</div>
               <div className="bg-muted p-2 rounded text-xs font-mono">
-                @metric:{selectedMetric?.name.includes(' ') 
-                  ? `'${selectedMetric.name}'` 
-                  : selectedMetric?.name}:{metricValue || "___"}
+                @metric:
+                {selectedMetric?.name.includes(" ")
+                  ? `'${selectedMetric.name}'`
+                  : selectedMetric?.name}
+                :{metricValue || "___"}
               </div>
             </div>
 
@@ -228,8 +264,8 @@ function InlineMetricsPanel({
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -237,64 +273,350 @@ export default function JournalEditorWithMetrics({
   value,
   onChange,
   placeholder = "Start writing...",
-  minHeight = "300px",
 }: JournalEditorWithMetricsProps) {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
   const [metricSearchQuery, setMetricSearchQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isInValueMode, setIsInValueMode] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [metricValue, setMetricValue] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const blockRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
-  // Load metrics from data store for keyboard navigation
-  const metrics = useStore(dataStore, (state) => state.metrics as Metric[]) || [];
-  const activeMetrics = metrics.filter(metric => metric.active);
-  
-  // Filter metrics based on search query
-  const filteredMetrics = metricSearchQuery.trim() 
-    ? activeMetrics.filter(metric =>
-        metric.name.toLowerCase().includes(metricSearchQuery.toLowerCase()) ||
-        metric.description.toLowerCase().includes(metricSearchQuery.toLowerCase()) ||
-        metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
+  const metrics =
+    useStore(dataStore, (state) => state.metrics as Metric[]) || [];
+  const activeMetrics = metrics.filter((metric) => metric.active);
+
+  const filteredMetrics = metricSearchQuery.trim()
+    ? activeMetrics.filter(
+        (metric) =>
+          metric.name.toLowerCase().includes(metricSearchQuery.toLowerCase()) ||
+          metric.description
+            .toLowerCase()
+            .includes(metricSearchQuery.toLowerCase()) ||
+          metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
       )
     : activeMetrics;
 
-  // Handle metric insertion from the inline panel
-  const handleMetricInsert = useCallback((metricText: string) => {
-    // Find the last @metric: occurrence and replace it
-    const lastAtMetricIndex = value.lastIndexOf("@metric:");
-    
-    if (lastAtMetricIndex !== -1) {
-      // Replace from @metric: to the end of the text with the complete metric text and add a space
-      const beforeMetric = value.substring(0, lastAtMetricIndex);
-      const newText = beforeMetric + metricText + " ";
-      onChange(newText);
+  const initializeBlocks = useCallback(() => {
+    if (value) {
+      const blockContents =
+        value.split("\n\n").length > 1
+          ? value.split("\n\n")
+          : value.split("\n");
+      const initialBlocks = blockContents.map((block, index) => ({
+        id: `block-${index}`,
+        content: block,
+      }));
+      return initialBlocks.length > 0
+        ? initialBlocks
+        : [{ id: "block-0", content: "" }];
+    } else {
+      return [{ id: "block-0", content: "" }];
+    }
+  }, [value]);
 
-      // Close metrics panel
+  useEffect(() => {
+    setBlocks(initializeBlocks());
+  }, []);
+
+  const updateParentValue = useCallback(
+    (newBlocks: Block[]) => {
+      const combinedValue = newBlocks
+        .map((block) => block.content)
+        .join("\n\n");
+      onChange(combinedValue);
+    },
+    [onChange]
+  );
+
+  const generateBlockId = () =>
+    `block-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+
+  const addBlock = useCallback(
+    (afterIndex?: number) => {
+      const newBlock: Block = {
+        id: generateBlockId(),
+        content: "",
+      };
+
+      setBlocks((prev) => {
+        const newBlocks = [...prev];
+        const insertIndex =
+          afterIndex !== undefined ? afterIndex + 1 : newBlocks.length;
+        newBlocks.splice(insertIndex, 0, newBlock);
+        updateParentValue(newBlocks);
+        return newBlocks;
+      });
+
+      setTimeout(() => {
+        const input = blockRefs.current[newBlock.id];
+        if (input) {
+          input.focus();
+        }
+      }, 10);
+    },
+    [updateParentValue]
+  );
+
+  const removeBlock = useCallback(
+    (blockId: string) => {
+      setBlocks((prev) => {
+        const newBlocks = prev.filter((block) => block.id !== blockId);
+
+        if (newBlocks.length === 0) {
+          newBlocks.push({ id: generateBlockId(), content: "" });
+        }
+        updateParentValue(newBlocks);
+        return newBlocks;
+      });
+    },
+    [updateParentValue]
+  );
+
+  const hasCompleteMetric = useCallback((content: string): boolean => {
+    const metricMatches = content.match(
+      /@metric:(?:'[^']*'|[^:]*):(?![:\s])[^\s@]+/g
+    );
+    return metricMatches !== null && metricMatches.length > 0;
+  }, []);
+
+  const isCorrection = useCallback(
+    (blockId: string, newContent: string, prevContent: string): boolean => {
+      const block = blocks.find((b) => b.id === blockId);
+      const history = block?.contentHistory || [];
+
+      if (newContent.length < prevContent.length) {
+        return true;
+      }
+
+      const recentHistory = history.slice(-3);
+      if (recentHistory.includes(newContent)) {
+        return true;
+      }
+
+      const prevAtMetricIndex = prevContent.lastIndexOf("@metric:");
+      const newAtMetricIndex = newContent.lastIndexOf("@metric:");
+
+      if (prevAtMetricIndex !== -1 && newAtMetricIndex === -1) {
+        return true;
+      }
+
+      return false;
+    },
+    [blocks]
+  );
+
+  const updateBlock = useCallback(
+    (blockId: string, content: string) => {
+      setBlocks((prev) => {
+        const newBlocks = prev.map((block) => {
+          if (block.id === blockId) {
+            const currentHistory = block.contentHistory || [];
+            const updatedHistory = [...currentHistory, block.content].slice(
+              -10
+            );
+
+            return {
+              ...block,
+              content,
+              contentHistory: updatedHistory,
+            };
+          }
+          return block;
+        });
+        updateParentValue(newBlocks);
+        return newBlocks;
+      });
+
+      const lastAtMetricIndex = content.lastIndexOf("@metric:");
+
+      if (lastAtMetricIndex !== -1) {
+        const textAfterMetric = content.substring(lastAtMetricIndex);
+
+        const spaceAfterMetric = textAfterMetric.indexOf(" ");
+        const isIncompleteMetric =
+          spaceAfterMetric === -1 ||
+          (spaceAfterMetric > 0 &&
+            textAfterMetric.substring(spaceAfterMetric).trim() === "");
+
+        if (isIncompleteMetric) {
+          const currentBlock = blocks.find((b) => b.id === blockId);
+          const prevContent = currentBlock?.content || "";
+
+          const isUserCorrection = isCorrection(blockId, content, prevContent);
+
+          const blockHasMetric = hasCompleteMetric(content);
+
+          const isActivelyTypingMetric =
+            content.endsWith("@metric:") ||
+            (lastAtMetricIndex !== -1 &&
+              content.substring(lastAtMetricIndex).startsWith("@metric:"));
+
+          if (
+            (!isUserCorrection || isActivelyTypingMetric) &&
+            !blockHasMetric
+          ) {
+            const searchQuery = textAfterMetric.substring(8);
+            setMetricSearchQuery(searchQuery);
+            setShowMetricsPanel(true);
+            setActiveBlockId(blockId);
+            setSelectedIndex(0);
+            setIsInValueMode(false);
+          } else {
+            setShowMetricsPanel(false);
+            setMetricSearchQuery("");
+            setActiveBlockId(null);
+          }
+        } else {
+          setShowMetricsPanel(false);
+          setMetricSearchQuery("");
+          setActiveBlockId(null);
+        }
+      } else {
+        setShowMetricsPanel(false);
+        setMetricSearchQuery("");
+        setActiveBlockId(null);
+      }
+    },
+    [updateParentValue, blocks, isCorrection, hasCompleteMetric]
+  );
+
+  const handleBlockKeyPress = useCallback(
+    (
+      e: React.KeyboardEvent<HTMLInputElement>,
+      blockId: string,
+      blockIndex: number
+    ) => {
+      const input = e.currentTarget;
+      const cursorPosition = input.selectionStart || 0;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addBlock(blockIndex);
+      } else if (
+        e.key === "Backspace" &&
+        e.currentTarget.value === "" &&
+        blocks.length > 1
+      ) {
+        e.preventDefault();
+        removeBlock(blockId);
+
+        if (blockIndex > 0) {
+          const prevBlock = blocks[blockIndex - 1];
+          setTimeout(() => {
+            const input = blockRefs.current[prevBlock.id];
+            if (input) {
+              input.focus();
+              input.setSelectionRange(input.value.length, input.value.length);
+            }
+          }, 10);
+        }
+      } else if (e.key === "ArrowUp" && !showMetricsPanel) {
+        if (blockIndex > 0) {
+          e.preventDefault();
+          const prevBlock = blocks[blockIndex - 1];
+          setTimeout(() => {
+            const prevInput = blockRefs.current[prevBlock.id];
+            if (prevInput) {
+              prevInput.focus();
+
+              const newPosition = Math.min(
+                cursorPosition,
+                prevInput.value.length
+              );
+              prevInput.setSelectionRange(newPosition, newPosition);
+            }
+          }, 10);
+        }
+      } else if (e.key === "ArrowDown" && !showMetricsPanel) {
+        if (blockIndex < blocks.length - 1) {
+          e.preventDefault();
+          const nextBlock = blocks[blockIndex + 1];
+          setTimeout(() => {
+            const nextInput = blockRefs.current[nextBlock.id];
+            if (nextInput) {
+              nextInput.focus();
+
+              const newPosition = Math.min(
+                cursorPosition,
+                nextInput.value.length
+              );
+              nextInput.setSelectionRange(newPosition, newPosition);
+            }
+          }, 10);
+        }
+      }
+    },
+    [blocks, addBlock, removeBlock, showMetricsPanel]
+  );
+
+  const handleSelectMetric = useCallback((metric: Metric) => {
+    setSelectedMetric(metric);
+    setIsInValueMode(true);
+    setMetricValue("");
+  }, []);
+
+  const handleConfirmValue = useCallback(() => {
+    if (selectedMetric && metricValue.trim() && activeBlockId) {
+      const metricName = selectedMetric.name.includes(" ")
+        ? `'${selectedMetric.name}'`
+        : selectedMetric.name;
+      const metricText = `@metric:${metricName}:${metricValue.trim()}`;
+
+      setBlocks((prev) => {
+        const newBlocks = prev.map((block) => {
+          if (block.id === activeBlockId) {
+            const lastAtMetricIndex = block.content.lastIndexOf("@metric:");
+            if (lastAtMetricIndex !== -1) {
+              const beforeMetric = block.content.substring(
+                0,
+                lastAtMetricIndex
+              );
+              return { ...block, content: beforeMetric + metricText + " " };
+            }
+          }
+          return block;
+        });
+        updateParentValue(newBlocks);
+        return newBlocks;
+      });
+
       setShowMetricsPanel(false);
       setMetricSearchQuery("");
+      setIsInValueMode(false);
+      setSelectedMetric(null);
+      setMetricValue("");
+      setActiveBlockId(null);
 
-      // Refocus textarea after a brief delay
       setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          // Position cursor at the end of the inserted metric text (after the space)
-          const cursorPosition = newText.length;
-          textareaRef.current.setSelectionRange(cursorPosition, cursorPosition);
+        const input = blockRefs.current[activeBlockId];
+        if (input) {
+          input.focus();
+          const newCursorPos =
+            input.value.lastIndexOf(metricText) + metricText.length + 1;
+          input.setSelectionRange(newCursorPos, newCursorPos);
         }
-      }, 100);
+      }, 10);
     }
-  }, [value, onChange]);
+  }, [selectedMetric, metricValue, activeBlockId, updateParentValue]);
 
-  // Global keyboard event handler
+  const handleMetricsPanelClose = useCallback(() => {
+    setShowMetricsPanel(false);
+    setMetricSearchQuery("");
+    setIsInValueMode(false);
+    setSelectedMetric(null);
+    setMetricValue("");
+    setActiveBlockId(null);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!showMetricsPanel) return;
 
       if (!isInValueMode) {
-        // Navigation in metric list
         switch (e.key) {
           case "ArrowDown":
             e.preventDefault();
@@ -314,35 +636,17 @@ export default function JournalEditorWithMetrics({
             e.preventDefault();
             e.stopPropagation();
             if (filteredMetrics[selectedIndex]) {
-              setSelectedMetric(filteredMetrics[selectedIndex]);
-              setIsInValueMode(true);
+              handleSelectMetric(filteredMetrics[selectedIndex]);
             }
             break;
           case "Escape":
             e.preventDefault();
             e.stopPropagation();
-            setShowMetricsPanel(false);
-            setMetricSearchQuery("");
-            setIsInValueMode(false);
+            handleMetricsPanelClose();
             break;
         }
       } else {
-        // Value input mode
         switch (e.key) {
-          case "Enter":
-            e.preventDefault();
-            e.stopPropagation();
-            if (selectedMetric && metricValue.trim()) {
-              const metricName = selectedMetric.name.includes(' ') 
-                ? `'${selectedMetric.name}'` 
-                : selectedMetric.name;
-              const metricText = `@metric:${metricName}:${metricValue.trim()}`;
-              handleMetricInsert(metricText);
-              setIsInValueMode(false);
-              setSelectedMetric(null);
-              setMetricValue("");
-            }
-            break;
           case "Escape":
             e.preventDefault();
             e.stopPropagation();
@@ -356,56 +660,14 @@ export default function JournalEditorWithMetrics({
 
     document.addEventListener("keydown", handleKeyDown, true);
     return () => document.removeEventListener("keydown", handleKeyDown, true);
-  }, [showMetricsPanel, isInValueMode, filteredMetrics, selectedIndex, selectedMetric, metricValue, handleMetricInsert]);
-
-  // Handle text changes and detect @metric: pattern
-  const handleTextChange = (newText: string) => {
-    onChange(newText);
-
-    // Find the last @metric: occurrence in the text
-    const lastAtMetricIndex = newText.lastIndexOf("@metric:");
-    
-    if (lastAtMetricIndex !== -1) {
-      // Get text from @metric: to the end
-      const textAfterMetric = newText.substring(lastAtMetricIndex);
-      
-      // Check if this @metric: tag is incomplete (no space after it or still being typed)
-      const spaceAfterMetric = textAfterMetric.indexOf(" ");
-      const isIncompleteMetric = spaceAfterMetric === -1 || 
-        (spaceAfterMetric > 0 && textAfterMetric.substring(spaceAfterMetric).trim() === "");
-      
-      if (isIncompleteMetric) {
-        // Extract the search query after @metric:
-        const searchQuery = textAfterMetric.substring(8); // Remove "@metric:" prefix
-        setMetricSearchQuery(searchQuery);
-        setShowMetricsPanel(true);
-        setSelectedIndex(0); // Reset selection when showing panel
-      } else {
-        setShowMetricsPanel(false);
-        setMetricSearchQuery("");
-      }
-    } else {
-      setShowMetricsPanel(false);
-      setMetricSearchQuery("");
-    }
-  };
-
-
-  // Handle closing the metrics panel
-  const handleMetricsPanelClose = () => {
-    setShowMetricsPanel(false);
-    setMetricSearchQuery("");
-    setIsInValueMode(false);
-    setSelectedMetric(null);
-    setMetricValue("");
-
-    // Refocus textarea when closing panel
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-      }
-    }, 100);
-  };
+  }, [
+    showMetricsPanel,
+    isInValueMode,
+    filteredMetrics,
+    selectedIndex,
+    handleSelectMetric,
+    handleMetricsPanelClose,
+  ]);
 
   return (
     <div className="w-full">
@@ -428,48 +690,156 @@ export default function JournalEditorWithMetrics({
           <Eye className="h-3 w-3 mr-1" />
           Preview
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => addBlock()}
+          className="h-8"
+        >
+          <Plus className="h-3 w-3 mr-1" />
+          Add Block
+        </Button>
       </div>
 
       <div className="relative">
         {activeTab === "edit" ? (
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => handleTextChange(e.target.value)}
-                placeholder={placeholder}
-                className="flex min-h-[300px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono resize-y"
-                style={{ minHeight }}
-              />
-            </div>
+          <div className="flex-1">
+            <ScrollArea className="h-[400px] w-full rounded-md border p-3">
+              <div className="space-y-2">
+                {blocks.map((block, index) => {
+                  const blockHasMetric = hasCompleteMetric(block.content);
+                  const isActiveBlock =
+                    showMetricsPanel && activeBlockId === block.id;
 
-            {showMetricsPanel && (
-              <InlineMetricsPanel
-                onClose={handleMetricsPanelClose}
-                selectedIndex={selectedIndex}
-                filteredMetrics={filteredMetrics}
-                isInValueMode={isInValueMode}
-                selectedMetric={selectedMetric}
-                metricValue={metricValue}
-                onMetricValueChange={setMetricValue}
-                searchQuery={metricSearchQuery}
-              />
-            )}
+                  return (
+                    <div key={block.id} className="space-y-2">
+                      <div className="flex items-center gap-2 group">
+                        <div className="flex-1 relative">
+                          <Input
+                            ref={(el) => {
+                              blockRefs.current[block.id] = el;
+                            }}
+                            value={block.content}
+                            onChange={(e) =>
+                              updateBlock(block.id, e.target.value)
+                            }
+                            onKeyDown={(e) =>
+                              handleBlockKeyPress(e, block.id, index)
+                            }
+                            placeholder={
+                              index === 0 && !block.content
+                                ? placeholder
+                                : "Continue writing..."
+                            }
+                            className={`text-sm border-l-2 transition-colors ${
+                              blockHasMetric
+                                ? "border-l-green-400 focus:border-l-green-600 bg-green-50/20 dark:bg-green-950/10 pr-8"
+                                : isActiveBlock
+                                  ? "border-l-blue-400 focus:border-l-blue-600 bg-blue-50/20 dark:bg-blue-950/10"
+                                  : "border-l-blue-200 focus:border-l-blue-500"
+                            }`}
+                          />
+                          {blockHasMetric && (
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                              <Zap className="h-3 w-3 text-green-600" />
+                            </div>
+                          )}
+                        </div>
+                        {blocks.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeBlock(block.id)}
+                            className="h-8 w-8 p-0 opacity-0 hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Inline metrics panel for this specific block */}
+                      {isActiveBlock && (
+                        <div className="w-full flex justify-center">
+                          <div className="w-full">
+                            <InlineMetricsPanel
+                              onClose={handleMetricsPanelClose}
+                              selectedIndex={selectedIndex}
+                              filteredMetrics={filteredMetrics}
+                              isInValueMode={isInValueMode}
+                              selectedMetric={selectedMetric}
+                              metricValue={metricValue}
+                              onMetricValueChange={setMetricValue}
+                              searchQuery={metricSearchQuery}
+                              onSelectMetric={handleSelectMetric}
+                              onConfirmValue={handleConfirmValue}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {!value ? (
+                  <div className="text-xs text-muted-foreground mt-4 p-2 bg-muted/20 rounded">
+                    <strong>Tips:</strong>
+                    <ul className="list-disc list-inside mt-1 space-y-1">
+                      <li>
+                        Press{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          Enter
+                        </kbd>{" "}
+                        to create a new block
+                      </li>
+                      <li>
+                        Press{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          Backspace
+                        </kbd>{" "}
+                        on empty block to delete it
+                      </li>
+                      <li>
+                        Use{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          ↑
+                        </kbd>{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          ↓
+                        </kbd>{" "}
+                        to navigate between blocks
+                      </li>
+                      <li>
+                        Type{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          @metric:
+                        </kbd>{" "}
+                        to add metrics
+                      </li>
+                      <li>
+                        <strong>Each block can only have one @metric</strong> -
+                        use separate blocks for multiple metrics
+                      </li>
+                      <li>
+                        All blocks are combined with blank lines when saved
+                      </li>
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </ScrollArea>
           </div>
         ) : (
-          <div
-            className="min-h-[300px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none"
-            style={{ minHeight }}
-          >
-            {value ? (
-              <ReactMarkdown>{value}</ReactMarkdown>
-            ) : (
-              <p className="text-muted-foreground italic">
-                Nothing to preview yet...
-              </p>
-            )}
-          </div>
+          <ScrollArea className="h-[400px] w-full rounded-md border">
+            <div className="px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none">
+              {value ? (
+                <ReactMarkdown>{value}</ReactMarkdown>
+              ) : (
+                <p className="text-muted-foreground italic">
+                  Nothing to preview yet...
+                </p>
+              )}
+            </div>
+          </ScrollArea>
         )}
       </div>
     </div>

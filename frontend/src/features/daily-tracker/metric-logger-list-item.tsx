@@ -301,16 +301,15 @@ export default function MetricLoggerListItem({
     metric: Metric;
   }) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    
+
     useEffect(() => {
       if (isEditingNote && textareaRef.current) {
         textareaRef.current.focus();
-        // Set cursor to end of text
         const length = textareaRef.current.value.length;
         textareaRef.current.setSelectionRange(length, length);
       }
     }, [isEditingNote]);
-    
+
     return isEditingNote ? (
       <div className="mt-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-2 mt-2">
