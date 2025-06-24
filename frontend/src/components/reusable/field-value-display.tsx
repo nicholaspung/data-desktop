@@ -3,6 +3,9 @@ import { format } from "date-fns";
 import { Badge } from "../ui/badge";
 import FileViewer from "./file-viewer";
 import { formatCurrency } from "@/lib/data-utils";
+import { useStore } from "@tanstack/react-store";
+import dataStore from "@/store/data-store";
+import { getDisplayValue } from "@/lib/table-utils";
 
 interface FieldValueDisplayProps {
   field: FieldDefinition;
@@ -14,8 +17,24 @@ export default function FieldValueDisplay({
   field,
   value,
 }: FieldValueDisplayProps) {
+  const allData = useStore(dataStore, (state) => state);
+
   if (value === undefined || value === null) {
     return <span className="text-muted-foreground italic">—</span>;
+  }
+
+  // Handle relational fields
+  if (field.isRelation && field.relatedDataset && value) {
+    const relatedRecords = allData[field.relatedDataset] || [];
+    const relatedRecord = relatedRecords.find((record: any) => record.id === value);
+    
+    if (relatedRecord) {
+      const displayValue = getDisplayValue(field, relatedRecord);
+      return <span>{displayValue}</span>;
+    } else {
+      // If related record not found, show the raw value
+      return <span className="text-muted-foreground">{String(value)}</span>;
+    }
   }
 
   switch (field.type) {

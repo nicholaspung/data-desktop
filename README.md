@@ -57,6 +57,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - refactor out icons used in application into lib.ts
 - refactor application to use reusable components
+- refactor application to save data in UTC, and to make use of frontend date functions that display in local time
 
 - add inventory management system
 - add a "taking current supplements" section - supplements and medication
@@ -76,25 +77,33 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - user still needs to disable/enable in settings a route in order to view the tile in dashboard summary information
 
+- add a "add sample data" where the date depends on a specific date sent from the frontend, by default, it will be around today
+
 - add a "daily journal" that is able to do like "@feature" for tracking metrics
   - also adding templates for the user to be able to select that is added to the journal
-- in daily journal, remove the "today's entries" section
-- in daily journal, when the user is looking at all the records for that date, make sure it's looking at the local date, and also add a way to display specific features, using a multi-select
-- in daily journal, the "entries" should be the full width
-- in daily journal, it shouldn't show the current daily journal entry
-- in daily journal, when displayed the records with relational data, it should show the relational data display fields
-- in daily journal, the user should be able to collapse/uncollapse a particular feature
 - in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date
-- in daily journal, when the user selects which feature to view, the config should be stored locally
-- in daily journal, it shouldn't show the "files" datasets
 - in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically
 - in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
+- in daily journal, for the records displaying, show own custom view
+- in daily journal, allow for the "record for the date" to be "collasped vertically" and "expanded vertically"
+- add the daily journal dashboard summary component to the dashboard
+  - see if you need to add instructions for CLAUDE in order to do this
+- in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast
 
 - make it so that daily journal has "optional" dependencies for basically all the other features
 - in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing
+- in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view
 
 ### DONE
 
+- in daily journal, when the user selects which feature to view, the config should be stored locally [DONE 2025-06-24]
+- in daily journal, when displayed the records with relational data, it should show the relational data display fields [DONE 2025-06-24]
+- in daily journal, the user should be able to collapse/uncollapse a particular feature [DONE 2025-06-24]
+- in daily journal, remove the "today's entries" section [DONE 2025-06-24]
+- in daily journal, when the user is looking at all the records for that date, make sure it's looking at the local date, and also add a way to display specific features, using a multi-select [DONE 2025-06-24]
+- in daily journal, the "entries" should be the full width [DONE 2025-06-24]
+- in daily journal, it shouldn't show the current daily journal entry [DONE 2025-06-24]
+- in daily journal, it shouldn't show the "files" datasets [DONE 2025-06-24]
 - update feature information in this README for the new features added so far [DONE 2025-06-23]
 - in the sidebar, add a search bar that is an autocomplete to select a route [DONE 2025-06-23]
 - in dataset table visual, the currency is showing incorrectly [DONE 2025-06-23]

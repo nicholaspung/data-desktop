@@ -7,7 +7,6 @@ import { DailyJournalEntry } from "@/store/journaling-definitions";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import DailyJournalEditor from "./daily-journal-editor";
 import DailyJournalHistory from "./daily-journal-history";
-import DailySummaryView from "./daily-summary-view";
 import DailyRecordsPanel from "./daily-records-panel";
 import { format } from "date-fns";
 
@@ -19,43 +18,11 @@ export default function DailyJournalMainView() {
     (state) => state.daily_journal as DailyJournalEntry[]
   );
 
-  const todayEntries = entries.filter((entry) => {
-    const entryDate = new Date(entry.date);
-    const today = new Date();
-    return (
-      entryDate.getDate() === today.getDate() &&
-      entryDate.getMonth() === today.getMonth() &&
-      entryDate.getFullYear() === today.getFullYear()
-    );
-  });
-
-  const selectedDateEntries = entries.filter((entry) => {
-    const entryDate = new Date(entry.date);
-    return (
-      entryDate.getDate() === selectedDate.getDate() &&
-      entryDate.getMonth() === selectedDate.getMonth() &&
-      entryDate.getFullYear() === selectedDate.getFullYear()
-    );
-  });
-
 
   return (
     <div className="space-y-6">
       {/* Today's Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today's Entries</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todayEntries.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Journal entries written today
-            </p>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Current Date</CardTitle>
@@ -109,16 +76,6 @@ export default function DailyJournalMainView() {
             ),
           },
           {
-            id: "summary",
-            label: (
-              <span className="flex gap-2 items-center">
-                <TrendingUp className="h-4 w-4" />
-                <span className="hidden sm:inline">Daily Summary</span>
-              </span>
-            ),
-            content: <DailySummaryView selectedDate={selectedDate} entries={selectedDateEntries} />,
-          },
-          {
             id: "history",
             label: (
               <span className="flex gap-2 items-center">
@@ -137,7 +94,7 @@ export default function DailyJournalMainView() {
         ]}
         defaultTabId="today"
         className="w-full"
-        tabsListClassName="mb-4 grid grid-cols-3 w-full"
+        tabsListClassName="mb-4 grid grid-cols-2 w-full"
       />
     </div>
   );

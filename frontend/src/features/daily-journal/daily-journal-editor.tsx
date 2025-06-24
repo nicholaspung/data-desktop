@@ -66,10 +66,18 @@ export default function DailyJournalEditor({
   };
 
   useEffect(() => {
-    const selectedDateString = selectedDate.toISOString().split("T")[0];
+    // Compare dates in local timezone, not UTC
+    const selectedYear = selectedDate.getFullYear();
+    const selectedMonth = selectedDate.getMonth();
+    const selectedDay = selectedDate.getDate();
+    
     const existingEntryForDate = entries.find((entry) => {
       const entryDate = new Date(entry.date);
-      return entryDate.toISOString().split("T")[0] === selectedDateString;
+      return (
+        entryDate.getFullYear() === selectedYear &&
+        entryDate.getMonth() === selectedMonth &&
+        entryDate.getDate() === selectedDay
+      );
     });
 
     if (existingEntryForDate) {
