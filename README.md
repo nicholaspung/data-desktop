@@ -83,7 +83,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically
 - in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
 - in daily journal, for the records displaying, show own custom view
-- in daily journal, allow for the "record for the date" to be "collasped vertically" and "expanded vertically"
+
 - add the daily journal dashboard summary component to the dashboard
   - see if you need to add instructions for CLAUDE in order to do this
 - in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast
@@ -100,6 +100,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in daily journal, allow for the "record for the date" to be "collasped vertically" and "expanded vertically" [DONE 2025-06-25]
 - add a "add sample data" where the date depends on a specific date sent from the frontend, by default, it will be around today [DONE 2025-06-25]
 - in daily journal, when the user selects which feature to view, the config should be stored locally [DONE 2025-06-24]
 - in daily journal, when displayed the records with relational data, it should show the relational data display fields [DONE 2025-06-24]

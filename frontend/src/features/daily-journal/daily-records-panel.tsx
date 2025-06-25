@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Calendar,
   FileText,
@@ -12,6 +14,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
@@ -24,6 +27,8 @@ import ReusableMultiSelect, {
 
 interface DailyRecordsPanelProps {
   selectedDate: Date;
+  onToggle?: () => void;
+  isCollapsed?: boolean;
 }
 
 const DATASET_ICONS: Record<string, any> = {
@@ -45,6 +50,8 @@ const DATASET_ICONS: Record<string, any> = {
 
 export default function DailyRecordsPanel({
   selectedDate,
+  onToggle,
+  isCollapsed = false,
 }: DailyRecordsPanelProps) {
   const allData = useStore(dataStore, (state) => state);
   const fieldDefinitions = useStore(
@@ -217,13 +224,64 @@ export default function DailyRecordsPanel({
     0
   );
 
+  if (isCollapsed) {
+    return (
+      <Card className="w-20">
+        <CardHeader className="p-3">
+          <CardTitle className="flex justify-center">
+            {onToggle && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onToggle}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <span>Show Records Panel</span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   if (totalRecords === 0) {
     return (
       <Card>
         <CardHeader className="space-y-3">
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Records for {format(selectedDate, "MMM d, yyyy")}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Records for {format(selectedDate, "MMM d, yyyy")}
+            </div>
+            {onToggle && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onToggle}
+                      className="h-6 w-6 p-0"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <span>Hide Records Panel</span>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </CardTitle>
           <div className="space-y-2">
             <label className="text-sm text-muted-foreground">
@@ -256,9 +314,30 @@ export default function DailyRecordsPanel({
   return (
     <Card>
       <CardHeader className="space-y-3">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Records for {format(selectedDate, "MMM d, yyyy")}
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Records for {format(selectedDate, "MMM d, yyyy")}
+          </div>
+          {onToggle && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onToggle}
+                    className="h-6 w-6 p-0"
+                  >
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <span>Hide Records Panel</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </CardTitle>
         <div className="space-y-2">
           <label className="text-sm text-muted-foreground">

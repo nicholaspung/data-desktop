@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, BookOpen, TrendingUp, Plus } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
@@ -12,11 +12,37 @@ import { format } from "date-fns";
 
 export default function DailyJournalMainView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isRecordsPanelCollapsed, setIsRecordsPanelCollapsed] = useState(false);
   
   const entries = useStore(
     dataStore,
     (state) => state.daily_journal as DailyJournalEntry[]
   );
+
+  // Load collapsed state from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('daily-journal-records-panel-collapsed');
+      if (saved) {
+        setIsRecordsPanelCollapsed(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.warn('Failed to load records panel state:', error);
+    }
+  }, []);
+
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('daily-journal-records-panel-collapsed', JSON.stringify(isRecordsPanelCollapsed));
+    } catch (error) {
+      console.warn('Failed to save records panel state:', error);
+    }
+  }, [isRecordsPanelCollapsed]);
+
+  const toggleRecordsPanel = () => {
+    setIsRecordsPanelCollapsed(!isRecordsPanelCollapsed);
+  };
 
 
   return (
@@ -69,8 +95,14 @@ export default function DailyJournalMainView() {
                     onDateChange={setSelectedDate}
                   />
                 </div>
-                <div className="w-80">
-                  <DailyRecordsPanel selectedDate={selectedDate} />
+                <div className={`transition-all duration-300 ease-in-out ${
+                  isRecordsPanelCollapsed ? 'w-20' : 'w-80'
+                }`}>
+                  <DailyRecordsPanel 
+                    selectedDate={selectedDate}
+                    onToggle={toggleRecordsPanel}
+                    isCollapsed={isRecordsPanelCollapsed}
+                  />
                 </div>
               </div>
             ),

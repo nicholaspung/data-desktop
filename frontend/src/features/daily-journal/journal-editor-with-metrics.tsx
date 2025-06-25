@@ -283,6 +283,7 @@ export default function JournalEditorWithMetrics({
   const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [metricValue, setMetricValue] = useState("");
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
+  const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
   const blockRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   const metrics =
@@ -740,6 +741,7 @@ export default function JournalEditorWithMetrics({
                   const blockHasMetric = hasCompleteMetric(block.content);
                   const isActiveBlock =
                     showMetricsPanel && activeBlockId === block.id;
+                  const isFocusedBlock = focusedBlockId === block.id;
 
                   return (
                     <div key={block.id} className="-my-1">
@@ -770,6 +772,8 @@ export default function JournalEditorWithMetrics({
                             onKeyDown={(e) =>
                               handleBlockKeyPress(e, block.id, index)
                             }
+                            onFocus={() => setFocusedBlockId(block.id)}
+                            onBlur={() => setFocusedBlockId(null)}
                             placeholder={
                               index === 0 && !block.content
                                 ? placeholder
@@ -786,7 +790,9 @@ export default function JournalEditorWithMetrics({
                                 ? "2px solid #4ade80"
                                 : isActiveBlock
                                   ? "2px solid #60a5fa"
-                                  : "2px solid transparent",
+                                  : isFocusedBlock
+                                    ? "2px solid #a855f7"
+                                    : "2px solid transparent",
                               paddingLeft: "8px",
                               paddingTop: "0",
                               paddingBottom: "0",
@@ -794,7 +800,9 @@ export default function JournalEditorWithMetrics({
                                 ? "rgba(134, 239, 172, 0.1)"
                                 : isActiveBlock
                                   ? "rgba(147, 197, 253, 0.1)"
-                                  : "transparent",
+                                  : isFocusedBlock
+                                    ? "rgba(168, 85, 247, 0.1)"
+                                    : "transparent",
                               marginLeft: "-2px",
                               minHeight: "1.2em",
                               lineHeight: "1.2",
