@@ -60,7 +60,7 @@ export default function DailyRecordsPanel({
 
   // Create options from available datasets
   const featureOptions: MultiSelectOption[] = Object.entries(fieldDefinitions)
-    .filter(([datasetId, dataset]) => {
+    .filter(([, dataset]) => {
       // Only include datasets that have a date field
       return dataset.fields.some((field) => field.type === "date");
     })

@@ -94,6 +94,14 @@ func (a *App) Startup(ctx context.Context) {
 		} else {
 			log.Println("Sample data loaded successfully")
 		}
+
+		// Fix any existing string data to numbers (development only)
+		err = database.FixStringToNumberData()
+		if err != nil {
+			log.Println("Error fixing string to number data:", err.Error())
+		} else {
+			log.Println("String to number data fix completed successfully")
+		}
 	}
 }
 
@@ -887,3 +895,31 @@ func (a *App) ResetAllData() error {
 func (a *App) LoadSampleData() error {
 	return database.LoadSampleDataOnce()
 }
+
+func (a *App) LoadSampleDataWithDates(startDate string, endDate string) error {
+	log.Printf("LoadSampleDataWithDates called with dates: %s to %s", startDate, endDate)
+	
+	// Add panic recovery to catch any unexpected panics
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("PANIC in LoadSampleDataWithDates: %v", r)
+		}
+	}()
+	
+	// Validate input parameters
+	if startDate == "" || endDate == "" {
+		err := fmt.Errorf("startDate and endDate cannot be empty")
+		log.Printf("Validation error: %v", err)
+		return err
+	}
+	
+	err := database.LoadSampleDataWithDateRange(startDate, endDate)
+	if err != nil {
+		log.Printf("Error in LoadSampleDataWithDates: %v", err)
+		return err
+	}
+	
+	log.Printf("LoadSampleDataWithDates completed successfully")
+	return nil
+}
+
