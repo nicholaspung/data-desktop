@@ -13,30 +13,33 @@ import { format } from "date-fns";
 export default function DailyJournalMainView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isRecordsPanelCollapsed, setIsRecordsPanelCollapsed] = useState(false);
-  
+
   const entries = useStore(
     dataStore,
     (state) => state.daily_journal as DailyJournalEntry[]
   );
 
-  // Load collapsed state from localStorage on mount
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('daily-journal-records-panel-collapsed');
+      const saved = localStorage.getItem(
+        "daily-journal-records-panel-collapsed"
+      );
       if (saved) {
         setIsRecordsPanelCollapsed(JSON.parse(saved));
       }
     } catch (error) {
-      console.warn('Failed to load records panel state:', error);
+      console.warn("Failed to load records panel state:", error);
     }
   }, []);
 
-  // Save collapsed state to localStorage when it changes
   useEffect(() => {
     try {
-      localStorage.setItem('daily-journal-records-panel-collapsed', JSON.stringify(isRecordsPanelCollapsed));
+      localStorage.setItem(
+        "daily-journal-records-panel-collapsed",
+        JSON.stringify(isRecordsPanelCollapsed)
+      );
     } catch (error) {
-      console.warn('Failed to save records panel state:', error);
+      console.warn("Failed to save records panel state:", error);
     }
   }, [isRecordsPanelCollapsed]);
 
@@ -44,20 +47,21 @@ export default function DailyJournalMainView() {
     setIsRecordsPanelCollapsed(!isRecordsPanelCollapsed);
   };
 
-
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full space-y-6">
       {/* Today's Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Date</CardTitle>
+            <CardTitle className="text-sm font-medium">Selected Date</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{format(new Date(), "MMM d")}</div>
+            <div className="text-2xl font-bold">
+              {format(selectedDate, "MMM d")}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(), "EEEE, yyyy")}
+              {format(selectedDate, "EEEE, yyyy")}
             </p>
           </CardContent>
         </Card>
@@ -78,6 +82,7 @@ export default function DailyJournalMainView() {
 
       {/* Main Content Tabs */}
       <ReusableTabs
+        tabsContentClassName="h-full overflow-hidden"
         tabs={[
           {
             id: "today",
@@ -90,15 +95,17 @@ export default function DailyJournalMainView() {
             content: (
               <div className="flex gap-6">
                 <div className="flex-1">
-                  <DailyJournalEditor 
-                    selectedDate={selectedDate} 
+                  <DailyJournalEditor
+                    selectedDate={selectedDate}
                     onDateChange={setSelectedDate}
                   />
                 </div>
-                <div className={`transition-all duration-300 ease-in-out ${
-                  isRecordsPanelCollapsed ? 'w-20' : 'w-80'
-                }`}>
-                  <DailyRecordsPanel 
+                <div
+                  className={`transition-all duration-300 ease-in-out ${
+                    isRecordsPanelCollapsed ? "w-20" : "w-80"
+                  }`}
+                >
+                  <DailyRecordsPanel
                     selectedDate={selectedDate}
                     onToggle={toggleRecordsPanel}
                     isCollapsed={isRecordsPanelCollapsed}
@@ -116,8 +123,8 @@ export default function DailyJournalMainView() {
               </span>
             ),
             content: (
-              <DailyJournalHistory 
-                entries={entries} 
+              <DailyJournalHistory
+                entries={entries}
                 showDate={true}
                 onDateSelect={setSelectedDate}
               />
@@ -125,7 +132,7 @@ export default function DailyJournalMainView() {
           },
         ]}
         defaultTabId="today"
-        className="w-full"
+        className="w-full flex-1 min-h-0"
         tabsListClassName="mb-4 grid grid-cols-2 w-full"
       />
     </div>

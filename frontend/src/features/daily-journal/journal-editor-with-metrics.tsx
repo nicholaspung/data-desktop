@@ -7,16 +7,16 @@ import {
   Edit,
   Eye,
   Plus,
-  Trash2,
   Zap,
   Search,
   ArrowRight,
   X,
+  Lock,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
-import { Metric } from "@/store/experiment-definitions";
+import { Metric, DailyLog } from "@/store/experiment-definitions";
 
 const getMetricExamples = (metric: Metric): string[] => {
   switch (metric.type) {
@@ -39,6 +39,7 @@ interface JournalEditorWithMetricsProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  selectedDate: Date;
 }
 
 interface Block {
@@ -58,6 +59,7 @@ interface InlineMetricsPanelProps {
   searchQuery: string;
   onSelectMetric: (metric: Metric) => void;
   onConfirmValue: () => void;
+  getExistingMetricValue: (metricId: string) => string | null;
 }
 
 function InlineMetricsPanel({
@@ -71,6 +73,7 @@ function InlineMetricsPanel({
   searchQuery,
   onSelectMetric,
   onConfirmValue,
+  getExistingMetricValue,
 }: InlineMetricsPanelProps) {
   useEffect(() => {
     if (!isInValueMode && filteredMetrics.length > 0) {
@@ -143,42 +146,71 @@ function InlineMetricsPanel({
 
             <ScrollArea className="h-64" id="metrics-scroll-area">
               <div className="space-y-1">
-                {filteredMetrics.map((metric, index) => (
-                  <Button
-                    key={metric.id}
-                    id={`metric-option-${index}`}
-                    variant="ghost"
-                    className={`w-full justify-start p-2 h-auto text-left ${
-                      index === selectedIndex
-                        ? "bg-accent text-accent-foreground"
-                        : "hover:bg-accent"
-                    }`}
-                    onClick={() => onSelectMetric(metric)}
-                  >
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-1">
-                        <span className="font-medium text-sm">
-                          {metric.name}
-                        </span>
-                        <Badge variant="secondary" className="text-xs h-4">
-                          {metric.type}
-                        </Badge>
-                        {metric.unit && (
-                          <Badge variant="outline" className="text-xs h-4">
-                            {metric.unit}
+                {filteredMetrics.map((metric, index) => {
+                  const existingValue = getExistingMetricValue(metric.id);
+                  const hasExistingValue = existingValue !== null;
+
+                  return (
+                    <Button
+                      key={metric.id}
+                      id={`metric-option-${index}`}
+                      variant="ghost"
+                      className={`w-full justify-start p-2 h-auto text-left ${
+                        index === selectedIndex
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent"
+                      } ${
+                        hasExistingValue
+                          ? "border-l-2 border-l-green-500 bg-green-50/30 dark:bg-green-950/20"
+                          : ""
+                      }`}
+                      onClick={() => onSelectMetric(metric)}
+                    >
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium text-sm">
+                            {metric.name}
+                          </span>
+                          <Badge variant="secondary" className="text-xs h-4">
+                            {metric.type}
                           </Badge>
+                          {metric.unit && (
+                            <Badge variant="outline" className="text-xs h-4">
+                              {metric.unit}
+                            </Badge>
+                          )}
+                          {hasExistingValue && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs h-4 bg-green-100 text-green-800 border-green-300"
+                            >
+                              <Lock className="h-2 w-2 mr-1" />
+                              Logged
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {metric.description}
+                        </div>
+                        {hasExistingValue ? (
+                          <div className="text-xs font-medium text-green-700 dark:text-green-400">
+                            Current value: {existingValue}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">
+                            Ex:{" "}
+                            {getMetricExamples(metric).slice(0, 2).join(", ")}
+                          </div>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground">
-                        {metric.description}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Ex: {getMetricExamples(metric).slice(0, 2).join(", ")}
-                      </div>
-                    </div>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                ))}
+                      {hasExistingValue ? (
+                        <Lock className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </Button>
+                  );
+                })}
               </div>
             </ScrollArea>
 
@@ -273,6 +305,7 @@ export default function JournalEditorWithMetrics({
   value,
   onChange,
   placeholder = "Start writing...",
+  selectedDate,
 }: JournalEditorWithMetricsProps) {
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -289,6 +322,25 @@ export default function JournalEditorWithMetrics({
   const metrics =
     useStore(dataStore, (state) => state.metrics as Metric[]) || [];
   const activeMetrics = metrics.filter((metric) => metric.active);
+
+  const dailyLogs =
+    useStore(dataStore, (state) => state.daily_logs as DailyLog[]) || [];
+
+  const getExistingMetricValue = useCallback(
+    (metricId: string): string | null => {
+      const existingLog = dailyLogs.find((log) => {
+        const logDate = new Date(log.date);
+        return (
+          log.metric_id === metricId &&
+          logDate.getFullYear() === selectedDate.getFullYear() &&
+          logDate.getMonth() === selectedDate.getMonth() &&
+          logDate.getDate() === selectedDate.getDate()
+        );
+      });
+      return existingLog ? existingLog.value : null;
+    },
+    [dailyLogs, selectedDate]
+  );
 
   const filteredMetrics = metricSearchQuery.trim()
     ? activeMetrics.filter(
@@ -320,16 +372,14 @@ export default function JournalEditorWithMetrics({
     setBlocks(initializeBlocks());
   }, []);
 
-  // Auto-resize textareas when blocks change
   useEffect(() => {
     blocks.forEach((block) => {
       const textarea = blockRefs.current[block.id];
       if (textarea) {
-        // Force single line height initially
-        textarea.style.height = '1.2em';
-        // Then expand if content requires it
+        textarea.style.height = "1.2em";
+
         if (textarea.scrollHeight > textarea.clientHeight) {
-          textarea.style.height = textarea.scrollHeight + 'px';
+          textarea.style.height = textarea.scrollHeight + "px";
         }
       }
     });
@@ -368,8 +418,8 @@ export default function JournalEditorWithMetrics({
         const textarea = blockRefs.current[newBlock.id];
         if (textarea) {
           textarea.focus();
-          textarea.style.height = 'auto';
-          textarea.style.height = textarea.scrollHeight + 'px';
+          textarea.style.height = "auto";
+          textarea.style.height = textarea.scrollHeight + "px";
         }
       }, 10);
     },
@@ -512,7 +562,6 @@ export default function JournalEditorWithMetrics({
         e.preventDefault();
         addBlock(blockIndex);
       } else if (e.key === "Enter" && e.shiftKey) {
-        // Allow default behavior for Shift+Enter (newline)
         return;
       } else if (
         e.key === "Backspace" &&
@@ -528,16 +577,18 @@ export default function JournalEditorWithMetrics({
             const textarea = blockRefs.current[prevBlock.id];
             if (textarea) {
               textarea.focus();
-              textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+              textarea.setSelectionRange(
+                textarea.value.length,
+                textarea.value.length
+              );
             }
           }, 10);
         }
       } else if (e.key === "ArrowUp" && !showMetricsPanel) {
-        // Check if cursor is at the first line of the textarea
         const textBeforeCursor = textarea.value.substring(0, cursorPosition);
-        const linesBeforeCursor = textBeforeCursor.split('\n');
+        const linesBeforeCursor = textBeforeCursor.split("\n");
         const isOnFirstLine = linesBeforeCursor.length === 1;
-        
+
         if (isOnFirstLine && blockIndex > 0) {
           e.preventDefault();
           const prevBlock = blocks[blockIndex - 1];
@@ -545,8 +596,8 @@ export default function JournalEditorWithMetrics({
             const prevTextarea = blockRefs.current[prevBlock.id];
             if (prevTextarea) {
               prevTextarea.focus();
-              // Position cursor at the end of the last line
-              const lines = prevTextarea.value.split('\n');
+
+              const lines = prevTextarea.value.split("\n");
               const lastLine = lines[lines.length - 1];
               const lastLineStart = prevTextarea.value.lastIndexOf(lastLine);
               const positionInLine = Math.min(cursorPosition, lastLine.length);
@@ -556,11 +607,10 @@ export default function JournalEditorWithMetrics({
           }, 10);
         }
       } else if (e.key === "ArrowDown" && !showMetricsPanel) {
-        // Check if cursor is at the last line of the textarea
         const textAfterCursor = textarea.value.substring(cursorPosition);
-        const linesAfterCursor = textAfterCursor.split('\n');
+        const linesAfterCursor = textAfterCursor.split("\n");
         const isOnLastLine = linesAfterCursor.length === 1;
-        
+
         if (isOnLastLine && blockIndex < blocks.length - 1) {
           e.preventDefault();
           const nextBlock = blocks[blockIndex + 1];
@@ -568,10 +618,13 @@ export default function JournalEditorWithMetrics({
             const nextTextarea = blockRefs.current[nextBlock.id];
             if (nextTextarea) {
               nextTextarea.focus();
-              // Position cursor at the beginning of the first line
-              const lines = nextTextarea.value.split('\n');
+
+              const lines = nextTextarea.value.split("\n");
               const firstLine = lines[0];
-              const cursorColumn = cursorPosition - textarea.value.lastIndexOf('\n', cursorPosition - 1) - 1;
+              const cursorColumn =
+                cursorPosition -
+                textarea.value.lastIndexOf("\n", cursorPosition - 1) -
+                1;
               const newPosition = Math.min(cursorColumn, firstLine.length);
               nextTextarea.setSelectionRange(newPosition, newPosition);
             }
@@ -582,11 +635,96 @@ export default function JournalEditorWithMetrics({
     [blocks, addBlock, removeBlock, showMetricsPanel]
   );
 
-  const handleSelectMetric = useCallback((metric: Metric) => {
-    setSelectedMetric(metric);
-    setIsInValueMode(true);
-    setMetricValue("");
-  }, []);
+  const handleSelectMetric = useCallback(
+    (metric: Metric) => {
+      const existingValue = getExistingMetricValue(metric.id);
+
+      if (existingValue && activeBlockId) {
+        const metricName = metric.name.includes(" ")
+          ? `'${metric.name}'`
+          : metric.name;
+        const metricText = `@metric:${metricName}:${existingValue}`;
+
+        setBlocks((prev) => {
+          const newBlocks = prev.map((block) => {
+            if (block.id === activeBlockId) {
+              const lastAtMetricIndex = block.content.lastIndexOf("@metric:");
+              if (lastAtMetricIndex !== -1) {
+                const beforeMetric = block.content.substring(
+                  0,
+                  lastAtMetricIndex
+                );
+                return { ...block, content: beforeMetric + metricText + " " };
+              }
+            }
+            return block;
+          });
+          updateParentValue(newBlocks);
+          return newBlocks;
+        });
+
+        setShowMetricsPanel(false);
+        setMetricSearchQuery("");
+        setActiveBlockId(null);
+
+        setTimeout(() => {
+          const textarea = blockRefs.current[activeBlockId];
+          if (textarea) {
+            textarea.focus();
+            const newCursorPos =
+              textarea.value.lastIndexOf(metricText) + metricText.length + 1;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+          }
+        }, 10);
+      } else if (metric.type === "boolean" && activeBlockId) {
+        const metricName = metric.name.includes(" ")
+          ? `'${metric.name}'`
+          : metric.name;
+        const metricText = `@metric:${metricName}:true`;
+
+        setBlocks((prev) => {
+          const newBlocks = prev.map((block) => {
+            if (block.id === activeBlockId) {
+              const lastAtMetricIndex = block.content.lastIndexOf("@metric:");
+              if (lastAtMetricIndex !== -1) {
+                const beforeMetric = block.content.substring(
+                  0,
+                  lastAtMetricIndex
+                );
+                return { ...block, content: beforeMetric + metricText + " " };
+              }
+            }
+            return block;
+          });
+          updateParentValue(newBlocks);
+          return newBlocks;
+        });
+
+        setShowMetricsPanel(false);
+        setMetricSearchQuery("");
+        setActiveBlockId(null);
+
+        setTimeout(() => {
+          const textarea = blockRefs.current[activeBlockId];
+          if (textarea) {
+            textarea.focus();
+            const newCursorPos =
+              textarea.value.lastIndexOf(metricText) + metricText.length + 1;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+          }
+        }, 10);
+      } else {
+        setSelectedMetric(metric);
+        setIsInValueMode(true);
+        setMetricValue("");
+      }
+    },
+    [getExistingMetricValue, activeBlockId, updateParentValue]
+  );
 
   const handleConfirmValue = useCallback(() => {
     if (selectedMetric && metricValue.trim() && activeBlockId) {
@@ -627,12 +765,94 @@ export default function JournalEditorWithMetrics({
           const newCursorPos =
             textarea.value.lastIndexOf(metricText) + metricText.length + 1;
           textarea.setSelectionRange(newCursorPos, newCursorPos);
-          textarea.style.height = 'auto';
-          textarea.style.height = textarea.scrollHeight + 'px';
+          textarea.style.height = "auto";
+          textarea.style.height = textarea.scrollHeight + "px";
         }
       }, 10);
     }
   }, [selectedMetric, metricValue, activeBlockId, updateParentValue]);
+
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+
+      if (
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "BUTTON" ||
+        target.closest("button")
+      ) {
+        return;
+      }
+
+      if (
+        target.closest("[data-radix-popper-content-wrapper]") ||
+        target.closest(".metrics-panel")
+      ) {
+        return;
+      }
+
+      if (blocks.length === 0) {
+        addBlock();
+        return;
+      }
+
+      const clickY = e.clientY;
+
+      const blockPositions = blocks
+        .map((block) => {
+          const textarea = blockRefs.current[block.id];
+          if (!textarea) return null;
+
+          const rect = textarea.getBoundingClientRect();
+          return {
+            block,
+            textarea,
+            top: rect.top,
+            bottom: rect.bottom,
+            centerY: rect.top + rect.height / 2,
+          };
+        })
+        .filter((pos): pos is NonNullable<typeof pos> => pos !== null);
+
+      if (blockPositions.length === 0) return;
+
+      const lastBlockPos = blockPositions[blockPositions.length - 1];
+
+      const containerElement =
+        e.currentTarget.querySelector(".blocks-container") || e.currentTarget;
+      const containerRect = containerElement.getBoundingClientRect();
+
+      const containerHeight = containerRect.height;
+      const bottomThreshold = containerRect.bottom - containerHeight * 0.3;
+
+      if (clickY > bottomThreshold || clickY > lastBlockPos.bottom + 10) {
+        lastBlockPos.textarea.focus();
+        setTimeout(() => {
+          lastBlockPos.textarea.setSelectionRange(
+            lastBlockPos.textarea.value.length,
+            lastBlockPos.textarea.value.length
+          );
+        }, 0);
+        return;
+      }
+
+      let closestBlock = blockPositions[0];
+      let minDistance = Math.abs(clickY - closestBlock.centerY);
+
+      blockPositions.forEach((blockPos) => {
+        const distance = Math.abs(clickY - blockPos.centerY);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestBlock = blockPos;
+        }
+      });
+
+      if (closestBlock) {
+        closestBlock.textarea.focus();
+      }
+    },
+    [blocks, addBlock]
+  );
 
   const handleMetricsPanelClose = useCallback(() => {
     setShowMetricsPanel(false);
@@ -735,8 +955,8 @@ export default function JournalEditorWithMetrics({
       <div className="relative">
         {activeTab === "edit" ? (
           <div className="flex-1">
-            <ScrollArea className="h-[400px] w-full rounded-md border bg-background">
-              <div className="p-4">
+            <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border bg-background overflow-y-auto">
+              <div className="p-4" onClick={handleContainerClick}>
                 {blocks.map((block, index) => {
                   const blockHasMetric = hasCompleteMetric(block.content);
                   const isActiveBlock =
@@ -751,29 +971,33 @@ export default function JournalEditorWithMetrics({
                             ref={(el) => {
                               blockRefs.current[block.id] = el;
                               if (el) {
-                                // Force single line height initially
-                                el.style.height = '1.2em';
-                                // Then expand if content requires it
+                                el.style.height = "1.2em";
+
                                 if (el.scrollHeight > el.clientHeight) {
-                                  el.style.height = el.scrollHeight + 'px';
+                                  el.style.height = el.scrollHeight + "px";
                                 }
                               }
                             }}
                             value={block.content}
                             onChange={(e) => {
                               updateBlock(block.id, e.target.value);
-                              // Reset to auto to get accurate scrollHeight
-                              e.target.style.height = '1.2em';
-                              // Only expand if content requires it
-                              if (e.target.scrollHeight > e.target.clientHeight) {
-                                e.target.style.height = e.target.scrollHeight + 'px';
+
+                              e.target.style.height = "1.2em";
+
+                              if (
+                                e.target.scrollHeight > e.target.clientHeight
+                              ) {
+                                e.target.style.height =
+                                  e.target.scrollHeight + "px";
                               }
                             }}
                             onKeyDown={(e) =>
                               handleBlockKeyPress(e, block.id, index)
                             }
                             onFocus={() => setFocusedBlockId(block.id)}
-                            onBlur={() => setFocusedBlockId(null)}
+                            onBlur={() => {
+                              setFocusedBlockId(null);
+                            }}
                             placeholder={
                               index === 0 && !block.content
                                 ? placeholder
@@ -781,32 +1005,30 @@ export default function JournalEditorWithMetrics({
                             }
                             rows={1}
                             className={`w-full text-sm transition-colors outline-none bg-transparent placeholder:text-muted-foreground resize-none overflow-hidden leading-tight ${
-                              blockHasMetric
-                                ? "pr-8"
-                                : ""
+                              blockHasMetric ? "pr-8" : ""
                             }`}
                             style={{
-                              borderLeft: blockHasMetric
-                                ? "2px solid #4ade80"
+                              borderLeft: isFocusedBlock
+                                ? "2px solid #a855f7"
                                 : isActiveBlock
                                   ? "2px solid #60a5fa"
-                                  : isFocusedBlock
-                                    ? "2px solid #a855f7"
+                                  : blockHasMetric
+                                    ? "2px solid #4ade80"
                                     : "2px solid transparent",
                               paddingLeft: "8px",
                               paddingTop: "0",
                               paddingBottom: "0",
-                              backgroundColor: blockHasMetric
-                                ? "rgba(134, 239, 172, 0.1)"
+                              backgroundColor: isFocusedBlock
+                                ? "rgba(168, 85, 247, 0.1)"
                                 : isActiveBlock
                                   ? "rgba(147, 197, 253, 0.1)"
-                                  : isFocusedBlock
-                                    ? "rgba(168, 85, 247, 0.1)"
+                                  : blockHasMetric
+                                    ? "rgba(134, 239, 172, 0.1)"
                                     : "transparent",
                               marginLeft: "-2px",
                               minHeight: "1.2em",
                               lineHeight: "1.2",
-                              font: "inherit"
+                              font: "inherit",
                             }}
                           />
                           {blockHasMetric && (
@@ -815,16 +1037,6 @@ export default function JournalEditorWithMetrics({
                             </div>
                           )}
                         </div>
-                        {blocks.length > 1 && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeBlock(block.id)}
-                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700 hover:bg-red-50 absolute -right-10"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        )}
                       </div>
 
                       {/* Inline metrics panel for this specific block */}
@@ -842,6 +1054,7 @@ export default function JournalEditorWithMetrics({
                               searchQuery={metricSearchQuery}
                               onSelectMetric={handleSelectMetric}
                               onConfirmValue={handleConfirmValue}
+                              getExistingMetricValue={getExistingMetricValue}
                             />
                           </div>
                         </div>
@@ -903,10 +1116,10 @@ export default function JournalEditorWithMetrics({
                   </div>
                 ) : null}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         ) : (
-          <ScrollArea className="h-[400px] w-full rounded-md border">
+          <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border overflow-y-auto">
             <div className="px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none">
               {value ? (
                 <ReactMarkdown>{value}</ReactMarkdown>
@@ -916,7 +1129,7 @@ export default function JournalEditorWithMetrics({
                 </p>
               )}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </div>
     </div>

@@ -23,16 +23,16 @@ export default function FieldValueDisplay({
     return <span className="text-muted-foreground italic">—</span>;
   }
 
-  // Handle relational fields
   if (field.isRelation && field.relatedDataset && value) {
     const relatedRecords = allData[field.relatedDataset] || [];
-    const relatedRecord = relatedRecords.find((record: any) => record.id === value);
-    
+    const relatedRecord = relatedRecords.find(
+      (record: any) => record.id === value
+    );
+
     if (relatedRecord) {
       const displayValue = getDisplayValue(field, relatedRecord);
       return <span>{displayValue}</span>;
     } else {
-      // If related record not found, show the raw value
       return <span className="text-muted-foreground">{String(value)}</span>;
     }
   }
@@ -92,7 +92,6 @@ export default function FieldValueDisplay({
         </div>
       );
 
-
     case "markdown":
       return (
         <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -103,7 +102,13 @@ export default function FieldValueDisplay({
     case "file":
       if (!value)
         return <span className="text-muted-foreground italic">No file</span>;
-      return <FileViewer src={value.src} fileName={value.name || field.displayName} size="lg" />;
+      return (
+        <FileViewer
+          src={value.src}
+          fileName={value.name || field.displayName}
+          size="lg"
+        />
+      );
 
     case "file-multiple":
       if (!Array.isArray(value) || value.length === 0) {
@@ -128,7 +133,6 @@ export default function FieldValueDisplay({
           })}
         </div>
       );
-
 
     case "text":
     default:

@@ -9,6 +9,7 @@ import (
 	"myproject/backend/file"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -95,7 +96,6 @@ func (a *App) Startup(ctx context.Context) {
 			log.Println("Sample data loaded successfully")
 		}
 
-		// Fix any existing string data to numbers (development only)
 		err = database.FixStringToNumberData()
 		if err != nil {
 			log.Println("Error fixing string to number data:", err.Error())
@@ -898,28 +898,198 @@ func (a *App) LoadSampleData() error {
 
 func (a *App) LoadSampleDataWithDates(startDate string, endDate string) error {
 	log.Printf("LoadSampleDataWithDates called with dates: %s to %s", startDate, endDate)
-	
-	// Add panic recovery to catch any unexpected panics
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("PANIC in LoadSampleDataWithDates: %v", r)
 		}
 	}()
-	
-	// Validate input parameters
+
 	if startDate == "" || endDate == "" {
 		err := fmt.Errorf("startDate and endDate cannot be empty")
 		log.Printf("Validation error: %v", err)
 		return err
 	}
-	
+
 	err := database.LoadSampleDataWithDateRange(startDate, endDate)
 	if err != nil {
 		log.Printf("Error in LoadSampleDataWithDates: %v", err)
 		return err
 	}
-	
+
 	log.Printf("LoadSampleDataWithDates completed successfully")
 	return nil
 }
 
+func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool) (map[string]interface{}, error) {
+
+	var journalData map[string]interface{}
+	err := json.Unmarshal([]byte(data), &journalData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse journal data: %w", err)
+	}
+
+	entryText, ok := journalData["entry"].(string)
+	if !ok {
+		return nil, fmt.Errorf("journal entry must contain 'entry' field")
+	}
+
+	dateStr, ok := journalData["date"].(string)
+	if !ok {
+		return nil, fmt.Errorf("journal entry must contain 'date' field")
+	}
+
+	journalDate, err := time.Parse(time.RFC3339, dateStr)
+	if err != nil {
+
+		journalDate, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid date format: %w", err)
+		}
+	}
+
+	var journalResult map[string]interface{}
+	if isUpdate && id != "" {
+		journalResult, err = a.UpdateRecord(id, data, false, false)
+	} else {
+		journalResult, err = a.AddRecord("daily_journal", data, false)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to save journal entry: %w", err)
+	}
+
+	log.Printf("DEBUG: Extracting metrics from journal text: %s", entryText)
+	metrics := a.extractMetrics(entryText)
+	log.Printf("DEBUG: Found %d metrics: %+v", len(metrics), metrics)
+
+	for _, metric := range metrics {
+
+		exists, err := a.checkMetricExistsForDate(metric.ID, journalDate)
+		if err != nil {
+			log.Printf("Error checking metric existence: %v", err)
+			continue
+		}
+
+		if !exists {
+
+			logData := map[string]interface{}{
+				"date":      journalDate.Format(time.RFC3339),
+				"metric_id": metric.ID,
+				"value":     metric.Value,
+				"notes":     fmt.Sprintf("Logged from daily journal on %s", time.Now().Format("Jan 2, 2006 at 3:04 PM")),
+			}
+
+			logJSON, err := json.Marshal(logData)
+			if err != nil {
+				log.Printf("Error marshaling metric log: %v", err)
+				continue
+			}
+
+			_, err = a.AddRecord("daily_logs", string(logJSON), false)
+			if err != nil {
+				log.Printf("Error creating daily log for metric %s: %v", metric.ID, err)
+			} else {
+
+				a.updateMetricLastOccurrence(metric.ID, journalDate)
+			}
+		}
+	}
+
+	return journalResult, nil
+}
+
+type ExtractedMetric struct {
+	ID    string
+	Name  string
+	Value string
+}
+
+func (a *App) extractMetrics(text string) []ExtractedMetric {
+	var metrics []ExtractedMetric
+
+	pattern := `@metric:(?:'([^']+)'|([^:\s]+)):([^\s]+)(?:\s+\(read-only\))?`
+	log.Printf("DEBUG: Using regex pattern: %s", pattern)
+
+	re := regexp.MustCompile(pattern)
+	matches := re.FindAllStringSubmatch(text, -1)
+	log.Printf("DEBUG: Regex found %d matches: %+v", len(matches), matches)
+
+	allMetrics, err := database.GetDataRecords("metrics")
+	if err != nil {
+		log.Printf("Error fetching metrics: %v", err)
+		return metrics
+	}
+	log.Printf("DEBUG: Found %d metrics in database", len(allMetrics))
+
+	metricMap := make(map[string]string)
+	for _, record := range allMetrics {
+		var metricData map[string]interface{}
+		err := json.Unmarshal(record.Data, &metricData)
+		if err != nil {
+			log.Printf("DEBUG: Error unmarshaling metric data: %v", err)
+			continue
+		}
+
+		if name, ok := metricData["name"].(string); ok {
+			metricMap[name] = record.ID
+			log.Printf("DEBUG: Added metric to map: %s -> %s", name, record.ID)
+		}
+	}
+	log.Printf("DEBUG: Created metric map with %d entries: %+v", len(metricMap), metricMap)
+
+	for _, match := range matches {
+
+		metricName := match[1]
+		if metricName == "" {
+			metricName = match[2]
+		}
+		metricValue := match[3]
+		log.Printf("DEBUG: Processing match - quoted name: '%s', unquoted name: '%s', value: '%s'", match[1], match[2], metricValue)
+
+		if metricID, exists := metricMap[metricName]; exists {
+			log.Printf("DEBUG: Found metric in map: %s -> %s, adding to results", metricName, metricID)
+			metrics = append(metrics, ExtractedMetric{
+				ID:    metricID,
+				Name:  metricName,
+				Value: metricValue,
+			})
+		} else {
+			log.Printf("DEBUG: Metric '%s' not found in map", metricName)
+		}
+	}
+
+	return metrics
+}
+
+func (a *App) checkMetricExistsForDate(metricID string, date time.Time) (bool, error) {
+	logs, err := database.GetDataRecords("daily_logs")
+	if err != nil {
+		return false, err
+	}
+
+	for _, log := range logs {
+		var logData map[string]interface{}
+		err := json.Unmarshal(log.Data, &logData)
+		if err != nil {
+			continue
+		}
+
+		if logMetricID, ok := logData["metric_id"].(string); ok && logMetricID == metricID {
+
+			if logDateStr, ok := logData["date"].(string); ok {
+				logDate, err := time.Parse(time.RFC3339, logDateStr)
+				if err != nil {
+					continue
+				}
+
+				if logDate.Year() == date.Year() &&
+					logDate.Month() == date.Month() &&
+					logDate.Day() == date.Day() {
+					return true, nil
+				}
+			}
+		}
+	}
+
+	return false, nil
+}

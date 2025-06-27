@@ -43,6 +43,8 @@ export function ProcessRecordWithFiles(arg1:Record<string, any>,arg2:boolean):Pr
 
 export function ResetAllData():Promise<void>;
 
+export function SaveDailyJournalWithMetrics(arg1:string,arg2:string,arg3:boolean):Promise<Record<string, any>>;
+
 export function SaveFiles(arg1:any,arg2:string):Promise<any>;
 
 export function UpdateDataset(arg1:string,arg2:string,arg3:string,arg4:string):Promise<database.Dataset>;

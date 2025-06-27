@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,7 @@ import { addDays, isToday, isTomorrow, isYesterday } from "date-fns";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { DailyJournalEntry } from "@/store/journaling-definitions";
+import { DailyLog } from "@/store/experiment-definitions";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -66,11 +67,10 @@ export default function DailyJournalEditor({
   };
 
   useEffect(() => {
-    // Compare dates in local timezone, not UTC
     const selectedYear = selectedDate.getFullYear();
     const selectedMonth = selectedDate.getMonth();
     const selectedDay = selectedDate.getDate();
-    
+
     const existingEntryForDate = entries.find((entry) => {
       const entryDate = new Date(entry.date);
       return (
@@ -89,43 +89,77 @@ export default function DailyJournalEditor({
     }
   }, [selectedDate, entries]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const saveEntry = useCallback(async () => {
     if (!entry.trim()) {
       toast.error("Please write something in your journal");
-      return;
+      return false;
     }
 
     setIsSubmitting(true);
 
     try {
       const entryData = {
-        date: selectedDate,
+        date: selectedDate.toISOString(),
         entry: entry.trim(),
       };
 
       let result;
       if (existingEntry) {
-        result = await ApiService.updateRecord(existingEntry.id, entryData);
+        result = await ApiService.saveDailyJournalWithMetrics(
+          existingEntry.id,
+          entryData,
+          true
+        );
         if (result) {
           updateEntry(existingEntry.id, result, "daily_journal");
           toast.success("Daily journal entry updated!");
+
+          const logs = await ApiService.getRecords<DailyLog>("daily_logs");
+          if (logs) {
+            dataStore.setState((state) => ({
+              ...state,
+              daily_logs: logs,
+            }));
+          }
         }
       } else {
-        result = await ApiService.addRecord("daily_journal", entryData);
+        result = await ApiService.saveDailyJournalWithMetrics(
+          null,
+          entryData,
+          false
+        );
         if (result) {
           addEntry(result, "daily_journal");
           toast.success("Daily journal entry added!");
+
+          const logs = await ApiService.getRecords<DailyLog>("daily_logs");
+          if (logs) {
+            dataStore.setState((state) => ({
+              ...state,
+              daily_logs: logs,
+            }));
+          }
         }
       }
+
+      return true;
     } catch (error) {
       console.error("Error saving daily journal entry:", error);
       toast.error("Failed to save daily journal entry");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
+  }, [entry, selectedDate, existingEntry]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveEntry();
   };
+
+  const handleEntryChange = useCallback((newEntry: string) => {
+    setEntry(newEntry);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -244,8 +278,9 @@ export default function DailyJournalEditor({
               <JournalEditorWithMetrics
                 key={`${selectedDate.toISOString()}-${existingEntry?.id || "new"}`}
                 value={entry}
-                onChange={setEntry}
+                onChange={handleEntryChange}
                 placeholder="Write about your day... Type @metric: to add metrics!"
+                selectedDate={selectedDate}
               />
             </div>
 
@@ -269,6 +304,7 @@ export default function DailyJournalEditor({
                   </span>
                 )}
               </div>
+
               <Button type="submit" disabled={isSubmitting || !entry.trim()}>
                 {isSubmitting
                   ? "Saving..."

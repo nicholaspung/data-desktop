@@ -92,20 +92,22 @@ export function FeatureLayout({
   className,
 }: FeatureLayoutProps) {
   return (
-    <div className={cn("container mx-auto", className)}>
-      {header}
+    <div className={cn("container mx-auto h-full flex flex-col overflow-hidden", className)}>
+      <div className="flex-shrink-0">
+        {header}
+      </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         {sidebarPosition === "left" && sidebar && (
-          <div className="lg:w-1/4">{sidebar}</div>
+          <div className="lg:w-1/4 flex-shrink-0">{sidebar}</div>
         )}
 
-        <div className={cn("flex-1", sidebar ? "lg:w-3/4" : "w-full")}>
+        <div className={cn("flex-1 min-h-0", sidebar ? "lg:w-3/4" : "w-full")}>
           {children}
         </div>
 
         {sidebarPosition === "right" && sidebar && (
-          <div className="lg:w-1/4">{sidebar}</div>
+          <div className="lg:w-1/4 flex-shrink-0">{sidebar}</div>
         )}
       </div>
     </div>

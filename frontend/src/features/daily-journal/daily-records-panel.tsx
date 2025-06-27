@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Calendar,
   FileText,
@@ -59,16 +64,14 @@ export default function DailyRecordsPanel({
     (state) => state.datasets
   );
 
-  // Initialize selected features state
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
-  
-  // State for collapsed sections
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
-  // Create options from available datasets
+  const [collapsedSections, setCollapsedSections] = useState<
+    Record<string, boolean>
+  >({});
+
   const featureOptions: MultiSelectOption[] = Object.entries(fieldDefinitions)
     .filter(([, dataset]) => {
-      // Only include datasets that have a date field
       return dataset.fields.some((field) => field.type === "date");
     })
     .map(([datasetId, dataset]) => ({
@@ -76,18 +79,15 @@ export default function DailyRecordsPanel({
       label: dataset.name,
     }));
 
-  // Local storage keys
   const STORAGE_KEY = "daily-journal-selected-features";
   const COLLAPSED_STORAGE_KEY = "daily-journal-collapsed-sections";
 
-  // Initialize selected features on component mount
   useEffect(() => {
     try {
-      // Try to load from localStorage first
       const savedFeatures = localStorage.getItem(STORAGE_KEY);
       if (savedFeatures) {
         const parsedFeatures = JSON.parse(savedFeatures);
-        // Validate that saved features still exist in current options
+
         const validFeatures = parsedFeatures.filter((featureId: string) =>
           featureOptions.some((option) => option.id === featureId)
         );
@@ -101,7 +101,6 @@ export default function DailyRecordsPanel({
       );
     }
 
-    // Fallback to default selection if no saved data or error
     const defaultSelected = featureOptions
       .filter(
         (option) => option.id !== "daily_journal" && option.id.includes("files")
@@ -110,7 +109,6 @@ export default function DailyRecordsPanel({
     setSelectedFeatures(defaultSelected);
   }, []);
 
-  // Save selected features to localStorage whenever they change
   useEffect(() => {
     if (selectedFeatures.length > 0) {
       try {
@@ -124,7 +122,6 @@ export default function DailyRecordsPanel({
     }
   }, [selectedFeatures]);
 
-  // Initialize collapsed sections from localStorage
   useEffect(() => {
     try {
       const savedCollapsed = localStorage.getItem(COLLAPSED_STORAGE_KEY);
@@ -139,23 +136,21 @@ export default function DailyRecordsPanel({
     }
   }, []);
 
-  // Save collapsed sections to localStorage whenever they change
   useEffect(() => {
     try {
-      localStorage.setItem(COLLAPSED_STORAGE_KEY, JSON.stringify(collapsedSections));
-    } catch (error) {
-      console.warn(
-        "Failed to save collapsed sections to localStorage:",
-        error
+      localStorage.setItem(
+        COLLAPSED_STORAGE_KEY,
+        JSON.stringify(collapsedSections)
       );
+    } catch (error) {
+      console.warn("Failed to save collapsed sections to localStorage:", error);
     }
   }, [collapsedSections]);
 
-  // Toggle collapsed state for a section
   const toggleSection = (datasetId: string) => {
-    setCollapsedSections(prev => ({
+    setCollapsedSections((prev) => ({
       ...prev,
-      [datasetId]: !prev[datasetId]
+      [datasetId]: !prev[datasetId],
     }));
   };
 
@@ -170,7 +165,6 @@ export default function DailyRecordsPanel({
     Object.entries(allData).forEach(([datasetId, records]) => {
       if (!records || !Array.isArray(records)) return;
 
-      // Filter by selected features
       if (!selectedFeatures.includes(datasetId)) return;
 
       const dataset = fieldDefinitions[datasetId];
@@ -179,31 +173,30 @@ export default function DailyRecordsPanel({
       const dateField = dataset.fields.find((field) => field.type === "date");
       if (!dateField) return;
 
-      const dateRecords = records.filter((record: any) => {
-        if (!record[dateField.key]) return false;
-        const recordDate = new Date(record[dateField.key]);
+      const dateRecords = records
+        .filter((record: any) => {
+          if (!record[dateField.key]) return false;
+          const recordDate = new Date(record[dateField.key]);
 
-        // Compare local dates by extracting year, month, and day
-        return (
-          recordDate.getFullYear() === selectedDate.getFullYear() &&
-          recordDate.getMonth() === selectedDate.getMonth() &&
-          recordDate.getDate() === selectedDate.getDate()
-        );
-      }).sort((a: any, b: any) => {
-        // Sort by datetime - use start_time for time tracking, otherwise use the date field
-        let aTime, bTime;
-        
-        if (datasetId === 'time_entries' && a.start_time && b.start_time) {
-          aTime = new Date(a.start_time);
-          bTime = new Date(b.start_time);
-        } else {
-          aTime = new Date(a[dateField.key]);
-          bTime = new Date(b[dateField.key]);
-        }
-        
-        // Sort in descending order (newest first)
-        return bTime.getTime() - aTime.getTime();
-      });
+          return (
+            recordDate.getFullYear() === selectedDate.getFullYear() &&
+            recordDate.getMonth() === selectedDate.getMonth() &&
+            recordDate.getDate() === selectedDate.getDate()
+          );
+        })
+        .sort((a: any, b: any) => {
+          let aTime, bTime;
+
+          if (datasetId === "time_entries" && a.start_time && b.start_time) {
+            aTime = new Date(a.start_time);
+            bTime = new Date(b.start_time);
+          } else {
+            aTime = new Date(a[dateField.key]);
+            bTime = new Date(b[dateField.key]);
+          }
+
+          return bTime.getTime() - aTime.getTime();
+        });
 
       if (dateRecords.length > 0) {
         recordsByDataset.push({

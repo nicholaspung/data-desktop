@@ -70,38 +70,35 @@ func LoadSampleDataOnce() error {
 	return nil
 }
 
-// LoadSampleDataWithDateRange loads sample data using the specified date range
 func LoadSampleDataWithDateRange(startDate string, endDate string) error {
-	// Parse dates
+
 	start, err := time.Parse("2006-01-02", startDate)
 	if err != nil {
 		return fmt.Errorf("invalid start date format: %w", err)
 	}
-	
+
 	end, err := time.Parse("2006-01-02", endDate)
 	if err != nil {
 		return fmt.Errorf("invalid end date format: %w", err)
 	}
-	
+
 	if end.Before(start) {
 		return fmt.Errorf("end date must be after start date")
 	}
 
 	fmt.Printf("Loading sample data for date range: %s to %s\n", startDate, endDate)
 
-	// Test database connection before proceeding
 	if DB == nil {
 		return fmt.Errorf("database connection is nil")
 	}
-	
+
 	err = DB.Ping()
 	if err != nil {
 		return fmt.Errorf("database ping failed: %w", err)
 	}
-	
+
 	fmt.Printf("Database connection verified\n")
 
-	// Load all sample data with date range - wrap each in error handling
 	datasets := []struct {
 		name string
 		fn   func(time.Time, time.Time) error
@@ -123,7 +120,7 @@ func LoadSampleDataWithDateRange(startDate string, endDate string) error {
 		fmt.Printf("Loading %s sample data...\n", dataset.name)
 		if err := dataset.fn(start, end); err != nil {
 			fmt.Printf("Warning: Failed to load %s sample data: %v\n", dataset.name, err)
-			// Continue with other datasets instead of failing completely
+
 			continue
 		}
 		fmt.Printf("Successfully loaded %s sample data\n", dataset.name)
@@ -133,16 +130,14 @@ func LoadSampleDataWithDateRange(startDate string, endDate string) error {
 	return nil
 }
 
-// Helper function to generate random dates within a range
 func randomDateInRange(start, end time.Time) string {
 	delta := end.Unix() - start.Unix()
 	sec := rand.Int63n(delta) + start.Unix()
 	return time.Unix(sec, 0).Format("2006-01-02")
 }
 
-// Helper function to generate dates with variance around a center date
 func dateWithVariance(centerDate time.Time, daysBefore, daysAfter int) string {
-	variance := rand.Intn(daysBefore + daysAfter + 1) - daysBefore
+	variance := rand.Intn(daysBefore+daysAfter+1) - daysBefore
 	return centerDate.AddDate(0, 0, variance).Format("2006-01-02")
 }
 
@@ -180,35 +175,31 @@ func loadDEXASampleData() error {
 }
 
 func loadDEXASampleDataWithDates(start, end time.Time) error {
-	// Generate 3-5 DEXA scans spread across the date range
+
 	numScans := rand.Intn(3) + 3
 	samples := make([]map[string]interface{}, numScans)
-	
-	// Calculate interval between scans
+
 	duration := end.Sub(start)
 	interval := duration / time.Duration(numScans)
-	
-	// Base values that will change over time
-	baseFatPercentage := 12.0 + rand.Float64()*8.0  // 12-20%
-	baseLeanMass := 140.0 + rand.Float64()*40.0     // 140-180 lbs
-	
+
+	baseFatPercentage := 12.0 + rand.Float64()*8.0
+	baseLeanMass := 140.0 + rand.Float64()*40.0
+
 	for i := 0; i < numScans; i++ {
 		scanDate := start.Add(time.Duration(i) * interval)
-		// Add some variance to the exact date (+/- 7 days)
+
 		scanDate = scanDate.AddDate(0, 0, rand.Intn(15)-7)
-		
-		// Simulate gradual changes over time
+
 		timeProgress := float64(i) / float64(numScans-1)
-		
-		// Simulate fat loss and muscle gain
-		fatPercentage := baseFatPercentage - (rand.Float64()*2.0+1.0)*timeProgress  // Lose 1-3%
-		leanMass := baseLeanMass + (rand.Float64()*5.0+2.0)*timeProgress           // Gain 2-7 lbs
+
+		fatPercentage := baseFatPercentage - (rand.Float64()*2.0+1.0)*timeProgress
+		leanMass := baseLeanMass + (rand.Float64()*5.0+2.0)*timeProgress
 		totalWeight := leanMass / (1 - fatPercentage/100)
 		fatMass := totalWeight * (fatPercentage / 100)
-		
+
 		samples[i] = map[string]interface{}{
 			"date":                      scanDate.Format("2006-01-02"),
-			"fasted":                    rand.Float32() > 0.2,  // 80% chance of fasted
+			"fasted":                    rand.Float32() > 0.2,
 			"total_body_fat_percentage": fatPercentage,
 			"fat_tissue_lbs":            fatMass,
 			"lean_tissue_lbs":           leanMass,
@@ -220,7 +211,7 @@ func loadDEXASampleDataWithDates(start, end time.Time) error {
 			"bone_density_g_cm2_total":  1.10 + rand.Float64()*0.15,
 		}
 	}
-	
+
 	return addSampleRecords(DatasetIDDEXA, samples)
 }
 
@@ -282,17 +273,13 @@ func loadBloodworkSampleData() error {
 }
 
 func loadBloodworkSampleDataWithDates(start, end time.Time) error {
-	// Skip blood markers - they should already exist from dev startup
-	// Just generate bloodwork sessions with results
-	
-	// Generate 4-8 bloodwork sessions (more than before)
+
 	numSessions := rand.Intn(5) + 4
 	bloodworkSessions := make([]map[string]interface{}, numSessions)
-	
+
 	duration := end.Sub(start)
 	interval := duration / time.Duration(numSessions)
-	
-	// Common blood markers with realistic ranges
+
 	bloodMarkers := []struct {
 		name string
 		min  float64
@@ -308,24 +295,23 @@ func loadBloodworkSampleDataWithDates(start, end time.Time) error {
 		{"TSH", 0.4, 4.0},
 		{"Testosterone", 300.0, 800.0},
 	}
-	
+
 	for i := 0; i < numSessions; i++ {
 		sessionDate := start.Add(time.Duration(i) * interval)
 		sessionDate = sessionDate.AddDate(0, 0, rand.Intn(15)-7)
-		
-		// Generate results for each marker
+
 		results := make([]map[string]interface{}, len(bloodMarkers))
 		for j, marker := range bloodMarkers {
-			// Generate value mostly within normal range, occasionally outside
+
 			value := marker.min + rand.Float64()*(marker.max-marker.min)
-			if rand.Float32() < 0.15 { // 15% chance of abnormal
+			if rand.Float32() < 0.15 {
 				if rand.Float32() < 0.5 {
-					value = marker.min - rand.Float64()*(marker.min*0.2) // Below normal
+					value = marker.min - rand.Float64()*(marker.min*0.2)
 				} else {
-					value = marker.max + rand.Float64()*(marker.max*0.2) // Above normal
+					value = marker.max + rand.Float64()*(marker.max*0.2)
 				}
 			}
-			
+
 			results[j] = map[string]interface{}{
 				"marker_name": marker.name,
 				"value":       value,
@@ -333,7 +319,7 @@ func loadBloodworkSampleDataWithDates(start, end time.Time) error {
 				"in_range":    value >= marker.min && value <= marker.max,
 			}
 		}
-		
+
 		bloodworkSessions[i] = map[string]interface{}{
 			"date":     sessionDate.Format("2006-01-02"),
 			"provider": []string{"LabCorp", "Quest Diagnostics", "Local Hospital Lab", "Primary Care", "Specialist"}[rand.Intn(5)],
@@ -342,7 +328,7 @@ func loadBloodworkSampleDataWithDates(start, end time.Time) error {
 			"notes":    []string{"Annual checkup", "Follow-up", "Preventive screening", "Monitoring", "Pre-surgery", "Routine physical"}[rand.Intn(6)],
 		}
 	}
-	
+
 	return addSampleRecords(DatasetIDBloodwork, bloodworkSessions)
 }
 
@@ -1121,12 +1107,12 @@ func addSampleRecords(datasetID string, samples []map[string]interface{}) error 
 	}
 
 	fmt.Printf("Adding %d sample records to dataset %s\n", len(samples), datasetID)
-	
+
 	for i, sample := range samples {
 		dataJSON, err := json.Marshal(sample)
 		if err != nil {
 			fmt.Printf("Failed to marshal sample %d for dataset %s: %v\n", i, datasetID, err)
-			continue // Skip this record but continue with others
+			continue
 		}
 
 		record := DataRecord{
@@ -1137,7 +1123,7 @@ func addSampleRecords(datasetID string, samples []map[string]interface{}) error 
 
 		if err := AddDataRecord(record); err != nil {
 			fmt.Printf("Failed to add sample record %d to dataset %s: %v\n", i, datasetID, err)
-			continue // Skip this record but continue with others
+			continue
 		}
 	}
 
@@ -1149,11 +1135,9 @@ func generateID() string {
 	return uuid.New().String()
 }
 
-// Simple test function to isolate issues
 func loadSimpleSampleDataWithDates(start, end time.Time) error {
 	fmt.Printf("Creating simple test record for date range %s to %s\n", start.Format("2006-01-02"), end.Format("2006-01-02"))
-	
-	// Create one simple record
+
 	samples := []map[string]interface{}{
 		{
 			"test_field": "test_value",
@@ -1161,14 +1145,12 @@ func loadSimpleSampleDataWithDates(start, end time.Time) error {
 			"number":     42.0,
 		},
 	}
-	
-	// Try to add to experiments dataset as it's simple
+
 	return addSampleRecords(DatasetIDExperiment, samples)
 }
 
-// Date-based loader implementations
 func loadExperimentSampleDataWithDates(start, end time.Time) error {
-	// Generate experiments within the date range
+
 	experiments := []map[string]interface{}{
 		{
 			"name":        "Sleep Optimization",
@@ -1186,13 +1168,12 @@ func loadExperimentSampleDataWithDates(start, end time.Time) error {
 			"start_state": "Irregular exercise schedule, low morning energy",
 			"goal":        "Consistent morning workouts 5x per week",
 			"start_date":  start.Format("2006-01-02"),
-			"end_date":    end.AddDate(0, 0, 14).Format("2006-01-02"), // 2 weeks
+			"end_date":    end.AddDate(0, 0, 14).Format("2006-01-02"),
 			"status":      "planning",
 			"private":     false,
 		},
 	}
 
-	// Generate more comprehensive metrics
 	metrics := []map[string]interface{}{
 		{
 			"name":        "Sleep Quality",
@@ -1207,7 +1188,7 @@ func loadExperimentSampleDataWithDates(start, end time.Time) error {
 		{
 			"name":        "Energy Level",
 			"description": "Daily energy rating throughout the day",
-			"type":        "scale", 
+			"type":        "scale",
 			"unit":        "/10",
 			"active":      true,
 			"private":     false,
@@ -1237,16 +1218,15 @@ func loadExperimentSampleDataWithDates(start, end time.Time) error {
 	if err := addSampleRecords(DatasetIDExperiment, experiments); err != nil {
 		return err
 	}
-	
+
 	if err := addSampleRecords(DatasetIDMetric, metrics); err != nil {
 		return err
 	}
 
-	// Create experiment-metric relationships
 	experimentMetrics := []map[string]interface{}{
 		{
-			"experiment_id": "sleep-optimization", // Will be linked to first experiment
-			"metric_id":     "sleep-quality",     // Will be linked to Sleep Quality metric
+			"experiment_id": "sleep-optimization",
+			"metric_id":     "sleep-quality",
 			"target_value":  8.0,
 			"priority":      "high",
 		},
@@ -1274,29 +1254,28 @@ func loadExperimentSampleDataWithDates(start, end time.Time) error {
 		return err
 	}
 
-	// Generate daily logs within the date range, linked to random metrics
 	metricNames := []string{"sleep-quality", "energy-level", "exercise-minutes", "mood-rating"}
 	dailyLogs := []map[string]interface{}{}
 	currentDate := start
-	
+
 	for currentDate.Before(end) || currentDate.Equal(end) {
-		// Generate 1-3 metric logs per day
+
 		numLogs := rand.Intn(3) + 1
 		for i := 0; i < numLogs; i++ {
-			if rand.Float32() < 0.8 { // 80% chance of entry
+			if rand.Float32() < 0.8 {
 				metricName := metricNames[rand.Intn(len(metricNames))]
 				var value string
 				var notes string
-				
+
 				switch metricName {
 				case "sleep-quality", "energy-level", "mood-rating":
-					value = strconv.Itoa(rand.Intn(4) + 6) // 6-10 rating
+					value = strconv.Itoa(rand.Intn(4) + 6)
 					notes = []string{"Feeling great", "Pretty good", "Average day", "Could be better", "Excellent"}[rand.Intn(5)]
 				case "exercise-minutes":
-					value = strconv.Itoa(rand.Intn(60) + 15) // 15-75 minutes
+					value = strconv.Itoa(rand.Intn(60) + 15)
 					notes = []string{"Morning run", "Gym workout", "Yoga session", "Quick walk", "Strength training"}[rand.Intn(5)]
 				}
-				
+
 				dailyLogs = append(dailyLogs, map[string]interface{}{
 					"date":      currentDate.Format("2006-01-02"),
 					"metric_id": metricName,
@@ -1339,7 +1318,7 @@ func loadTodoSampleDataWithDates(start, end time.Time) error {
 }
 
 func loadPeopleCRMSampleDataWithDates(start, end time.Time) error {
-	// Just generate basic people data - dates less relevant for contacts
+
 	people := []map[string]interface{}{
 		{
 			"name":           "Alex Chen",
@@ -1354,7 +1333,6 @@ func loadPeopleCRMSampleDataWithDates(start, end time.Time) error {
 		return err
 	}
 
-	// Generate a meeting within the date range
 	meetings := []map[string]interface{}{
 		{
 			"meeting_date":     randomDateInRange(start, end),
@@ -1377,7 +1355,7 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 	creativityEntries := []map[string]interface{}{}
 	questionEntries := []map[string]interface{}{}
 	affirmationEntries := []map[string]interface{}{}
-	
+
 	currentDate := start
 
 	gratitudePrompts := []string{
@@ -1388,7 +1366,7 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 	}
 
 	creativityPrompts := []struct {
-		prompt string
+		prompt   string
 		response string
 	}{
 		{
@@ -1432,7 +1410,7 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 	}
 
 	for currentDate.Before(end) || currentDate.Equal(end) {
-		// Gratitude entries (60% chance)
+
 		if rand.Float32() < 0.6 {
 			gratitudeEntries = append(gratitudeEntries, map[string]interface{}{
 				"date":  currentDate.Format("2006-01-02"),
@@ -1440,7 +1418,6 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 			})
 		}
 
-		// Creativity entries (30% chance)
 		if rand.Float32() < 0.3 {
 			prompt := creativityPrompts[rand.Intn(len(creativityPrompts))]
 			creativityEntries = append(creativityEntries, map[string]interface{}{
@@ -1450,7 +1427,6 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 			})
 		}
 
-		// Question entries (40% chance)
 		if rand.Float32() < 0.4 {
 			question := questionPrompts[rand.Intn(len(questionPrompts))]
 			questionEntries = append(questionEntries, map[string]interface{}{
@@ -1460,7 +1436,6 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 			})
 		}
 
-		// Affirmation entries (50% chance)
 		if rand.Float32() < 0.5 {
 			affirmationEntries = append(affirmationEntries, map[string]interface{}{
 				"date":        currentDate.Format("2006-01-02"),
@@ -1471,19 +1446,18 @@ func loadJournalingSampleDataWithDates(start, end time.Time) error {
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
 
-	// Add all journal types
 	if err := addSampleRecords(DatasetIDGratitudeJournal, gratitudeEntries); err != nil {
 		return err
 	}
-	
+
 	if err := addSampleRecords(DatasetIDCreativityJournal, creativityEntries); err != nil {
 		return err
 	}
-	
+
 	if err := addSampleRecords(DatasetIDQuestionJournal, questionEntries); err != nil {
 		return err
 	}
-	
+
 	return addSampleRecords(DatasetIDAffirmation, affirmationEntries)
 }
 
@@ -1501,12 +1475,12 @@ func loadTimeTrackingSampleDataWithDates(start, end time.Time) error {
 	currentDate := start
 
 	for currentDate.Before(end) || currentDate.Equal(end) {
-		// Generate 1-3 time entries per day
+
 		numEntries := rand.Intn(3) + 1
 		for i := 0; i < numEntries; i++ {
-			hour := rand.Intn(10) + 9 // 9 AM to 6 PM
+			hour := rand.Intn(10) + 9
 			startTime := currentDate.Add(time.Duration(hour) * time.Hour)
-			duration := rand.Intn(120) + 30 // 30-150 minutes
+			duration := rand.Intn(120) + 30
 			endTime := startTime.Add(time.Duration(duration) * time.Minute)
 
 			timeEntries = append(timeEntries, map[string]interface{}{
@@ -1529,11 +1503,11 @@ func loadFinancialSampleDataWithDates(start, end time.Time) error {
 	currentDate := start
 
 	for currentDate.Before(end) || currentDate.Equal(end) {
-		// Generate 1-3 financial transactions per day
+
 		numTransactions := rand.Intn(3) + 1
 		for i := 0; i < numTransactions; i++ {
-			amount := (rand.Float64() * 100) + 10 // $10-$110
-			if rand.Float32() < 0.8 { // 80% are expenses
+			amount := (rand.Float64() * 100) + 10
+			if rand.Float32() < 0.8 {
 				amount = -amount
 			}
 
@@ -1551,50 +1525,47 @@ func loadFinancialSampleDataWithDates(start, end time.Time) error {
 	return addSampleRecords(DatasetIDFinancialLogs, financialLogs)
 }
 
-// New dataset loaders
 func loadBodyMeasurementsSampleDataWithDates(start, end time.Time) error {
-	// Generate measurements every 3-7 days
+
 	measurements := []map[string]interface{}{}
 	currentDate := start
-	
-	// Base values
-	baseWeight := 150.0 + rand.Float64()*50.0  // 150-200 lbs
-	baseWaist := 30.0 + rand.Float64()*10.0    // 30-40 inches
-	baseChest := 36.0 + rand.Float64()*10.0    // 36-46 inches
-	baseBicep := 12.0 + rand.Float64()*6.0     // 12-18 inches
-	
+
+	baseWeight := 150.0 + rand.Float64()*50.0
+	baseWaist := 30.0 + rand.Float64()*10.0
+	baseChest := 36.0 + rand.Float64()*10.0
+	baseBicep := 12.0 + rand.Float64()*6.0
+
 	for currentDate.Before(end) {
-		// Progress over time
+
 		progress := currentDate.Sub(start).Hours() / end.Sub(start).Hours()
-		
+
 		measurement := map[string]interface{}{
-			"date": currentDate.Format("2006-01-02"),
-			"weight": baseWeight - rand.Float64()*5.0*progress,
-			"waist": baseWaist - rand.Float64()*2.0*progress,
-			"chest": baseChest + rand.Float64()*2.0*progress,
-			"bicep_left": baseBicep + rand.Float64()*1.0*progress,
+			"date":        currentDate.Format("2006-01-02"),
+			"weight":      baseWeight - rand.Float64()*5.0*progress,
+			"waist":       baseWaist - rand.Float64()*2.0*progress,
+			"chest":       baseChest + rand.Float64()*2.0*progress,
+			"bicep_left":  baseBicep + rand.Float64()*1.0*progress,
 			"bicep_right": baseBicep + rand.Float64()*1.0*progress,
-			"thigh_left": 20.0 + rand.Float64()*4.0,
+			"thigh_left":  20.0 + rand.Float64()*4.0,
 			"thigh_right": 20.0 + rand.Float64()*4.0,
-			"calf_left": 14.0 + rand.Float64()*2.0,
-			"calf_right": 14.0 + rand.Float64()*2.0,
-			"neck": 15.0 + rand.Float64()*2.0,
-			"notes": []string{"Morning measurement", "After workout", "Weekly check-in", ""}[rand.Intn(4)],
+			"calf_left":   14.0 + rand.Float64()*2.0,
+			"calf_right":  14.0 + rand.Float64()*2.0,
+			"neck":        15.0 + rand.Float64()*2.0,
+			"notes":       []string{"Morning measurement", "After workout", "Weekly check-in", ""}[rand.Intn(4)],
 		}
-		
+
 		measurements = append(measurements, measurement)
-		
-		// Next measurement in 3-7 days
+
 		currentDate = currentDate.AddDate(0, 0, rand.Intn(5)+3)
 	}
-	
+
 	return addSampleRecords(DatasetIDBodyMeasurements, measurements)
 }
 
 func loadDailyJournalSampleDataWithDates(start, end time.Time) error {
 	journals := []map[string]interface{}{}
 	currentDate := start
-	
+
 	prompts := []string{
 		"What are you grateful for today?",
 		"What challenged you today and how did you overcome it?",
@@ -1602,56 +1573,54 @@ func loadDailyJournalSampleDataWithDates(start, end time.Time) error {
 		"What did you learn about yourself today?",
 		"How did you make progress toward your goals today?",
 	}
-	
+
 	for currentDate.Before(end) {
-		// Skip some days randomly (70% chance of having an entry)
+
 		if rand.Float32() < 0.7 {
 			journal := map[string]interface{}{
-				"date": currentDate.Format("2006-01-02"),
+				"date":   currentDate.Format("2006-01-02"),
 				"prompt": prompts[rand.Intn(len(prompts))],
-				"entry": generateJournalEntry(),
-				"mood": []string{"great", "good", "okay", "challenging", "difficult"}[rand.Intn(5)],
-				"tags": generateTags(),
+				"entry":  generateJournalEntry(),
+				"mood":   []string{"great", "good", "okay", "challenging", "difficult"}[rand.Intn(5)],
+				"tags":   generateTags(),
 			}
 			journals = append(journals, journal)
 		}
-		
+
 		currentDate = currentDate.AddDate(0, 0, 1)
 	}
-	
+
 	return addSampleRecords(DatasetIDDailyJournal, journals)
 }
 
 func loadHealthFilesSampleDataWithDates(start, end time.Time) error {
 	files := []map[string]interface{}{}
-	
-	// Generate 5-10 health files spread across the date range
+
 	numFiles := rand.Intn(6) + 5
 	duration := end.Sub(start)
 	interval := duration / time.Duration(numFiles)
-	
+
 	fileTypes := []string{"Lab Report", "Medical Record", "Prescription", "Imaging", "Insurance Document", "Doctor's Note"}
-	
+
 	for i := 0; i < numFiles; i++ {
 		fileDate := start.Add(time.Duration(i) * interval)
 		fileDate = fileDate.AddDate(0, 0, rand.Intn(15)-7)
-		
+
 		file := map[string]interface{}{
-			"date": fileDate.Format("2006-01-02"),
-			"name": fmt.Sprintf("%s_%s.pdf", fileTypes[rand.Intn(len(fileTypes))], fileDate.Format("20060102")),
-			"type": fileTypes[rand.Intn(len(fileTypes))],
-			"provider": []string{"Primary Care", "Specialist", "Lab", "Hospital", "Pharmacy"}[rand.Intn(5)],
+			"date":        fileDate.Format("2006-01-02"),
+			"name":        fmt.Sprintf("%s_%s.pdf", fileTypes[rand.Intn(len(fileTypes))], fileDate.Format("20060102")),
+			"type":        fileTypes[rand.Intn(len(fileTypes))],
+			"provider":    []string{"Primary Care", "Specialist", "Lab", "Hospital", "Pharmacy"}[rand.Intn(5)],
 			"description": generateFileDescription(),
-			"tags": []string{"important", "follow-up", "reference", "archive"}[rand.Intn(4)],
+			"tags":        []string{"important", "follow-up", "reference", "archive"}[rand.Intn(4)],
 		}
-		
+
 		files = append(files, file)
 	}
-	
+
 	return addSampleRecords(DatasetIDHealthFiles, files)
 }
 
-// Helper functions
 func generateJournalEntry() string {
 	entries := []string{
 		"Today was productive. Completed several important tasks and made good progress on my goals.",
@@ -1687,14 +1656,12 @@ func generateFileDescription() string {
 	return descriptions[rand.Intn(len(descriptions))]
 }
 
-// FixStringToNumberData - ONE-OFF function to convert string numeric values back to numbers
 func FixStringToNumberData() error {
 	fmt.Printf("Starting data type fix...\n")
-	
-	// Define which fields should be numbers for each dataset
+
 	numericFields := map[string][]string{
 		DatasetIDDEXA: {
-			"total_body_fat_percentage", "fat_tissue_lbs", "lean_tissue_lbs", 
+			"total_body_fat_percentage", "fat_tissue_lbs", "lean_tissue_lbs",
 			"total_mass_lbs", "bone_mineral_content", "resting_metabolic_rate",
 			"vat_mass_lbs", "vat_volume_in3", "bone_density_g_cm2_total",
 		},
@@ -1702,9 +1669,7 @@ func FixStringToNumberData() error {
 			"weight", "waist", "chest", "bicep_left", "bicep_right",
 			"thigh_left", "thigh_right", "calf_left", "calf_right", "neck",
 		},
-		DatasetIDBloodwork: {
-			// Results array will need special handling
-		},
+		DatasetIDBloodwork: {},
 	}
 
 	totalFixed := 0
@@ -1713,7 +1678,7 @@ func FixStringToNumberData() error {
 		records, err := GetDataRecords(datasetID)
 		if err != nil {
 			fmt.Printf("Error getting records for %s: %v\n", datasetID, err)
-			continue // Skip if dataset doesn't exist
+			continue
 		}
 		fmt.Printf("Found %d records in %s\n", len(records), datasetID)
 
@@ -1727,7 +1692,6 @@ func FixStringToNumberData() error {
 			modified := false
 			recordFixed := 0
 
-			// Handle regular fields
 			for _, field := range fields {
 				if value, exists := data[field]; exists {
 					if strValue, isString := value.(string); isString {
@@ -1741,7 +1705,6 @@ func FixStringToNumberData() error {
 				}
 			}
 
-			// Special handling for bloodwork results
 			if datasetID == DatasetIDBloodwork {
 				if results, exists := data["results"]; exists {
 					if resultsArray, ok := results.([]interface{}); ok {
@@ -1763,14 +1726,13 @@ func FixStringToNumberData() error {
 				}
 			}
 
-			// Update record if modified
 			if modified {
 				newData, err := json.Marshal(data)
 				if err != nil {
 					fmt.Printf("Error marshaling updated data: %v\n", err)
 					continue
 				}
-				
+
 				record.Data = newData
 				if err := UpdateDataRecord(record); err != nil {
 					return fmt.Errorf("failed to update record %s: %w", record.ID, err)

@@ -67,6 +67,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
+- in daily journal, add a way to manually add "obsidian" like text, and to log those metrics
 
 - PDF reports from data
 - in bloodwork, for reports, provide a table where a user can copy/paste their "out of range" markers to be used in a LLM
@@ -80,13 +81,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - add a "daily journal" that is able to do like "@feature" for tracking metrics
   - also adding templates for the user to be able to select that is added to the journal
 - in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date
-- in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically
 - in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
 - in daily journal, for the records displaying, show own custom view
+- in daily journal, when the user typed "@metric:" and it is highlighting an already logged value, it should still change the background so the user knows that's what being highlighted
 
 - add the daily journal dashboard summary component to the dashboard
   - see if you need to add instructions for CLAUDE in order to do this
-- in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast
 - in daily journal, for records for the day, for todos, check for the completion date and show it there only for the completion date
 
 - in time tracker form, for the description autocomplete, it's not showing the metrics for the user to select
@@ -100,6 +100,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast [DONE 2025-06-25]
+- in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically [DONE 2025-06-25]
 - in daily journal, allow for the "record for the date" to be "collasped vertically" and "expanded vertically" [DONE 2025-06-25]
 - add a "add sample data" where the date depends on a specific date sent from the frontend, by default, it will be around today [DONE 2025-06-25]
 - in daily journal, when the user selects which feature to view, the config should be stored locally [DONE 2025-06-24]

@@ -17,6 +17,7 @@ import {
   UploadFile,
   GetFileAsBase64,
   DeleteFile,
+  SaveDailyJournalWithMetrics,
 } from "../../wailsjs/go/backend/App";
 import { database } from "wailsjs/go/models";
 import { toast } from "sonner";
@@ -327,6 +328,30 @@ export const ApiService = {
     } catch (error) {
       console.error("Failed to upload file chunk:", error);
       toast.error("Failed to upload file chunk");
+      return null;
+    }
+  },
+
+  async saveDailyJournalWithMetrics<T = Record<string, any>>(
+    id: string | null,
+    data: Record<string, any>,
+    isUpdate: boolean
+  ): Promise<T | null> {
+    try {
+      const dataJson = JSON.stringify(data);
+      const result = await SaveDailyJournalWithMetrics(
+        id || "",
+        dataJson,
+        isUpdate
+      );
+      return result as T;
+    } catch (error) {
+      console.error("Failed to save daily journal with metrics:", error);
+      
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      
+      toast.error(errorMessage || "Failed to save journal entry");
       return null;
     }
   },

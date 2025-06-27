@@ -93,6 +93,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow: hidden;
   }
 }
 
@@ -112,15 +113,6 @@
     100% {
       background-color: transparent;
     }
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }
 
