@@ -106,6 +106,9 @@ export default function AutocompleteInput({
       filteredOptions = options.filter((option) =>
         option.label.toLowerCase().includes(value.toLowerCase())
       );
+    } else if (showSuggestions && !showRecentOptions) {
+      // Show all options when dropdown is opened and showRecentOptions is false
+      filteredOptions = options;
     }
 
     setFinalOptions(filteredOptions);
@@ -115,6 +118,7 @@ export default function AutocompleteInput({
     continueProvidingSuggestions,
     maxRecentOptions,
     showRecentOptions,
+    showSuggestions,
   ]);
 
   useEffect(() => {

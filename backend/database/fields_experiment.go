@@ -101,7 +101,7 @@ func GetMetricFields() []FieldDefinition {
 			Key:         "type",
 			Type:        FieldTypeText,
 			DisplayName: "Type",
-			Description: "Type of metric (number, boolean, text, scale)",
+			Description: "Type of metric (number, boolean, time, percentage, text, scale)",
 		},
 		{
 			Key:         "unit",

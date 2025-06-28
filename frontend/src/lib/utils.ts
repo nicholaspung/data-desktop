@@ -37,3 +37,20 @@ export const getNestedValue = (obj: any, path: string): any => {
     return current && current[key] !== undefined ? current[key] : undefined;
   }, obj);
 };
+
+/**
+ * Gets the display unit for a metric, with special handling for time metrics
+ * @param metric - The metric object with type and unit properties
+ * @returns The unit to display, defaulting to "minutes" for time metrics without a unit
+ */
+export const getMetricDisplayUnit = (metric: { type?: string; unit?: string }): string => {
+  if (metric.unit) {
+    return metric.unit;
+  }
+  
+  if (metric.type === "time") {
+    return "minutes";
+  }
+  
+  return "";
+};

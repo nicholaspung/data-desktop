@@ -144,13 +144,13 @@ const defaultDatasets = {
 // If the dataset has a dedicated route, also add to defaultRoutes
 const defaultRoutes = {
   // ... existing routes
-  "/my-feature": true,  // If you have a dedicated route
+  "/my-feature": false,  // Set to false to disable by default
 };
 
 // If the dataset has a dashboard summary, add to defaultDashboardSummaries
 const defaultDashboardSummaries = {
   // ... existing summaries
-  "/my-feature": { id: "/my-feature", size: 'medium' as const, order: 9, visible: true },
+  "/my-feature": { id: "/my-feature", size: 'medium' as const, order: 9, visible: false },  // Set visible: false to disable by default
 };
 ```
 
@@ -268,6 +268,23 @@ export default function MyFeatureDashboardSummary({
     />
   );
 }
+
+// Register the dashboard summary with enabled: false to make it disabled by default
+import { registerDashboardSummary } from "@/lib/dashboard-registry";
+
+registerDashboardSummary({
+  route: "/my-feature",
+  component: MyFeatureDashboardSummary,
+  defaultConfig: {
+    enabled: false,  // Set to false to disable by default
+    order: 999,
+    size: "default"
+  },
+  metadata: {
+    title: "My Feature",
+    description: "Description of what this feature does"
+  }
+});
 ```
 
 ### 9. Update Dashboard Index (Optional)

@@ -13,6 +13,7 @@ import MetricStreakDisplay from "./metric-streak-display";
 import { Progress } from "@/components/ui/progress";
 import NumberValueInput from "./number-input-control";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { getMetricDisplayUnit } from "@/lib/utils";
 
 export default function DailyTrackerViewCard({
   metric,
@@ -117,7 +118,7 @@ export default function DailyTrackerViewCard({
           const goal = parseFloat(metric.goal_value) || 0;
           return {
             progress: Math.min(100, (current / goal) * 100),
-            text: `${current}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""} (min)`,
+            text: `${current}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}/${goal}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""} (min)`,
           };
         }
         break;
@@ -133,7 +134,7 @@ export default function DailyTrackerViewCard({
           return {
             progress:
               goal === 0 ? 100 : Math.max(0, 100 - (current / goal) * 100),
-            text: `${current}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""} (max)`,
+            text: `${current}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}/${goal}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""} (max)`,
           };
         }
         break;
@@ -149,7 +150,7 @@ export default function DailyTrackerViewCard({
           const maxDiff = goal * 0.5;
           return {
             progress: Math.max(0, 100 - (diff / maxDiff) * 100),
-            text: `${current}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""}/${goal}${metric.type === "percentage" ? "%" : metric.unit ? ` ${metric.unit}` : ""} (exact)`,
+            text: `${current}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}/${goal}${metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""} (exact)`,
           };
         }
         break;
@@ -261,14 +262,14 @@ export default function DailyTrackerViewCard({
               Value{" "}
               {metric.type === "percentage"
                 ? "(%)"
-                : metric.unit
-                  ? `(${metric.unit})`
+                : getMetricDisplayUnit(metric)
+                  ? `(${getMetricDisplayUnit(metric)})`
                   : ""}
             </Label>
             <NumberValueInput
               value={metric.value}
               onChange={(value) => saveChanges(metric.id, "value", value)}
-              unit={metric.type === "percentage" ? "%" : metric.unit}
+              unit={metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric)}
               step={metric.type === "percentage" ? 1 : 1}
               min={0}
               max={metric.type === "percentage" ? 100 : 9999}

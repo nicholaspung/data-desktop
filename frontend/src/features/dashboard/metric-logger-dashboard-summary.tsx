@@ -18,6 +18,7 @@ import { usePin } from "@/hooks/usePin";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { FEATURE_ICONS } from "@/lib/icons";
+import { getMetricDisplayUnit } from "@/lib/utils";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function MetricLoggerDashboardSummary({
@@ -338,7 +339,7 @@ export default function MetricLoggerDashboardSummary({
                     <Lock className="h-3 w-3 text-amber-500" />
                   )}
                   {selectedMetric.type}
-                  {selectedMetric.unit ? ` (${selectedMetric.unit})` : ""}
+                  {getMetricDisplayUnit(selectedMetric) ? ` (${getMetricDisplayUnit(selectedMetric)})` : ""}
                 </Badge>
               </div>
 

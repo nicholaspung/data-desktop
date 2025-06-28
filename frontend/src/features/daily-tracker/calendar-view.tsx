@@ -16,6 +16,7 @@ import {
 import { eachDayOfInterval } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getMetricDisplayUnit } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -306,7 +307,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
                   if (typeof value === "boolean") {
                     displayValue = value ? "Completed" : "Not Completed";
                   } else if (typeof value === "number") {
-                    displayValue = `${value}${metric?.unit ? ` ${metric.unit}` : ""}`;
+                    displayValue = `${value}${metric && getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}`;
                   } else {
                     displayValue = String(value);
                   }

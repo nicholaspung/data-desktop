@@ -843,7 +843,37 @@ export default function JournalEditorWithMetrics({
 
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        addBlock(blockIndex);
+        
+        // Get the current block content
+        const textBeforeCursor = textarea.value.substring(0, cursorPosition);
+        const textAfterCursor = textarea.value.substring(cursorPosition);
+        
+        // Update current block with only text before cursor
+        updateBlock(blockId, textBeforeCursor);
+        
+        // Create new block with text after cursor
+        const newBlock: Block = {
+          id: generateBlockId(),
+          content: textAfterCursor,
+        };
+        
+        setBlocks((prev) => {
+          const newBlocks = [...prev];
+          newBlocks.splice(blockIndex + 1, 0, newBlock);
+          updateParentValue(newBlocks);
+          return newBlocks;
+        });
+        
+        // Focus the new block and set cursor to beginning
+        setTimeout(() => {
+          const newTextarea = blockRefs.current[newBlock.id];
+          if (newTextarea) {
+            newTextarea.focus();
+            newTextarea.setSelectionRange(0, 0);
+            newTextarea.style.height = "auto";
+            newTextarea.style.height = newTextarea.scrollHeight + "px";
+          }
+        }, 10);
       } else if (e.key === "Enter" && e.shiftKey) {
         return;
       } else if (

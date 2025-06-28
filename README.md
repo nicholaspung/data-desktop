@@ -76,18 +76,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- user still needs to disable/enable in settings a route in order to view the tile in dashboard summary information
-
-- add a "daily journal" that is able to do like "@feature" for tracking metrics
-  - also adding templates for the user to be able to select that is added to the journal
-- in daily journal, for the records displaying, show own custom view
-- in daily journal, when the user typed "@metric:" and it is highlighting an already logged value, it should still change the background so the user knows that's what being highlighted
-
-- add the daily journal dashboard summary component to the dashboard
-  - see if you need to add instructions for CLAUDE in order to do this
-- in daily journal, for records for the day, for todos, check for the completion date and show it there only for the completion date
-
-- in time tracker form, for the description autocomplete, it's not showing the metrics for the user to select
 - in modifying todos, the "deadline" datepicker visually looks weird
 - in time tracker form, with the new "select timer mode, change start time to now", it seems to also be bugging out the saving of entries, as it will save the start time to now when the user finishes a time entry
 - in time tracker, the resolving time conflicts is kind of off - it should put the "earlier" time entry first, so that when the user is selecting which entry to cut off, it modifies that correct entry
@@ -100,6 +88,15 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in time tracker form, for the description autocomplete, it's not showing the metrics for the user to select [DONE 2025-06-28]
+- also adding templates for the user to be able to select that is added to the journal [DONE 2025-06-28]
+- add a "daily journal" that is able to do like "@feature" for tracking metrics [DONE 2025-06-28]
+- add the daily journal dashboard summary component to the dashboard [DONE 2025-06-28]
+- see if you need to add instructions for CLAUDE in order to do this [DONE 2025-06-28]
+- user still needs to disable/enable in settings a route in order to view the tile in dashboard summary information [DONE 2025-06-28]
+- in daily journal, for records for the day, for todos, check for the completion date and show it there only for the completion date [DONE 2025-06-28]
+- in daily journal, for the records displaying, show own custom view [DONE 2025-06-28]
+- in daily journal, when the user typed "@metric:" and it is highlighting an already logged value, it should still change the background so the user knows that's what being highlighted [DONE 2025-06-28]
 - in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date [DONE 2025-06-27]
 - in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it [DONE 2025-06-27]
 - in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast [DONE 2025-06-25]

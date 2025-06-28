@@ -23,6 +23,7 @@ import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 import { calculateGoalProgress } from "@/features/daily-tracker/goal-utils";
+import { getMetricDisplayUnit } from "@/lib/utils";
 
 export default function DailyTrackingDashboardSummary({
   showPrivateMetrics = true,
@@ -255,9 +256,9 @@ export default function DailyTrackingDashboardSummary({
 
     try {
       const value = JSON.parse(log.value);
-      return `${value}${metric.unit ? ` ${metric.unit}` : ""}`;
+      return `${value}${getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}`;
     } catch {
-      return `${log.value}${metric.unit ? ` ${metric.unit}` : ""}`;
+      return `${log.value}${getMetricDisplayUnit(metric) ? ` ${getMetricDisplayUnit(metric)}` : ""}`;
     }
   };
 
@@ -536,7 +537,7 @@ export default function DailyTrackingDashboardSummary({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="value">
-                Value{currentMetric?.unit ? ` (${currentMetric.unit})` : ""}
+                Value{currentMetric && getMetricDisplayUnit(currentMetric) ? ` (${getMetricDisplayUnit(currentMetric)})` : ""}
               </Label>
               {currentMetric?.type === "number" ||
               currentMetric?.type === "percentage" ||

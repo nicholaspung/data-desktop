@@ -168,7 +168,7 @@ export default function AddMetricForm({
         }
       }
     }
-  }, [type, isEditMode]);
+  }, [type, isEditMode, goalValue]);
 
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {

@@ -116,22 +116,30 @@ function TimeTrackerForm({
       }
     });
 
-    const timeMetrics = metricsEnabled
-      ? metricsData
-          .filter((m: any) => m.type === "time" && m.active)
-          .map((metric: any) => ({
-            id: `metric-${metric.id}`,
-            label: metric.name,
-            isMetric: true,
-            metric: metric,
-          }))
-      : [];
+    const timeMetrics =
+      metricsEnabled && metricsData?.length > 0
+        ? metricsData
+            .filter((m: any) => m?.type === "time" && m?.active === true)
+            .map((metric: any) => ({
+              id: `metric-${metric.id}`,
+              label: metric.name,
+              isMetric: true,
+              metric: metric,
+              entry: {
+                id: `metric-${metric.id}`,
+                description: metric.name,
+                lastModified: new Date().toISOString(),
+              } as any,
+            }))
+        : [];
+
 
     const timeMetricNames = new Set(
-      metricsEnabled
+      metricsEnabled && metricsData?.length > 0
         ? metricsData
-            .filter((m: any) => m.type === "time" && m.active)
-            .map((m: any) => m.name.toLowerCase())
+            .filter((m: any) => m?.type === "time" && m?.active === true)
+            .map((m: any) => m?.name?.toLowerCase())
+            .filter(Boolean)
         : []
     );
 
@@ -141,10 +149,19 @@ function TimeTrackerForm({
           entry.description.toLowerCase()
         );
 
+        // Ensure entry has lastModified for proper sorting
+        const entryWithModified = {
+          ...entry,
+          lastModified:
+            entry.lastModified ||
+            (entry as any).date_created ||
+            new Date(0).toISOString(),
+        };
+
         return {
           id: entry.id,
           label: entry.description,
-          entry: entry,
+          entry: entryWithModified,
           isMetric: isTimeMetric,
           category_id_data: entry.category_id_data,
         };
@@ -725,7 +742,7 @@ function TimeTrackerForm({
                 }`}
                 emptyMessage="Type to start tracking a new task or select a previous one"
                 showRecentOptions={true}
-                maxRecentOptions={7}
+                maxRecentOptions={15}
                 renderItem={(option, isActive) => {
                   const entry = option.entry as TimeEntry;
 
@@ -817,6 +834,7 @@ function TimeTrackerForm({
                 placeholder="Search or create category..."
                 createNewLabel="Create category"
                 triggerClassName="h-10"
+                usePortal={true}
                 renderItem={(option) => (
                   <div className="flex items-center gap-2">
                     <div

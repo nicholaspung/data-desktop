@@ -164,6 +164,7 @@ export default function ReusableSelect({
         disabled={disabled || isLoading || isCreating}
         emptyMessage="No options available."
         usePortal={usePortal}
+        showRecentOptions={false}
         renderItem={(option) => {
           if ((option as any).isCreateNew) {
             return (

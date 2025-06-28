@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { DailyLog } from "@/store/experiment-definitions";
 import { format } from "date-fns";
 import { addEntry, updateEntry } from "@/store/data-store";
+import { getMetricDisplayUnit } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
@@ -407,9 +408,9 @@ export default function MetricLoggerListItem({
                         <span className="text-xl font-bold text-primary">
                           {getMetricValue(metric)}
                         </span>
-                        {(metric.unit || metric.type === "percentage") && (
+                        {(getMetricDisplayUnit(metric) || metric.type === "percentage") && (
                           <span className="text-sm font-medium text-muted-foreground">
-                            {metric.type === "percentage" ? "%" : metric.unit}
+                            {metric.type === "percentage" ? "%" : getMetricDisplayUnit(metric)}
                           </span>
                         )}
                       </div>
@@ -574,9 +575,9 @@ export default function MetricLoggerListItem({
                                   <span className="text-xs font-medium text-primary">
                                     Editing Value
                                   </span>
-                                  {metric.unit && (
+                                  {getMetricDisplayUnit(metric) && (
                                     <span className="text-xs text-muted-foreground">
-                                      ({metric.unit})
+                                      ({getMetricDisplayUnit(metric)})
                                     </span>
                                   )}
                                 </div>
@@ -663,12 +664,12 @@ export default function MetricLoggerListItem({
                                   <span className="text-2xl font-bold text-primary">
                                     {getMetricValue(metric)}
                                   </span>
-                                  {(metric.unit ||
+                                  {(getMetricDisplayUnit(metric) ||
                                     metric.type === "percentage") && (
                                     <span className="text-sm font-medium text-muted-foreground">
                                       {metric.type === "percentage"
                                         ? "%"
-                                        : metric.unit}
+                                        : getMetricDisplayUnit(metric)}
                                     </span>
                                   )}
                                 </div>

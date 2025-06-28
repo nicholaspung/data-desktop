@@ -104,10 +104,12 @@ export default function DailyRecordsPanel({
     }
 
     const defaultSelected = featureOptions
-      .filter(
-        (option) => option.id !== "daily_journal" && option.id.includes("files")
-      )
+      .filter((option) => option.id.includes("files"))
       .map((option) => option.id);
+    // Always include daily_journal by default
+    if (featureOptions.some((option) => option.id === "daily_journal")) {
+      defaultSelected.push("daily_journal");
+    }
     setSelectedFeatures(defaultSelected);
   }, []);
 
@@ -187,7 +189,7 @@ export default function DailyRecordsPanel({
               completedDate.getDate() === selectedDate.getDate()
             );
           }
-          
+
           if (!record[dateField.key]) return false;
           const recordDate = new Date(record[dateField.key]);
 
@@ -417,8 +419,11 @@ export default function DailyRecordsPanel({
                                       "h:mm a"
                                     )}`
                                   : record.start_time
-                                  ? format(new Date(record.start_time), "h:mm a")
-                                  : "No time"}
+                                    ? format(
+                                        new Date(record.start_time),
+                                        "h:mm a"
+                                      )
+                                    : "No time"}
                               </div>
                               <div className="text-sm text-muted-foreground">
                                 {record.description || "No description"}
@@ -428,23 +433,35 @@ export default function DailyRecordsPanel({
                             /* Special handling for Daily Logs */
                             (() => {
                               // Resolve metric name
-                              const metricField = dataset.fields.find(f => f.key === "metric_id");
+                              const metricField = dataset.fields.find(
+                                (f) => f.key === "metric_id"
+                              );
                               let metricName = "";
                               if (metricField && record.metric_id) {
                                 const metrics = allData.metrics || [];
-                                const metric = metrics.find((m: any) => m.id === record.metric_id);
-                                metricName = metric ? getDisplayValue(metricField, metric) : "";
+                                const metric = metrics.find(
+                                  (m: any) => m.id === record.metric_id
+                                );
+                                metricName = metric
+                                  ? getDisplayValue(metricField, metric)
+                                  : "";
                               }
-                              
+
                               // Resolve experiment name
-                              const experimentField = dataset.fields.find(f => f.key === "experiment_id");
+                              const experimentField = dataset.fields.find(
+                                (f) => f.key === "experiment_id"
+                              );
                               let experimentName = "";
                               if (experimentField && record.experiment_id) {
                                 const experiments = allData.experiments || [];
-                                const experiment = experiments.find((e: any) => e.id === record.experiment_id);
-                                experimentName = experiment ? getDisplayValue(experimentField, experiment) : "";
+                                const experiment = experiments.find(
+                                  (e: any) => e.id === record.experiment_id
+                                );
+                                experimentName = experiment
+                                  ? getDisplayValue(experimentField, experiment)
+                                  : "";
                               }
-                              
+
                               return (
                                 <>
                                   <div className="flex items-center justify-between text-sm">
@@ -471,47 +488,112 @@ export default function DailyRecordsPanel({
                                 </>
                               );
                             })()
-                          ) : datasetId === "financial_logs" ? (
-                            /* Special handling for Financial Logs */
+                          ) : datasetId === "financial_logs" ||
+                            datasetId === "financial_balances" ||
+                            datasetId === "paycheck" ? (
+                            /* Special handling for Financial Logs, Balances, and Paychecks */
                             <>
                               <div className="text-sm font-medium">
-                                {record.amount !== undefined && record.amount !== null && (
-                                  <span className={record.amount < 0 ? "text-red-600" : "text-green-600"}>
-                                    ${Math.abs(record.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </span>
-                                )}
-                                {record.amount !== undefined && record.amount !== null && record.description && " "}
-                                {record.description || "No description"}
+                                {record.amount !== undefined &&
+                                  record.amount !== null && (
+                                    <span
+                                      className={
+                                        record.amount < 0
+                                          ? "text-red-600"
+                                          : "text-green-600"
+                                      }
+                                    >
+                                      $
+                                      {Math.abs(record.amount).toLocaleString(
+                                        "en-US",
+                                        {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
+                                        }
+                                      )}
+                                    </span>
+                                  )}
+                                {record.amount !== undefined &&
+                                  record.amount !== null &&
+                                  record.description &&
+                                  " "}
+                                {record.description ||
+                                  record.name ||
+                                  "No description"}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {record.category || "No category"}
+                                {datasetId === "financial_balances" &&
+                                record.account_type
+                                  ? record.account_type
+                                  : record.category || "No category"}
                               </div>
                             </>
+                          ) : datasetId === "daily_journal" ? (
+                            /* Special handling for Daily Journal - show entry created */
+                            <div className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">
+                                  Journal entry created
+                                </span>
+                              </div>
+                              {record.created_at && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {format(
+                                    new Date(record.created_at),
+                                    "h:mm a"
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ) : datasetId === "gratitude_journal" ? (
+                            /* Special handling for Gratitude Journal - show count only */
+                            <div className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Heart className="h-4 w-4 text-pink-600" />
+                                <span className="font-medium">
+                                  {records.length} gratitude
+                                  {records.length !== 1 ? "s" : ""} recorded
+                                </span>
+                              </div>
+                            </div>
                           ) : datasetId === "todos" ? (
                             /* Special handling for Todos - only completed ones shown */
                             (() => {
-                              const createdDate = record.created_at ? new Date(record.created_at) : null;
-                              const completedDate = record.completed_at ? new Date(record.completed_at) : null;
+                              const createdDate = record.created_at
+                                ? new Date(record.created_at)
+                                : null;
+                              const completedDate = record.completed_at
+                                ? new Date(record.completed_at)
+                                : null;
                               let timeTaken = "";
-                              
+
                               if (createdDate && completedDate) {
-                                const daysDiff = differenceInDays(completedDate, createdDate);
-                                const hoursDiff = differenceInHours(completedDate, createdDate);
-                                
+                                const daysDiff = differenceInDays(
+                                  completedDate,
+                                  createdDate
+                                );
+                                const hoursDiff = differenceInHours(
+                                  completedDate,
+                                  createdDate
+                                );
+
                                 if (daysDiff > 0) {
-                                  timeTaken = `${daysDiff} day${daysDiff > 1 ? 's' : ''}`;
+                                  timeTaken = `${daysDiff} day${daysDiff > 1 ? "s" : ""}`;
                                 } else if (hoursDiff > 0) {
-                                  timeTaken = `${hoursDiff} hour${hoursDiff > 1 ? 's' : ''}`;
+                                  timeTaken = `${hoursDiff} hour${hoursDiff > 1 ? "s" : ""}`;
                                 } else {
                                   timeTaken = "< 1 hour";
                                 }
                               }
-                              
+
                               return (
                                 <>
                                   <div className="flex items-center gap-2 text-sm">
                                     <Check className="h-4 w-4 text-green-600" />
-                                    <span className="font-medium">{record.title || "Untitled todo"}</span>
+                                    <span className="font-medium">
+                                      {record.title || "Untitled todo"}
+                                    </span>
                                   </div>
                                   {timeTaken && (
                                     <div className="text-xs text-muted-foreground ml-6">
@@ -551,12 +633,13 @@ export default function DailyRecordsPanel({
                           )}
 
                           {/* Show creation time if available (but not for time_entries) */}
-                          {record.created_at && datasetId !== "time_entries" && (
-                            <div className="text-xs text-muted-foreground mt-2">
-                              Created:{" "}
-                              {format(new Date(record.created_at), "h:mm a")}
-                            </div>
-                          )}
+                          {record.created_at &&
+                            datasetId !== "time_entries" && (
+                              <div className="text-xs text-muted-foreground mt-2">
+                                Created:{" "}
+                                {format(new Date(record.created_at), "h:mm a")}
+                              </div>
+                            )}
                         </div>
                       </div>
                     ))}
