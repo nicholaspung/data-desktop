@@ -36,7 +36,7 @@ export default function TodoDashboardSummary({
 
     const today = sortedTodos.filter(
       (todo) =>
-        !todo.isComplete &&
+        !todo.is_complete &&
         todo.deadline !== undefined &&
         isToday(new Date(todo.deadline))
     );
@@ -44,7 +44,7 @@ export default function TodoDashboardSummary({
 
     const upcoming = sortedTodos.filter((todo) => {
       if (
-        todo.isComplete ||
+        todo.is_complete ||
         todo.deadline === undefined ||
         isToday(new Date(todo.deadline))
       )
@@ -56,7 +56,7 @@ export default function TodoDashboardSummary({
 
     const overdue = sortedTodos.filter(
       (todo) =>
-        !todo.isComplete &&
+        !todo.is_complete &&
         todo.deadline !== undefined &&
         isPast(new Date(todo.deadline)) &&
         !isToday(new Date(todo.deadline))

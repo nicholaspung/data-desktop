@@ -38,6 +38,30 @@ const getMetricExamples = (metric: Metric): string[] => {
   }
 };
 
+// Helper function to intelligently quote names based on their content
+const smartQuoteName = (name: string): string => {
+  // If no spaces, no quotes needed
+  if (!name.includes(" ")) {
+    return name;
+  }
+  
+  // Check what characters the name contains
+  const hasSingleQuote = name.includes("'");
+  const hasDoubleQuote = name.includes('"');
+  
+  // Choose quote style based on content
+  if (hasSingleQuote && hasDoubleQuote) {
+    // Both quotes present, use backticks
+    return `\`${name}\``;
+  } else if (hasSingleQuote) {
+    // Has single quote, use double quotes
+    return `"${name}"`;
+  } else {
+    // Default to single quotes (or has double quotes)
+    return `'${name}'`;
+  }
+};
+
 interface JournalEditorWithMetricsProps {
   value: string;
   onChange: (value: string) => void;
@@ -125,6 +149,10 @@ function InlineTodoPanel({
 
         <div className="text-xs text-muted-foreground">
           {filteredTodos.length} incomplete todos
+        </div>
+
+        <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2 rounded border border-amber-200 dark:border-amber-800">
+          <strong>Note:</strong> If you have multiple todos with the same name, all incomplete instances will be marked as completed when you save your journal entry.
         </div>
 
         <ScrollArea className="h-64" id="todos-scroll-area">
@@ -413,9 +441,7 @@ function InlineMetricsPanel({
               <div className="text-sm font-medium">Preview</div>
               <div className="bg-muted p-2 rounded text-xs font-mono">
                 @metric:
-                {selectedMetric?.name.includes(" ")
-                  ? `'${selectedMetric.name}'`
-                  : selectedMetric?.name}
+                {selectedMetric ? smartQuoteName(selectedMetric.name) : "___"}
                 :{metricValue || "___"}
               </div>
             </div>
@@ -453,6 +479,9 @@ export default function JournalEditorWithMetrics({
   const [todoSearchQuery, setTodoSearchQuery] = useState("");
   const [selectedTodoIndex, setSelectedTodoIndex] = useState(0);
 
+  // Block selection state
+  const [allBlocksSelected, setAllBlocksSelected] = useState(false);
+
   const metrics =
     useStore(dataStore, (state) => state.metrics as Metric[]) || [];
   const activeMetrics = metrics.filter((metric) => metric.active);
@@ -461,7 +490,7 @@ export default function JournalEditorWithMetrics({
     useStore(dataStore, (state) => state.daily_logs as DailyLog[]) || [];
 
   const todos = useStore(dataStore, (state) => state.todos as Todo[]) || [];
-  const incompleteTodos = todos.filter((todo) => !todo.isComplete);
+  const incompleteTodos = todos.filter((todo) => !todo.is_complete);
 
   const getExistingMetricValue = useCallback(
     (metricId: string): string | null => {
@@ -484,14 +513,14 @@ export default function JournalEditorWithMetrics({
     const allContent = blocks.map(block => block.content).join('\n\n');
     
     // Match patterns like @metric:name:value or @metric:'name with spaces':value
-    const metricMatches = allContent.match(/@metric:(?:'([^']*)'|([^:]*)):(?![:\s])[^\s@]+/g);
+    const metricMatches = allContent.match(/@metric:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):(?![:\s])[^\s@]+/g);
     
     if (metricMatches) {
       metricMatches.forEach(match => {
         // Extract metric name from the match
-        const nameMatch = match.match(/@metric:(?:'([^']*)'|([^:]*)):/);
+        const nameMatch = match.match(/@metric:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):/);
         if (nameMatch) {
-          const metricName = nameMatch[1] || nameMatch[2]; // quoted or unquoted name
+          const metricName = nameMatch[1] || nameMatch[2] || nameMatch[3] || nameMatch[4]; // double, single, backtick, or unquoted name
           const metric = activeMetrics.find(m => m.name === metricName);
           if (metric) {
             usedMetrics.add(metric.id);
@@ -508,14 +537,14 @@ export default function JournalEditorWithMetrics({
     const allContent = blocks.map(block => block.content).join('\n\n');
     
     // Match patterns like @todo:title:true or @todo:'title with spaces':true
-    const todoMatches = allContent.match(/@todo:(?:'([^']*)'|([^:]*)):true/g);
+    const todoMatches = allContent.match(/@todo:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):true/g);
     
     if (todoMatches) {
       todoMatches.forEach(match => {
         // Extract todo title from the match
-        const titleMatch = match.match(/@todo:(?:'([^']*)'|([^:]*)):/);
+        const titleMatch = match.match(/@todo:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):/);
         if (titleMatch) {
-          const todoTitle = titleMatch[1] || titleMatch[2]; // quoted or unquoted title
+          const todoTitle = titleMatch[1] || titleMatch[2] || titleMatch[3] || titleMatch[4]; // double, single, backtick, or unquoted title
           const todo = incompleteTodos.find(t => t.title === todoTitle);
           if (todo) {
             usedTodos.add(todo.id);
@@ -650,13 +679,13 @@ export default function JournalEditorWithMetrics({
 
   const hasCompleteMetric = useCallback((content: string): boolean => {
     const metricMatches = content.match(
-      /@metric:(?:'[^']*'|[^:]*):(?![:\s])[^\s@]+/g
+      /@metric:(?:"[^"]*"|'[^']*'|`[^`]*`|[^:]*):(?![:\s])[^\s@]+/g
     );
     return metricMatches !== null && metricMatches.length > 0;
   }, []);
 
   const hasCompleteTodo = useCallback((content: string): boolean => {
-    const todoMatches = content.match(/@todo:(?:'[^']*'|[^:]*):true/g);
+    const todoMatches = content.match(/@todo:(?:"[^"]*"|'[^']*'|`[^`]*`|[^:]*):true/g);
     return todoMatches !== null && todoMatches.length > 0;
   }, []);
 
@@ -894,9 +923,7 @@ export default function JournalEditorWithMetrics({
       const existingValue = getExistingMetricValue(metric.id);
 
       if (existingValue && activeBlockId) {
-        const metricName = metric.name.includes(" ")
-          ? `'${metric.name}'`
-          : metric.name;
+        const metricName = smartQuoteName(metric.name);
         const metricText = `@metric:${metricName}:${existingValue}`;
 
         setBlocks((prev) => {
@@ -938,9 +965,7 @@ export default function JournalEditorWithMetrics({
           }
         }, 10);
       } else if (metric.type === "boolean" && activeBlockId) {
-        const metricName = metric.name.includes(" ")
-          ? `'${metric.name}'`
-          : metric.name;
+        const metricName = smartQuoteName(metric.name);
         const metricText = `@metric:${metricName}:true`;
 
         setBlocks((prev) => {
@@ -994,9 +1019,7 @@ export default function JournalEditorWithMetrics({
     (todo: Todo) => {
       if (activeBlockId) {
         // Format todo similar to metric: @todo:<name>:true
-        const todoName = todo.title.includes(" ")
-          ? `'${todo.title}'`
-          : todo.title;
+        const todoName = smartQuoteName(todo.title);
         const todoText = `@todo:${todoName}:true`;
 
         setBlocks((prev) => {
@@ -1041,9 +1064,7 @@ export default function JournalEditorWithMetrics({
 
   const handleConfirmValue = useCallback(() => {
     if (selectedMetric && metricValue.trim() && activeBlockId) {
-      const metricName = selectedMetric.name.includes(" ")
-        ? `'${selectedMetric.name}'`
-        : selectedMetric.name;
+      const metricName = smartQuoteName(selectedMetric.name);
       const metricText = `@metric:${metricName}:${metricValue.trim()}`;
 
       setBlocks((prev) => {
@@ -1188,8 +1209,100 @@ export default function JournalEditorWithMetrics({
     setActiveBlockId(null);
   }, []);
 
+  const selectAllBlocks = useCallback(() => {
+    if (allBlocksSelected) {
+      // Deselect all blocks
+      setAllBlocksSelected(false);
+      blocks.forEach((block) => {
+        const textarea = blockRefs.current[block.id];
+        if (textarea) {
+          textarea.setSelectionRange(0, 0);
+        }
+      });
+    } else {
+      // Select all blocks
+      setAllBlocksSelected(true);
+      blocks.forEach((block) => {
+        const textarea = blockRefs.current[block.id];
+        if (textarea && block.content) {
+          textarea.setSelectionRange(0, block.content.length);
+        }
+      });
+    }
+  }, [allBlocksSelected, blocks]);
+
+  const copyAllBlocks = useCallback(async () => {
+    if (allBlocksSelected) {
+      const combinedContent = blocks
+        .map((block) => block.content)
+        .join("\n\n");
+      
+      try {
+        await navigator.clipboard.writeText(combinedContent);
+      } catch (err) {
+        console.error("Failed to copy to clipboard:", err);
+      }
+    }
+  }, [allBlocksSelected, blocks]);
+
+  const deleteAllBlocks = useCallback(() => {
+    if (allBlocksSelected) {
+      // Clear all blocks and reset to single empty block
+      const newBlock = { id: generateBlockId(), content: "" };
+      setBlocks([newBlock]);
+      setAllBlocksSelected(false);
+      updateParentValue([newBlock]);
+      
+      // Focus the new empty block
+      setTimeout(() => {
+        const textarea = blockRefs.current[newBlock.id];
+        if (textarea) {
+          textarea.focus();
+        }
+      }, 10);
+    }
+  }, [allBlocksSelected, updateParentValue]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Global shortcuts that work regardless of panel state
+      if (e.ctrlKey && e.shiftKey && e.key === "A") {
+        e.preventDefault();
+        e.stopPropagation();
+        selectAllBlocks();
+        return;
+      }
+
+      if (allBlocksSelected) {
+        switch (e.key) {
+          case "c":
+            if (e.ctrlKey) {
+              e.preventDefault();
+              e.stopPropagation();
+              copyAllBlocks();
+            }
+            break;
+          case "Delete":
+          case "Backspace":
+            e.preventDefault();
+            e.stopPropagation();
+            deleteAllBlocks();
+            break;
+          case "Escape":
+            e.preventDefault();
+            e.stopPropagation();
+            setAllBlocksSelected(false);
+            blocks.forEach((block) => {
+              const textarea = blockRefs.current[block.id];
+              if (textarea) {
+                textarea.setSelectionRange(0, 0);
+              }
+            });
+            break;
+        }
+        return;
+      }
+
       if (showTodoPanel) {
         switch (e.key) {
           case "ArrowDown":
@@ -1280,6 +1393,11 @@ export default function JournalEditorWithMetrics({
     handleSelectTodo,
     handleMetricsPanelClose,
     handleTodoPanelClose,
+    allBlocksSelected,
+    selectAllBlocks,
+    copyAllBlocks,
+    deleteAllBlocks,
+    blocks,
   ]);
 
   return (
@@ -1312,6 +1430,14 @@ export default function JournalEditorWithMetrics({
           <Plus className="h-3 w-3 mr-1" />
           Add Block
         </Button>
+        {allBlocksSelected && (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 text-xs">
+            <span>All blocks selected</span>
+            <Badge variant="outline" className="text-xs h-4">
+              Ctrl+C to copy, Del to delete, Esc to deselect
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="relative">
@@ -1328,6 +1454,7 @@ export default function JournalEditorWithMetrics({
                     (showMetricsPanel || showTodoPanel) &&
                     activeBlockId === block.id;
                   const isFocusedBlock = focusedBlockId === block.id;
+                  const isSelectedBlock = allBlocksSelected;
 
                   return (
                     <div key={block.id} className="-my-1">
@@ -1374,23 +1501,27 @@ export default function JournalEditorWithMetrics({
                               blockHasAnyMetricOrTodo ? "pr-8" : ""
                             }`}
                             style={{
-                              borderLeft: isFocusedBlock
-                                ? "2px solid #a855f7"
-                                : isActiveBlock
-                                  ? "2px solid #60a5fa"
-                                  : blockHasAnyMetricOrTodo
-                                    ? "2px solid #4ade80"
-                                    : "2px solid transparent",
+                              borderLeft: isSelectedBlock
+                                ? "2px solid #f59e0b"
+                                : isFocusedBlock
+                                  ? "2px solid #a855f7"
+                                  : isActiveBlock
+                                    ? "2px solid #60a5fa"
+                                    : blockHasAnyMetricOrTodo
+                                      ? "2px solid #4ade80"
+                                      : "2px solid transparent",
                               paddingLeft: "8px",
                               paddingTop: "0",
                               paddingBottom: "0",
-                              backgroundColor: isFocusedBlock
-                                ? "rgba(168, 85, 247, 0.1)"
-                                : isActiveBlock
-                                  ? "rgba(147, 197, 253, 0.1)"
-                                  : blockHasAnyMetricOrTodo
-                                    ? "rgba(134, 239, 172, 0.1)"
-                                    : "transparent",
+                              backgroundColor: isSelectedBlock
+                                ? "rgba(245, 158, 11, 0.15)"
+                                : isFocusedBlock
+                                  ? "rgba(168, 85, 247, 0.1)"
+                                  : isActiveBlock
+                                    ? "rgba(147, 197, 253, 0.1)"
+                                    : blockHasAnyMetricOrTodo
+                                      ? "rgba(134, 239, 172, 0.1)"
+                                      : "transparent",
                               marginLeft: "-2px",
                               minHeight: "1.2em",
                               lineHeight: "1.2",
@@ -1491,11 +1622,22 @@ export default function JournalEditorWithMetrics({
                         to mark todos for completion (completed when saved)
                       </li>
                       <li>
+                        <strong>Note:</strong> If you have multiple todos with the same name, 
+                        all incomplete instances will be marked as completed
+                      </li>
+                      <li>
                         Press{" "}
                         <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
                           Shift+Enter
                         </kbd>{" "}
                         to add a new line within a block
+                      </li>
+                      <li>
+                        Press{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          Ctrl+Shift+A
+                        </kbd>{" "}
+                        to select all blocks for copying or deleting
                       </li>
                       <li>
                         <strong>

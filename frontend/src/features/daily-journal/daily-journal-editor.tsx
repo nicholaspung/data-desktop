@@ -19,6 +19,7 @@ import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { DailyJournalEntry } from "@/store/journaling-definitions";
 import { DailyLog } from "@/store/experiment-definitions";
+import { Todo } from "@/store/todo-definitions";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -35,6 +36,30 @@ const getDateLabel = (date: Date): string => {
   return format(date, "EEEE, MMM d, yyyy");
 };
 
+const JOURNAL_DRAFT_KEY_PREFIX = "daily-journal-draft-";
+
+const getJournalDraftKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${JOURNAL_DRAFT_KEY_PREFIX}${year}-${month}-${day}`;
+};
+
+const cleanupOldDrafts = () => {
+  const today = new Date();
+  const todayKey = getJournalDraftKey(today);
+  
+  // Get all localStorage keys
+  const keys = Object.keys(localStorage);
+  
+  // Remove any draft entries that aren't for today
+  keys.forEach(key => {
+    if (key.startsWith(JOURNAL_DRAFT_KEY_PREFIX) && key !== todayKey) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 export default function DailyJournalEditor({
   selectedDate: propSelectedDate,
   onDateChange,
@@ -47,6 +72,7 @@ export default function DailyJournalEditor({
   const [existingEntry, setExistingEntry] = useState<DailyJournalEntry | null>(
     null
   );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const entries = useStore(
     dataStore,
@@ -66,6 +92,11 @@ export default function DailyJournalEditor({
     }
   };
 
+  // Cleanup old drafts on component mount
+  useEffect(() => {
+    cleanupOldDrafts();
+  }, []);
+
   useEffect(() => {
     const selectedYear = selectedDate.getFullYear();
     const selectedMonth = selectedDate.getMonth();
@@ -80,12 +111,32 @@ export default function DailyJournalEditor({
       );
     });
 
+    // Always check for draft first
+    const draftKey = getJournalDraftKey(selectedDate);
+    const savedDraft = localStorage.getItem(draftKey);
+    
     if (existingEntryForDate) {
       setExistingEntry(existingEntryForDate);
-      setEntry(existingEntryForDate.entry);
+      
+      // For today's entry, prefer draft over saved version if they're different
+      if (savedDraft && isToday(selectedDate) && savedDraft !== existingEntryForDate.entry) {
+        setEntry(savedDraft);
+        setHasUnsavedChanges(true);
+      } else {
+        setEntry(existingEntryForDate.entry);
+        setHasUnsavedChanges(false);
+      }
     } else {
       setExistingEntry(null);
-      setEntry("");
+      
+      if (savedDraft && isToday(selectedDate)) {
+        // Only load draft if it's for today
+        setEntry(savedDraft);
+        setHasUnsavedChanges(true);
+      } else {
+        setEntry("");
+        setHasUnsavedChanges(false);
+      }
     }
   }, [selectedDate, entries]);
 
@@ -103,6 +154,7 @@ export default function DailyJournalEditor({
         entry: entry.trim(),
       };
 
+
       let result;
       if (existingEntry) {
         result = await ApiService.saveDailyJournalWithMetrics(
@@ -115,10 +167,13 @@ export default function DailyJournalEditor({
           toast.success("Daily journal entry updated!");
 
           const logs = await ApiService.getRecords<DailyLog>("daily_logs");
-          if (logs) {
+          const todos = await ApiService.getRecords<Todo>("todos");
+          
+          if (logs || todos) {
             dataStore.setState((state) => ({
               ...state,
-              daily_logs: logs,
+              ...(logs && { daily_logs: logs }),
+              ...(todos && { todos: todos }),
             }));
           }
         }
@@ -133,14 +188,22 @@ export default function DailyJournalEditor({
           toast.success("Daily journal entry added!");
 
           const logs = await ApiService.getRecords<DailyLog>("daily_logs");
-          if (logs) {
+          const todos = await ApiService.getRecords<Todo>("todos");
+          
+          if (logs || todos) {
             dataStore.setState((state) => ({
               ...state,
-              daily_logs: logs,
+              ...(logs && { daily_logs: logs }),
+              ...(todos && { todos: todos }),
             }));
           }
         }
       }
+
+      // Clear the draft from localStorage after successful save
+      const draftKey = getJournalDraftKey(selectedDate);
+      localStorage.removeItem(draftKey);
+      setHasUnsavedChanges(false);
 
       return true;
     } catch (error) {
@@ -159,7 +222,33 @@ export default function DailyJournalEditor({
 
   const handleEntryChange = useCallback((newEntry: string) => {
     setEntry(newEntry);
-  }, []);
+    
+    // Save draft to localStorage for today's date
+    if (isToday(selectedDate)) {
+      const draftKey = getJournalDraftKey(selectedDate);
+      
+      // If there's an existing entry, only save draft if content is different
+      if (existingEntry) {
+        if (newEntry !== existingEntry.entry) {
+          localStorage.setItem(draftKey, newEntry);
+          setHasUnsavedChanges(true);
+        } else {
+          // Remove draft if it matches the saved version
+          localStorage.removeItem(draftKey);
+          setHasUnsavedChanges(false);
+        }
+      } else {
+        // No existing entry, save draft if not empty
+        if (newEntry.trim()) {
+          localStorage.setItem(draftKey, newEntry);
+          setHasUnsavedChanges(true);
+        } else {
+          localStorage.removeItem(draftKey);
+          setHasUnsavedChanges(false);
+        }
+      }
+    }
+  }, [selectedDate, existingEntry]);
 
   return (
     <div className="space-y-6">
@@ -213,6 +302,13 @@ export default function DailyJournalEditor({
                             @todo:
                           </code>{" "}
                           to see incomplete todos and complete them
+                        </li>
+                        <li>
+                          • <strong>Note:</strong> Multiple todos with the same name 
+                          will all be marked complete
+                        </li>
+                        <li>
+                          • Autocomplete intelligently selects quotes based on content
                         </li>
                         <li>
                           • Continue typing to filter (e.g.,{" "}
@@ -294,20 +390,34 @@ export default function DailyJournalEditor({
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
                 {existingEntry ? (
-                  <span>
-                    Last updated:{" "}
-                    {format(
-                      new Date(
-                        existingEntry.lastModified ||
-                          existingEntry.createdAt ||
-                          new Date()
-                      ),
-                      "MMM d, yyyy 'at' h:mm a"
+                  <span className="flex items-center gap-2">
+                    <span>
+                      Last updated:{" "}
+                      {format(
+                        new Date(
+                          existingEntry.lastModified ||
+                            existingEntry.createdAt ||
+                            new Date()
+                        ),
+                        "MMM d, yyyy 'at' h:mm a"
+                      )}
+                    </span>
+                    {isToday(selectedDate) && hasUnsavedChanges && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 bg-amber-600 dark:bg-amber-400 rounded-full animate-pulse"></span>
+                        Unsaved changes
+                      </span>
                     )}
                   </span>
                 ) : (
-                  <span>
-                    Creating entry for {format(selectedDate, "MMM d, yyyy")}
+                  <span className="flex items-center gap-2">
+                    <span>Creating entry for {format(selectedDate, "MMM d, yyyy")}</span>
+                    {isToday(selectedDate) && entry.trim() && (
+                      <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 bg-amber-600 dark:bg-amber-400 rounded-full animate-pulse"></span>
+                        Draft saved
+                      </span>
+                    )}
                   </span>
                 )}
               </div>

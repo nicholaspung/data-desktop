@@ -78,7 +78,7 @@ export default function TodoList({ showPrivate }: TodoListProps) {
         return false;
       }
 
-      if (hasMetricFilter && !todo.relatedMetricId) {
+      if (hasMetricFilter && !todo.related_metric_id) {
         return false;
       }
 
@@ -91,13 +91,13 @@ export default function TodoList({ showPrivate }: TodoListProps) {
 
       switch (tabId) {
         case "active":
-          return !(todo as any).is_complete && !(todo.isComplete);
+          return !todo.is_complete;
         case "overdue":
           return (
-            !(todo as any).is_complete && !todo.isComplete && todo.deadline && isPast(new Date(todo.deadline))
+            !todo.is_complete && todo.deadline && isPast(new Date(todo.deadline))
           );
         case "completed":
-          return (todo as any).is_complete || todo.isComplete;
+          return todo.is_complete;
         default:
           return true;
       }
@@ -214,21 +214,21 @@ export default function TodoList({ showPrivate }: TodoListProps) {
     },
     {
       id: "active",
-      label: `Active (${visibleTodos.filter((t) => !(t as any).is_complete && !t.isComplete).length})`,
+      label: `Active (${visibleTodos.filter((t) => !t.is_complete).length})`,
       content: <div className="space-y-4">{renderTodoList("active")}</div>,
     },
     {
       id: "overdue",
       label: `Overdue (${
         visibleTodos.filter(
-          (t) => !(t as any).is_complete && !t.isComplete && t.deadline && isPast(new Date(t.deadline))
+          (t) => !t.is_complete && t.deadline && isPast(new Date(t.deadline))
         ).length
       })`,
       content: <div className="space-y-4">{renderTodoList("overdue")}</div>,
     },
     {
       id: "completed",
-      label: `Completed (${visibleTodos.filter((t) => (t as any).is_complete || t.isComplete).length})`,
+      label: `Completed (${visibleTodos.filter((t) => t.is_complete).length})`,
       content: <div className="space-y-4">{renderTodoList("completed")}</div>,
     },
   ];

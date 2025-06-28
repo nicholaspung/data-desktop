@@ -37,6 +37,8 @@ export function LoadSampleData():Promise<void>;
 
 export function LoadSampleDataWithDates(arg1:string,arg2:string):Promise<void>;
 
+export function MigrateTodoStatusValues():Promise<void>;
+
 export function ProcessRecord(arg1:Record<string, any>,arg2:boolean):Promise<void>;
 
 export function ProcessRecordWithFiles(arg1:Record<string, any>,arg2:boolean):Promise<void>;

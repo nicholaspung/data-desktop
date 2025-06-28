@@ -3,24 +3,24 @@ export interface Todo {
   id: string;
   title: string;
   description?: string;
-  deadline?: Date;
-  createdAt: Date;
-  lastModified: Date;
+  deadline?: string;
+  created_at: string;
+  last_modified: string;
   status: TodoStatus;
   priority: TodoPriority;
   tags?: string;
-  relatedMetricId?: string;
-  metricType?: "completion" | "time";
-  failedDeadlines?: FailedDeadline[];
-  reminderDate?: Date;
-  isComplete: boolean;
-  completedAt?: Date;
+  related_metric_id?: string;
+  metric_type?: "completion" | "time";
+  failed_deadlines?: FailedDeadline[];
+  reminder_date?: string;
+  is_complete: boolean;
+  completed_at?: string;
   private?: boolean;
 }
 
 export interface FailedDeadline {
-  originalDeadline: Date;
-  failedAt: Date;
+  originalDeadline: string;
+  failedAt: string;
   reason?: string;
 }
 
@@ -41,5 +41,5 @@ export enum TodoPriority {
 export type PartialTodo = Partial<Todo>;
 export type TodoInput = Omit<
   Todo,
-  "id" | "createdAt" | "lastModified" | "status" | "isComplete" | "completedAt"
+  "id" | "created_at" | "last_modified" | "status" | "is_complete" | "completed_at"
 >;

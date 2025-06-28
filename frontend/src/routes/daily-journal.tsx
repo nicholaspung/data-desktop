@@ -18,7 +18,7 @@ function DailyJournalPage() {
           title="Daily Journal"
           description="Record your daily thoughts and automatically track metrics from your writing"
           storageKey="daily-journal-page"
-          helpText="The Daily Journal allows you to write daily entries and automatically extract metrics from your text. Use special syntax like 'weight: 150lbs' or 'mood: 8/10' to automatically log metrics."
+          helpText={`The Daily Journal allows you to write daily entries and automatically extract metrics from your text. Use special syntax like 'weight: 150lbs' or 'mood: 8/10' to automatically log metrics. Use '@todo:TodoName:true' to mark todos complete - if you have multiple todos with the same name, all will be completed. The system automatically selects the right quote style based on content (single quotes, double quotes, or backticks).`}
           helpVariant="info"
           developmentStage="alpha"
           guideContent={[
@@ -33,7 +33,16 @@ function DailyJournalPage() {
 - Use "exercise: 30 mins running" to log activities
 - Use "energy: high" or "energy: 7/10" to track energy levels
 
-The system will automatically detect these patterns and create metric entries for you.`,
+**Todo Completion:**
+- Type "@todo:TodoName:true" to mark todos as complete
+- If you have multiple todos with the same name, all incomplete instances will be marked complete
+- The autocomplete intelligently chooses quote style:
+  - Names with apostrophes: '@todo:"Review week's goals":true'
+  - Names with double quotes: "@todo:'Product "A" review':true"
+  - Names with both: '@todo:\`Review "week\\'s" goals\`:true'
+  - Names without spaces: "@todo:SimpleTask:true" (no quotes)
+
+The system will automatically detect these patterns and create metric entries or complete todos for you.`,
             },
             {
               title: "Daily Summary",

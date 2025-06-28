@@ -86,7 +86,6 @@ func LoadSampleDataWithDateRange(startDate string, endDate string) error {
 		return fmt.Errorf("end date must be after start date")
 	}
 
-	fmt.Printf("Loading sample data for date range: %s to %s\n", startDate, endDate)
 
 	if DB == nil {
 		return fmt.Errorf("database connection is nil")
@@ -97,7 +96,6 @@ func LoadSampleDataWithDateRange(startDate string, endDate string) error {
 		return fmt.Errorf("database ping failed: %w", err)
 	}
 
-	fmt.Printf("Database connection verified\n")
 
 	datasets := []struct {
 		name string
@@ -117,16 +115,11 @@ func LoadSampleDataWithDateRange(startDate string, endDate string) error {
 	}
 
 	for _, dataset := range datasets {
-		fmt.Printf("Loading %s sample data...\n", dataset.name)
 		if err := dataset.fn(start, end); err != nil {
-			fmt.Printf("Warning: Failed to load %s sample data: %v\n", dataset.name, err)
-
 			continue
 		}
-		fmt.Printf("Successfully loaded %s sample data\n", dataset.name)
 	}
 
-	fmt.Printf("Sample data loading completed\n")
 	return nil
 }
 
@@ -457,7 +450,7 @@ func loadTodoSampleData() error {
 			"priority":    "medium",
 			"tags":        "health,medical",
 			"is_complete": false,
-			"status":      "pending",
+			"status":      "not_started",
 			"private":     false,
 		},
 		{
@@ -467,7 +460,7 @@ func loadTodoSampleData() error {
 			"priority":    "low",
 			"tags":        "career,professional",
 			"is_complete": false,
-			"status":      "pending",
+			"status":      "not_started",
 			"private":     false,
 		},
 		{
@@ -480,6 +473,45 @@ func loadTodoSampleData() error {
 			"completed_at": "2024-10-15",
 			"status":       "completed",
 			"private":      false,
+		},
+		{
+			"title":       "Buy groceries",
+			"description": "Get ingredients for dinner tonight",
+			"deadline":    "2024-12-01",
+			"priority":    "medium",
+			"tags":        "shopping,food",
+			"is_complete": false,
+			"status":      "not_started",
+			"private":     false,
+		},
+		{
+			"title":       "Buy groceries",
+			"description": "Pick up milk and bread from the store",
+			"deadline":    "2024-12-02",
+			"priority":    "low",
+			"tags":        "shopping,essentials",
+			"is_complete": false,
+			"status":      "not_started",
+			"private":     false,
+		},
+		{
+			"title":       "Call mom",
+			"description": "Check in with mom about holiday plans",
+			"priority":    "high",
+			"tags":        "family,personal",
+			"is_complete": false,
+			"status":      "not_started",
+			"private":     false,
+		},
+		{
+			"title":       "Call mom",
+			"description": "Wish mom happy birthday",
+			"deadline":    "2024-12-15",
+			"priority":    "urgent",
+			"tags":        "family,birthday",
+			"is_complete": false,
+			"status":      "not_started",
+			"private":     false,
 		},
 	}
 
@@ -1102,16 +1134,12 @@ func loadFinancialSampleData() error {
 
 func addSampleRecords(datasetID string, samples []map[string]interface{}) error {
 	if len(samples) == 0 {
-		fmt.Printf("No samples to add for dataset %s\n", datasetID)
 		return nil
 	}
 
-	fmt.Printf("Adding %d sample records to dataset %s\n", len(samples), datasetID)
-
-	for i, sample := range samples {
+	for _, sample := range samples {
 		dataJSON, err := json.Marshal(sample)
 		if err != nil {
-			fmt.Printf("Failed to marshal sample %d for dataset %s: %v\n", i, datasetID, err)
 			continue
 		}
 
@@ -1122,12 +1150,10 @@ func addSampleRecords(datasetID string, samples []map[string]interface{}) error 
 		}
 
 		if err := AddDataRecord(record); err != nil {
-			fmt.Printf("Failed to add sample record %d to dataset %s: %v\n", i, datasetID, err)
 			continue
 		}
 	}
 
-	fmt.Printf("Completed adding sample records to dataset %s\n", datasetID)
 	return nil
 }
 
@@ -1136,7 +1162,6 @@ func generateID() string {
 }
 
 func loadSimpleSampleDataWithDates(start, end time.Time) error {
-	fmt.Printf("Creating simple test record for date range %s to %s\n", start.Format("2006-01-02"), end.Format("2006-01-02"))
 
 	samples := []map[string]interface{}{
 		{
@@ -1299,7 +1324,7 @@ func loadTodoSampleDataWithDates(start, end time.Time) error {
 			"priority":    "medium",
 			"tags":        "planning,review",
 			"is_complete": false,
-			"status":      "pending",
+			"status":      "not_started",
 			"private":     false,
 		},
 		{
@@ -1309,7 +1334,7 @@ func loadTodoSampleDataWithDates(start, end time.Time) error {
 			"priority":    "low",
 			"tags":        "experiments,planning",
 			"is_complete": false,
-			"status":      "pending",
+			"status":      "not_started",
 			"private":     false,
 		},
 	}
@@ -1657,7 +1682,6 @@ func generateFileDescription() string {
 }
 
 func FixStringToNumberData() error {
-	fmt.Printf("Starting data type fix...\n")
 
 	numericFields := map[string][]string{
 		DatasetIDDEXA: {
@@ -1674,18 +1698,14 @@ func FixStringToNumberData() error {
 
 	totalFixed := 0
 	for datasetID, fields := range numericFields {
-		fmt.Printf("Processing dataset: %s\n", datasetID)
 		records, err := GetDataRecords(datasetID)
 		if err != nil {
-			fmt.Printf("Error getting records for %s: %v\n", datasetID, err)
 			continue
 		}
-		fmt.Printf("Found %d records in %s\n", len(records), datasetID)
 
-		for i, record := range records {
+		for _, record := range records {
 			var data map[string]interface{}
 			if err := json.Unmarshal(record.Data, &data); err != nil {
-				fmt.Printf("Error unmarshaling record %d: %v\n", i, err)
 				continue
 			}
 
@@ -1696,7 +1716,6 @@ func FixStringToNumberData() error {
 				if value, exists := data[field]; exists {
 					if strValue, isString := value.(string); isString {
 						if numValue, err := strconv.ParseFloat(strValue, 64); err == nil {
-							fmt.Printf("Converting %s.%s from string '%s' to number %f\n", datasetID, field, strValue, numValue)
 							data[field] = numValue
 							modified = true
 							recordFixed++
@@ -1708,12 +1727,11 @@ func FixStringToNumberData() error {
 			if datasetID == DatasetIDBloodwork {
 				if results, exists := data["results"]; exists {
 					if resultsArray, ok := results.([]interface{}); ok {
-						for j, result := range resultsArray {
+						for _, result := range resultsArray {
 							if resultMap, ok := result.(map[string]interface{}); ok {
 								if value, exists := resultMap["value"]; exists {
 									if strValue, isString := value.(string); isString {
 										if numValue, err := strconv.ParseFloat(strValue, 64); err == nil {
-											fmt.Printf("Converting bloodwork result %d value from string '%s' to number %f\n", j, strValue, numValue)
 											resultMap["value"] = numValue
 											modified = true
 											recordFixed++
@@ -1729,7 +1747,6 @@ func FixStringToNumberData() error {
 			if modified {
 				newData, err := json.Marshal(data)
 				if err != nil {
-					fmt.Printf("Error marshaling updated data: %v\n", err)
 					continue
 				}
 
@@ -1737,12 +1754,10 @@ func FixStringToNumberData() error {
 				if err := UpdateDataRecord(record); err != nil {
 					return fmt.Errorf("failed to update record %s: %w", record.ID, err)
 				}
-				fmt.Printf("Updated record %d with %d field conversions\n", i, recordFixed)
 				totalFixed += recordFixed
 			}
 		}
 	}
 
-	fmt.Printf("Data type fix completed. Total fields converted: %d\n", totalFixed)
 	return nil
 }

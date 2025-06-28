@@ -17,6 +17,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// Todo status constants to match frontend enum
+const (
+	TodoStatusNotStarted = "not_started"
+	TodoStatusInProgress = "in_progress"
+	TodoStatusCompleted  = "completed"
+	TodoStatusOverdue    = "overdue"
+)
+
 type App struct {
 	ctx        context.Context
 	appDataDir string
@@ -31,7 +39,6 @@ func (a *App) Startup(ctx context.Context) {
 
 	appDir, err := getAppDataDir()
 	if err != nil {
-		log.Println("Error getting app data directory:", err.Error())
 		return
 	}
 
@@ -39,7 +46,6 @@ func (a *App) Startup(ctx context.Context) {
 
 	err = file.Initialize(appDir)
 	if err != nil {
-		log.Println("Error initializing file directory:", err.Error())
 		return
 	}
 
@@ -52,55 +58,51 @@ func (a *App) Startup(ctx context.Context) {
 		isDev = strings.Contains(executableName, "wails-") || strings.Contains(executableName, "__debug_bin") || os.Getenv("BUILD_MODE") == "dev"
 
 		if isDev {
-			log.Println("Running in development mode (detected via executable name):", executableName)
 			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
 		} else {
-			log.Println("Running in production mode with executable:", executableName)
 			dbPath = filepath.Join(appDir, "DataDesktop.db")
 		}
 	} else {
 		if os.Getenv("BUILD_MODE") == "dev" {
-			log.Println("Running in development mode (detected via environment variable)")
 			isDev = true
 			dbPath = filepath.Join(appDir, "DataDesktop-dev.db")
 		} else {
-			log.Println("Running in production mode (fallback)")
 			isDev = false
 			dbPath = filepath.Join(appDir, "DataDesktop.db")
 		}
 	}
 
-	log.Printf("Using database path: %s", dbPath)
 
 	err = database.Initialize(dbPath)
 	if err != nil {
-		log.Println("Error initializing database:", err.Error())
 		return
 	}
 
 	err = database.SyncDatasets()
 	if err != nil {
-		log.Println("Error synchronizing datasets:", err.Error())
+		return
 	}
 
 	err = database.CleanupUnusedTables()
 	if err != nil {
-		log.Println("Error cleaning up unused tables:", err.Error())
+		return
+	}
+
+	// Run data migrations for both dev and production
+	err = a.MigrateTodoStatusValues()
+	if err != nil {
+		return
 	}
 
 	if isDev {
 		err = database.LoadSampleDataOnce()
 		if err != nil {
-			log.Println("Error loading sample data:", err.Error())
-		} else {
-			log.Println("Sample data loaded successfully")
+			return
 		}
 
 		err = database.FixStringToNumberData()
 		if err != nil {
-			log.Println("Error fixing string to number data:", err.Error())
-		} else {
-			log.Println("String to number data fix completed successfully")
+			return
 		}
 	}
 }
@@ -897,28 +899,11 @@ func (a *App) LoadSampleData() error {
 }
 
 func (a *App) LoadSampleDataWithDates(startDate string, endDate string) error {
-	log.Printf("LoadSampleDataWithDates called with dates: %s to %s", startDate, endDate)
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("PANIC in LoadSampleDataWithDates: %v", r)
-		}
-	}()
-
 	if startDate == "" || endDate == "" {
-		err := fmt.Errorf("startDate and endDate cannot be empty")
-		log.Printf("Validation error: %v", err)
-		return err
+		return fmt.Errorf("startDate and endDate cannot be empty")
 	}
 
-	err := database.LoadSampleDataWithDateRange(startDate, endDate)
-	if err != nil {
-		log.Printf("Error in LoadSampleDataWithDates: %v", err)
-		return err
-	}
-
-	log.Printf("LoadSampleDataWithDates completed successfully")
-	return nil
+	return database.LoadSampleDataWithDateRange(startDate, endDate)
 }
 
 func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool) (map[string]interface{}, error) {
@@ -958,9 +943,7 @@ func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool)
 		return nil, fmt.Errorf("failed to save journal entry: %w", err)
 	}
 
-	log.Printf("DEBUG: Extracting metrics from journal text: %s", entryText)
 	metrics := a.extractMetrics(entryText)
-	log.Printf("DEBUG: Found %d metrics: %+v", len(metrics), metrics)
 
 	for _, metric := range metrics {
 
@@ -995,16 +978,19 @@ func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool)
 		}
 	}
 
-	// Process todos from journal text
-	log.Printf("DEBUG: Extracting todos from journal text: %s", entryText)
 	todos := a.extractTodos(entryText)
-	log.Printf("DEBUG: Found %d todos: %+v", len(todos), todos)
+
+	completedCount := 0
+	failedCount := 0
+	todoTitleCounts := make(map[string]int)
 
 	for _, todo := range todos {
-		// Update todo to completed
 		err := a.completeTodoFromJournal(todo.ID, journalDate)
 		if err != nil {
-			log.Printf("Error completing todo %s: %v", todo.ID, err)
+			failedCount++
+		} else {
+			completedCount++
+			todoTitleCounts[todo.Title]++
 		}
 	}
 
@@ -1025,54 +1011,47 @@ type ExtractedTodo struct {
 func (a *App) extractMetrics(text string) []ExtractedMetric {
 	var metrics []ExtractedMetric
 
-	pattern := `@metric:(?:'([^']+)'|([^:\s]+)):([^\s]+)(?:\s+\(read-only\))?`
-	log.Printf("DEBUG: Using regex pattern: %s", pattern)
-
+	pattern := `@metric:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^:\s]+)):([^\s]+)(?:\s+\(read-only\))?`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllStringSubmatch(text, -1)
-	log.Printf("DEBUG: Regex found %d matches: %+v", len(matches), matches)
 
 	allMetrics, err := database.GetDataRecords("metrics")
 	if err != nil {
-		log.Printf("Error fetching metrics: %v", err)
 		return metrics
 	}
-	log.Printf("DEBUG: Found %d metrics in database", len(allMetrics))
 
 	metricMap := make(map[string]string)
 	for _, record := range allMetrics {
 		var metricData map[string]interface{}
 		err := json.Unmarshal(record.Data, &metricData)
 		if err != nil {
-			log.Printf("DEBUG: Error unmarshaling metric data: %v", err)
 			continue
 		}
 
 		if name, ok := metricData["name"].(string); ok {
 			metricMap[name] = record.ID
-			log.Printf("DEBUG: Added metric to map: %s -> %s", name, record.ID)
 		}
 	}
-	log.Printf("DEBUG: Created metric map with %d entries: %+v", len(metricMap), metricMap)
 
 	for _, match := range matches {
-
-		metricName := match[1]
-		if metricName == "" {
+		var metricName string
+		if match[1] != "" {
+			metricName = match[1]
+		} else if match[2] != "" {
 			metricName = match[2]
+		} else if match[3] != "" {
+			metricName = match[3]
+		} else {
+			metricName = match[4]
 		}
-		metricValue := match[3]
-		log.Printf("DEBUG: Processing match - quoted name: '%s', unquoted name: '%s', value: '%s'", match[1], match[2], metricValue)
+		metricValue := match[5]
 
 		if metricID, exists := metricMap[metricName]; exists {
-			log.Printf("DEBUG: Found metric in map: %s -> %s, adding to results", metricName, metricID)
 			metrics = append(metrics, ExtractedMetric{
 				ID:    metricID,
 				Name:  metricName,
 				Value: metricValue,
 			})
-		} else {
-			log.Printf("DEBUG: Metric '%s' not found in map", metricName)
 		}
 	}
 
@@ -1082,56 +1061,49 @@ func (a *App) extractMetrics(text string) []ExtractedMetric {
 func (a *App) extractTodos(text string) []ExtractedTodo {
 	var todos []ExtractedTodo
 
-	pattern := `@todo:(?:'([^']+)'|([^:\s]+)):true`
-	log.Printf("DEBUG: Using todo regex pattern: %s", pattern)
-
+	pattern := `@todo:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^\s:]+)):true`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllStringSubmatch(text, -1)
-	log.Printf("DEBUG: Todo regex found %d matches: %+v", len(matches), matches)
 
 	allTodos, err := database.GetDataRecords("todos")
 	if err != nil {
-		log.Printf("Error fetching todos: %v", err)
 		return todos
 	}
-	log.Printf("DEBUG: Found %d todos in database", len(allTodos))
 
-	todoMap := make(map[string]string)
+	todoMap := make(map[string][]string)
 	for _, record := range allTodos {
 		var todoData map[string]interface{}
 		err := json.Unmarshal(record.Data, &todoData)
 		if err != nil {
-			log.Printf("DEBUG: Error unmarshaling todo data: %v", err)
 			continue
 		}
 
 		if title, ok := todoData["title"].(string); ok {
-			todoMap[title] = record.ID
-			log.Printf("DEBUG: Added todo to map: %s -> %s", title, record.ID)
+			if isComplete, exists := todoData["is_complete"].(bool); !exists || !isComplete {
+				todoMap[title] = append(todoMap[title], record.ID)
+			}
 		}
 	}
-	log.Printf("DEBUG: Created todo map with %d entries: %+v", len(todoMap), todoMap)
 
 	for _, match := range matches {
-		// Handle both quoted and unquoted todo names
 		var todoTitle string
 		if match[1] != "" {
-			// Quoted todo name (group 1)
 			todoTitle = match[1]
-		} else {
-			// Unquoted todo name (group 2)
+		} else if match[2] != "" {
 			todoTitle = match[2]
-		}
-		log.Printf("DEBUG: Processing todo match - title: '%s'", todoTitle)
-
-		if todoID, exists := todoMap[todoTitle]; exists {
-			log.Printf("DEBUG: Found todo in map: %s -> %s, adding to results", todoTitle, todoID)
-			todos = append(todos, ExtractedTodo{
-				ID:    todoID,
-				Title: todoTitle,
-			})
+		} else if match[3] != "" {
+			todoTitle = match[3]
 		} else {
-			log.Printf("DEBUG: Todo '%s' not found in map", todoTitle)
+			todoTitle = match[4]
+		}
+
+		if todoIDs, exists := todoMap[todoTitle]; exists {
+			for _, todoID := range todoIDs {
+				todos = append(todos, ExtractedTodo{
+					ID:    todoID,
+					Title: todoTitle,
+				})
+			}
 		}
 	}
 
@@ -1162,16 +1134,14 @@ func (a *App) completeTodoFromJournal(todoID string, completedDate time.Time) er
 		return fmt.Errorf("todo with ID %s not found", todoID)
 	}
 
-	// Check if already completed
 	if isComplete, ok := currentTodo["is_complete"].(bool); ok && isComplete {
-		log.Printf("Todo %s is already completed, skipping", todoID)
 		return nil
 	}
 
 	// Update todo to completed
 	currentTodo["is_complete"] = true
 	currentTodo["completed_at"] = completedDate.Format(time.RFC3339)
-	currentTodo["status"] = "completed"
+	currentTodo["status"] = TodoStatusCompleted
 
 	// Marshal back to JSON
 	updatedData, err := json.Marshal(currentTodo)
@@ -1185,7 +1155,54 @@ func (a *App) completeTodoFromJournal(todoID string, completedDate time.Time) er
 		return fmt.Errorf("failed to update todo record: %w", err)
 	}
 
-	log.Printf("Successfully completed todo %s from journal entry", todoID)
+	return nil
+}
+
+// MigrateTodoStatusValues fixes any inconsistent todo status values to use the standard enum values
+func (a *App) MigrateTodoStatusValues() error {
+	todos, err := database.GetDataRecords("todos")
+	if err != nil {
+		return fmt.Errorf("failed to fetch todos for migration: %w", err)
+	}
+	
+	validStatuses := map[string]bool{
+		TodoStatusNotStarted: true,
+		TodoStatusInProgress: true,
+		TodoStatusCompleted:  true,
+		TodoStatusOverdue:    true,
+	}
+	
+	migratedCount := 0
+	
+	for _, record := range todos {
+		var todoData map[string]interface{}
+		err := json.Unmarshal(record.Data, &todoData)
+		if err != nil {
+			continue
+		}
+		
+		currentStatus, exists := todoData["status"].(string)
+		if !exists {
+			todoData["status"] = TodoStatusNotStarted
+			migratedCount++
+		} else if !validStatuses[currentStatus] {
+			todoData["status"] = TodoStatusNotStarted
+			migratedCount++
+		} else {
+			continue
+		}
+		
+		updatedData, err := json.Marshal(todoData)
+		if err != nil {
+			continue
+		}
+		
+		_, err = a.UpdateRecord(record.ID, string(updatedData), false, false)
+		if err != nil {
+			continue
+		}
+	}
+	
 	return nil
 }
 

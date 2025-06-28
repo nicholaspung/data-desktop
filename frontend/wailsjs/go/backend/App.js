@@ -70,6 +70,10 @@ export function LoadSampleDataWithDates(arg1, arg2) {
   return window['go']['backend']['App']['LoadSampleDataWithDates'](arg1, arg2);
 }
 
+export function MigrateTodoStatusValues() {
+  return window['go']['backend']['App']['MigrateTodoStatusValues']();
+}
+
 export function ProcessRecord(arg1, arg2) {
   return window['go']['backend']['App']['ProcessRecord'](arg1, arg2);
 }

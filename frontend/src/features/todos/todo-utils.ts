@@ -11,21 +11,21 @@ export const getSortedTodos = (todos: Todo[]) => {
     };
 
     const aIsOverdue =
-      !a.isComplete && !!a.deadline && isPast(new Date(a.deadline));
+      !a.is_complete && !!a.deadline && isPast(new Date(a.deadline));
     const bIsOverdue =
-      !b.isComplete && !!b.deadline && isPast(new Date(b.deadline));
+      !b.is_complete && !!b.deadline && isPast(new Date(b.deadline));
 
     if (aIsOverdue === bIsOverdue) {
-      if (a.isComplete !== b.isComplete) {
-        return a.isComplete ? 1 : -1;
+      if (a.is_complete !== b.is_complete) {
+        return a.is_complete ? 1 : -1;
       }
 
-      if (a.isComplete && b.isComplete) {
-        const aCompleted = a.completedAt
-          ? new Date(a.completedAt).getTime()
+      if (a.is_complete && b.is_complete) {
+        const aCompleted = a.completed_at
+          ? new Date(a.completed_at).getTime()
           : 0;
-        const bCompleted = b.completedAt
-          ? new Date(b.completedAt).getTime()
+        const bCompleted = b.completed_at
+          ? new Date(b.completed_at).getTime()
           : 0;
         return bCompleted - aCompleted;
       }

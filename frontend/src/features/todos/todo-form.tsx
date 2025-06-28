@@ -57,13 +57,13 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
     existingTodo?.tags || ""
   );
   const [relatedMetricId, setRelatedMetricId] = useState<string>(
-    existingTodo?.relatedMetricId || ""
+    existingTodo?.related_metric_id || ""
   );
   const [metricType, setMetricType] = useState<string>(
-    existingTodo?.metricType || "none"
+    existingTodo?.metric_type || "none"
   );
   const [reminderDate, setReminderDate] = useState<Date | undefined>(
-    existingTodo?.reminderDate ? new Date(existingTodo.reminderDate) : undefined
+    existingTodo?.reminder_date ? new Date(existingTodo.reminder_date) : undefined
   );
   const [createMetric, setCreateMetric] = useState(!isEditMode);
   const [isPrivate, setIsPrivate] = useState(false);
@@ -196,7 +196,6 @@ export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
         }
       }
     } catch (error) {
-      console.error("Failed to save todo:", error);
       toast.error(
         isEditMode ? "Failed to update todo" : "Failed to create todo"
       );

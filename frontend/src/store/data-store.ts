@@ -19,9 +19,12 @@ const initialState = DATASET_IDS.reduce((acc, id) => {
 const dataStore = new Store<DataStoreType>(initialState);
 
 export function loadState(data: Record<string, any>[], datasetId: string) {
+  // Process each entry with field transformations
+  const processedData = data.map(entry => processEntry(entry, datasetId as DataStoreName));
+  
   dataStore.setState((state) => ({
     ...state,
-    [datasetId]: data,
+    [datasetId]: processedData,
   }));
 }
 
@@ -29,6 +32,8 @@ function processEntry(entry: Record<string, any>, datasetId: DataStoreName) {
   const fields = fieldDefinitionsStore.state.datasets[datasetId]?.fields || [];
 
   const processed = { ...entry };
+
+  // No field transformations needed - using backend field names directly
 
   fields.forEach((field) => {
     if (field.type === "date" && processed[field.key]) {

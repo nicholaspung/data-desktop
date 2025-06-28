@@ -9,17 +9,17 @@ export default function TodoStats() {
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
 
   const totalTodos = todos.length;
-  const completedTodos = todos.filter((todo) => todo.isComplete).length;
+  const completedTodos = todos.filter((todo) => todo.is_complete).length;
   const overdueTodos = todos.filter(
     (todo) =>
-      !todo.isComplete &&
+      !todo.is_complete &&
       todo.deadline !== undefined &&
       isPast(new Date(todo.deadline)) &&
       !isToday(new Date(todo.deadline))
   ).length;
   const dueTodayTodos = todos.filter(
     (todo) =>
-      !todo.isComplete &&
+      !todo.is_complete &&
       todo.deadline !== undefined &&
       isToday(new Date(todo.deadline))
   ).length;

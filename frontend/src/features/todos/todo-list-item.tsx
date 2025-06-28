@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Todo, TodoPriority } from "@/store/todo-definitions.d";
+import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions.d";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { AlertCircle, Calendar, CheckCircle2, Clock } from "lucide-react";
@@ -31,33 +31,32 @@ export default function TodoListItem({
       deadline: todo.deadline ? new Date(todo.deadline).toISOString() : null,
       priority: todo.priority,
       tags: todo.tags || "",
-      related_metric_id: todo.relatedMetricId || null,
-      metric_type: todo.metricType || null,
-      failed_deadlines: todo.failedDeadlines
-        ? JSON.stringify(todo.failedDeadlines)
+      related_metric_id: todo.related_metric_id || null,
+      metric_type: todo.metric_type || null,
+      failed_deadlines: todo.failed_deadlines
+        ? JSON.stringify(todo.failed_deadlines)
         : null,
-      reminder_date: todo.reminderDate
-        ? new Date(todo.reminderDate).toISOString()
+      reminder_date: todo.reminder_date
+        ? new Date(todo.reminder_date).toISOString()
         : null,
       is_complete: true,
       completed_at: new Date().toISOString(),
-      status: "completed",
+      status: TodoStatus.COMPLETED,
       private: todo.private || false,
     };
 
     try {
       const response = await ApiService.updateRecord(todo.id, updatedTodo);
       if (response) {
-        console.log(response);
         updateEntry(todo.id, response, "todos");
         toast.success(`"${todo.title}" marked as completed!`);
 
         if (
           todoMetrics &&
-          todo.relatedMetricId &&
-          todoMetrics[todo.relatedMetricId]
+          todo.related_metric_id &&
+          todoMetrics[todo.related_metric_id]
         ) {
-          const metric = todoMetrics[todo.relatedMetricId];
+          const metric = todoMetrics[todo.related_metric_id];
 
           let shouldDeactivate = false;
           if (
@@ -74,18 +73,17 @@ export default function TodoListItem({
             };
 
             const metricResponse = await ApiService.updateRecord(
-              todo.relatedMetricId,
+              todo.related_metric_id,
               updatedMetric
             );
             if (metricResponse) {
-              updateEntry(todo.relatedMetricId, metricResponse, "metrics");
+              updateEntry(todo.related_metric_id, metricResponse, "metrics");
               toast.info("Related metric has been marked as inactive");
             }
           }
         }
       }
     } catch (error) {
-      console.error("Failed to complete todo:", error);
       toast.error("Failed to complete todo");
     }
   };
@@ -96,7 +94,6 @@ export default function TodoListItem({
       deleteEntry(id, "todos");
       toast.success("Todo deleted successfully");
     } catch (error) {
-      console.error("Failed to delete todo:", error);
       toast.error("Failed to delete todo");
     }
   };
@@ -183,16 +180,16 @@ export default function TodoListItem({
       )}
 
       {todoMetrics &&
-        todo.relatedMetricId &&
-        todoMetrics[todo.relatedMetricId] && (
+        todo.related_metric_id &&
+        todoMetrics[todo.related_metric_id] && (
           <Badge variant="outline" className="flex gap-1 items-center text-xs">
             <Link
               to="/metric"
               search={{
-                query: todoMetrics[todo.relatedMetricId].name,
+                query: todoMetrics[todo.related_metric_id].name,
               }}
             >
-              {todoMetrics[todo.relatedMetricId].name}
+              {todoMetrics[todo.related_metric_id].name}
             </Link>
           </Badge>
         )}
@@ -203,7 +200,7 @@ export default function TodoListItem({
     <ReusableCard
       showHeader={false}
       cardClassName={`border-l-4 ${
-        ((todo as any).is_complete || todo.isComplete)
+        todo.is_complete
           ? "border-l-green-500"
           : todo.deadline && isPast(new Date(todo.deadline))
             ? "border-l-red-500"
@@ -219,7 +216,7 @@ export default function TodoListItem({
                 <ProtectedField>
                   <h3
                     className={`font-medium break-words ${
-                      ((todo as any).is_complete || todo.isComplete)
+                      todo.is_complete
                         ? "line-through text-muted-foreground"
                         : ""
                     }`}
@@ -230,7 +227,7 @@ export default function TodoListItem({
               ) : (
                 <h3
                   className={`font-medium break-words ${
-                    ((todo as any).is_complete || todo.isComplete) ? "line-through text-muted-foreground" : ""
+                    todo.is_complete ? "line-through text-muted-foreground" : ""
                   }`}
                 >
                   {todo.title}
@@ -239,8 +236,8 @@ export default function TodoListItem({
               <div className="flex flex-wrap gap-2 items-center">
                 {getPriorityBadge(todo.priority as TodoPriority)}
                 {getDeadlineStatus(
-                  todo.deadline?.toISOString(),
-                  (todo as any).is_complete || todo.isComplete
+                  todo.deadline,
+                  todo.is_complete
                 )}
 
                 {todo.private ? (
@@ -267,7 +264,7 @@ export default function TodoListItem({
             {/* Right section - Actions */}
             {!isCompact && (
               <div className="flex gap-1 sm:ml-4 self-start sm:self-center flex-shrink-0">
-                {!(todo as any).is_complete && !todo.isComplete && (
+                {!todo.is_complete && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -277,7 +274,7 @@ export default function TodoListItem({
                     <CheckCircle2 className="h-4 w-4" />
                   </Button>
                 )}
-                {!(todo as any).is_complete && !todo.isComplete && (
+                {!todo.is_complete && (
                   <>
                     <AddTodoButton
                       existingTodo={todo}
@@ -317,7 +314,7 @@ export default function TodoListItem({
               {todo.deadline ? (
                 <>
                   Deadline: {new Date(todo.deadline).toLocaleDateString()}
-                  {!(todo as any).is_complete && !todo.isComplete && (
+                  {!todo.is_complete && (
                     <span>
                       {" "}
                       -{" "}
@@ -334,10 +331,10 @@ export default function TodoListItem({
               )}
             </div>
 
-            {todo.failedDeadlines && todo.failedDeadlines.length > 0 && (
+            {todo.failed_deadlines && todo.failed_deadlines.length > 0 && (
               <div className="flex-shrink-0">
-                {todo.failedDeadlines.length} failed deadline
-                {todo.failedDeadlines.length > 1 ? "s" : ""}
+                {todo.failed_deadlines.length} failed deadline
+                {todo.failed_deadlines.length > 1 ? "s" : ""}
               </div>
             )}
           </div>
