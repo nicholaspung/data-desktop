@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { TimeEntry, TimeCategory } from "@/store/time-tracking-definitions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -46,9 +46,9 @@ export default function TimeEntryConflictResolver({
   const categories = useStore(dataStore, (state) => state.time_categories);
 
   const sortedEntries = useMemo(() => {
-    return convertToLocalDates([...entries]).sort((a, b) => {
+    return [...entries].sort((a, b) => {
       return (
-        new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
       );
     });
   }, [entries]);
@@ -80,8 +80,8 @@ export default function TimeEntryConflictResolver({
       await ApiService.deleteRecord(entry.id);
       deleteEntry(entry.id, "time_entries");
 
-      handleNextOrFinish();
       toast.success("Entry deleted successfully");
+      handleNextOrFinish();
     } catch (error) {
       console.error("Error deleting entry:", error);
       toast.error("Failed to delete entry");
@@ -110,95 +110,196 @@ export default function TimeEntryConflictResolver({
 
       const mergedDescription = `${entry1.description} + ${entry2.description}`;
 
-      const hasSegment1 = overlapStart > start1;
-      const hasSegment3 = overlapEnd < end2;
+      // Identify all possible segments:
+      // 1. Pre-overlap segment of entry1 (if entry1 starts before overlap)
+      // 2. Pre-overlap segment of entry2 (if entry2 starts before overlap) 
+      // 3. Overlap segment (always exists if we got here)
+      // 4. Post-overlap segment of entry1 (if entry1 ends after overlap)
+      // 5. Post-overlap segment of entry2 (if entry2 ends after overlap)
+      
+      const hasEntry1PreOverlap = start1 < overlapStart;
+      const hasEntry2PreOverlap = start2 < overlapStart;
+      const hasEntry1PostOverlap = end1 > overlapEnd;
+      const hasEntry2PostOverlap = end2 > overlapEnd;
 
-      const segment1Duration = hasSegment1
+      // Calculate durations for all segments
+      const entry1PreOverlapDuration = hasEntry1PreOverlap
         ? Math.round((overlapStart - start1) / (1000 * 60))
+        : 0;
+      const entry2PreOverlapDuration = hasEntry2PreOverlap
+        ? Math.round((overlapStart - start2) / (1000 * 60))
         : 0;
       const overlapDuration = Math.round(
         (overlapEnd - overlapStart) / (1000 * 60)
       );
-      const segment3Duration = hasSegment3
+      const entry1PostOverlapDuration = hasEntry1PostOverlap
+        ? Math.round((end1 - overlapEnd) / (1000 * 60))
+        : 0;
+      const entry2PostOverlapDuration = hasEntry2PostOverlap
         ? Math.round((end2 - overlapEnd) / (1000 * 60))
         : 0;
 
+      // Validate that all segments would have positive durations
+      if (hasEntry1PreOverlap && entry1PreOverlapDuration <= 0) {
+        toast.error("Cannot split: Entry 1 pre-overlap segment would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+      if (hasEntry2PreOverlap && entry2PreOverlapDuration <= 0) {
+        toast.error("Cannot split: Entry 2 pre-overlap segment would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+      if (overlapDuration <= 0) {
+        toast.error("Cannot split: Overlap segment would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+      if (hasEntry1PostOverlap && entry1PostOverlapDuration <= 0) {
+        toast.error("Cannot split: Entry 1 post-overlap segment would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+      if (hasEntry2PostOverlap && entry2PostOverlapDuration <= 0) {
+        toast.error("Cannot split: Entry 2 post-overlap segment would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+
       let operationsCompleted = 0;
+      const operations = [];
 
-      const totalOperations = (hasSegment1 ? 1 : 0) + 1 + (hasSegment3 ? 1 : 0);
+      // Strategy: 
+      // 1. Handle entry1: update to pre-overlap OR delete if no pre-overlap
+      // 2. Handle entry2: update to pre-overlap OR delete if no pre-overlap  
+      // 3. Create overlap segment
+      // 4. Create post-overlap segments as new entries (if any)
 
-      if (hasSegment1) {
-        const updatedEntry1 = {
-          ...entry1,
-          end_time: new Date(overlapStart).toISOString(),
-          duration_minutes: segment1Duration,
-          tags: addOverlapFixTag(entry1.tags),
-        };
-
-        const response1 = await ApiService.updateRecord(
-          entry1.id,
-          updatedEntry1
-        );
-        if (response1) {
-          updateEntry(entry1.id, response1, "time_entries");
-          operationsCompleted++;
-        }
+      // Handle entry1
+      if (hasEntry1PreOverlap) {
+        // Update entry1 to be the pre-overlap segment
+        operations.push({
+          type: 'update',
+          id: entry1.id,
+          data: {
+            ...entry1,
+            end_time: new Date(overlapStart).toISOString(),
+            duration_minutes: entry1PreOverlapDuration,
+            tags: addOverlapFixTag(entry1.tags),
+          }
+        });
       } else {
-        await ApiService.deleteRecord(entry1.id);
-        deleteEntry(entry1.id, "time_entries");
-        operationsCompleted++;
+        // No pre-overlap segment, delete entry1 entirely
+        operations.push({
+          type: 'delete',
+          id: entry1.id
+        });
       }
 
-      const overlapEntry = {
-        description: mergedDescription,
-        start_time: new Date(overlapStart).toISOString(),
-        end_time: new Date(overlapEnd).toISOString(),
-        duration_minutes: overlapDuration,
-        tags: addOverlapFixTag(
-          [entry1.tags, entry2.tags].filter(Boolean).join(", ")
-        ),
-        category_id: entry1.category_id,
-        private: false,
-      };
-
-      const responseOverlap = await ApiService.addRecord(
-        "time_entries",
-        overlapEntry
-      );
-      if (responseOverlap) {
-        addEntry(responseOverlap, "time_entries");
-        operationsCompleted++;
+      // Handle entry2  
+      if (hasEntry2PreOverlap) {
+        // Update entry2 to be the pre-overlap segment
+        operations.push({
+          type: 'update',
+          id: entry2.id,
+          data: {
+            ...entry2,
+            end_time: new Date(overlapStart).toISOString(),
+            duration_minutes: entry2PreOverlapDuration,
+            tags: addOverlapFixTag(entry2.tags),
+          }
+        });
+      } else {
+        // No pre-overlap segment, delete entry2 entirely
+        operations.push({
+          type: 'delete',
+          id: entry2.id
+        });
       }
 
-      if (hasSegment3) {
-        const updatedEntry2 = {
-          ...entry2,
-          start_time: new Date(overlapEnd).toISOString(),
-          duration_minutes: segment3Duration,
-          tags: addOverlapFixTag(entry2.tags),
-        };
-
-        const response2 = await ApiService.updateRecord(
-          entry2.id,
-          updatedEntry2
-        );
-        if (response2) {
-          updateEntry(entry2.id, response2, "time_entries");
-          operationsCompleted++;
+      // Create overlap segment (always needed)
+      operations.push({
+        type: 'create',
+        data: {
+          description: mergedDescription,
+          start_time: new Date(overlapStart).toISOString(),
+          end_time: new Date(overlapEnd).toISOString(),
+          duration_minutes: overlapDuration,
+          tags: addOverlapFixTag(
+            [entry1.tags, entry2.tags].filter(Boolean).join(", ")
+          ),
+          category_id: entry1.category_id,
+          private: false,
         }
-      } else {
-        await ApiService.deleteRecord(entry2.id);
-        deleteEntry(entry2.id, "time_entries");
-        operationsCompleted++;
+      });
+
+      // Create post-overlap segments as new entries
+      if (hasEntry1PostOverlap) {
+        operations.push({
+          type: 'create',
+          data: {
+            description: entry1.description,
+            start_time: new Date(overlapEnd).toISOString(),
+            end_time: entry1.end_time,
+            duration_minutes: entry1PostOverlapDuration,
+            category_id: entry1.category_id,
+            tags: addOverlapFixTag(entry1.tags),
+            private: entry1.private || false,
+          }
+        });
+      }
+
+      if (hasEntry2PostOverlap) {
+        operations.push({
+          type: 'create',
+          data: {
+            description: entry2.description,
+            start_time: new Date(overlapEnd).toISOString(),
+            end_time: entry2.end_time,
+            duration_minutes: entry2PostOverlapDuration,
+            category_id: entry2.category_id,
+            tags: addOverlapFixTag(entry2.tags),
+            private: entry2.private || false,
+          }
+        });
+      }
+
+      // Execute operations
+      const totalOperations = operations.length;
+      for (const operation of operations) {
+        try {
+          if (operation.type === 'update') {
+            const response = await ApiService.updateRecord(operation.id, operation.data);
+            if (response) {
+              updateEntry(operation.id, response, "time_entries");
+              operationsCompleted++;
+            }
+          } else if (operation.type === 'delete') {
+            await ApiService.deleteRecord(operation.id);
+            deleteEntry(operation.id, "time_entries");
+            operationsCompleted++;
+          } else if (operation.type === 'create') {
+            const response = await ApiService.addRecord("time_entries", operation.data);
+            if (response) {
+              addEntry(response, "time_entries");
+              operationsCompleted++;
+            }
+          }
+        } catch (opError) {
+          console.error(`Error executing ${operation.type} operation:`, opError);
+          // Continue with other operations but track the failure
+        }
       }
 
       if (operationsCompleted === totalOperations) {
         toast.success("Entries split successfully with overlap segment");
         handleNextOrFinish();
-      } else {
+      } else if (operationsCompleted > 0) {
         toast.warning(
-          `Completed ${operationsCompleted} of ${totalOperations} operations`
+          `Partially completed: ${operationsCompleted} of ${totalOperations} operations succeeded. Some data may be in an inconsistent state.`
         );
+      } else {
+        toast.error("All split operations failed. No changes were made.");
       }
     } catch (error) {
       console.error("Error splitting entries:", error);
@@ -212,14 +313,22 @@ export default function TimeEntryConflictResolver({
     try {
       setIsProcessing(true);
 
+      const start = new Date(entry1.start_time);
+      const end = new Date(entry2.start_time);
+      
+      // Validate that the truncated entry would have a valid time range
+      if (start >= end) {
+        toast.error("Cannot truncate: Earlier entry would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+
       const updatedEntry = {
         ...entry1,
-        end_time: new Date(entry2.start_time).toISOString(),
+        end_time: end.toISOString(),
         tags: addOverlapFixTag(entry1.tags),
       };
 
-      const start = new Date(updatedEntry.start_time);
-      const end = new Date(updatedEntry.end_time);
       const durationMinutes = Math.max(
         1,
         Math.round((end.getTime() - start.getTime()) / (1000 * 60))
@@ -232,7 +341,6 @@ export default function TimeEntryConflictResolver({
       if (response) {
         updateEntry(entry1.id, response, "time_entries");
         toast.success("Entry adjusted successfully");
-
         handleNextOrFinish();
       }
     } catch (error) {
@@ -247,14 +355,22 @@ export default function TimeEntryConflictResolver({
     try {
       setIsProcessing(true);
 
+      const start = new Date(entry1.end_time);
+      const end = new Date(entry2.end_time);
+      
+      // Validate that the truncated entry would have a valid time range
+      if (start >= end) {
+        toast.error("Cannot truncate: Later entry would have no valid duration");
+        setIsProcessing(false);
+        return;
+      }
+
       const updatedEntry = {
         ...entry2,
-        start_time: new Date(entry1.end_time).toISOString(),
+        start_time: start.toISOString(),
         tags: addOverlapFixTag(entry2.tags),
       };
 
-      const start = new Date(updatedEntry.start_time);
-      const end = new Date(updatedEntry.end_time);
       const durationMinutes = Math.max(
         1,
         Math.round((end.getTime() - start.getTime()) / (1000 * 60))
@@ -267,7 +383,6 @@ export default function TimeEntryConflictResolver({
       if (response) {
         updateEntry(entry2.id, response, "time_entries");
         toast.success("Entry adjusted successfully");
-
         handleNextOrFinish();
       }
     } catch (error) {
@@ -278,14 +393,42 @@ export default function TimeEntryConflictResolver({
     }
   };
 
+  const canTruncateFirst = (entry1: TimeEntry, entry2: TimeEntry): boolean => {
+    const start1 = new Date(entry1.start_time);
+    const end2Start = new Date(entry2.start_time);
+    return start1 < end2Start;
+  };
+
+  const canTruncateSecond = (entry1: TimeEntry, entry2: TimeEntry): boolean => {
+    const end1 = new Date(entry1.end_time);
+    const end2 = new Date(entry2.end_time);
+    return end1 < end2;
+  };
+
+  const refreshConflicts = useCallback(() => {
+    // Force re-calculation of overlapping pairs by triggering a re-render
+    // This ensures that after resolving conflicts, we see the updated state
+    setTimeout(() => {
+      const updatedEntries = dataStore.state.time_entries;
+      const newOverlappingPairs = findOverlappingPairs([...updatedEntries].sort((a, b) => {
+        return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+      }));
+      
+      if (newOverlappingPairs.length === 0) {
+        // No more conflicts, close the dialog
+        onDataChange();
+        onOpenChange(false);
+        setCurrentPage(0);
+      } else if (currentPage >= newOverlappingPairs.length) {
+        // Current page is beyond available conflicts, reset to last available
+        setCurrentPage(Math.max(0, newOverlappingPairs.length - 1));
+      }
+      // Otherwise stay on current page to handle next conflict
+    }, 100);
+  }, [currentPage, onDataChange, onOpenChange]);
+
   const handleNextOrFinish = () => {
-    if (currentPage < overlappingPairs.length - 1) {
-      setCurrentPage(currentPage + 1);
-    } else {
-      onDataChange();
-      onOpenChange(false);
-      setCurrentPage(0);
-    }
+    refreshConflicts();
   };
 
   const isLastOrNoConflicts =
@@ -295,14 +438,14 @@ export default function TimeEntryConflictResolver({
     <ScrollArea className="overflow-y-auto pr-4">
       <div className="space-y-4">
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-          {/* Entry 1 - The chronologically first created entry */}
+          {/* Entry 1 - The earlier entry (starts first) */}
           <EntryCard
             entry={currentConflict.entry1}
             category={getCategoryById(currentConflict.entry1.category_id)}
             isFirstEntry={true}
           />
 
-          {/* Entry 2 - The chronologically second created entry */}
+          {/* Entry 2 - The later entry (starts after) */}
           <EntryCard
             entry={currentConflict.entry2}
             category={getCategoryById(currentConflict.entry2.category_id)}
@@ -357,11 +500,11 @@ export default function TimeEntryConflictResolver({
                       currentConflict.entry2
                     )
                   }
-                  disabled={isProcessing}
+                  disabled={isProcessing || !canTruncateFirst(currentConflict.entry1, currentConflict.entry2)}
                   className="justify-start border-blue-500"
                 >
                   <Scissors className="h-4 w-4 mr-2" />
-                  End first entry when second begins
+                  End earlier entry when later begins
                 </Button>
                 <Button
                   variant="outline"
@@ -371,11 +514,11 @@ export default function TimeEntryConflictResolver({
                       currentConflict.entry2
                     )
                   }
-                  disabled={isProcessing}
+                  disabled={isProcessing || !canTruncateSecond(currentConflict.entry1, currentConflict.entry2)}
                   className="justify-start border-green-500"
                 >
                   <Scissors className="h-4 w-4 mr-2" />
-                  Start second entry when first ends
+                  Start later entry when earlier ends
                 </Button>
                 <Button
                   variant="outline"
@@ -384,7 +527,7 @@ export default function TimeEntryConflictResolver({
                   className="justify-start text-destructive hover:text-destructive border-blue-500"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete first entry
+                  Delete earlier entry
                 </Button>
                 <Button
                   variant="outline"
@@ -393,7 +536,7 @@ export default function TimeEntryConflictResolver({
                   className="justify-start text-destructive hover:text-destructive border-green-500"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete second entry
+                  Delete later entry
                 </Button>
               </div>
             </div>
@@ -467,19 +610,38 @@ function EntryTimeline({
   entry1: TimeEntry;
   entry2: TimeEntry;
 }) {
-  const start1 = new Date(entry1.start_time).getTime();
-  const end1 = new Date(entry1.end_time).getTime();
-  const start2 = new Date(entry2.start_time).getTime();
-  const end2 = new Date(entry2.end_time).getTime();
+  // Ensure we're working with timestamps, handle both string and Date inputs
+  const start1 = typeof entry1.start_time === 'string' 
+    ? new Date(entry1.start_time).getTime() 
+    : entry1.start_time.getTime();
+  const end1 = typeof entry1.end_time === 'string'
+    ? new Date(entry1.end_time).getTime()
+    : entry1.end_time.getTime();
+  const start2 = typeof entry2.start_time === 'string'
+    ? new Date(entry2.start_time).getTime()
+    : entry2.start_time.getTime();
+  const end2 = typeof entry2.end_time === 'string'
+    ? new Date(entry2.end_time).getTime()
+    : entry2.end_time.getTime();
 
   const earliestStart = Math.min(start1, start2);
   const latestEnd = Math.max(end1, end2);
   const totalDuration = latestEnd - earliestStart;
 
-  const entry1Start = ((start1 - earliestStart) / totalDuration) * 100;
-  const entry1Width = ((end1 - start1) / totalDuration) * 100;
-  const entry2Start = ((start2 - earliestStart) / totalDuration) * 100;
-  const entry2Width = ((end2 - start2) / totalDuration) * 100;
+  // Prevent division by zero and ensure valid percentages
+  if (totalDuration <= 0) {
+    return <div className="text-xs text-muted-foreground">Invalid timeline data</div>;
+  }
+
+  const entry1Start = Math.max(0, ((start1 - earliestStart) / totalDuration) * 100);
+  const entry1Width = Math.max(0, ((end1 - start1) / totalDuration) * 100);
+  const entry2Start = Math.max(0, ((start2 - earliestStart) / totalDuration) * 100);
+  const entry2Width = Math.max(0, ((end2 - start2) / totalDuration) * 100);
+
+  // Calculate overlap for highlighting
+  const overlapStart = Math.max(entry1Start, entry2Start);
+  const overlapEnd = Math.min(entry1Start + entry1Width, entry2Start + entry2Width);
+  const overlapWidth = Math.max(0, overlapEnd - overlapStart);
 
   return (
     <>
@@ -504,13 +666,15 @@ function EntryTimeline({
       />
 
       {/* Overlap highlighting */}
-      <div
-        className="absolute h-full bg-amber-200 opacity-50"
-        style={{
-          left: `${Math.max(entry1Start, entry2Start)}%`,
-          width: `${Math.min(entry1Start + entry1Width, entry2Start + entry2Width) - Math.max(entry1Start, entry2Start)}%`,
-        }}
-      />
+      {overlapWidth > 0 && (
+        <div
+          className="absolute h-full bg-amber-200 opacity-50"
+          style={{
+            left: `${overlapStart}%`,
+            width: `${overlapWidth}%`,
+          }}
+        />
+      )}
 
       {/* Timeline labels */}
       <div className="absolute text-xs text-muted-foreground bottom-[-18px] left-0">
@@ -578,7 +742,7 @@ function EntryCard({
         <div className="flex items-center gap-2">
           <span className="font-medium">{entry.description}</span>
           <Badge variant="outline" className="text-xs">
-            {isFirstEntry ? "First Created" : "Created Later"}
+            {isFirstEntry ? "Earlier Entry" : "Later Entry"}
           </Badge>
         </div>
       }

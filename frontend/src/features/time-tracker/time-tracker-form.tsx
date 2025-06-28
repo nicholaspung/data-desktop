@@ -89,11 +89,12 @@ function TimeTrackerForm({
   const [tags, setTags] = useState(
     globalTimerData.isActive ? globalTimerData.tags : ""
   );
-  const [startTime, setStartTime] = useState(
-    globalTimerData.isActive && globalTimerData.startTime
-      ? formatDateForInput(globalTimerData.startTime)
-      : formatDateForInput(new Date())
-  );
+  const [startTime, setStartTime] = useState(() => {
+    if (globalTimerData.isActive && globalTimerData.startTime) {
+      return formatDateForInput(globalTimerData.startTime);
+    }
+    return formatDateForInput(new Date());
+  });
   const [endTime, setEndTime] = useState("");
 
   const [elapsedSeconds, setElapsedSeconds] = useState(
@@ -132,7 +133,6 @@ function TimeTrackerForm({
               } as any,
             }))
         : [];
-
 
     const timeMetricNames = new Set(
       metricsEnabled && metricsData?.length > 0
@@ -197,10 +197,10 @@ function TimeTrackerForm({
         const formattedNow = formatDateForInput(now);
         setEndTime(formattedNow);
       }
-    } else if (addState === "timer") {
+    } else if (addState === "timer" && !isTimerActive) {
       setCurrentTimeAsStartTime();
     }
-  }, [addState]);
+  }, [addState, isTimerActive, startTime, endTime]);
 
   useEffect(() => {
     if (!isPomodoroActive && !isTimerActive) {
@@ -372,13 +372,13 @@ function TimeTrackerForm({
     startGlobalTimer(description, categoryId, tags, actualStartTime);
   };
 
-  const setCurrentTimeAsStartTime = () => {
+  const setCurrentTimeAsStartTime = useCallback(() => {
     const now = new Date();
     const formattedNow = formatDateForInput(now);
     handleStartTimeChange(formattedNow);
     setShowStartTimeWarning(false);
     setStartTimeError("");
-  };
+  }, []);
 
   const setLastEntryEndTimeAsStartTime = () => {
     if (timeEntries.length === 0) {

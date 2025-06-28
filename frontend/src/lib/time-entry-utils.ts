@@ -72,13 +72,16 @@ export function findOverlappingPairs(
       const start2 = new Date(entry2.start_time).getTime();
       const end2 = new Date(entry2.end_time).getTime();
 
-      if (start1 < end2 && start2 < end1) {
-        if (end1 - start2 > bufferMs || end2 - start1 > bufferMs) {
-          const hasExactSameTimestamps = start1 === start2 && end1 === end2;
+      // Check for actual overlap (not just touching edges)
+      const overlapStart = Math.max(start1, start2);
+      const overlapEnd = Math.min(end1, end2);
+      const overlapDuration = overlapEnd - overlapStart;
+      
+      if (overlapDuration > bufferMs) {
+        const hasExactSameTimestamps = start1 === start2 && end1 === end2;
 
-          if (!hasExactSameTimestamps) {
-            pairs.push({ entry1, entry2 });
-          }
+        if (!hasExactSameTimestamps) {
+          pairs.push({ entry1, entry2 });
         }
       }
     }

@@ -76,10 +76,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in modifying todos, the "deadline" datepicker visually looks weird
-- in time tracker form, with the new "select timer mode, change start time to now", it seems to also be bugging out the saving of entries, as it will save the start time to now when the user finishes a time entry
-- in time tracker, the resolving time conflicts is kind of off - it should put the "earlier" time entry first, so that when the user is selecting which entry to cut off, it modifies that correct entry
-
 - make it so that daily journal has "optional" dependencies for basically all the other features
 - in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing
 - in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view
@@ -88,6 +84,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in time tracker form, with the new "select timer mode, change start time to now", it seems to also be bugging out the saving of entries, as it will save the start time to now when the user finishes a time entry [DONE 2025-06-28]
+- in time tracker, the resolving time conflicts is kind of off - it should put the "earlier" time entry first, so that when the user is selecting which entry to cut off, it modifies that correct entry [DONE 2025-06-28]
 - in time tracker form, for the description autocomplete, it's not showing the metrics for the user to select [DONE 2025-06-28]
 - also adding templates for the user to be able to select that is added to the journal [DONE 2025-06-28]
 - add a "daily journal" that is able to do like "@feature" for tracking metrics [DONE 2025-06-28]
