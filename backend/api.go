@@ -995,6 +995,19 @@ func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool)
 		}
 	}
 
+	// Process todos from journal text
+	log.Printf("DEBUG: Extracting todos from journal text: %s", entryText)
+	todos := a.extractTodos(entryText)
+	log.Printf("DEBUG: Found %d todos: %+v", len(todos), todos)
+
+	for _, todo := range todos {
+		// Update todo to completed
+		err := a.completeTodoFromJournal(todo.ID, journalDate)
+		if err != nil {
+			log.Printf("Error completing todo %s: %v", todo.ID, err)
+		}
+	}
+
 	return journalResult, nil
 }
 
@@ -1002,6 +1015,11 @@ type ExtractedMetric struct {
 	ID    string
 	Name  string
 	Value string
+}
+
+type ExtractedTodo struct {
+	ID    string
+	Title string
 }
 
 func (a *App) extractMetrics(text string) []ExtractedMetric {
@@ -1059,6 +1077,116 @@ func (a *App) extractMetrics(text string) []ExtractedMetric {
 	}
 
 	return metrics
+}
+
+func (a *App) extractTodos(text string) []ExtractedTodo {
+	var todos []ExtractedTodo
+
+	pattern := `@todo:(?:'([^']+)'|([^:\s]+)):true`
+	log.Printf("DEBUG: Using todo regex pattern: %s", pattern)
+
+	re := regexp.MustCompile(pattern)
+	matches := re.FindAllStringSubmatch(text, -1)
+	log.Printf("DEBUG: Todo regex found %d matches: %+v", len(matches), matches)
+
+	allTodos, err := database.GetDataRecords("todos")
+	if err != nil {
+		log.Printf("Error fetching todos: %v", err)
+		return todos
+	}
+	log.Printf("DEBUG: Found %d todos in database", len(allTodos))
+
+	todoMap := make(map[string]string)
+	for _, record := range allTodos {
+		var todoData map[string]interface{}
+		err := json.Unmarshal(record.Data, &todoData)
+		if err != nil {
+			log.Printf("DEBUG: Error unmarshaling todo data: %v", err)
+			continue
+		}
+
+		if title, ok := todoData["title"].(string); ok {
+			todoMap[title] = record.ID
+			log.Printf("DEBUG: Added todo to map: %s -> %s", title, record.ID)
+		}
+	}
+	log.Printf("DEBUG: Created todo map with %d entries: %+v", len(todoMap), todoMap)
+
+	for _, match := range matches {
+		// Handle both quoted and unquoted todo names
+		var todoTitle string
+		if match[1] != "" {
+			// Quoted todo name (group 1)
+			todoTitle = match[1]
+		} else {
+			// Unquoted todo name (group 2)
+			todoTitle = match[2]
+		}
+		log.Printf("DEBUG: Processing todo match - title: '%s'", todoTitle)
+
+		if todoID, exists := todoMap[todoTitle]; exists {
+			log.Printf("DEBUG: Found todo in map: %s -> %s, adding to results", todoTitle, todoID)
+			todos = append(todos, ExtractedTodo{
+				ID:    todoID,
+				Title: todoTitle,
+			})
+		} else {
+			log.Printf("DEBUG: Todo '%s' not found in map", todoTitle)
+		}
+	}
+
+	return todos
+}
+
+func (a *App) completeTodoFromJournal(todoID string, completedDate time.Time) error {
+	// Fetch the current todo data
+	todos, err := database.GetDataRecords("todos")
+	if err != nil {
+		return fmt.Errorf("failed to fetch todos: %w", err)
+	}
+
+	var currentTodo map[string]interface{}
+	var found bool
+	for _, record := range todos {
+		if record.ID == todoID {
+			err := json.Unmarshal(record.Data, &currentTodo)
+			if err != nil {
+				return fmt.Errorf("failed to unmarshal todo data: %w", err)
+			}
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("todo with ID %s not found", todoID)
+	}
+
+	// Check if already completed
+	if isComplete, ok := currentTodo["is_complete"].(bool); ok && isComplete {
+		log.Printf("Todo %s is already completed, skipping", todoID)
+		return nil
+	}
+
+	// Update todo to completed
+	currentTodo["is_complete"] = true
+	currentTodo["completed_at"] = completedDate.Format(time.RFC3339)
+	currentTodo["status"] = "completed"
+
+	// Marshal back to JSON
+	updatedData, err := json.Marshal(currentTodo)
+	if err != nil {
+		return fmt.Errorf("failed to marshal updated todo: %w", err)
+	}
+
+	// Update the record
+	_, err = a.UpdateRecord(todoID, string(updatedData), false, false)
+	if err != nil {
+		return fmt.Errorf("failed to update todo record: %w", err)
+	}
+
+	log.Printf("Successfully completed todo %s from journal entry", todoID)
+	return nil
 }
 
 func (a *App) checkMetricExistsForDate(metricID string, date time.Time) (bool, error) {

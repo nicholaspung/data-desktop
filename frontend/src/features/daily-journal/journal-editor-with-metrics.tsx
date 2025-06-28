@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,11 +12,14 @@ import {
   ArrowRight,
   X,
   Lock,
+  Check,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
+import { Todo } from "@/store/todo-definitions";
+import { format } from "date-fns";
 
 const getMetricExamples = (metric: Metric): string[] => {
   switch (metric.type) {
@@ -60,6 +63,132 @@ interface InlineMetricsPanelProps {
   onSelectMetric: (metric: Metric) => void;
   onConfirmValue: () => void;
   getExistingMetricValue: (metricId: string) => string | null;
+}
+
+interface InlineTodoPanelProps {
+  onClose: () => void;
+  selectedIndex: number;
+  filteredTodos: Todo[];
+  searchQuery: string;
+  onSelectTodo: (todo: Todo) => void;
+}
+
+function InlineTodoPanel({
+  onClose,
+  selectedIndex,
+  filteredTodos,
+  searchQuery,
+  onSelectTodo,
+}: InlineTodoPanelProps) {
+  useEffect(() => {
+    if (filteredTodos.length > 0) {
+      const selectedElement = document.getElementById(
+        `todo-option-${selectedIndex}`
+      );
+      if (selectedElement) {
+        selectedElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+    }
+  }, [selectedIndex, filteredTodos.length]);
+
+  return (
+    <div className="w-full h-fit shadow-lg border-l-2 border-purple-500 bg-purple-50/30 dark:bg-purple-950/30 rounded-lg">
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Check className="h-4 w-4 text-purple-600" />
+            <span className="font-medium text-sm">
+              Mark Todo for Completion
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+          <div className="text-xs text-muted-foreground pl-7">
+            Type to filter or use ↑↓ arrows, Enter to select (completed when
+            journal is saved)
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground">
+          {filteredTodos.length} incomplete todos
+        </div>
+
+        <ScrollArea className="h-64" id="todos-scroll-area">
+          <div className="space-y-1">
+            {filteredTodos.map((todo, index) => (
+              <Button
+                key={todo.id}
+                id={`todo-option-${index}`}
+                variant="ghost"
+                className={`w-full justify-start p-2 h-auto text-left ${
+                  index === selectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-accent"
+                }`}
+                onClick={() => onSelectTodo(todo)}
+              >
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-1">
+                    <span className="font-medium text-sm">{todo.title}</span>
+                    {todo.priority && (
+                      <Badge
+                        variant={
+                          todo.priority === "urgent"
+                            ? "destructive"
+                            : todo.priority === "high"
+                              ? "default"
+                              : "secondary"
+                        }
+                        className="text-xs h-4"
+                      >
+                        {todo.priority}
+                      </Badge>
+                    )}
+                  </div>
+                  {todo.description && (
+                    <div className="text-xs text-muted-foreground">
+                      {todo.description}
+                    </div>
+                  )}
+                  {todo.deadline && (
+                    <div className="text-xs text-muted-foreground">
+                      Due: {format(new Date(todo.deadline), "MMM d, yyyy")}
+                    </div>
+                  )}
+                </div>
+                <Check className="h-3 w-3 text-muted-foreground" />
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
+
+        {filteredTodos.length === 0 && (
+          <div className="text-center py-4">
+            <div className="text-sm text-muted-foreground">
+              No incomplete todos match "{searchQuery}"
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              All matching todos might be completed
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function InlineMetricsPanel({
@@ -319,12 +448,20 @@ export default function JournalEditorWithMetrics({
   const [focusedBlockId, setFocusedBlockId] = useState<string | null>(null);
   const blockRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
+  // Todo-related state
+  const [showTodoPanel, setShowTodoPanel] = useState(false);
+  const [todoSearchQuery, setTodoSearchQuery] = useState("");
+  const [selectedTodoIndex, setSelectedTodoIndex] = useState(0);
+
   const metrics =
     useStore(dataStore, (state) => state.metrics as Metric[]) || [];
   const activeMetrics = metrics.filter((metric) => metric.active);
 
   const dailyLogs =
     useStore(dataStore, (state) => state.daily_logs as DailyLog[]) || [];
+
+  const todos = useStore(dataStore, (state) => state.todos as Todo[]) || [];
+  const incompleteTodos = todos.filter((todo) => !todo.isComplete);
 
   const getExistingMetricValue = useCallback(
     (metricId: string): string | null => {
@@ -342,16 +479,85 @@ export default function JournalEditorWithMetrics({
     [dailyLogs, selectedDate]
   );
 
-  const filteredMetrics = metricSearchQuery.trim()
-    ? activeMetrics.filter(
-        (metric) =>
-          metric.name.toLowerCase().includes(metricSearchQuery.toLowerCase()) ||
-          metric.description
-            .toLowerCase()
-            .includes(metricSearchQuery.toLowerCase()) ||
-          metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
-      )
-    : activeMetrics;
+  const getUsedMetricsFromJournal = useCallback((): Set<string> => {
+    const usedMetrics = new Set<string>();
+    const allContent = blocks.map(block => block.content).join('\n\n');
+    
+    // Match patterns like @metric:name:value or @metric:'name with spaces':value
+    const metricMatches = allContent.match(/@metric:(?:'([^']*)'|([^:]*)):(?![:\s])[^\s@]+/g);
+    
+    if (metricMatches) {
+      metricMatches.forEach(match => {
+        // Extract metric name from the match
+        const nameMatch = match.match(/@metric:(?:'([^']*)'|([^:]*)):/);
+        if (nameMatch) {
+          const metricName = nameMatch[1] || nameMatch[2]; // quoted or unquoted name
+          const metric = activeMetrics.find(m => m.name === metricName);
+          if (metric) {
+            usedMetrics.add(metric.id);
+          }
+        }
+      });
+    }
+    
+    return usedMetrics;
+  }, [blocks, activeMetrics]);
+
+  const getUsedTodosFromJournal = useCallback((): Set<string> => {
+    const usedTodos = new Set<string>();
+    const allContent = blocks.map(block => block.content).join('\n\n');
+    
+    // Match patterns like @todo:title:true or @todo:'title with spaces':true
+    const todoMatches = allContent.match(/@todo:(?:'([^']*)'|([^:]*)):true/g);
+    
+    if (todoMatches) {
+      todoMatches.forEach(match => {
+        // Extract todo title from the match
+        const titleMatch = match.match(/@todo:(?:'([^']*)'|([^:]*)):/);
+        if (titleMatch) {
+          const todoTitle = titleMatch[1] || titleMatch[2]; // quoted or unquoted title
+          const todo = incompleteTodos.find(t => t.title === todoTitle);
+          if (todo) {
+            usedTodos.add(todo.id);
+          }
+        }
+      });
+    }
+    
+    return usedTodos;
+  }, [blocks, incompleteTodos]);
+
+  const filteredMetrics = useMemo(() => {
+    const usedMetrics = getUsedMetricsFromJournal();
+    const availableMetrics = activeMetrics.filter(metric => !usedMetrics.has(metric.id));
+    
+    return metricSearchQuery.trim()
+      ? availableMetrics.filter(
+          (metric) =>
+            metric.name.toLowerCase().includes(metricSearchQuery.toLowerCase()) ||
+            metric.description
+              .toLowerCase()
+              .includes(metricSearchQuery.toLowerCase()) ||
+            metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
+        )
+      : availableMetrics;
+  }, [activeMetrics, metricSearchQuery, getUsedMetricsFromJournal]);
+
+  const filteredTodos = useMemo(() => {
+    const usedTodos = getUsedTodosFromJournal();
+    const availableTodos = incompleteTodos.filter(todo => !usedTodos.has(todo.id));
+    
+    return todoSearchQuery.trim()
+      ? availableTodos.filter(
+          (todo) =>
+            todo.title.toLowerCase().includes(todoSearchQuery.toLowerCase()) ||
+            (todo.description &&
+              todo.description
+                .toLowerCase()
+                .includes(todoSearchQuery.toLowerCase()))
+        )
+      : availableTodos;
+  }, [incompleteTodos, todoSearchQuery, getUsedTodosFromJournal]);
 
   const initializeBlocks = useCallback(() => {
     if (value) {
@@ -435,6 +641,7 @@ export default function JournalEditorWithMetrics({
           newBlocks.push({ id: generateBlockId(), content: "" });
         }
         updateParentValue(newBlocks);
+
         return newBlocks;
       });
     },
@@ -448,30 +655,21 @@ export default function JournalEditorWithMetrics({
     return metricMatches !== null && metricMatches.length > 0;
   }, []);
 
-  const isCorrection = useCallback(
-    (blockId: string, newContent: string, prevContent: string): boolean => {
-      const block = blocks.find((b) => b.id === blockId);
-      const history = block?.contentHistory || [];
+  const hasCompleteTodo = useCallback((content: string): boolean => {
+    const todoMatches = content.match(/@todo:(?:'[^']*'|[^:]*):true/g);
+    return todoMatches !== null && todoMatches.length > 0;
+  }, []);
 
-      if (newContent.length < prevContent.length) {
-        return true;
-      }
-
-      const recentHistory = history.slice(-3);
-      if (recentHistory.includes(newContent)) {
-        return true;
-      }
-
-      const prevAtMetricIndex = prevContent.lastIndexOf("@metric:");
-      const newAtMetricIndex = newContent.lastIndexOf("@metric:");
-
-      if (prevAtMetricIndex !== -1 && newAtMetricIndex === -1) {
-        return true;
-      }
-
-      return false;
+  const hasAnyMetricOrTodo = useCallback(
+    (content: string): boolean => {
+      return (
+        hasCompleteMetric(content) ||
+        hasCompleteTodo(content) ||
+        content.includes("@metric:") ||
+        content.includes("@todo:")
+      );
     },
-    [blocks]
+    [hasCompleteMetric, hasCompleteTodo]
   );
 
   const updateBlock = useCallback(
@@ -492,61 +690,117 @@ export default function JournalEditorWithMetrics({
           }
           return block;
         });
-        updateParentValue(newBlocks);
+
+        // Schedule parent update asynchronously
+        setTimeout(() => {
+          updateParentValue(newBlocks);
+        }, 0);
+
         return newBlocks;
       });
 
-      const lastAtMetricIndex = content.lastIndexOf("@metric:");
+      // Schedule panel state updates for the next tick to avoid setState during render
+      setTimeout(() => {
+        const lastAtMetricIndex = content.lastIndexOf("@metric:");
+        const lastAtTodoIndex = content.lastIndexOf("@todo:");
 
-      if (lastAtMetricIndex !== -1) {
-        const textAfterMetric = content.substring(lastAtMetricIndex);
+        if (
+          lastAtMetricIndex !== -1 &&
+          (lastAtTodoIndex === -1 || lastAtMetricIndex > lastAtTodoIndex)
+        ) {
+          const textAfterMetric = content.substring(lastAtMetricIndex);
 
-        const spaceAfterMetric = textAfterMetric.indexOf(" ");
-        const isIncompleteMetric =
-          spaceAfterMetric === -1 ||
-          (spaceAfterMetric > 0 &&
-            textAfterMetric.substring(spaceAfterMetric).trim() === "");
+          const spaceAfterMetric = textAfterMetric.indexOf(" ");
+          const isIncompleteMetric =
+            spaceAfterMetric === -1 ||
+            (spaceAfterMetric > 0 &&
+              textAfterMetric.substring(spaceAfterMetric).trim() === "");
 
-        if (isIncompleteMetric) {
-          const currentBlock = blocks.find((b) => b.id === blockId);
-          const prevContent = currentBlock?.content || "";
+          if (isIncompleteMetric) {
+            const isActivelyTypingMetric =
+              content.endsWith("@metric:") ||
+              (lastAtMetricIndex !== -1 &&
+                content.substring(lastAtMetricIndex).startsWith("@metric:"));
 
-          const isUserCorrection = isCorrection(blockId, content, prevContent);
+            // Only show panel if block doesn't already have a metric or todo
+            const contentBeforeCurrentMetric = content.substring(
+              0,
+              lastAtMetricIndex
+            );
+            const alreadyHasMetricOrTodo = hasAnyMetricOrTodo(
+              contentBeforeCurrentMetric
+            );
 
-          const blockHasMetric = hasCompleteMetric(content);
-
-          const isActivelyTypingMetric =
-            content.endsWith("@metric:") ||
-            (lastAtMetricIndex !== -1 &&
-              content.substring(lastAtMetricIndex).startsWith("@metric:"));
-
-          if (
-            (!isUserCorrection || isActivelyTypingMetric) &&
-            !blockHasMetric
-          ) {
-            const searchQuery = textAfterMetric.substring(8);
-            setMetricSearchQuery(searchQuery);
-            setShowMetricsPanel(true);
-            setActiveBlockId(blockId);
-            setSelectedIndex(0);
-            setIsInValueMode(false);
+            if (isActivelyTypingMetric && !alreadyHasMetricOrTodo) {
+              const searchQuery = textAfterMetric.substring(8);
+              setMetricSearchQuery(searchQuery);
+              setShowMetricsPanel(true);
+              setActiveBlockId(blockId);
+              setSelectedIndex(0);
+              setIsInValueMode(false);
+            } else {
+              setShowMetricsPanel(false);
+              setMetricSearchQuery("");
+              setActiveBlockId(null);
+            }
           } else {
             setShowMetricsPanel(false);
             setMetricSearchQuery("");
             setActiveBlockId(null);
           }
+        } else if (
+          lastAtTodoIndex !== -1 &&
+          (lastAtMetricIndex === -1 || lastAtTodoIndex > lastAtMetricIndex)
+        ) {
+          // Handle @todo: similar to @metric:
+          const textAfterTodo = content.substring(lastAtTodoIndex);
+
+          const spaceAfterTodo = textAfterTodo.indexOf(" ");
+          const isIncompleteTodo =
+            spaceAfterTodo === -1 ||
+            (spaceAfterTodo > 0 &&
+              textAfterTodo.substring(spaceAfterTodo).trim() === "");
+
+          if (isIncompleteTodo) {
+            // Only show panel if block doesn't already have a metric or todo
+            const contentBeforeCurrentTodo = content.substring(
+              0,
+              lastAtTodoIndex
+            );
+            const alreadyHasMetricOrTodo = hasAnyMetricOrTodo(
+              contentBeforeCurrentTodo
+            );
+
+            if (!alreadyHasMetricOrTodo) {
+              const searchQuery = textAfterTodo.substring(6); // "@todo:" length is 6
+              setTodoSearchQuery(searchQuery);
+              setShowTodoPanel(true);
+              setActiveBlockId(blockId);
+              setSelectedTodoIndex(0);
+
+              // Hide metrics panel if it's open
+              setShowMetricsPanel(false);
+              setMetricSearchQuery("");
+            } else {
+              setShowTodoPanel(false);
+              setTodoSearchQuery("");
+              setActiveBlockId(null);
+            }
+          } else {
+            setShowTodoPanel(false);
+            setTodoSearchQuery("");
+            setActiveBlockId(null);
+          }
         } else {
           setShowMetricsPanel(false);
           setMetricSearchQuery("");
+          setShowTodoPanel(false);
+          setTodoSearchQuery("");
           setActiveBlockId(null);
         }
-      } else {
-        setShowMetricsPanel(false);
-        setMetricSearchQuery("");
-        setActiveBlockId(null);
-      }
+      }, 0);
     },
-    [updateParentValue, blocks, isCorrection, hasCompleteMetric]
+    [updateParentValue, hasAnyMetricOrTodo]
   );
 
   const handleBlockKeyPress = useCallback(
@@ -584,7 +838,7 @@ export default function JournalEditorWithMetrics({
             }
           }, 10);
         }
-      } else if (e.key === "ArrowUp" && !showMetricsPanel) {
+      } else if (e.key === "ArrowUp" && !showMetricsPanel && !showTodoPanel) {
         const textBeforeCursor = textarea.value.substring(0, cursorPosition);
         const linesBeforeCursor = textBeforeCursor.split("\n");
         const isOnFirstLine = linesBeforeCursor.length === 1;
@@ -606,7 +860,7 @@ export default function JournalEditorWithMetrics({
             }
           }, 10);
         }
-      } else if (e.key === "ArrowDown" && !showMetricsPanel) {
+      } else if (e.key === "ArrowDown" && !showMetricsPanel && !showTodoPanel) {
         const textAfterCursor = textarea.value.substring(cursorPosition);
         const linesAfterCursor = textAfterCursor.split("\n");
         const isOnLastLine = linesAfterCursor.length === 1;
@@ -632,7 +886,7 @@ export default function JournalEditorWithMetrics({
         }
       }
     },
-    [blocks, addBlock, removeBlock, showMetricsPanel]
+    [blocks, addBlock, removeBlock, showMetricsPanel, showTodoPanel]
   );
 
   const handleSelectMetric = useCallback(
@@ -659,7 +913,12 @@ export default function JournalEditorWithMetrics({
             }
             return block;
           });
-          updateParentValue(newBlocks);
+
+          // Schedule parent update asynchronously
+          setTimeout(() => {
+            updateParentValue(newBlocks);
+          }, 0);
+
           return newBlocks;
         });
 
@@ -698,7 +957,12 @@ export default function JournalEditorWithMetrics({
             }
             return block;
           });
-          updateParentValue(newBlocks);
+
+          // Schedule parent update asynchronously
+          setTimeout(() => {
+            updateParentValue(newBlocks);
+          }, 0);
+
           return newBlocks;
         });
 
@@ -726,6 +990,55 @@ export default function JournalEditorWithMetrics({
     [getExistingMetricValue, activeBlockId, updateParentValue]
   );
 
+  const handleSelectTodo = useCallback(
+    (todo: Todo) => {
+      if (activeBlockId) {
+        // Format todo similar to metric: @todo:<name>:true
+        const todoName = todo.title.includes(" ")
+          ? `'${todo.title}'`
+          : todo.title;
+        const todoText = `@todo:${todoName}:true`;
+
+        setBlocks((prev) => {
+          const newBlocks = prev.map((block) => {
+            if (block.id === activeBlockId) {
+              const lastAtTodoIndex = block.content.lastIndexOf("@todo:");
+              if (lastAtTodoIndex !== -1) {
+                const beforeTodo = block.content.substring(0, lastAtTodoIndex);
+                return { ...block, content: beforeTodo + todoText + " " };
+              }
+            }
+            return block;
+          });
+
+          // Schedule parent update asynchronously
+          setTimeout(() => {
+            updateParentValue(newBlocks);
+          }, 0);
+
+          return newBlocks;
+        });
+
+        setShowTodoPanel(false);
+        setTodoSearchQuery("");
+        setActiveBlockId(null);
+
+        setTimeout(() => {
+          const textarea = blockRefs.current[activeBlockId];
+          if (textarea) {
+            textarea.focus();
+            const newCursorPos =
+              textarea.value.lastIndexOf(todoText) + todoText.length + 1;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+          }
+        }, 10);
+      }
+    },
+    [activeBlockId, updateParentValue]
+  );
+
   const handleConfirmValue = useCallback(() => {
     if (selectedMetric && metricValue.trim() && activeBlockId) {
       const metricName = selectedMetric.name.includes(" ")
@@ -747,7 +1060,12 @@ export default function JournalEditorWithMetrics({
           }
           return block;
         });
-        updateParentValue(newBlocks);
+
+        // Schedule parent update asynchronously
+        setTimeout(() => {
+          updateParentValue(newBlocks);
+        }, 0);
+
         return newBlocks;
       });
 
@@ -863,8 +1181,47 @@ export default function JournalEditorWithMetrics({
     setActiveBlockId(null);
   }, []);
 
+  const handleTodoPanelClose = useCallback(() => {
+    setShowTodoPanel(false);
+    setTodoSearchQuery("");
+    setSelectedTodoIndex(0);
+    setActiveBlockId(null);
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showTodoPanel) {
+        switch (e.key) {
+          case "ArrowDown":
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedTodoIndex((prev) =>
+              prev < filteredTodos.length - 1 ? prev + 1 : 0
+            );
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedTodoIndex((prev) =>
+              prev > 0 ? prev - 1 : filteredTodos.length - 1
+            );
+            break;
+          case "Enter":
+            e.preventDefault();
+            e.stopPropagation();
+            if (filteredTodos[selectedTodoIndex]) {
+              handleSelectTodo(filteredTodos[selectedTodoIndex]);
+            }
+            break;
+          case "Escape":
+            e.preventDefault();
+            e.stopPropagation();
+            handleTodoPanelClose();
+            break;
+        }
+        return;
+      }
+
       if (!showMetricsPanel) return;
 
       if (!isInValueMode) {
@@ -913,11 +1270,16 @@ export default function JournalEditorWithMetrics({
     return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [
     showMetricsPanel,
+    showTodoPanel,
     isInValueMode,
     filteredMetrics,
+    filteredTodos,
     selectedIndex,
+    selectedTodoIndex,
     handleSelectMetric,
+    handleSelectTodo,
     handleMetricsPanelClose,
+    handleTodoPanelClose,
   ]);
 
   return (
@@ -959,8 +1321,12 @@ export default function JournalEditorWithMetrics({
               <div className="p-4" onClick={handleContainerClick}>
                 {blocks.map((block, index) => {
                   const blockHasMetric = hasCompleteMetric(block.content);
+                  const blockHasTodo = hasCompleteTodo(block.content);
+                  const blockHasAnyMetricOrTodo =
+                    blockHasMetric || blockHasTodo;
                   const isActiveBlock =
-                    showMetricsPanel && activeBlockId === block.id;
+                    (showMetricsPanel || showTodoPanel) &&
+                    activeBlockId === block.id;
                   const isFocusedBlock = focusedBlockId === block.id;
 
                   return (
@@ -1005,14 +1371,14 @@ export default function JournalEditorWithMetrics({
                             }
                             rows={1}
                             className={`w-full text-sm transition-colors outline-none bg-transparent placeholder:text-muted-foreground resize-none overflow-hidden leading-tight ${
-                              blockHasMetric ? "pr-8" : ""
+                              blockHasAnyMetricOrTodo ? "pr-8" : ""
                             }`}
                             style={{
                               borderLeft: isFocusedBlock
                                 ? "2px solid #a855f7"
                                 : isActiveBlock
                                   ? "2px solid #60a5fa"
-                                  : blockHasMetric
+                                  : blockHasAnyMetricOrTodo
                                     ? "2px solid #4ade80"
                                     : "2px solid transparent",
                               paddingLeft: "8px",
@@ -1022,7 +1388,7 @@ export default function JournalEditorWithMetrics({
                                 ? "rgba(168, 85, 247, 0.1)"
                                 : isActiveBlock
                                   ? "rgba(147, 197, 253, 0.1)"
-                                  : blockHasMetric
+                                  : blockHasAnyMetricOrTodo
                                     ? "rgba(134, 239, 172, 0.1)"
                                     : "transparent",
                               marginLeft: "-2px",
@@ -1031,16 +1397,20 @@ export default function JournalEditorWithMetrics({
                               font: "inherit",
                             }}
                           />
-                          {blockHasMetric && (
+                          {blockHasAnyMetricOrTodo && (
                             <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                              <Zap className="h-3 w-3 text-green-600" />
+                              {blockHasMetric ? (
+                                <Zap className="h-3 w-3 text-green-600" />
+                              ) : (
+                                <Check className="h-3 w-3 text-purple-600" />
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
 
                       {/* Inline metrics panel for this specific block */}
-                      {isActiveBlock && (
+                      {isActiveBlock && showMetricsPanel && (
                         <div className="w-full flex justify-center mt-1 -mb-1">
                           <div className="w-full">
                             <InlineMetricsPanel
@@ -1055,6 +1425,21 @@ export default function JournalEditorWithMetrics({
                               onSelectMetric={handleSelectMetric}
                               onConfirmValue={handleConfirmValue}
                               getExistingMetricValue={getExistingMetricValue}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Inline todo panel for this specific block */}
+                      {isActiveBlock && showTodoPanel && (
+                        <div className="w-full flex justify-center mt-1 -mb-1">
+                          <div className="w-full">
+                            <InlineTodoPanel
+                              onClose={handleTodoPanelClose}
+                              selectedIndex={selectedTodoIndex}
+                              filteredTodos={filteredTodos}
+                              searchQuery={todoSearchQuery}
+                              onSelectTodo={handleSelectTodo}
                             />
                           </div>
                         </div>
@@ -1099,6 +1484,13 @@ export default function JournalEditorWithMetrics({
                         to add metrics
                       </li>
                       <li>
+                        Type{" "}
+                        <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
+                          @todo:
+                        </kbd>{" "}
+                        to mark todos for completion (completed when saved)
+                      </li>
+                      <li>
                         Press{" "}
                         <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
                           Shift+Enter
@@ -1106,8 +1498,10 @@ export default function JournalEditorWithMetrics({
                         to add a new line within a block
                       </li>
                       <li>
-                        <strong>Each block can only have one @metric</strong> -
-                        use separate blocks for multiple metrics
+                        <strong>
+                          Each block can only have one @metric: OR one @todo:
+                        </strong>{" "}
+                        - use separate blocks for multiple items
                       </li>
                       <li>
                         All blocks are combined with blank lines when saved

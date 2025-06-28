@@ -80,8 +80,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - add a "daily journal" that is able to do like "@feature" for tracking metrics
   - also adding templates for the user to be able to select that is added to the journal
-- in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date
-- in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it
 - in daily journal, for the records displaying, show own custom view
 - in daily journal, when the user typed "@metric:" and it is highlighting an already logged value, it should still change the background so the user knows that's what being highlighted
 
@@ -98,8 +96,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing
 - in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view
 
+- make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
+
 ### DONE
 
+- in daily journal, for time entries, it should show the entries sorted by date, with the description -> start time and end time, no need to show the date [DONE 2025-06-27]
+- in daily journal, when the user types "@metric:", and chooses a metric that is a boolean, it should just automatically add the ":true" since if the user is logging a boolean metric, it means they completed it [DONE 2025-06-27]
 - in daily journal, add a button that toggles auto-save, which doesn't show a toast when it's on auto-save, but it will show an icon next to that button on whether the data has been autosaved. if it's not autosaved, it will show a toast [DONE 2025-06-25]
 - in daily journal, when the user selects the metric, it doesn't seem like it's being logged automatically [DONE 2025-06-25]
 - in daily journal, allow for the "record for the date" to be "collasped vertically" and "expanded vertically" [DONE 2025-06-25]

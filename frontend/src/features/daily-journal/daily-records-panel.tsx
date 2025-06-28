@@ -20,15 +20,17 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
+  Check,
 } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { fieldDefinitionsStore } from "@/features/field-definitions/field-definitions-store";
-import { format } from "date-fns";
+import { format, differenceInDays, differenceInHours } from "date-fns";
 import FieldValueDisplay from "@/components/reusable/field-value-display";
 import ReusableMultiSelect, {
   MultiSelectOption,
 } from "@/components/reusable/reusable-multiselect";
+import { getDisplayValue } from "@/lib/table-utils";
 
 interface DailyRecordsPanelProps {
   selectedDate: Date;
@@ -175,6 +177,17 @@ export default function DailyRecordsPanel({
 
       const dateRecords = records
         .filter((record: any) => {
+          // Special handling for todos - only show completed ones
+          if (datasetId === "todos") {
+            if (!record.is_complete || !record.completed_at) return false;
+            const completedDate = new Date(record.completed_at);
+            return (
+              completedDate.getFullYear() === selectedDate.getFullYear() &&
+              completedDate.getMonth() === selectedDate.getMonth() &&
+              completedDate.getDate() === selectedDate.getDate()
+            );
+          }
+          
           if (!record[dateField.key]) return false;
           const recordDate = new Date(record[dateField.key]);
 
@@ -195,7 +208,8 @@ export default function DailyRecordsPanel({
             bTime = new Date(b[dateField.key]);
           }
 
-          return bTime.getTime() - aTime.getTime();
+          // Sort early to late (ascending order)
+          return aTime.getTime() - bTime.getTime();
         });
 
       if (dateRecords.length > 0) {
@@ -390,34 +404,154 @@ export default function DailyRecordsPanel({
                         className="p-3 bg-muted/50 rounded-md w-full"
                       >
                         <div className="space-y-1">
-                          {dataset.fields
-                            .filter(
-                              (field) =>
-                                field.key !== "date" &&
-                                record[field.key] !== undefined &&
-                                record[field.key] !== null &&
-                                record[field.key] !== ""
-                            )
-                            .slice(0, 3)
-                            .map((field) => (
-                              <div
-                                key={field.key}
-                                className="flex items-start gap-2 text-sm"
-                              >
-                                <span className="font-medium text-muted-foreground min-w-0 flex-shrink-0">
-                                  {field.displayName}:
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <FieldValueDisplay
-                                    field={field}
-                                    value={record[field.key]}
-                                  />
-                                </div>
+                          {/* Special handling for Time Entries */}
+                          {datasetId === "time_entries" ? (
+                            <>
+                              <div className="text-sm font-medium">
+                                {record.start_time && record.end_time
+                                  ? `${format(
+                                      new Date(record.start_time),
+                                      "h:mm a"
+                                    )} - ${format(
+                                      new Date(record.end_time),
+                                      "h:mm a"
+                                    )}`
+                                  : record.start_time
+                                  ? format(new Date(record.start_time), "h:mm a")
+                                  : "No time"}
                               </div>
-                            ))}
+                              <div className="text-sm text-muted-foreground">
+                                {record.description || "No description"}
+                              </div>
+                            </>
+                          ) : datasetId === "daily_logs" ? (
+                            /* Special handling for Daily Logs */
+                            (() => {
+                              // Resolve metric name
+                              const metricField = dataset.fields.find(f => f.key === "metric_id");
+                              let metricName = "";
+                              if (metricField && record.metric_id) {
+                                const metrics = allData.metrics || [];
+                                const metric = metrics.find((m: any) => m.id === record.metric_id);
+                                metricName = metric ? getDisplayValue(metricField, metric) : "";
+                              }
+                              
+                              // Resolve experiment name
+                              const experimentField = dataset.fields.find(f => f.key === "experiment_id");
+                              let experimentName = "";
+                              if (experimentField && record.experiment_id) {
+                                const experiments = allData.experiments || [];
+                                const experiment = experiments.find((e: any) => e.id === record.experiment_id);
+                                experimentName = experiment ? getDisplayValue(experimentField, experiment) : "";
+                              }
+                              
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="font-medium">
+                                      {metricName}
+                                    </span>
+                                    <span className="font-medium">
+                                      {record.value || "No value"}
+                                    </span>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {experimentName && (
+                                      <span>
+                                        <i>Experiment:</i> {experimentName}
+                                      </span>
+                                    )}
+                                    {experimentName && record.notes && " • "}
+                                    {record.notes && (
+                                      <span>
+                                        <i>Note:</i> {record.notes}
+                                      </span>
+                                    )}
+                                  </div>
+                                </>
+                              );
+                            })()
+                          ) : datasetId === "financial_logs" ? (
+                            /* Special handling for Financial Logs */
+                            <>
+                              <div className="text-sm font-medium">
+                                {record.amount !== undefined && record.amount !== null && (
+                                  <span className={record.amount < 0 ? "text-red-600" : "text-green-600"}>
+                                    ${Math.abs(record.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                )}
+                                {record.amount !== undefined && record.amount !== null && record.description && " "}
+                                {record.description || "No description"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {record.category || "No category"}
+                              </div>
+                            </>
+                          ) : datasetId === "todos" ? (
+                            /* Special handling for Todos - only completed ones shown */
+                            (() => {
+                              const createdDate = record.created_at ? new Date(record.created_at) : null;
+                              const completedDate = record.completed_at ? new Date(record.completed_at) : null;
+                              let timeTaken = "";
+                              
+                              if (createdDate && completedDate) {
+                                const daysDiff = differenceInDays(completedDate, createdDate);
+                                const hoursDiff = differenceInHours(completedDate, createdDate);
+                                
+                                if (daysDiff > 0) {
+                                  timeTaken = `${daysDiff} day${daysDiff > 1 ? 's' : ''}`;
+                                } else if (hoursDiff > 0) {
+                                  timeTaken = `${hoursDiff} hour${hoursDiff > 1 ? 's' : ''}`;
+                                } else {
+                                  timeTaken = "< 1 hour";
+                                }
+                              }
+                              
+                              return (
+                                <>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Check className="h-4 w-4 text-green-600" />
+                                    <span className="font-medium">{record.title || "Untitled todo"}</span>
+                                  </div>
+                                  {timeTaken && (
+                                    <div className="text-xs text-muted-foreground ml-6">
+                                      Completed in {timeTaken}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()
+                          ) : (
+                            /* Default rendering for other datasets */
+                            dataset.fields
+                              .filter(
+                                (field) =>
+                                  field.key !== "date" &&
+                                  record[field.key] !== undefined &&
+                                  record[field.key] !== null &&
+                                  record[field.key] !== ""
+                              )
+                              .slice(0, 3)
+                              .map((field) => (
+                                <div
+                                  key={field.key}
+                                  className="flex items-start gap-2 text-sm"
+                                >
+                                  <span className="font-medium text-muted-foreground min-w-0 flex-shrink-0">
+                                    {field.displayName}:
+                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <FieldValueDisplay
+                                      field={field}
+                                      value={record[field.key]}
+                                    />
+                                  </div>
+                                </div>
+                              ))
+                          )}
 
-                          {/* Show creation time if available */}
-                          {record.created_at && (
+                          {/* Show creation time if available (but not for time_entries) */}
+                          {record.created_at && datasetId !== "time_entries" && (
                             <div className="text-xs text-muted-foreground mt-2">
                               Created:{" "}
                               {format(new Date(record.created_at), "h:mm a")}

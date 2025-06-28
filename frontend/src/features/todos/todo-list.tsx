@@ -15,11 +15,23 @@ import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { getSortedTodos } from "./todo-utils";
 import TodoListItem from "./todo-list-item";
+import useLoadData from "@/hooks/useLoadData";
+import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 interface TodoListProps {
   showPrivate: boolean;
 }
 
 export default function TodoList({ showPrivate }: TodoListProps) {
+  const { getDatasetFields } = useFieldDefinitions();
+  const todoFields = getDatasetFields("todos");
+  
+  const { loadData: loadTodos } = useLoadData({
+    fields: todoFields,
+    datasetId: "todos",
+    title: "Todos",
+    fetchDataNow: true,
+  });
+
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
   const isLoading = useStore(loadingStore, (state) => state.todos);
   const [todoMetrics, setTodoMetrics] = useState<Record<string, any>>({});
@@ -27,6 +39,10 @@ export default function TodoList({ showPrivate }: TodoListProps) {
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [hasMetricFilter, setHasMetricFilter] = useState(false);
   const [hasDeadlineFilter, setHasDeadlineFilter] = useState("all");
+
+  useEffect(() => {
+    loadTodos();
+  }, []);
 
   useEffect(() => {
     const loadMetrics = async () => {
@@ -75,13 +91,13 @@ export default function TodoList({ showPrivate }: TodoListProps) {
 
       switch (tabId) {
         case "active":
-          return !todo.isComplete;
+          return !(todo as any).is_complete && !(todo.isComplete);
         case "overdue":
           return (
-            !todo.isComplete && todo.deadline && isPast(new Date(todo.deadline))
+            !(todo as any).is_complete && !todo.isComplete && todo.deadline && isPast(new Date(todo.deadline))
           );
         case "completed":
-          return todo.isComplete;
+          return (todo as any).is_complete || todo.isComplete;
         default:
           return true;
       }
@@ -198,21 +214,21 @@ export default function TodoList({ showPrivate }: TodoListProps) {
     },
     {
       id: "active",
-      label: `Active (${visibleTodos.filter((t) => !t.isComplete).length})`,
+      label: `Active (${visibleTodos.filter((t) => !(t as any).is_complete && !t.isComplete).length})`,
       content: <div className="space-y-4">{renderTodoList("active")}</div>,
     },
     {
       id: "overdue",
       label: `Overdue (${
         visibleTodos.filter(
-          (t) => !t.isComplete && t.deadline && isPast(new Date(t.deadline))
+          (t) => !(t as any).is_complete && !t.isComplete && t.deadline && isPast(new Date(t.deadline))
         ).length
       })`,
       content: <div className="space-y-4">{renderTodoList("overdue")}</div>,
     },
     {
       id: "completed",
-      label: `Completed (${visibleTodos.filter((t) => t.isComplete).length})`,
+      label: `Completed (${visibleTodos.filter((t) => (t as any).is_complete || t.isComplete).length})`,
       content: <div className="space-y-4">{renderTodoList("completed")}</div>,
     },
   ];

@@ -208,6 +208,13 @@ export default function DailyJournalEditor({
                           to see all available metrics
                         </li>
                         <li>
+                          • Type{" "}
+                          <code className="bg-muted px-1 rounded">
+                            @todo:
+                          </code>{" "}
+                          to see incomplete todos and complete them
+                        </li>
+                        <li>
                           • Continue typing to filter (e.g.,{" "}
                           <code className="bg-muted px-1 rounded">
                             @metric:weight
@@ -279,7 +286,7 @@ export default function DailyJournalEditor({
                 key={`${selectedDate.toISOString()}-${existingEntry?.id || "new"}`}
                 value={entry}
                 onChange={handleEntryChange}
-                placeholder="Write about your day... Type @metric: to add metrics!"
+                placeholder="Write about your day... Type @metric: to add metrics or @todo: to mark todos complete!"
                 selectedDate={selectedDate}
               />
             </div>

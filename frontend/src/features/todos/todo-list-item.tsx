@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Todo, TodoPriority, TodoStatus } from "@/store/todo-definitions.d";
+import { Todo, TodoPriority } from "@/store/todo-definitions.d";
 import { Link } from "@tanstack/react-router";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { AlertCircle, Calendar, CheckCircle2, Clock } from "lucide-react";
@@ -25,15 +25,30 @@ export default function TodoListItem({
 }) {
   const handleCompleteTodo = async (todo: Todo) => {
     const updatedTodo = {
-      ...todo,
-      isComplete: true,
-      completedAt: new Date(),
-      status: TodoStatus.COMPLETED,
+      id: todo.id,
+      title: todo.title,
+      description: todo.description || "",
+      deadline: todo.deadline ? new Date(todo.deadline).toISOString() : null,
+      priority: todo.priority,
+      tags: todo.tags || "",
+      related_metric_id: todo.relatedMetricId || null,
+      metric_type: todo.metricType || null,
+      failed_deadlines: todo.failedDeadlines
+        ? JSON.stringify(todo.failedDeadlines)
+        : null,
+      reminder_date: todo.reminderDate
+        ? new Date(todo.reminderDate).toISOString()
+        : null,
+      is_complete: true,
+      completed_at: new Date().toISOString(),
+      status: "completed",
+      private: todo.private || false,
     };
 
     try {
       const response = await ApiService.updateRecord(todo.id, updatedTodo);
       if (response) {
+        console.log(response);
         updateEntry(todo.id, response, "todos");
         toast.success(`"${todo.title}" marked as completed!`);
 
@@ -104,7 +119,10 @@ export default function TodoListItem({
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getDeadlineStatus = (deadline: string | undefined, isComplete: boolean) => {
+  const getDeadlineStatus = (
+    deadline: string | undefined,
+    isComplete: boolean
+  ) => {
     if (isComplete || !deadline) return null;
 
     const deadlineDate = new Date(deadline);
@@ -185,7 +203,7 @@ export default function TodoListItem({
     <ReusableCard
       showHeader={false}
       cardClassName={`border-l-4 ${
-        todo.isComplete
+        ((todo as any).is_complete || todo.isComplete)
           ? "border-l-green-500"
           : todo.deadline && isPast(new Date(todo.deadline))
             ? "border-l-red-500"
@@ -201,7 +219,9 @@ export default function TodoListItem({
                 <ProtectedField>
                   <h3
                     className={`font-medium break-words ${
-                      todo.isComplete ? "line-through text-muted-foreground" : ""
+                      ((todo as any).is_complete || todo.isComplete)
+                        ? "line-through text-muted-foreground"
+                        : ""
                     }`}
                   >
                     {todo.title}
@@ -210,7 +230,7 @@ export default function TodoListItem({
               ) : (
                 <h3
                   className={`font-medium break-words ${
-                    todo.isComplete ? "line-through text-muted-foreground" : ""
+                    ((todo as any).is_complete || todo.isComplete) ? "line-through text-muted-foreground" : ""
                   }`}
                 >
                   {todo.title}
@@ -220,7 +240,7 @@ export default function TodoListItem({
                 {getPriorityBadge(todo.priority as TodoPriority)}
                 {getDeadlineStatus(
                   todo.deadline?.toISOString(),
-                  todo.isComplete
+                  (todo as any).is_complete || todo.isComplete
                 )}
 
                 {todo.private ? (
@@ -229,8 +249,9 @@ export default function TodoListItem({
                   renderTags()
                 )}
               </div>
-              {!isCompact && todo.description && (
-                todo.private ? (
+              {!isCompact &&
+                todo.description &&
+                (todo.private ? (
                   <ProtectedField>
                     <p className="text-sm text-muted-foreground break-words">
                       {todo.description}
@@ -240,14 +261,13 @@ export default function TodoListItem({
                   <p className="text-sm text-muted-foreground break-words">
                     {todo.description}
                   </p>
-                )
-              )}
+                ))}
             </div>
 
             {/* Right section - Actions */}
             {!isCompact && (
               <div className="flex gap-1 sm:ml-4 self-start sm:self-center flex-shrink-0">
-                {!todo.isComplete && (
+                {!(todo as any).is_complete && !todo.isComplete && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -257,7 +277,7 @@ export default function TodoListItem({
                     <CheckCircle2 className="h-4 w-4" />
                   </Button>
                 )}
-                {!todo.isComplete && (
+                {!(todo as any).is_complete && !todo.isComplete && (
                   <>
                     <AddTodoButton
                       existingTodo={todo}
@@ -297,7 +317,7 @@ export default function TodoListItem({
               {todo.deadline ? (
                 <>
                   Deadline: {new Date(todo.deadline).toLocaleDateString()}
-                  {!todo.isComplete && (
+                  {!(todo as any).is_complete && !todo.isComplete && (
                     <span>
                       {" "}
                       -{" "}
