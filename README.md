@@ -76,13 +76,12 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- see if there's a way so that if a user is scrolling in a box, it only scrolls in that box
-- in daily journal, make it so that the user can click anywhere in the input box and it will focus on the input block closest to the click
-
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 ### DONE
 
+- see if there's a way so that if a user is scrolling in a box, it only scrolls in that box [DONE 2025-06-28]
+- in daily journal, make it so that the user can click anywhere in the input box and it will focus on the input block closest to the click [DONE 2025-06-28]
 - make it so that daily journal has "optional" dependencies for basically all the other features [DONE 2025-06-28]
 - in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing [DONE 2025-06-28]
 - in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view [DONE 2025-06-28]

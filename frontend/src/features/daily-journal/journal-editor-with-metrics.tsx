@@ -1572,7 +1572,7 @@ export default function JournalEditorWithMetrics({
       <div className="relative">
         {activeTab === "edit" ? (
           <div className="flex-1">
-            <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border bg-background overflow-y-auto">
+            <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border bg-background overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200">
               <div 
                 className="p-4 min-h-full cursor-text" 
                 onClick={handleContainerClick}
@@ -1800,7 +1800,7 @@ export default function JournalEditorWithMetrics({
             </div>
           </div>
         ) : (
-          <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border overflow-y-auto">
+          <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200">
             <div className="px-3 py-2 text-sm prose prose-sm dark:prose-invert max-w-none">
               {value ? (
                 <ReactMarkdown>{value}</ReactMarkdown>
