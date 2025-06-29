@@ -1253,16 +1253,31 @@ export default function JournalEditorWithMetrics({
 
       if (blockPositions.length === 0) return;
 
+      // Find the closest block to the click position
+      let closestBlock = null;
+      let minDistance = Infinity;
+
+      for (const blockPos of blockPositions) {
+        // Check if click is within the block's vertical bounds
+        if (clickY >= blockPos.top && clickY <= blockPos.bottom) {
+          closestBlock = blockPos;
+          break;
+        }
+        
+        // Otherwise calculate distance to the block
+        const distanceToTop = Math.abs(clickY - blockPos.top);
+        const distanceToBottom = Math.abs(clickY - blockPos.bottom);
+        const distance = Math.min(distanceToTop, distanceToBottom);
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestBlock = blockPos;
+        }
+      }
+
+      // If clicking below all blocks, focus the last block
       const lastBlockPos = blockPositions[blockPositions.length - 1];
-
-      const containerElement =
-        e.currentTarget.querySelector(".blocks-container") || e.currentTarget;
-      const containerRect = containerElement.getBoundingClientRect();
-
-      const containerHeight = containerRect.height;
-      const bottomThreshold = containerRect.bottom - containerHeight * 0.3;
-
-      if (clickY > bottomThreshold || clickY > lastBlockPos.bottom + 10) {
+      if (clickY > lastBlockPos.bottom) {
         lastBlockPos.textarea.focus();
         setTimeout(() => {
           lastBlockPos.textarea.setSelectionRange(
@@ -1273,19 +1288,37 @@ export default function JournalEditorWithMetrics({
         return;
       }
 
-      let closestBlock = blockPositions[0];
-      let minDistance = Math.abs(clickY - closestBlock.centerY);
+      // If clicking above all blocks, focus the first block
+      const firstBlockPos = blockPositions[0];
+      if (clickY < firstBlockPos.top) {
+        firstBlockPos.textarea.focus();
+        setTimeout(() => {
+          firstBlockPos.textarea.setSelectionRange(0, 0);
+        }, 0);
+        return;
+      }
 
-      blockPositions.forEach((blockPos) => {
-        const distance = Math.abs(clickY - blockPos.centerY);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestBlock = blockPos;
-        }
-      });
-
+      // Focus the closest block
       if (closestBlock) {
         closestBlock.textarea.focus();
+        
+        // Try to position cursor based on click X position within the textarea
+        const clickX = e.clientX;
+        const textareaRect = closestBlock.textarea.getBoundingClientRect();
+        const relativeX = clickX - textareaRect.left;
+        
+        // Simple heuristic: if clicking in the right half, put cursor at end
+        // Otherwise put it at the beginning
+        setTimeout(() => {
+          if (relativeX > textareaRect.width / 2) {
+            closestBlock.textarea.setSelectionRange(
+              closestBlock.textarea.value.length,
+              closestBlock.textarea.value.length
+            );
+          } else {
+            closestBlock.textarea.setSelectionRange(0, 0);
+          }
+        }, 0);
       }
     },
     [blocks, addBlock]
@@ -1540,7 +1573,11 @@ export default function JournalEditorWithMetrics({
         {activeTab === "edit" ? (
           <div className="flex-1">
             <div className="min-h-[400px] max-h-[60vh] w-full rounded-md border bg-background overflow-y-auto">
-              <div className="p-4" onClick={handleContainerClick}>
+              <div 
+                className="p-4 min-h-full cursor-text" 
+                onClick={handleContainerClick}
+                style={{ minHeight: "inherit" }}
+              >
                 {blocks.map((block, index) => {
                   const blockHasMetric = hasCompleteMetric(block.content);
                   const blockHasTodo = hasCompleteTodo(block.content);
@@ -1676,10 +1713,16 @@ export default function JournalEditorWithMetrics({
                   );
                 })}
 
+                {/* Add invisible spacer to ensure minimum clickable area */}
+                <div className="min-h-[100px]" aria-hidden="true" />
+                
                 {!value ? (
                   <div className="text-xs text-muted-foreground mt-4 p-2 bg-muted/20 rounded">
                     <strong>Tips:</strong>
                     <ul className="list-disc list-inside mt-1 space-y-1">
+                      <li>
+                        Click anywhere in the editor to focus the nearest block
+                      </li>
                       <li>
                         Press{" "}
                         <kbd className="px-1 py-0.5 bg-muted rounded text-xs">
