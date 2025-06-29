@@ -382,10 +382,31 @@ export default function DataLogsManager<T extends Record<string, any>>({
       fieldDefinitions.forEach((field) => {
         if (field.type === "date" && processedData[field.key as keyof T]) {
           const dateValue = processedData[field.key as keyof T] as string;
-          if (dateValue && !dateValue.includes("T")) {
-            const localDate = new Date(dateValue + "T00:00:00");
-            processedData[field.key as keyof T] =
-              localDate.toISOString() as T[keyof T];
+          if (dateValue) {
+            // Check if the date is already in ISO format
+            if (dateValue.includes("T") || dateValue.includes("Z")) {
+              // Already in ISO format, use as-is
+              const date = new Date(dateValue);
+              if (!isNaN(date.getTime())) {
+                processedData[field.key as keyof T] =
+                  date.toISOString() as T[keyof T];
+              } else {
+                console.error(`Invalid ISO date: ${dateValue}`);
+                processedData[field.key as keyof T] =
+                  new Date().toISOString() as T[keyof T];
+              }
+            } else {
+              // Assume it's a date string without time, create local date
+              const localDate = new Date(dateValue + "T00:00:00");
+              if (!isNaN(localDate.getTime())) {
+                processedData[field.key as keyof T] =
+                  localDate.toISOString() as T[keyof T];
+              } else {
+                console.error(`Invalid date: ${dateValue}`);
+                processedData[field.key as keyof T] =
+                  new Date().toISOString() as T[keyof T];
+              }
+            }
           }
         }
       });

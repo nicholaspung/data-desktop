@@ -121,7 +121,16 @@ export default function BodyMeasurementsVisualization({
     return Array.from(measurementsByDate.keys())
       .map((dateString) => {
         try {
-          const date = new Date(dateString + "T00:00:00");
+          let date: Date;
+          // Check if the date is already in ISO format
+          if (dateString.includes("T") || dateString.includes("Z")) {
+            // Already in ISO format, use as-is
+            date = new Date(dateString);
+          } else {
+            // Assume it's a date string without time, create local date
+            date = new Date(dateString + "T00:00:00");
+          }
+          
           if (isNaN(date.getTime())) {
             console.warn("Invalid date string for options:", dateString);
             return null;

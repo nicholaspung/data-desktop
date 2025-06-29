@@ -108,10 +108,28 @@ export default function MultiModeAddDialog({
           typeof dateValue
         );
         if (dateValue) {
-          const localDate = new Date(dateValue + "T00:00:00");
-          console.log(`Local date created:`, localDate);
-          console.log(`ISO string:`, localDate.toISOString());
-          processed[field.key] = localDate.toISOString();
+          // Check if the date is already in ISO format
+          if (dateValue.includes("T") || dateValue.includes("Z")) {
+            // Already in ISO format, use as-is
+            const date = new Date(dateValue);
+            if (!isNaN(date.getTime())) {
+              processed[field.key] = date.toISOString();
+            } else {
+              console.error(`Invalid ISO date: ${dateValue}`);
+              processed[field.key] = new Date().toISOString();
+            }
+          } else {
+            // Assume it's a date string without time, create local date
+            const localDate = new Date(dateValue + "T00:00:00");
+            console.log(`Local date created:`, localDate);
+            console.log(`ISO string:`, localDate.toISOString());
+            if (!isNaN(localDate.getTime())) {
+              processed[field.key] = localDate.toISOString();
+            } else {
+              console.error(`Invalid date: ${dateValue}`);
+              processed[field.key] = new Date().toISOString();
+            }
+          }
         }
       }
     });
