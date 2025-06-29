@@ -4,7 +4,6 @@ import dataStore from "@/store/data-store";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Badge } from "@/components/ui/badge";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { BookOpen } from "lucide-react";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function JournalingDashboardSummary() {
@@ -163,5 +162,5 @@ registerDashboardSummary({
   ],
   name: "Journaling",
   description: "Journal thoughts, gratitude, and affirmations",
-  icon: BookOpen,
+  icon: FEATURE_ICONS.JOURNALING,
 });

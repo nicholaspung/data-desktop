@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format, differenceInDays, addYears } from "date-fns";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 export default function PeopleCRMDashboardSummary() {
   const people = useStore(dataStore, (state) => state.people);
@@ -320,5 +321,5 @@ registerDashboardSummary({
   ],
   name: "People CRM",
   description: "Manage your contacts and relationships",
-  icon: Users,
+  icon: FEATURE_ICONS.PEOPLE_CRM,
 });

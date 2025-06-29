@@ -1,6 +1,6 @@
 import DailyJournalDashboardSummary from "./daily-journal-dashboard-summary";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
-import { BookOpen } from "lucide-react";
+import { FEATURE_ICONS } from "@/lib/icons";
 
 registerDashboardSummary({
   route: "/daily-journal",
@@ -15,5 +15,5 @@ registerDashboardSummary({
   datasets: ["daily_journal"],
   name: "Daily Journal",
   description: "Daily journal with automatic metric detection",
-  icon: BookOpen,
+  icon: FEATURE_ICONS.BOOK_OPEN,
 });

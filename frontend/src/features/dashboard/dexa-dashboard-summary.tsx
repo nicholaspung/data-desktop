@@ -5,7 +5,6 @@ import { formatDate } from "@/lib/date-utils";
 import { DEXAScan } from "@/store/dexa-definitions";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { PieChart } from "lucide-react";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function DEXADashboardSummary() {
@@ -109,5 +108,5 @@ registerDashboardSummary({
   datasets: ["dexa"],
   name: "DEXA Scans",
   description: "Track body composition from DEXA scans",
-  icon: PieChart,
+  icon: FEATURE_ICONS.DEXA_SCAN,
 });

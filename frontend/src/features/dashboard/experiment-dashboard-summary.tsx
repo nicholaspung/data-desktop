@@ -10,7 +10,7 @@ import { Link } from "@tanstack/react-router";
 import { Progress } from "@/components/ui/progress";
 import { OngoingIndicator } from "@/components/experiments/ongoing-indicator";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { Calendar, FlaskConical } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function ExperimentDashboardSummary() {
@@ -269,5 +269,5 @@ registerDashboardSummary({
   datasets: ["experiments", "experiment_metrics"],
   name: "Experiments",
   description: "Create and manage self-experiments",
-  icon: FlaskConical,
+  icon: FEATURE_ICONS.EXPERIMENTS,
 });

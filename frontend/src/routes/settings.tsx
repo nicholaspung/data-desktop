@@ -28,6 +28,12 @@ const getRoutes = () => {
       icon: <FEATURE_ICONS.HOME className="h-4 w-4 mr-2" />,
     },
     {
+      path: "/todos",
+      name: "Todos",
+      description: "Manage your todo list and tasks",
+      icon: <FEATURE_ICONS.TODOS className="h-4 w-4 mr-2" />,
+    },
+    {
       path: "/metric-calendar",
       name: "Metric Calendar",
       description: "View metrics in calendar format",

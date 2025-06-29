@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { FileText } from "lucide-react";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +102,7 @@ export default function FilesDashboardSummary() {
     return (
       <ReusableSummary
         title="Files"
-        titleIcon={<FileText className="h-5 w-5 text-primary" />}
+        titleIcon={<FEATURE_ICONS.FILE_TEXT className="h-5 w-5 text-primary" />}
         linkText="View Files"
         linkTo="/files"
         emptyState={{
@@ -216,7 +215,7 @@ export default function FilesDashboardSummary() {
   return (
     <ReusableSummary
       title="Files"
-      titleIcon={<FileText className="h-5 w-5 text-primary" />}
+      titleIcon={<FEATURE_ICONS.FILE_TEXT className="h-5 w-5 text-primary" />}
       linkText="View All Files"
       linkTo="/files"
       customContent={

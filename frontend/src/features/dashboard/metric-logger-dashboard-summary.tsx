@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import { CheckCircle2, Circle, Lock, Tag, Zap } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Tag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -438,5 +438,5 @@ registerDashboardSummary({
   datasets: ["metrics", "daily_logs", "metric_categories"],
   name: "Metric Logger",
   description: "Log metrics on-demand",
-  icon: Zap,
+  icon: FEATURE_ICONS.METRIC_LOGGER,
 });

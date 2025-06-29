@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Edit, CalendarDays } from "lucide-react";
+import { Clock, Edit } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { Metric, DailyLog, GoalType } from "@/store/experiment-definitions";
@@ -604,5 +604,5 @@ registerDashboardSummary({
   datasets: ["metrics", "daily_logs", "metric_categories"],
   name: "Daily Tracker",
   description: "Track daily habits and metrics",
-  icon: CalendarDays,
+  icon: FEATURE_ICONS.DAILY_TRACKER,
 });
