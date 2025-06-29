@@ -90,11 +90,10 @@ ${
       header={
         <FeatureHeader
           title="Daily Journal"
-          description="Record your daily thoughts and automatically track metrics from your writing"
+          description="Write daily entries with automatic metric extraction, todo management, and intelligent text processing"
           storageKey="daily-journal-page"
           helpText={getHelpText()}
           helpVariant="info"
-          developmentStage="alpha"
           guideContent={getGuideContent()}
         >
           <FEATURE_ICONS.BOOK_OPEN className="h-8 w-8" />
