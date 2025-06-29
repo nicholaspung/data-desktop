@@ -129,6 +129,20 @@ export default function DailyRecordsPanel({
       defaultSelected.push("daily_journal");
     }
     setSelectedFeatures(defaultSelected);
+  }, []); // Remove featureOptions dependency to prevent re-runs
+
+  // Separate effect to filter out invalid features when options change
+  useEffect(() => {
+    setSelectedFeatures((current) => {
+      const validFeatures = current.filter((featureId) =>
+        featureOptions.some((option) => option.id === featureId)
+      );
+      // Only update if there's a difference
+      if (validFeatures.length !== current.length) {
+        return validFeatures;
+      }
+      return current;
+    });
   }, [featureOptions]);
 
   useEffect(() => {

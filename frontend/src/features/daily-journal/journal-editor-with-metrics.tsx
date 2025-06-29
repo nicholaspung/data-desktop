@@ -128,7 +128,7 @@ function InlineTodoPanel({
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-purple-600" />
             <span className="font-medium text-sm">
-              Mark Todo for Completion
+              Select Todo (Mark for Completion)
             </span>
           </div>
           <Button
@@ -150,7 +150,7 @@ function InlineTodoPanel({
         </div>
 
         <div className="text-xs text-muted-foreground">
-          {filteredTodos.length} incomplete todos
+          {filteredTodos.length} todos ({filteredTodos.filter(t => !t.is_complete).length} incomplete, {filteredTodos.filter(t => t.is_complete).length} completed for this date)
         </div>
 
         <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2 rounded border border-amber-200 dark:border-amber-800">
@@ -161,50 +161,79 @@ function InlineTodoPanel({
 
         <ScrollArea className="h-64" id="todos-scroll-area">
           <div className="space-y-1">
-            {filteredTodos.map((todo, index) => (
-              <Button
-                key={todo.id}
-                id={`todo-option-${index}`}
-                variant="ghost"
-                className={`w-full justify-start p-2 h-auto text-left ${
-                  index === selectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent"
-                }`}
-                onClick={() => onSelectTodo(todo)}
-              >
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium text-sm">{todo.title}</span>
-                    {todo.priority && (
-                      <Badge
-                        variant={
-                          todo.priority === "urgent"
-                            ? "destructive"
-                            : todo.priority === "high"
-                              ? "default"
-                              : "secondary"
-                        }
-                        className="text-xs h-4"
-                      >
-                        {todo.priority}
-                      </Badge>
+            {filteredTodos.map((todo, index) => {
+              const isCompleted = todo.is_complete;
+              
+              return (
+                <Button
+                  key={todo.id}
+                  id={`todo-option-${index}`}
+                  variant="ghost"
+                  className={`w-full justify-start p-2 h-auto text-left ${
+                    index === selectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-accent"
+                  } ${
+                    isCompleted
+                      ? "border-l-2 border-l-green-500"
+                      : ""
+                  }`}
+                  onClick={() => onSelectTodo(todo)}
+                >
+                  {index === selectedIndex && (
+                    <ArrowRight className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium text-sm">{todo.title}</span>
+                      {todo.priority && (
+                        <Badge
+                          variant={
+                            todo.priority === "urgent"
+                              ? "destructive"
+                              : todo.priority === "high"
+                                ? "default"
+                                : "secondary"
+                          }
+                          className="text-xs h-4"
+                        >
+                          {todo.priority}
+                        </Badge>
+                      )}
+                      {isCompleted && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs h-4 bg-green-100 text-green-800 border-green-300"
+                        >
+                          <Check className="h-2 w-2 mr-1" />
+                          Completed
+                        </Badge>
+                      )}
+                    </div>
+                    {todo.description && (
+                      <div className="text-xs text-muted-foreground">
+                        {todo.description}
+                      </div>
+                    )}
+                    {todo.deadline && (
+                      <div className="text-xs text-muted-foreground">
+                        Due: {format(new Date(todo.deadline), "MMM d, yyyy")}
+                      </div>
+                    )}
+                    {isCompleted && todo.completed_at && (
+                      <div className="text-xs font-medium text-green-700 dark:text-green-400">
+                        Completed: {format(new Date(todo.completed_at), "MMM d, yyyy")}
+                      </div>
                     )}
                   </div>
-                  {todo.description && (
-                    <div className="text-xs text-muted-foreground">
-                      {todo.description}
-                    </div>
+                  {isCompleted ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Check className="h-3 w-3 text-muted-foreground" />
                   )}
-                  {todo.deadline && (
-                    <div className="text-xs text-muted-foreground">
-                      Due: {format(new Date(todo.deadline), "MMM d, yyyy")}
-                    </div>
-                  )}
-                </div>
-                <Check className="h-3 w-3 text-muted-foreground" />
-              </Button>
-            ))}
+                </Button>
+              );
+            })}
           </div>
         </ScrollArea>
 
@@ -322,11 +351,14 @@ function InlineMetricsPanel({
                           : "hover:bg-accent"
                       } ${
                         hasExistingValue
-                          ? "border-l-2 border-l-green-500 bg-green-50/30 dark:bg-green-950/20"
+                          ? "border-l-2 border-l-green-500"
                           : ""
                       }`}
                       onClick={() => onSelectMetric(metric)}
                     >
+                      {index === selectedIndex && (
+                        <ArrowRight className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                      )}
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center gap-1">
                           <span className="font-medium text-sm">
@@ -514,34 +546,6 @@ export default function JournalEditorWithMetrics({
     [dailyLogs, selectedDate]
   );
 
-  const getUsedMetricsFromJournal = useCallback((): Set<string> => {
-    const usedMetrics = new Set<string>();
-    const allContent = blocks.map((block) => block.content).join("\n\n");
-
-    // Match patterns like @metric:name:value or @metric:'name with spaces':value
-    const metricMatches = allContent.match(
-      /@metric:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):(?![:\s])[^\s@]+/g
-    );
-
-    if (metricMatches) {
-      metricMatches.forEach((match) => {
-        // Extract metric name from the match
-        const nameMatch = match.match(
-          /@metric:(?:"([^"]*)"|'([^']*)'|`([^`]*)`|([^:]*)):/
-        );
-        if (nameMatch) {
-          const metricName =
-            nameMatch[1] || nameMatch[2] || nameMatch[3] || nameMatch[4]; // double, single, backtick, or unquoted name
-          const metric = activeMetrics.find((m) => m.name === metricName);
-          if (metric) {
-            usedMetrics.add(metric.id);
-          }
-        }
-      });
-    }
-
-    return usedMetrics;
-  }, [blocks, activeMetrics]);
 
   const getUsedTodosFromJournal = useCallback((): Set<string> => {
     const usedTodos = new Set<string>();
@@ -572,11 +576,21 @@ export default function JournalEditorWithMetrics({
     return usedTodos;
   }, [blocks, incompleteTodos]);
 
+  const getCompletedTodosForDate = useCallback((date: Date): Todo[] => {
+    return todos.filter((todo) => {
+      if (!todo.is_complete || !todo.completed_at) return false;
+      const completedDate = new Date(todo.completed_at);
+      return (
+        completedDate.getFullYear() === date.getFullYear() &&
+        completedDate.getMonth() === date.getMonth() &&
+        completedDate.getDate() === date.getDate()
+      );
+    });
+  }, [todos]);
+
   const filteredMetrics = useMemo(() => {
-    const usedMetrics = getUsedMetricsFromJournal();
-    const availableMetrics = activeMetrics.filter(
-      (metric) => !usedMetrics.has(metric.id)
-    );
+    // Show all active metrics (including already-logged ones)
+    const availableMetrics = activeMetrics;
 
     return metricSearchQuery.trim()
       ? availableMetrics.filter(
@@ -590,13 +604,21 @@ export default function JournalEditorWithMetrics({
             metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
         )
       : availableMetrics;
-  }, [activeMetrics, metricSearchQuery, getUsedMetricsFromJournal]);
+  }, [activeMetrics, metricSearchQuery]);
 
   const filteredTodos = useMemo(() => {
     const usedTodos = getUsedTodosFromJournal();
-    const availableTodos = incompleteTodos.filter(
+    const completedTodosForDate = getCompletedTodosForDate(selectedDate);
+    
+    // Combine incomplete todos and todos completed on the selected date
+    const incompleteTodosFiltered = incompleteTodos.filter(
       (todo) => !usedTodos.has(todo.id)
     );
+    const completedTodosFiltered = completedTodosForDate.filter(
+      (todo) => !usedTodos.has(todo.id)
+    );
+    
+    const availableTodos = [...incompleteTodosFiltered, ...completedTodosFiltered];
 
     return todoSearchQuery.trim()
       ? availableTodos.filter(
@@ -608,7 +630,7 @@ export default function JournalEditorWithMetrics({
                 .includes(todoSearchQuery.toLowerCase()))
         )
       : availableTodos;
-  }, [incompleteTodos, todoSearchQuery, getUsedTodosFromJournal]);
+  }, [incompleteTodos, todoSearchQuery, getUsedTodosFromJournal, getCompletedTodosForDate, selectedDate]);
 
   const initializeBlocks = useCallback(() => {
     if (value) {

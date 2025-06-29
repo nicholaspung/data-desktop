@@ -77,6 +77,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - see if there's a way so that if a user is scrolling in a box, it only scrolls in that box
+- in daily journal, make it so that the user can click anywhere in the input box and it will focus on the input block closest to the click
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
