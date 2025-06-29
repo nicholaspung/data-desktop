@@ -86,8 +86,8 @@ export function ResetAllData() {
   return window['go']['backend']['App']['ResetAllData']();
 }
 
-export function SaveDailyJournalWithMetrics(arg1, arg2, arg3) {
-  return window['go']['backend']['App']['SaveDailyJournalWithMetrics'](arg1, arg2, arg3);
+export function SaveDailyJournalWithMetrics(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['backend']['App']['SaveDailyJournalWithMetrics'](arg1, arg2, arg3, arg4, arg5);
 }
 
 export function SaveFiles(arg1, arg2) {

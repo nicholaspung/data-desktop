@@ -23,6 +23,7 @@ import { Todo } from "@/store/todo-definitions";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import settingsStore from "@/store/settings-store";
 
 interface DailyJournalEditorProps {
   selectedDate?: Date;
@@ -40,20 +41,20 @@ const JOURNAL_DRAFT_KEY_PREFIX = "daily-journal-draft-";
 
 const getJournalDraftKey = (date: Date): string => {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${JOURNAL_DRAFT_KEY_PREFIX}${year}-${month}-${day}`;
 };
 
 const cleanupOldDrafts = () => {
   const today = new Date();
   const todayKey = getJournalDraftKey(today);
-  
+
   // Get all localStorage keys
   const keys = Object.keys(localStorage);
-  
+
   // Remove any draft entries that aren't for today
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (key.startsWith(JOURNAL_DRAFT_KEY_PREFIX) && key !== todayKey) {
       localStorage.removeItem(key);
     }
@@ -78,6 +79,10 @@ export default function DailyJournalEditor({
     dataStore,
     (state) => state.daily_journal as DailyJournalEntry[]
   );
+
+  const settings = useStore(settingsStore);
+  const isMetricsEnabled = settings.visibleRoutes["/metric"] === true;
+  const isTodosEnabled = settings.visibleRoutes["/todos"] === true;
 
   useEffect(() => {
     if (propSelectedDate) {
@@ -114,12 +119,16 @@ export default function DailyJournalEditor({
     // Always check for draft first
     const draftKey = getJournalDraftKey(selectedDate);
     const savedDraft = localStorage.getItem(draftKey);
-    
+
     if (existingEntryForDate) {
       setExistingEntry(existingEntryForDate);
-      
+
       // For today's entry, prefer draft over saved version if they're different
-      if (savedDraft && isToday(selectedDate) && savedDraft !== existingEntryForDate.entry) {
+      if (
+        savedDraft &&
+        isToday(selectedDate) &&
+        savedDraft !== existingEntryForDate.entry
+      ) {
         setEntry(savedDraft);
         setHasUnsavedChanges(true);
       } else {
@@ -128,7 +137,7 @@ export default function DailyJournalEditor({
       }
     } else {
       setExistingEntry(null);
-      
+
       if (savedDraft && isToday(selectedDate)) {
         // Only load draft if it's for today
         setEntry(savedDraft);
@@ -154,13 +163,14 @@ export default function DailyJournalEditor({
         entry: entry.trim(),
       };
 
-
       let result;
       if (existingEntry) {
         result = await ApiService.saveDailyJournalWithMetrics(
           existingEntry.id,
           entryData,
-          true
+          true,
+          isMetricsEnabled,
+          isTodosEnabled
         );
         if (result) {
           updateEntry(existingEntry.id, result, "daily_journal");
@@ -168,7 +178,7 @@ export default function DailyJournalEditor({
 
           const logs = await ApiService.getRecords<DailyLog>("daily_logs");
           const todos = await ApiService.getRecords<Todo>("todos");
-          
+
           if (logs || todos) {
             dataStore.setState((state) => ({
               ...state,
@@ -181,7 +191,9 @@ export default function DailyJournalEditor({
         result = await ApiService.saveDailyJournalWithMetrics(
           null,
           entryData,
-          false
+          false,
+          isMetricsEnabled,
+          isTodosEnabled
         );
         if (result) {
           addEntry(result, "daily_journal");
@@ -189,7 +201,7 @@ export default function DailyJournalEditor({
 
           const logs = await ApiService.getRecords<DailyLog>("daily_logs");
           const todos = await ApiService.getRecords<Todo>("todos");
-          
+
           if (logs || todos) {
             dataStore.setState((state) => ({
               ...state,
@@ -213,42 +225,45 @@ export default function DailyJournalEditor({
     } finally {
       setIsSubmitting(false);
     }
-  }, [entry, selectedDate, existingEntry]);
+  }, [entry, selectedDate, existingEntry, isMetricsEnabled, isTodosEnabled]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await saveEntry();
   };
 
-  const handleEntryChange = useCallback((newEntry: string) => {
-    setEntry(newEntry);
-    
-    // Save draft to localStorage for today's date
-    if (isToday(selectedDate)) {
-      const draftKey = getJournalDraftKey(selectedDate);
-      
-      // If there's an existing entry, only save draft if content is different
-      if (existingEntry) {
-        if (newEntry !== existingEntry.entry) {
-          localStorage.setItem(draftKey, newEntry);
-          setHasUnsavedChanges(true);
+  const handleEntryChange = useCallback(
+    (newEntry: string) => {
+      setEntry(newEntry);
+
+      // Save draft to localStorage for today's date
+      if (isToday(selectedDate)) {
+        const draftKey = getJournalDraftKey(selectedDate);
+
+        // If there's an existing entry, only save draft if content is different
+        if (existingEntry) {
+          if (newEntry !== existingEntry.entry) {
+            localStorage.setItem(draftKey, newEntry);
+            setHasUnsavedChanges(true);
+          } else {
+            // Remove draft if it matches the saved version
+            localStorage.removeItem(draftKey);
+            setHasUnsavedChanges(false);
+          }
         } else {
-          // Remove draft if it matches the saved version
-          localStorage.removeItem(draftKey);
-          setHasUnsavedChanges(false);
-        }
-      } else {
-        // No existing entry, save draft if not empty
-        if (newEntry.trim()) {
-          localStorage.setItem(draftKey, newEntry);
-          setHasUnsavedChanges(true);
-        } else {
-          localStorage.removeItem(draftKey);
-          setHasUnsavedChanges(false);
+          // No existing entry, save draft if not empty
+          if (newEntry.trim()) {
+            localStorage.setItem(draftKey, newEntry);
+            setHasUnsavedChanges(true);
+          } else {
+            localStorage.removeItem(draftKey);
+            setHasUnsavedChanges(false);
+          }
         }
       }
-    }
-  }, [selectedDate, existingEntry]);
+    },
+    [selectedDate, existingEntry]
+  );
 
   return (
     <div className="space-y-6">
@@ -261,71 +276,83 @@ export default function DailyJournalEditor({
                 ? "Edit Journal Entry"
                 : "Write Your Daily Journal"}
             </CardTitle>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1 h-8 px-2"
-                >
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Tips</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4" align="end">
-                <div className="space-y-3">
-                  <div className="font-semibold text-sm">Tips</div>
+            {(isMetricsEnabled || isTodosEnabled) && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 h-8 px-2"
+                  >
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Tips</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4" align="end">
+                  <div className="space-y-3">
+                    <div className="font-semibold text-sm">Smart Text Features</div>
 
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <div className="font-medium mb-1">Adding Metrics:</div>
-                      <div className="text-muted-foreground">
-                        Type{" "}
-                        <code className="bg-muted px-1 rounded">@metric:</code>{" "}
-                        to open the metrics menu
+                    <div className="space-y-3 text-sm">
+                      {isMetricsEnabled && (
+                        <div>
+                          <div className="font-medium mb-2 flex items-center gap-2">
+                            📊 Metrics
+                          </div>
+                          <ul className="text-muted-foreground space-y-1 text-xs pl-4">
+                            <li>
+                              • Type{" "}
+                              <code className="bg-muted px-1 rounded">
+                                @metric:
+                              </code>{" "}
+                              to see existing metrics
+                            </li>
+                            <li>
+                              • Use{" "}
+                              <code className="bg-muted px-1 rounded">
+                                @metric:Weight:150
+                              </code>{" "}
+                              to log values
+                            </li>
+                            <li>• Only existing metrics can be referenced</li>
+                            <li>• Smart quotes for complex names</li>
+                          </ul>
+                        </div>
+                      )}
+
+                      {isTodosEnabled && (
+                        <div>
+                          <div className="font-medium mb-2 flex items-center gap-2">
+                            ✅ Todos
+                          </div>
+                          <ul className="text-muted-foreground space-y-1 text-xs pl-4">
+                            <li>
+                              • Type{" "}
+                              <code className="bg-muted px-1 rounded">
+                                @todo:
+                              </code>{" "}
+                              to see incomplete todos
+                            </li>
+                            <li>
+                              • Use{" "}
+                              <code className="bg-muted px-1 rounded">
+                                @todo:TaskName:true
+                              </code>{" "}
+                              to complete
+                            </li>
+                            <li>• Only existing todos can be referenced</li>
+                            <li>• Smart quotes for complex names</li>
+                          </ul>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-muted-foreground pt-2 border-t">
+                        One metric or todo per line • Use ↑↓ arrows to navigate, Enter to select
                       </div>
                     </div>
-
-                    <div>
-                      <div className="font-medium mb-1">How to Use:</div>
-                      <ul className="text-muted-foreground space-y-1 text-xs">
-                        <li>
-                          • Type{" "}
-                          <code className="bg-muted px-1 rounded">
-                            @metric:
-                          </code>{" "}
-                          to see all available metrics
-                        </li>
-                        <li>
-                          • Type{" "}
-                          <code className="bg-muted px-1 rounded">
-                            @todo:
-                          </code>{" "}
-                          to see incomplete todos and complete them
-                        </li>
-                        <li>
-                          • <strong>Note:</strong> Multiple todos with the same name 
-                          will all be marked complete
-                        </li>
-                        <li>
-                          • Autocomplete intelligently selects quotes based on content
-                        </li>
-                        <li>
-                          • Continue typing to filter (e.g.,{" "}
-                          <code className="bg-muted px-1 rounded">
-                            @metric:weight
-                          </code>
-                          )
-                        </li>
-                        <li>• Use ↑↓ arrows to navigate, Enter to select</li>
-                        <li>• Each block can have only one metric</li>
-                        <li>• Use multiple blocks for multiple metrics</li>
-                      </ul>
-                    </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
           <div className="flex items-center gap-2 pt-2">
             <div className="flex items-center gap-2">
@@ -382,8 +409,18 @@ export default function DailyJournalEditor({
                 key={`${selectedDate.toISOString()}-${existingEntry?.id || "new"}`}
                 value={entry}
                 onChange={handleEntryChange}
-                placeholder="Write about your day... Type @metric: to add metrics or @todo: to mark todos complete!"
+                placeholder={`Write about your day...${
+                  isMetricsEnabled && isTodosEnabled
+                    ? " Type @metric:Name:Value to log metrics or @todo:Name:true/false to manage todos!"
+                    : isMetricsEnabled
+                      ? " Type @metric:Name:Value to log metrics!"
+                      : isTodosEnabled
+                        ? " Type @todo:Name:true/false to manage todos!"
+                        : ""
+                }`}
                 selectedDate={selectedDate}
+                isMetricsEnabled={isMetricsEnabled}
+                isTodosEnabled={isTodosEnabled}
               />
             </div>
 
@@ -411,7 +448,9 @@ export default function DailyJournalEditor({
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    <span>Creating entry for {format(selectedDate, "MMM d, yyyy")}</span>
+                    <span>
+                      Creating entry for {format(selectedDate, "MMM d, yyyy")}
+                    </span>
                     {isToday(selectedDate) && entry.trim() && (
                       <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
                         <span className="inline-block w-2 h-2 bg-amber-600 dark:bg-amber-400 rounded-full animate-pulse"></span>

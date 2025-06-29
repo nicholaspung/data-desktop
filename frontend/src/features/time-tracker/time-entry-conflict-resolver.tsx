@@ -22,7 +22,6 @@ import { toast } from "sonner";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import ReusableCard from "@/components/reusable/reusable-card";
 import {
-  convertToLocalDates,
   findOverlappingPairs,
   getOverlapDuration,
 } from "@/lib/time-entry-utils";
@@ -33,6 +32,12 @@ interface TimeEntryConflictResolverProps {
   onDataChange: () => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface Operation {
+  type: 'update' | 'delete' | 'create';
+  id?: string;
+  data?: Record<string, any>;
 }
 
 export default function TimeEntryConflictResolver({
@@ -167,7 +172,7 @@ export default function TimeEntryConflictResolver({
       }
 
       let operationsCompleted = 0;
-      const operations = [];
+      const operations: Operation[] = [];
 
       // Strategy: 
       // 1. Handle entry1: update to pre-overlap OR delete if no pre-overlap
@@ -268,17 +273,17 @@ export default function TimeEntryConflictResolver({
       const totalOperations = operations.length;
       for (const operation of operations) {
         try {
-          if (operation.type === 'update') {
+          if (operation.type === 'update' && operation.id && operation.data) {
             const response = await ApiService.updateRecord(operation.id, operation.data);
             if (response) {
               updateEntry(operation.id, response, "time_entries");
               operationsCompleted++;
             }
-          } else if (operation.type === 'delete') {
+          } else if (operation.type === 'delete' && operation.id) {
             await ApiService.deleteRecord(operation.id);
             deleteEntry(operation.id, "time_entries");
             operationsCompleted++;
-          } else if (operation.type === 'create') {
+          } else if (operation.type === 'create' && operation.data) {
             const response = await ApiService.addRecord("time_entries", operation.data);
             if (response) {
               addEntry(response, "time_entries");

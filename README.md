@@ -76,14 +76,15 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- make it so that daily journal has "optional" dependencies for basically all the other features
-- in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing
-- in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view
+- see if there's a way so that if a user is scrolling in a box, it only scrolls in that box
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 ### DONE
 
+- make it so that daily journal has "optional" dependencies for basically all the other features [DONE 2025-06-28]
+- in daily journal, if metrics are not enabled, it shouldn't allow the user to "automatically track metric" while typing [DONE 2025-06-28]
+- in daily journal, if a feature isn't enabled, don't show it in the "records for the day" view [DONE 2025-06-28]
 - in time tracker form, with the new "select timer mode, change start time to now", it seems to also be bugging out the saving of entries, as it will save the start time to now when the user finishes a time entry [DONE 2025-06-28]
 - in time tracker, the resolving time conflicts is kind of off - it should put the "earlier" time entry first, so that when the user is selecting which entry to cut off, it modifies that correct entry [DONE 2025-06-28]
 - in time tracker form, for the description autocomplete, it's not showing the metrics for the user to select [DONE 2025-06-28]

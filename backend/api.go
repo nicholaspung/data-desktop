@@ -906,7 +906,29 @@ func (a *App) LoadSampleDataWithDates(startDate string, endDate string) error {
 	return database.LoadSampleDataWithDateRange(startDate, endDate)
 }
 
-func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool) (map[string]interface{}, error) {
+// validateLineLevel checks that each line has at most one @metric: or @todo:
+func validateLineLevel(text string) error {
+	lines := strings.Split(text, "\n")
+	
+	metricPattern := `@metric:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^:\s]+)):`
+	todoPattern := `@todo:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^\s:]+)):`
+	
+	metricRe := regexp.MustCompile(metricPattern)
+	todoRe := regexp.MustCompile(todoPattern)
+	
+	for i, line := range lines {
+		metricCount := len(metricRe.FindAllString(line, -1))
+		todoCount := len(todoRe.FindAllString(line, -1))
+		
+		if metricCount + todoCount > 1 {
+			return fmt.Errorf("line %d contains multiple @metric: or @todo: entries. Please use only one per line", i+1)
+		}
+	}
+	
+	return nil
+}
+
+func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool, metricsEnabled bool, todosEnabled bool) (map[string]interface{}, error) {
 
 	var journalData map[string]interface{}
 	err := json.Unmarshal([]byte(data), &journalData)
@@ -917,6 +939,11 @@ func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool)
 	entryText, ok := journalData["entry"].(string)
 	if !ok {
 		return nil, fmt.Errorf("journal entry must contain 'entry' field")
+	}
+
+	// Validate line-level constraints
+	if err := validateLineLevel(entryText); err != nil {
+		return nil, err
 	}
 
 	dateStr, ok := journalData["date"].(string)
@@ -943,54 +970,60 @@ func (a *App) SaveDailyJournalWithMetrics(id string, data string, isUpdate bool)
 		return nil, fmt.Errorf("failed to save journal entry: %w", err)
 	}
 
-	metrics := a.extractMetrics(entryText)
+	// Only process metrics if metrics feature is enabled
+	if metricsEnabled {
+		metrics := a.extractMetrics(entryText)
 
-	for _, metric := range metrics {
+		for _, metric := range metrics {
 
-		exists, err := a.checkMetricExistsForDate(metric.ID, journalDate)
-		if err != nil {
-			log.Printf("Error checking metric existence: %v", err)
-			continue
-		}
-
-		if !exists {
-
-			logData := map[string]interface{}{
-				"date":      journalDate.Format(time.RFC3339),
-				"metric_id": metric.ID,
-				"value":     metric.Value,
-				"notes":     fmt.Sprintf("Logged from daily journal on %s", time.Now().Format("Jan 2, 2006 at 3:04 PM")),
-			}
-
-			logJSON, err := json.Marshal(logData)
+			exists, err := a.checkMetricExistsForDate(metric.ID, journalDate)
 			if err != nil {
-				log.Printf("Error marshaling metric log: %v", err)
+				log.Printf("Error checking metric existence: %v", err)
 				continue
 			}
 
-			_, err = a.AddRecord("daily_logs", string(logJSON), false)
-			if err != nil {
-				log.Printf("Error creating daily log for metric %s: %v", metric.ID, err)
-			} else {
+			if !exists {
 
-				a.updateMetricLastOccurrence(metric.ID, journalDate)
+				logData := map[string]interface{}{
+					"date":      journalDate.Format(time.RFC3339),
+					"metric_id": metric.ID,
+					"value":     metric.Value,
+					"notes":     fmt.Sprintf("Logged from daily journal on %s", time.Now().Format("Jan 2, 2006 at 3:04 PM")),
+				}
+
+				logJSON, err := json.Marshal(logData)
+				if err != nil {
+					log.Printf("Error marshaling metric log: %v", err)
+					continue
+				}
+
+				_, err = a.AddRecord("daily_logs", string(logJSON), false)
+				if err != nil {
+					log.Printf("Error creating daily log for metric %s: %v", metric.ID, err)
+				} else {
+
+					a.updateMetricLastOccurrence(metric.ID, journalDate)
+				}
 			}
 		}
 	}
 
-	todos := a.extractTodos(entryText)
+	// Only process todos if todos feature is enabled
+	if todosEnabled {
+		todos := a.extractTodos(entryText)
 
-	completedCount := 0
-	failedCount := 0
-	todoTitleCounts := make(map[string]int)
+		completedCount := 0
+		failedCount := 0
+		todoTitleCounts := make(map[string]int)
 
-	for _, todo := range todos {
-		err := a.completeTodoFromJournal(todo.ID, journalDate)
-		if err != nil {
-			failedCount++
-		} else {
-			completedCount++
-			todoTitleCounts[todo.Title]++
+		for _, todo := range todos {
+			err := a.completeTodoFromJournal(todo.ID, journalDate)
+			if err != nil {
+				failedCount++
+			} else {
+				completedCount++
+				todoTitleCounts[todo.Title]++
+			}
 		}
 	}
 

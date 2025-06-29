@@ -138,6 +138,17 @@ export const conditionalFeatures: Record<string, string[]> = {
   "/todos": ["/metric"],
   "/time-tracker": ["/metric"],
   "/journaling": ["/metric"],
+  "/daily-journal": [
+    "/metric",
+    "/todos",
+    "/time-tracker",
+    "/experiments",
+    "/people",
+    "/body-measurements",
+    "/wealth",
+    "/dexa",
+    "/bloodwork",
+  ],
 };
 
 export const checkRouteDependencies = (

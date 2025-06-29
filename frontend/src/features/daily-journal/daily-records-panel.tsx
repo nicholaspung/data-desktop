@@ -25,6 +25,7 @@ import {
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { fieldDefinitionsStore } from "@/features/field-definitions/field-definitions-store";
+import settingsStore from "@/store/settings-store";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import FieldValueDisplay from "@/components/reusable/field-value-display";
 import ReusableMultiSelect, {
@@ -65,6 +66,9 @@ export default function DailyRecordsPanel({
     fieldDefinitionsStore,
     (state) => state.datasets
   );
+  const settings = useStore(settingsStore);
+  const isMetricsEnabled = settings.visibleRoutes["/metric"] === true;
+  const isTodosEnabled = settings.visibleRoutes["/todos"] === true;
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
@@ -73,8 +77,22 @@ export default function DailyRecordsPanel({
   >({});
 
   const featureOptions: MultiSelectOption[] = Object.entries(fieldDefinitions)
-    .filter(([, dataset]) => {
-      return dataset.fields.some((field) => field.type === "date");
+    .filter(([datasetId, dataset]) => {
+      // Check if dataset has a date field
+      const hasDateField = dataset.fields.some((field) => field.type === "date");
+      if (!hasDateField) return false;
+      
+      // Filter out metrics-related datasets if metrics is disabled
+      if (!isMetricsEnabled && (datasetId === "daily_logs" || datasetId === "metrics")) {
+        return false;
+      }
+      
+      // Filter out todo dataset if todos is disabled
+      if (!isTodosEnabled && datasetId === "todos") {
+        return false;
+      }
+      
+      return true;
     })
     .map(([datasetId, dataset]) => ({
       id: datasetId,
@@ -111,7 +129,7 @@ export default function DailyRecordsPanel({
       defaultSelected.push("daily_journal");
     }
     setSelectedFeatures(defaultSelected);
-  }, []);
+  }, [featureOptions]);
 
   useEffect(() => {
     if (selectedFeatures.length > 0) {

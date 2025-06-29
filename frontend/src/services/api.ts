@@ -335,14 +335,18 @@ export const ApiService = {
   async saveDailyJournalWithMetrics<T = Record<string, any>>(
     id: string | null,
     data: Record<string, any>,
-    isUpdate: boolean
+    isUpdate: boolean,
+    metricsEnabled: boolean = true,
+    todosEnabled: boolean = true
   ): Promise<T | null> {
     try {
       const dataJson = JSON.stringify(data);
       const result = await SaveDailyJournalWithMetrics(
         id || "",
         dataJson,
-        isUpdate
+        isUpdate,
+        metricsEnabled,
+        todosEnabled
       );
       return result as T;
     } catch (error) {
