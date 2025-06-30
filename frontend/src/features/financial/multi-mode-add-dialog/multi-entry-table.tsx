@@ -477,7 +477,7 @@ export default function MultiEntryTable({
                   <div>
                     •{" "}
                     <kbd className="px-1 py-0.5 bg-background border rounded text-xs">
-                      Alt+Shift
+                      Ctrl+Shift
                     </kbd>{" "}
                     - Hide autocomplete suggestions
                   </div>

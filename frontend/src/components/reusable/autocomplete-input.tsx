@@ -447,7 +447,7 @@ export default function AutocompleteInput({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Shift" && e.altKey) {
+    if (e.key === "Shift" && e.ctrlKey) {
       if (showSuggestions) {
         e.preventDefault();
         e.stopPropagation();
