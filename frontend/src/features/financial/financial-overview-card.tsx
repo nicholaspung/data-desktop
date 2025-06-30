@@ -157,16 +157,30 @@ export function FinancialOverviewCard({
   }, [allData, type]);
 
   const filteredData = useMemo(() => {
-    const filterByDate = (date: string) => {
+    const filterByDate = (date: string, useRangeFilter: boolean = true) => {
       const itemDate = new Date(date);
       if (timeFilter === "month" && selectedMonth) {
-        // Show all entries up to and including the selected month
-        const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
-        return itemDate <= endOfMonth;
+        if (useRangeFilter) {
+          // For logs and paychecks: Show only entries within the selected month
+          const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1, 0, 0, 0);
+          const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+          return itemDate >= startOfMonth && itemDate <= endOfMonth;
+        } else {
+          // For balances: Show all entries up to and including the selected month
+          const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+          return itemDate <= endOfMonth;
+        }
       } else if (timeFilter === "year" && selectedYear) {
-        // Show all entries up to and including the selected year
-        const endOfYear = new Date(selectedYear.getFullYear(), 11, 31, 23, 59, 59);
-        return itemDate <= endOfYear;
+        if (useRangeFilter) {
+          // For logs and paychecks: Show only entries within the selected year
+          const startOfYear = new Date(selectedYear.getFullYear(), 0, 1, 0, 0, 0);
+          const endOfYear = new Date(selectedYear.getFullYear(), 11, 31, 23, 59, 59);
+          return itemDate >= startOfYear && itemDate <= endOfYear;
+        } else {
+          // For balances: Show all entries up to and including the selected year
+          const endOfYear = new Date(selectedYear.getFullYear(), 11, 31, 23, 59, 59);
+          return itemDate <= endOfYear;
+        }
       }
       return true;
     };
@@ -210,7 +224,7 @@ export function FinancialOverviewCard({
 
     if (type === "logs" && logs) {
       return logs.filter(
-        (log) => filterByDate(log.date) && filterByContent(log)
+        (log) => filterByDate(log.date, true) && filterByContent(log)
       );
     } else if (type === "balances" && balances) {
       // First, filter by content (account type, owner)
@@ -233,9 +247,9 @@ export function FinancialOverviewCard({
       const latestBalances: FinancialBalance[] = [];
       
       accountGroups.forEach((groupBalances) => {
-        // Filter by date and sort by date descending
+        // Filter by date (use false for cumulative filter) and sort by date descending
         const validBalances = groupBalances
-          .filter((balance) => filterByDate(balance.date))
+          .filter((balance) => filterByDate(balance.date, false))
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
         // Take the most recent one
@@ -247,7 +261,7 @@ export function FinancialOverviewCard({
       return latestBalances;
     } else if (type === "paycheck" && paychecks) {
       return paychecks.filter(
-        (paycheck) => filterByDate(paycheck.date) && filterByContent(paycheck)
+        (paycheck) => filterByDate(paycheck.date, true) && filterByContent(paycheck)
       );
     }
     return [];
