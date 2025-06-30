@@ -76,6 +76,13 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
+in financial balances, the logic for displaying in the "summary" component should look at each individual entry's uniqueness, and find the latest log according to date to display in it
+- in financial logs, add a "dupliate record" handling when using import CSV, it should add the non-duplicated records, and allow the user review the duplicated records to see if they want to continue uploading the data
+- in the financial import CSV, can you add the "no-scroll" behavior for the components?
+- in financial logs, in import CSV, for recent entries, change it to show all the records with the filters, but keep it looking like how it currently is - basically, just add filters and show all the logs, along with pagination
+- in multi-add-mode-dialog, also add ALT+CTRL to exit the suggestions when a user is in the autocomplete fields
+- in daily journal metric logging, if the value is "@metric:name:true,", it will save as value "true,". Is there a way to regex my way out of this? Or does there need to be validation to make sure it will save like that? Check for @todo:name:true, and also @metric:name:10,
+
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 ### DONE

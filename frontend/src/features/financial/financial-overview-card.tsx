@@ -13,7 +13,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { format, isSameMonth, isSameYear } from "date-fns";
+import { format } from "date-fns";
 import type { FinancialLog, FinancialBalance, PaycheckInfo } from "./types";
 import { Button } from "@/components/ui/button";
 
@@ -160,12 +160,13 @@ export function FinancialOverviewCard({
     const filterByDate = (date: string) => {
       const itemDate = new Date(date);
       if (timeFilter === "month" && selectedMonth) {
-        return (
-          isSameMonth(itemDate, selectedMonth) &&
-          isSameYear(itemDate, selectedMonth)
-        );
+        // Show all entries up to and including the selected month
+        const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0, 23, 59, 59);
+        return itemDate <= endOfMonth;
       } else if (timeFilter === "year" && selectedYear) {
-        return isSameYear(itemDate, selectedYear);
+        // Show all entries up to and including the selected year
+        const endOfYear = new Date(selectedYear.getFullYear(), 11, 31, 23, 59, 59);
+        return itemDate <= endOfYear;
       }
       return true;
     };
@@ -212,30 +213,38 @@ export function FinancialOverviewCard({
         (log) => filterByDate(log.date) && filterByContent(log)
       );
     } else if (type === "balances" && balances) {
-      let latestDate: Date | null = null;
-
-      const filteredBalances = balances.filter(
-        (balance) => filterByDate(balance.date) && filterByContent(balance)
+      // First, filter by content (account type, owner)
+      const contentFilteredBalances = balances.filter((balance) => 
+        filterByContent(balance)
       );
 
-      filteredBalances.forEach((balance) => {
-        const balanceDate = new Date(balance.date);
-        if (!latestDate || balanceDate > latestDate) {
-          latestDate = balanceDate;
+      // Group by unique combination of account_name + account_type + account_owner
+      const accountGroups = new Map<string, FinancialBalance[]>();
+      
+      contentFilteredBalances.forEach((balance) => {
+        const key = `${balance.account_name}|${balance.account_type}|${balance.account_owner}`;
+        if (!accountGroups.has(key)) {
+          accountGroups.set(key, []);
+        }
+        accountGroups.get(key)!.push(balance);
+      });
+
+      // For each group, find the most recent entry that passes the date filter
+      const latestBalances: FinancialBalance[] = [];
+      
+      accountGroups.forEach((groupBalances) => {
+        // Filter by date and sort by date descending
+        const validBalances = groupBalances
+          .filter((balance) => filterByDate(balance.date))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        // Take the most recent one
+        if (validBalances.length > 0) {
+          latestBalances.push(validBalances[0]);
         }
       });
 
-      if (latestDate) {
-        return filteredBalances.filter((balance) => {
-          const balanceDate = new Date(balance.date);
-          return (
-            latestDate &&
-            balanceDate.toDateString() === latestDate.toDateString()
-          );
-        });
-      }
-
-      return [];
+      return latestBalances;
     } else if (type === "paycheck" && paychecks) {
       return paychecks.filter(
         (paycheck) => filterByDate(paycheck.date) && filterByContent(paycheck)
