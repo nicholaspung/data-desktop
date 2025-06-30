@@ -22,4 +22,6 @@ export interface MultiEntryRow {
   data: Record<string, any>;
   isValid: boolean;
   errors: Record<string, string>;
+  overwrite?: boolean;
+  originalRecord?: Record<string, any>;
 }

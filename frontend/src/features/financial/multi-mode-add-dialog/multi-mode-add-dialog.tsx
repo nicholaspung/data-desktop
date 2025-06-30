@@ -24,6 +24,7 @@ import { DataStoreName, addEntry } from "@/store/data-store";
 import MultiEntryTable from "./multi-entry-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { parseCSV, createCSVTemplate, validateCSV } from "@/lib/csv-parser";
+import { DuplicateDetectionDialog, DuplicateRecord } from "@/components/data-table/duplicate-detection-dialog";
 
 export default function MultiModeAddDialog({
   open,
@@ -43,6 +44,10 @@ export default function MultiModeAddDialog({
   const [showRecentEntries, setShowRecentEntries] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingCSV, setIsUploadingCSV] = useState(false);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+  const [duplicates, setDuplicates] = useState<DuplicateRecord[]>([]);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [pendingCsvRows, setPendingCsvRows] = useState<MultiEntryRow[]>([]);
   const singleFormSubmitRef = useRef<(() => void) | null>(null);
   const csvFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -233,18 +238,69 @@ export default function MultiModeAddDialog({
       }
     }
 
+    // Check for duplicates before saving
+    setIsCheckingDuplicates(true);
+    try {
+      const recordsToCheck = validRows.map(row => row.data);
+      const duplicateResults = await ApiService.checkForDuplicates(
+        datasetId,
+        recordsToCheck
+      );
+
+      if (duplicateResults.length > 0) {
+        // Store valid rows for later processing
+        setPendingCsvRows(validRows);
+        
+        // Convert to DuplicateRecord format
+        const duplicateRecords: DuplicateRecord[] = duplicateResults.map((result) => ({
+          importRecord: result.importRecord,
+          existingRecords: result.existingRecords,
+          duplicateFields: result.duplicateFields,
+          confidence: result.confidence,
+          action: null,
+        }));
+
+        setDuplicates(duplicateRecords);
+        setShowDuplicateDialog(true);
+        setIsCheckingDuplicates(false);
+        return; // Stop here and wait for user resolution
+      }
+    } catch (error) {
+      console.error("Error checking for duplicates:", error);
+      toast.error("Failed to check for duplicates, proceeding with import");
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+
+    // No duplicates found, proceed with saving
+    await saveBulkRows(validRows);
+  };
+
+  const saveBulkRows = async (rowsToSave: MultiEntryRow[]) => {
     setIsSaving(true);
     try {
       const savedRows: string[] = [];
       const failedRows: MultiEntryRow[] = [];
 
-      for (const row of validRows) {
+      for (const row of rowsToSave) {
         try {
           const processedData = processDataForSave(row.data);
-          const savedRecord = await ApiService.addRecord(
-            datasetId,
-            processedData
-          );
+          
+          let savedRecord;
+          if (row.overwrite && row.originalRecord?.id) {
+            // Update existing record
+            savedRecord = await ApiService.updateRecord(
+              row.originalRecord.id,
+              processedData
+            );
+          } else {
+            // Create new record
+            savedRecord = await ApiService.addRecord(
+              datasetId,
+              processedData
+            );
+          }
+          
           if (savedRecord) {
             addEntry(savedRecord, datasetId as DataStoreName);
             savedRows.push(row.id);
@@ -336,6 +392,59 @@ export default function MultiModeAddDialog({
         event.target.value = "";
       }
     }
+  };
+
+  const handleDuplicateResolution = async (
+    resolutions: Record<number, "skip" | "create" | "overwrite">
+  ) => {
+    const approvedRows: MultiEntryRow[] = [];
+    const skippedRowIds: string[] = [];
+    
+    pendingCsvRows.forEach((row, index) => {
+      const resolution = resolutions[index];
+      if (resolution === "create") {
+        // Add row as-is for creation
+        approvedRows.push(row);
+      } else if (resolution === "overwrite") {
+        // Mark row for overwrite (will be handled in save function)
+        approvedRows.push({
+          ...row,
+          overwrite: true,
+          originalRecord: duplicates[index]?.existingRecords[0], // Use first existing record
+        });
+      } else if (resolution === "skip") {
+        // Track skipped rows to remove from table
+        skippedRowIds.push(row.id);
+      }
+    });
+
+    // Remove skipped entries from bulkRows
+    const remainingBulkRows = bulkRows.filter(row => !skippedRowIds.includes(row.id));
+    setBulkRows(remainingBulkRows);
+
+    setShowDuplicateDialog(false);
+    setDuplicates([]);
+    setPendingCsvRows([]);
+
+    const skippedCount = skippedRowIds.length;
+    
+    if (approvedRows.length > 0) {
+      // Proceed with saving the approved rows
+      await saveBulkRows(approvedRows);
+    } else {
+      toast.info("All entries were skipped");
+    }
+
+    if (skippedCount > 0) {
+      toast.info(`${skippedCount} duplicate ${skippedCount === 1 ? 'entry was' : 'entries were'} skipped`);
+    }
+  };
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateDialog(false);
+    setDuplicates([]);
+    setPendingCsvRows([]);
+    toast.info("CSV import cancelled");
   };
 
   const handleDownloadTemplate = () => {
@@ -615,10 +724,12 @@ export default function MultiModeAddDialog({
           </Button>
           <Button
             onClick={handleBulkSave}
-            disabled={isSaving || validCount === 0}
+            disabled={isSaving || isCheckingDuplicates || validCount === 0}
           >
             <Save className="h-4 w-4 mr-2" />
-            Import {validCount} Valid {validCount === 1 ? "Entry" : "Entries"}
+            {isCheckingDuplicates 
+              ? "Checking duplicates..." 
+              : `Import ${validCount} Valid ${validCount === 1 ? "Entry" : "Entries"}`}
           </Button>
         </>
       );
@@ -627,30 +738,41 @@ export default function MultiModeAddDialog({
   };
 
   return (
-    <ReusableDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={`Add ${title}`}
-      showTrigger={false}
-      fixedFooter={true}
-      customFooter={
-        <div className="flex justify-end gap-2">{getFooterActions()}</div>
-      }
-      customContent={
-        <div className="w-full">
-          {filteredTabs.length === 1 ? (
-            filteredTabs[0].content
-          ) : (
-            <ReusableTabs
-              tabs={filteredTabs}
-              defaultTabId={mode}
-              onChange={(tabId) => setMode(tabId as AddMode)}
-              className="w-full"
-            />
-          )}
-        </div>
-      }
-      contentClassName="max-w-[95vw] w-full"
-    />
+    <>
+      <ReusableDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={`Add ${title}`}
+        showTrigger={false}
+        fixedFooter={true}
+        customFooter={
+          <div className="flex justify-end gap-2">{getFooterActions()}</div>
+        }
+        customContent={
+          <div className="w-full">
+            {filteredTabs.length === 1 ? (
+              filteredTabs[0].content
+            ) : (
+              <ReusableTabs
+                tabs={filteredTabs}
+                defaultTabId={mode}
+                onChange={(tabId) => setMode(tabId as AddMode)}
+                className="w-full"
+              />
+            )}
+          </div>
+        }
+        contentClassName="max-w-[95vw] w-full"
+      />
+      
+      <DuplicateDetectionDialog
+        isOpen={showDuplicateDialog}
+        onOpenChange={setShowDuplicateDialog}
+        duplicates={duplicates}
+        fields={fieldDefinitions}
+        onResolve={handleDuplicateResolution}
+        onCancel={handleDuplicateCancel}
+      />
+    </>
   );
 }

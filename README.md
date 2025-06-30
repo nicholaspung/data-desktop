@@ -76,7 +76,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-in financial balances, the logic for displaying in the "summary" component should look at each individual entry's uniqueness, and find the latest log according to date to display in it
 - in financial logs, add a "dupliate record" handling when using import CSV, it should add the non-duplicated records, and allow the user review the duplicated records to see if they want to continue uploading the data
 - in the financial import CSV, can you add the "no-scroll" behavior for the components?
 - in financial logs, in import CSV, for recent entries, change it to show all the records with the filters, but keep it looking like how it currently is - basically, just add filters and show all the logs, along with pagination
@@ -87,6 +86,7 @@ in financial balances, the logic for displaying in the "summary" component shoul
 
 ### DONE
 
+- in financial balances, the logic for displaying in the "summary" component should look at each individual entry's uniqueness, and find the latest log according to date to display in it [DONE 2025-06-28]
 - see if there's a way so that if a user is scrolling in a box, it only scrolls in that box [DONE 2025-06-28]
 - in daily journal, make it so that the user can click anywhere in the input box and it will focus on the input block closest to the click [DONE 2025-06-28]
 - make it so that daily journal has "optional" dependencies for basically all the other features [DONE 2025-06-28]
