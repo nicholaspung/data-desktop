@@ -933,7 +933,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
                 <div
                   className={cn(
-                    "space-y-2 overflow-y-auto pr-2",
+                    "space-y-2 overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200 pr-2",
                     compactMode ? "max-h-[400px]" : "max-h-[520px]"
                   )}
                 >

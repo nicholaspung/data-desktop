@@ -523,7 +523,7 @@ export default function MultiEntryTable({
         </div>
       </div>
 
-      <div className="rounded-md border max-h-[60vh] overflow-auto pr-2">
+      <div className="rounded-md border max-h-[60vh] overflow-hidden hover:overflow-auto overscroll-contain transition-all duration-200 pr-2">
         <Table>
           <TableHeader className="sticky top-0 bg-background z-10">
             <TableRow>

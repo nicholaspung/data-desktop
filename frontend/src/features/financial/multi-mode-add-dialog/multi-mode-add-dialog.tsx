@@ -25,6 +25,8 @@ import MultiEntryTable from "./multi-entry-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { parseCSV, createCSVTemplate, validateCSV } from "@/lib/csv-parser";
 import { DuplicateDetectionDialog, DuplicateRecord } from "@/components/data-table/duplicate-detection-dialog";
+import FinancialLogsManager from "@/features/financial/financial-logs-manager";
+import { FinancialLog } from "@/features/financial/types";
 
 export default function MultiModeAddDialog({
   open,
@@ -576,7 +578,7 @@ export default function MultiModeAddDialog({
                   ) : (
                     <EyeOff className="h-4 w-4" />
                   )}
-                  Recent Entries
+                  {datasetId === "financial_logs" ? "All Entries" : "Recent Entries"}
                 </Label>
               </div>
             )}
@@ -620,47 +622,59 @@ export default function MultiModeAddDialog({
           {showRecentEntries && recentEntries.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium">
-                Recent Entries (View Only)
+                {datasetId === "financial_logs" ? "All Entries" : "Recent Entries (View Only)"}
               </h4>
-              <div className="rounded-md border p-2 max-h-[200px] overflow-y-auto bg-muted/30">
-                <div className="space-y-1">
-                  {recentEntries
-                    .sort((a, b) => {
-                      const dateField = fieldDefinitions.find(
-                        (f) => f.type === "date"
-                      )?.key;
-                      if (!dateField) return 0;
-                      const dateA = new Date(a[dateField] as string);
-                      const dateB = new Date(b[dateField] as string);
-                      return dateB.getTime() - dateA.getTime();
-                    })
-                    .slice(0, 10)
-                    .map((entry, index) => (
-                      <div
-                        key={entry.id || index}
-                        className={cn(
-                          "text-sm p-2 rounded",
-                          index % 2 === 0 ? "bg-background" : "bg-muted/50"
-                        )}
-                      >
-                        {fieldDefinitions
-                          .filter(
-                            (f) =>
-                              !f.isRelation && f.key !== "id" && entry[f.key]
-                          )
-                          .map((field, i) => (
-                            <span key={field.key}>
-                              {i > 0 && " • "}
-                              <span className="font-medium">
-                                {field.displayName}:
-                              </span>{" "}
-                              {formatValue(entry[field.key], field.key, entry)}
-                            </span>
-                          ))}
-                      </div>
-                    ))}
+              {datasetId === "financial_logs" ? (
+                <div className="rounded-md border p-4 max-h-[400px] overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200 pt-2">
+                  <FinancialLogsManager 
+                    logs={recentEntries.filter(
+                      (item): item is FinancialLog =>
+                        (item as FinancialLog).description !== undefined &&
+                        (item as FinancialLog).category !== undefined
+                    )} 
+                  />
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-md border p-2 max-h-[200px] overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200 bg-muted/30 pt-4">
+                  <div className="space-y-1">
+                    {recentEntries
+                      .sort((a, b) => {
+                        const dateField = fieldDefinitions.find(
+                          (f) => f.type === "date"
+                        )?.key;
+                        if (!dateField) return 0;
+                        const dateA = new Date(a[dateField] as string);
+                        const dateB = new Date(b[dateField] as string);
+                        return dateB.getTime() - dateA.getTime();
+                      })
+                      .slice(0, 10)
+                      .map((entry, index) => (
+                        <div
+                          key={entry.id || index}
+                          className={cn(
+                            "text-sm p-2 rounded",
+                            index % 2 === 0 ? "bg-background" : "bg-muted/50"
+                          )}
+                        >
+                          {fieldDefinitions
+                            .filter(
+                              (f) =>
+                                !f.isRelation && f.key !== "id" && entry[f.key]
+                            )
+                            .map((field, i) => (
+                              <span key={field.key}>
+                                {i > 0 && " • "}
+                                <span className="font-medium">
+                                  {field.displayName}:
+                                </span>{" "}
+                                {formatValue(entry[field.key], field.key, entry)}
+                              </span>
+                            ))}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
