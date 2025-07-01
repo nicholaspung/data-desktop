@@ -4,11 +4,11 @@
 export interface Person {
   id: string;
   name: string;
-  birthday?: Date;
+  birthday?: string;
   address?: string;
   employment_history?: string; // Markdown list of occupations/companies
   tags?: string;
-  first_met_date?: Date;
+  first_met_date?: string;
 
   // Metadata
   createdAt: Date;
@@ -21,7 +21,7 @@ export interface Meeting {
   id: string;
   person_id: string;
   person_id_data?: Person;
-  meeting_date: Date;
+  meeting_date: string;
   location: string;
   location_type?: string; // Changed to string for autocomplete
   duration_minutes?: number;
@@ -30,7 +30,7 @@ export interface Meeting {
   tags?: string;
   feelings?: string;
   follow_up_needed?: boolean;
-  follow_up_date?: Date;
+  follow_up_date?: string;
 
   // Metadata
   createdAt: Date;
@@ -56,7 +56,7 @@ export interface PersonAttribute {
   attribute_name: string;
   attribute_value: string;
   category?: string; // Like "preferences", "hobbies", "facts", etc
-  learned_date?: Date;
+  learned_date?: string;
   notes?: string;
   source?: string; // Where did you learn this
 
@@ -71,10 +71,11 @@ export interface PersonNote {
   id: string;
   person_id: string;
   person_id_data?: Person;
-  note_date: Date;
+  note_date: string;
   content: string;
   category?: string; // "general", "important", "reminder", etc
   tags?: string;
+  title?: string;
 
   // Metadata
   createdAt: Date;
@@ -87,7 +88,7 @@ export interface BirthdayReminder {
   id: string;
   person_id: string;
   person_id_data?: Person;
-  reminder_date: Date;
+  reminder_date: string;
   advance_days: number;
   reminder_note?: string;
 
@@ -103,7 +104,7 @@ export interface PersonRelationship {
   person2_id: string;
   relationship_type: string; // "colleague", "friend", "family", "mentor", etc
   description?: string;
-  since_date?: Date;
+  since_date?: string;
 
   // Metadata
   createdAt: Date;

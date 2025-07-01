@@ -179,17 +179,17 @@ When adding new datasets or features that involve data storage:
 ## Task Completion Requirements
 
 When completing any coding task:
-- **ALWAYS run lint and fix TypeScript errors**: After making changes, run `cd frontend && npm run lint` to check for issues
-- **Run lint/fix loop until all errors are resolved**:
-  1. Run `cd frontend && npm run lint`
+- **ALWAYS build frontend and fix TypeScript errors**: After making changes, run `cd frontend && npm run build` to check for issues
+- **Run build/fix loop until all errors are resolved**:
+  1. Run `cd frontend && npm run build`
   2. Fix any errors found
-  3. Run lint again to verify fixes
+  3. Run build again to verify fixes
   4. Repeat until no errors remain (maximum 5 iterations)
   5. If errors persist after 5 attempts, stop and ask the user for guidance on how to resolve the remaining issues
 - **Fix all errors before finishing**: This includes:
   - TypeScript type errors (incorrect component prop usage, missing required props)
-  - Unused imports and variables
-  - ESLint warnings and errors
+  - Missing imports and exports
+  - Build compilation errors
 - **Common issues to check**:
   - Component props matching their interfaces
   - Correct import names (case-sensitive)

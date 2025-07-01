@@ -2,9 +2,8 @@ import React, { useState, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import ReusableSelect from "@/components/reusable/reusable-select";
-import { formatDistanceToNow, parseISO, isValid } from "date-fns";
+import { formatDistanceToNow, isValid } from "date-fns";
 import { Users, Calendar, NotebookPen, Tag, Gift, Filter } from "lucide-react";
 
 interface RecentEntry {
@@ -12,8 +11,8 @@ interface RecentEntry {
   type: "person" | "meeting" | "note" | "attribute" | "birthday";
   title: string;
   subtitle?: string;
-  timestamp: string;
-  data: Record<string, unknown>;
+  timestamp: Date;
+  data: any;
 }
 
 interface RecentEntriesProps {
@@ -38,8 +37,8 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
         id: person.id,
         type: "person",
         title: person.name,
-        subtitle: person.email || person.phone || "No contact info",
-        timestamp: person.created_at,
+        subtitle: "Person",
+        timestamp: person.createdAt,
         data: person,
       });
     });
@@ -49,9 +48,9 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
       entries.push({
         id: meeting.id,
         type: "meeting",
-        title: meeting.title || "Untitled Meeting",
+        title: "Meeting",
         subtitle: `${meeting.location || "No location"} • ${meeting.duration_minutes || 60} min`,
-        timestamp: meeting.created_at,
+        timestamp: meeting.createdAt,
         data: meeting,
       });
     });
@@ -64,7 +63,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
         type: "note",
         title: note.title || "Untitled Note",
         subtitle: `Note for ${person?.name || "Unknown person"}`,
-        timestamp: note.created_at,
+        timestamp: note.createdAt,
         data: note,
       });
     });
@@ -77,7 +76,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
         type: "attribute",
         title: attr.attribute_name,
         subtitle: `${attr.attribute_value} • ${person?.name || "Unknown person"}`,
-        timestamp: attr.created_at,
+        timestamp: attr.createdAt,
         data: attr,
       });
     });
@@ -89,8 +88,8 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
         id: reminder.id,
         type: "birthday",
         title: `Birthday: ${person?.name || "Unknown person"}`,
-        subtitle: reminder.reminder_text || "Birthday reminder",
-        timestamp: reminder.created_at,
+        subtitle: reminder.reminder_note || "Birthday reminder",
+        timestamp: reminder.createdAt,
         data: reminder,
       });
     });
@@ -101,10 +100,8 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
     // Sort by timestamp (newest first)
     return filtered.sort((a, b) => {
       try {
-        const dateA = parseISO(a.timestamp);
-        const dateB = parseISO(b.timestamp);
-        if (!isValid(dateA) || !isValid(dateB)) return 0;
-        return dateB.getTime() - dateA.getTime();
+        if (!isValid(a.timestamp) || !isValid(b.timestamp)) return 0;
+        return b.timestamp.getTime() - a.timestamp.getTime();
       } catch {
         return 0;
       }
@@ -130,16 +127,6 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
       case "attribute": return "bg-orange-100 text-orange-800";
       case "birthday": return "bg-pink-100 text-pink-800";
       default: return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatRelativeTime = (timestamp: string) => {
-    try {
-      const date = parseISO(timestamp);
-      if (!isValid(date)) return "Unknown time";
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch {
-      return "Unknown time";
     }
   };
 
@@ -190,7 +177,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({ onShowDetail }) => {
                     <p className="text-xs text-muted-foreground truncate">{entry.subtitle}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatRelativeTime(entry.timestamp)}
+                    {formatDistanceToNow(entry.timestamp, { addSuffix: true })}
                   </p>
                 </div>
               </div>
