@@ -1044,7 +1044,7 @@ type ExtractedTodo struct {
 func (a *App) extractMetrics(text string) []ExtractedMetric {
 	var metrics []ExtractedMetric
 
-	pattern := `@metric:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^:\s]+)):([^\s]+)(?:\s+\(read-only\))?`
+	pattern := `@metric:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^:\s]+)):(\d+(?:\.\d+)?)(?:\s+\(read-only\))?`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllStringSubmatch(text, -1)
 
@@ -1094,7 +1094,7 @@ func (a *App) extractMetrics(text string) []ExtractedMetric {
 func (a *App) extractTodos(text string) []ExtractedTodo {
 	var todos []ExtractedTodo
 
-	pattern := `@todo:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^\s:]+)):true`
+	pattern := `@todo:(?:"([^"]+)"|'([^']+)'|` + "`([^`]+)`" + `|([^\s:]+)):(true)`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindAllStringSubmatch(text, -1)
 

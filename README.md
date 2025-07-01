@@ -76,12 +76,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in daily journal metric logging, if the value is "@metric:name:true,", it will save as value "true,". Is there a way to regex my way out of this? Or does there need to be validation to make sure it will save like that? Check for @todo:name:true, and also @metric:name:10,
-
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 ### DONE
 
+- in daily journal metric logging, if the value is "@metric:name:true,", it will save as value "true,". Is there a way to regex my way out of this? Or does there need to be validation to make sure it will save like that? Check for @todo:name:true, and also @metric:name:10, [DONE 2025-06-30]
 - in financial logs, add a "dupliate record" handling when using import CSV, it should add the non-duplicated records, and allow the user review the duplicated records to see if they want to continue uploading the data [DONE 2025-06-30]
 - in the financial import CSV, can you add the "no-scroll" behavior for the components? [DONE 2025-06-30]
 - in financial logs, in import CSV, for recent entries, change it to show all the records with the filters, but keep it looking like how it currently is - basically, just add filters and show all the logs, along with pagination [DONE 2025-06-30]

@@ -20,7 +20,8 @@ import MeetingsList from "@/features/people-crm/meeting-list";
 import PersonNotesList from "@/features/people-crm/notes-list";
 import PersonAttributesList from "@/features/people-crm/attributes-list";
 import BirthdaysList from "@/features/people-crm/birthdays-list";
-import { Calendar } from "lucide-react";
+import QuickActions from "@/features/people-crm/quick-actions/quick-actions";
+import { Calendar, Zap } from "lucide-react";
 
 interface PeopleCRMSearch {
   tab?: string;
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/people-crm")({
 function PeopleCRM() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const [activeTab, setActiveTab] = useState(search.tab || "people");
+  const [activeTab, setActiveTab] = useState(search.tab || "quick-actions");
 
   useEffect(() => {
     if (search.tab) {
@@ -146,6 +147,12 @@ function PeopleCRM() {
   const tabs = useMemo(
     () => [
       {
+        id: "quick-actions",
+        label: "Quick Actions",
+        icon: <Zap className="h-4 w-4" />,
+        content: <QuickActions onShowDetail={handleShowDetail} />,
+      },
+      {
         id: "people",
         label: "People",
         icon: <FEATURE_ICONS.USER className="h-4 w-4" />,
@@ -176,7 +183,7 @@ function PeopleCRM() {
         content: <BirthdaysList onShowDetail={handleShowDetail} />,
       },
     ],
-    []
+    [handleShowDetail]
   );
 
   const showingDetail = !!search.detail;

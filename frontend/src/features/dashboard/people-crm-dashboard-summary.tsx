@@ -14,7 +14,7 @@ import { Link } from "@tanstack/react-router";
 import ReusableSummary from "@/components/reusable/reusable-summary";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { format, differenceInDays, addYears } from "date-fns";
+import { format, differenceInDays, addYears, parseISO, isValid } from "date-fns";
 import { registerDashboardSummary } from "@/lib/dashboard-registry";
 import { FEATURE_ICONS } from "@/lib/icons";
 
@@ -40,41 +40,68 @@ export default function PeopleCRMDashboardSummary() {
       state.person_attributes
   );
 
-  const peopleWithBirthdays = people.filter((person) => person.birthday);
+  const peopleWithBirthdays = people.filter((person) => {
+    if (!person.birthday) return false;
+    try {
+      const parsedDate = parseISO(person.birthday);
+      return isValid(parsedDate);
+    } catch {
+      return false;
+    }
+  });
   const today = new Date();
 
   const upcomingBirthdays = peopleWithBirthdays
     .map((person) => {
-      const birthday = new Date(person.birthday!);
-      let nextBirthday = new Date(
-        today.getFullYear(),
-        birthday.getMonth(),
-        birthday.getDate()
-      );
+      try {
+        const birthday = parseISO(person.birthday!);
+        if (!isValid(birthday)) return null;
+        
+        let nextBirthday = new Date(
+          today.getFullYear(),
+          birthday.getMonth(),
+          birthday.getDate()
+        );
 
-      if (nextBirthday < today) {
-        nextBirthday = addYears(nextBirthday, 1);
+        if (nextBirthday < today) {
+          nextBirthday = addYears(nextBirthday, 1);
+        }
+
+        const daysUntil = differenceInDays(nextBirthday, today);
+        const age = nextBirthday.getFullYear() - birthday.getFullYear();
+
+        return {
+          ...person,
+          daysUntil,
+          age,
+          nextBirthday,
+        };
+      } catch {
+        return null;
       }
-
-      const daysUntil = differenceInDays(nextBirthday, today);
-      const age = nextBirthday.getFullYear() - birthday.getFullYear();
-
-      return {
-        ...person,
-        daysUntil,
-        age,
-        nextBirthday,
-      };
     })
-    .filter((person) => person.daysUntil <= 30)
+    .filter((person): person is NonNullable<typeof person> => person !== null && person.daysUntil <= 30)
     .sort((a, b) => a.daysUntil - b.daysUntil);
 
   const recentMeetings = meetings
     .slice()
-    .sort(
-      (a, b) =>
-        new Date(b.meeting_date).getTime() - new Date(a.meeting_date).getTime()
-    )
+    .filter((meeting) => {
+      try {
+        const parsedDate = parseISO(meeting.meeting_date);
+        return isValid(parsedDate);
+      } catch {
+        return false;
+      }
+    })
+    .sort((a, b) => {
+      try {
+        const dateA = parseISO(a.meeting_date);
+        const dateB = parseISO(b.meeting_date);
+        return dateB.getTime() - dateA.getTime();
+      } catch {
+        return 0;
+      }
+    })
     .slice(0, 5);
 
   const stats = {
@@ -135,12 +162,18 @@ export default function PeopleCRMDashboardSummary() {
             {
               label: "This Month",
               value: `${
-                meetings.filter(
-                  (m) =>
-                    new Date(m.meeting_date).getMonth() === today.getMonth() &&
-                    new Date(m.meeting_date).getFullYear() ===
-                      today.getFullYear()
-                ).length
+                meetings.filter((m) => {
+                  try {
+                    const meetingDate = parseISO(m.meeting_date);
+                    if (!isValid(meetingDate)) return false;
+                    return (
+                      meetingDate.getMonth() === today.getMonth() &&
+                      meetingDate.getFullYear() === today.getFullYear()
+                    );
+                  } catch {
+                    return false;
+                  }
+                }).length
               } meetings`,
             },
             {
@@ -177,8 +210,14 @@ export default function PeopleCRMDashboardSummary() {
                           <div>
                             <div className="font-medium">{person.name}</div>
                             <div className="text-xs text-muted-foreground">
-                              {format(person.birthday!, "MMM d")} • {person.age}{" "}
-                              years old
+                              {(() => {
+                                try {
+                                  const birthday = parseISO(person.birthday!);
+                                  return isValid(birthday) ? format(birthday, "MMM d") : "Invalid date";
+                                } catch {
+                                  return "Invalid date";
+                                }
+                              })()} • {person.age} years old
                             </div>
                           </div>
                           <Badge className={getBirthdayBadge(person.daysUntil)}>
@@ -234,8 +273,14 @@ export default function PeopleCRMDashboardSummary() {
                               {meeting.person_id_data?.name || "Unknown"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {format(meeting.meeting_date, "MMM d")} •{" "}
-                              {meeting.location}
+                              {(() => {
+                                try {
+                                  const meetingDate = parseISO(meeting.meeting_date);
+                                  return isValid(meetingDate) ? format(meetingDate, "MMM d") : "Invalid date";
+                                } catch {
+                                  return "Invalid date";
+                                }
+                              })()} • {meeting.location}
                             </div>
                           </div>
                           <ChevronRight className="h-3 w-3 text-muted-foreground" />
