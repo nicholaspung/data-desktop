@@ -121,7 +121,7 @@ export default function DailyJournalHistory({
             <CardContent>
               <div className="prose prose-sm max-w-none dark:prose-invert">
                 <ReactMarkdown>
-                  {isExpanded ? entry.entry : getPreviewText(entry.entry)}
+                {isExpanded ? entry.entry : getPreviewText(entry.entry)}
                 </ReactMarkdown>
               </div>
             </CardContent>

@@ -21,7 +21,7 @@ import {
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import MetricStreakDisplay from "./metric-streak-display";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
@@ -68,6 +68,8 @@ export default function MetricLoggerListItem({
   const [isSubmittingNote, setIsSubmittingNote] = useState<boolean>(false);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const noteDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const experimentMetrics =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
@@ -93,6 +95,9 @@ export default function MetricLoggerListItem({
     return () => {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
+      }
+      if (noteDebounceTimeoutRef.current) {
+        clearTimeout(noteDebounceTimeoutRef.current);
       }
     };
   }, []);
@@ -161,10 +166,14 @@ export default function MetricLoggerListItem({
     setEditValue(getMetricValue(metric));
   };
 
-  const startEditingNote = (metric: Metric) => {
+  const startEditingNote = useCallback((metric: Metric) => {
     setEditingNoteId(metric.id);
     setNoteValue(getMetricNote(metric));
-  };
+  }, [dailyLogs, selectedDate]);
+
+  const handleNoteChange = useCallback((value: string) => {
+    setNoteValue(value);
+  }, []);
 
   const saveEditedValue = async (metric: Metric, valueToSave?: string) => {
     if (editingMetricId !== metric.id) return;
@@ -289,28 +298,30 @@ export default function MetricLoggerListItem({
     setEditValue("");
   };
 
-  const cancelEditingNote = () => {
+  const cancelEditingNote = useCallback(() => {
+    if (noteDebounceTimeoutRef.current) {
+      clearTimeout(noteDebounceTimeoutRef.current);
+    }
     setEditingNoteId(null);
     setNoteValue("");
-  };
+  }, []);
 
-  const EditingNote = ({
+  // Focus textarea when editing starts
+  useEffect(() => {
+    if (editingNoteId && textareaRef.current) {
+      textareaRef.current.focus();
+      const length = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(length, length);
+    }
+  }, [editingNoteId]);
+
+  const EditingNote = useCallback(({
     isEditingNote,
     metric,
   }: {
     isEditingNote: boolean;
     metric: Metric;
   }) => {
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-      if (isEditingNote && textareaRef.current) {
-        textareaRef.current.focus();
-        const length = textareaRef.current.value.length;
-        textareaRef.current.setSelectionRange(length, length);
-      }
-    }, [isEditingNote]);
-
     return isEditingNote ? (
       <div className="mt-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-2 mt-2">
@@ -318,7 +329,7 @@ export default function MetricLoggerListItem({
             ref={textareaRef}
             placeholder="Add a note for today..."
             value={noteValue}
-            onChange={(e) => setNoteValue(e.target.value)}
+            onChange={(e) => handleNoteChange(e.target.value)}
             rows={3}
             className="min-h-[80px] text-sm"
             disabled={isSubmittingNote}
@@ -358,7 +369,7 @@ export default function MetricLoggerListItem({
         </div>
       </div>
     ) : null;
-  };
+  }, [noteValue, isSubmittingNote, handleNoteChange, cancelEditingNote, saveEditedNote]);
 
   return Object.keys(groupedMetrics)
     .sort()

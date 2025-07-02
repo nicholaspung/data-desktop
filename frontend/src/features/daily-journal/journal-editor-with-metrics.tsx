@@ -20,6 +20,7 @@ import dataStore from "@/store/data-store";
 import { Metric, DailyLog } from "@/store/experiment-definitions";
 import { Todo } from "@/store/todo-definitions";
 import { format } from "date-fns";
+import { usePin } from "@/hooks/usePin";
 
 const getMetricExamples = (metric: Metric): string[] => {
   switch (metric.type) {
@@ -520,6 +521,9 @@ export default function JournalEditorWithMetrics({
   // Block selection state
   const [allBlocksSelected, setAllBlocksSelected] = useState(false);
 
+  // PIN protection
+  const { isConfigured, isUnlocked } = usePin();
+
   const metrics =
     useStore(dataStore, (state) => state.metrics as Metric[]) || [];
   const activeMetrics = metrics.filter((metric) => metric.active);
@@ -589,8 +593,13 @@ export default function JournalEditorWithMetrics({
   }, [todos]);
 
   const filteredMetrics = useMemo(() => {
-    // Show all active metrics (including already-logged ones)
-    const availableMetrics = activeMetrics;
+    // Filter out private metrics if PIN is configured and locked
+    const availableMetrics = activeMetrics.filter((metric) => {
+      if (metric.private && isConfigured && !isUnlocked) {
+        return false; // Hide private metrics when PIN is locked
+      }
+      return true;
+    });
 
     return metricSearchQuery.trim()
       ? availableMetrics.filter(
@@ -604,7 +613,7 @@ export default function JournalEditorWithMetrics({
             metric.type.toLowerCase().includes(metricSearchQuery.toLowerCase())
         )
       : availableMetrics;
-  }, [activeMetrics, metricSearchQuery]);
+  }, [activeMetrics, metricSearchQuery, isConfigured, isUnlocked]);
 
   const filteredTodos = useMemo(() => {
     const usedTodos = getUsedTodosFromJournal();
@@ -618,7 +627,15 @@ export default function JournalEditorWithMetrics({
       (todo) => !usedTodos.has(todo.id)
     );
     
-    const availableTodos = [...incompleteTodosFiltered, ...completedTodosFiltered];
+    const allAvailableTodos = [...incompleteTodosFiltered, ...completedTodosFiltered];
+    
+    // Filter out private todos if PIN is configured and locked
+    const availableTodos = allAvailableTodos.filter((todo) => {
+      if (todo.private && isConfigured && !isUnlocked) {
+        return false; // Hide private todos when PIN is locked
+      }
+      return true;
+    });
 
     return todoSearchQuery.trim()
       ? availableTodos.filter(
@@ -630,7 +647,7 @@ export default function JournalEditorWithMetrics({
                 .includes(todoSearchQuery.toLowerCase()))
         )
       : availableTodos;
-  }, [incompleteTodos, todoSearchQuery, getUsedTodosFromJournal, getCompletedTodosForDate, selectedDate]);
+  }, [incompleteTodos, todoSearchQuery, getUsedTodosFromJournal, getCompletedTodosForDate, selectedDate, isConfigured, isUnlocked]);
 
   const initializeBlocks = useCallback(() => {
     if (value) {

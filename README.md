@@ -55,10 +55,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - low priority bug: in time tracker, the pomodoro/break logic basically stops the pomdoro, then it shows a default add time entry view, then it goes to break mode
 - low priority bug: make the markdown CSS better looking
 
-- refactor out icons used in application into lib.ts
-- refactor application to use reusable components
-- refactor application to save data in UTC, and to make use of frontend date functions that display in local time
-
 - add inventory management system
 - add a "taking current supplements" section - supplements and medication
   - allow user to select supplements based on what's in inventory
@@ -76,10 +72,16 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
+- refactor out icons used in application into lib.ts
+- refactor application to use reusable components
+- refactor application to save data in UTC, and to make use of frontend date functions that display in local time
+
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 ### DONE
 
+- in metric logger, when saving notes, the responsiveness of typing is pretty slow [DONE 2025-07-02]
+- in daily journal, when searching for metrics or todos, make sure it follows the private/protected logic [DONE 2025-07-03]
 - in daily journal metric logging, if the value is "@metric:name:true,", it will save as value "true,". Is there a way to regex my way out of this? Or does there need to be validation to make sure it will save like that? Check for @todo:name:true, and also @metric:name:10, [DONE 2025-06-30]
 - in financial logs, add a "dupliate record" handling when using import CSV, it should add the non-duplicated records, and allow the user review the duplicated records to see if they want to continue uploading the data [DONE 2025-06-30]
 - in the financial import CSV, can you add the "no-scroll" behavior for the components? [DONE 2025-06-30]
