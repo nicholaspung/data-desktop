@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { isPast } from "date-fns";
 import AddTodoButton from "./add-todo-button";
-import { ApiService } from "@/services/api";
+
 import TodoStats from "./todo-stats";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -33,8 +33,8 @@ export default function TodoList({ showPrivate }: TodoListProps) {
   });
 
   const todos = useStore(dataStore, (state) => state.todos as Todo[]);
+  const metrics = useStore(dataStore, (state) => state.metrics || []);
   const isLoading = useStore(loadingStore, (state) => state.todos);
-  const [todoMetrics, setTodoMetrics] = useState<Record<string, any>>({});
   const [searchText, setSearchText] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [hasMetricFilter, setHasMetricFilter] = useState(false);
@@ -44,18 +44,11 @@ export default function TodoList({ showPrivate }: TodoListProps) {
     loadTodos();
   }, []);
 
-  useEffect(() => {
-    const loadMetrics = async () => {
-      const metrics = await ApiService.getRecordsWithRelations<any>("metrics");
-      const metricMap: Record<string, any> = {};
-      metrics.forEach((metric) => {
-        metricMap[metric.id] = metric;
-      });
-      setTodoMetrics(metricMap);
-    };
-
-    loadMetrics();
-  }, []);
+  // Convert metrics array to map for easy lookup
+  const todoMetrics = metrics.reduce((acc: Record<string, any>, metric: any) => {
+    acc[metric.id] = metric;
+    return acc;
+  }, {});
 
   const getFilteredTodos = (tabId: string) => {
     return todos.filter((todo) => {
@@ -143,7 +136,7 @@ export default function TodoList({ showPrivate }: TodoListProps) {
                   key={todo.id}
                   todo={todo}
                   todoMetrics={todoMetrics}
-                  setTodoMetrics={setTodoMetrics}
+
                 />
               ))}
             </div>
@@ -159,7 +152,7 @@ export default function TodoList({ showPrivate }: TodoListProps) {
                   key={todo.id}
                   todo={todo}
                   todoMetrics={todoMetrics}
-                  setTodoMetrics={setTodoMetrics}
+
                 />
               ))}
             </div>
@@ -175,7 +168,7 @@ export default function TodoList({ showPrivate }: TodoListProps) {
             key={todo.id}
             todo={todo}
             todoMetrics={todoMetrics}
-            setTodoMetrics={setTodoMetrics}
+
           />
         ))}
       </>

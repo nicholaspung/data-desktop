@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -11,8 +11,9 @@ import {
 import { defaultJournalingMetrics } from "@/features/daily-tracker/default-metrics";
 
 export function useJournalingMetricsSync() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [isLoading] = useState(false);
+  
+  const allMetrics = useStore(dataStore, (state) => state.metrics as Metric[] || []);
 
   const gratitudeEntries = useStore(
     dataStore,
@@ -31,31 +32,14 @@ export function useJournalingMetricsSync() {
     (state) => state.daily_logs as DailyLog[]
   );
 
-  useEffect(() => {
-    const loadMetrics = async () => {
-      setIsLoading(true);
-      try {
-        const allMetrics =
-          await ApiService.getRecordsWithRelations<Metric>("metrics");
+  // Filter journaling metrics from the data store
+  const journalingMetricNames = defaultJournalingMetrics
+    .filter((m) => !m.name?.toLowerCase().includes("affirmation"))
+    .map((m) => m.name?.toLowerCase());
 
-        const journalingMetricNames = defaultJournalingMetrics
-          .filter((m) => !m.name?.toLowerCase().includes("affirmation"))
-          .map((m) => m.name?.toLowerCase());
-
-        const journalingMetrics = allMetrics.filter((m) =>
-          journalingMetricNames.includes(m.name?.toLowerCase())
-        );
-
-        setMetrics(journalingMetrics);
-      } catch (error) {
-        console.error("Error loading journaling metrics:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadMetrics();
-  }, []);
+  const metrics = allMetrics.filter((m) =>
+    journalingMetricNames.includes(m.name?.toLowerCase())
+  );
 
   const syncJournalingMetrics = useCallback(async () => {
     if (isLoading || metrics.length === 0) return;

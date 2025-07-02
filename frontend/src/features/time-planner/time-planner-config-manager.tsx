@@ -10,6 +10,10 @@ import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { ConfirmChangesDialog } from "@/components/reusable/confirm-changes-dialog";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
+import { useStore } from "@tanstack/react-store";
+import dataStore, { addEntry, updateEntry, deleteEntry } from "@/store/data-store";
+import useLoadData from "@/hooks/useLoadData";
+import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 
 interface TimePlannerConfigManagerProps {
   currentTimeBlocks: Record<number, TimeBlock[]>;
@@ -31,16 +35,25 @@ export default function TimePlannerConfigManager({
   const [saveNewDialogOpen, setSaveNewDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const { getDatasetFields } = useFieldDefinitions();
+  const configFields = getDatasetFields("time_planner_configs");
+
+  const { loadData: loadConfigs } = useLoadData({
+    fields: configFields,
+    datasetId: "time_planner_configs",
+    title: "Time Planner Configs",
+  });
+
   const [configToLoad, setConfigToLoad] = useState<TimeBlockConfig | null>(
     null
   );
-  const [savedConfigs, setSavedConfigs] = useState<TimeBlockConfig[]>([]);
+  const savedConfigs = useStore(dataStore, (state) => state.time_planner_configs as TimeBlockConfig[] || []);
   const [newConfigName, setNewConfigName] = useState("");
   const [newConfigDescription, setNewConfigDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadSavedConfigs();
+    loadConfigs();
   }, []);
 
   useEffect(() => {
@@ -75,18 +88,7 @@ export default function TimePlannerConfigManager({
     autoLoadLastConfig();
   }, [savedConfigs, currentConfig, currentTimeBlocks]);
 
-  const loadSavedConfigs = async () => {
-    setLoading(true);
-    try {
-      const records = await ApiService.getRecords("time_planner_configs");
-      setSavedConfigs(records as TimeBlockConfig[]);
-    } catch (error) {
-      console.error("Failed to load saved configurations:", error);
-      toast.error("Failed to load saved configurations");
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleUpdateConfig = async () => {
     if (!currentConfig) return;
@@ -101,11 +103,12 @@ export default function TimePlannerConfigManager({
         lastModified: new Date(),
       };
 
-      await ApiService.updateRecord(currentConfig.id, updatedConfig);
-      toast.success(`Updated "${currentConfig.name}" configuration`);
-
-      onConfigLoaded(updatedConfig as TimeBlockConfig);
-      await loadSavedConfigs();
+      const response = await ApiService.updateRecord(currentConfig.id, updatedConfig);
+      if (response) {
+        updateEntry(currentConfig.id, response, "time_planner_configs");
+        toast.success(`Updated "${currentConfig.name}" configuration`);
+        onConfigLoaded(response as TimeBlockConfig);
+      }
     } catch (error) {
       console.error("Failed to update configuration:", error);
       toast.error("Failed to update configuration");
@@ -137,18 +140,18 @@ export default function TimePlannerConfigManager({
         "time_planner_configs",
         newConfig
       );
-      toast.success("Configuration saved successfully");
-      setSaveNewDialogOpen(false);
-
-      setNewConfigName("");
-      setNewConfigDescription("");
-
+      
       if (savedConfig) {
+        addEntry(savedConfig, "time_planner_configs");
+        toast.success("Configuration saved successfully");
+        setSaveNewDialogOpen(false);
+
+        setNewConfigName("");
+        setNewConfigDescription("");
+
         onConfigLoaded(savedConfig as TimeBlockConfig);
         localStorage.setItem("lastLoadedConfigId", savedConfig.id);
       }
-
-      await loadSavedConfigs();
     } catch (error) {
       console.error("Failed to save configuration:", error);
       toast.error("Failed to save configuration");
@@ -253,8 +256,8 @@ export default function TimePlannerConfigManager({
     setLoading(true);
     try {
       await ApiService.deleteRecord(configId);
+      deleteEntry(configId, "time_planner_configs");
       toast.success("Configuration deleted successfully");
-      await loadSavedConfigs();
     } catch (error) {
       console.error("Failed to delete configuration:", error);
       toast.error("Failed to delete configuration");

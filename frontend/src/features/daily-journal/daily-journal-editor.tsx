@@ -18,12 +18,13 @@ import { addDays, isToday, isTomorrow, isYesterday } from "date-fns";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import { DailyJournalEntry } from "@/store/journaling-definitions";
-import { DailyLog } from "@/store/experiment-definitions";
-import { Todo } from "@/store/todo-definitions";
+
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import settingsStore from "@/store/settings-store";
+import useLoadData from "@/hooks/useLoadData";
+import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
 
 interface DailyJournalEditorProps {
   selectedDate?: Date;
@@ -74,6 +75,22 @@ export default function DailyJournalEditor({
     null
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const { getDatasetFields } = useFieldDefinitions();
+  const dailyLogsFields = getDatasetFields("daily_logs");
+  const todosFields = getDatasetFields("todos");
+
+  const { loadData: loadDailyLogs } = useLoadData({
+    fields: dailyLogsFields,
+    datasetId: "daily_logs",
+    title: "Daily Logs",
+  });
+
+  const { loadData: loadTodos } = useLoadData({
+    fields: todosFields,
+    datasetId: "todos",
+    title: "Todos",
+  });
 
   const entries = useStore(
     dataStore,
@@ -176,15 +193,12 @@ export default function DailyJournalEditor({
           updateEntry(existingEntry.id, result, "daily_journal");
           toast.success("Daily journal entry updated!");
 
-          const logs = await ApiService.getRecords<DailyLog>("daily_logs");
-          const todos = await ApiService.getRecords<Todo>("todos");
-
-          if (logs || todos) {
-            dataStore.setState((state) => ({
-              ...state,
-              ...(logs && { daily_logs: logs }),
-              ...(todos && { todos: todos }),
-            }));
+          // Reload related data using the data store pattern
+          if (isMetricsEnabled) {
+            await loadDailyLogs();
+          }
+          if (isTodosEnabled) {
+            await loadTodos();
           }
         }
       } else {
@@ -199,15 +213,12 @@ export default function DailyJournalEditor({
           addEntry(result, "daily_journal");
           toast.success("Daily journal entry added!");
 
-          const logs = await ApiService.getRecords<DailyLog>("daily_logs");
-          const todos = await ApiService.getRecords<Todo>("todos");
-
-          if (logs || todos) {
-            dataStore.setState((state) => ({
-              ...state,
-              ...(logs && { daily_logs: logs }),
-              ...(todos && { todos: todos }),
-            }));
+          // Reload related data using the data store pattern
+          if (isMetricsEnabled) {
+            await loadDailyLogs();
+          }
+          if (isTodosEnabled) {
+            await loadTodos();
           }
         }
       }
@@ -225,7 +236,7 @@ export default function DailyJournalEditor({
     } finally {
       setIsSubmitting(false);
     }
-  }, [entry, selectedDate, existingEntry, isMetricsEnabled, isTodosEnabled]);
+  }, [entry, selectedDate, existingEntry, isMetricsEnabled, isTodosEnabled, loadDailyLogs, loadTodos]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
