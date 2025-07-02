@@ -32,6 +32,7 @@ import ReusableMultiSelect, {
   MultiSelectOption,
 } from "@/components/reusable/reusable-multiselect";
 import { getDisplayValue } from "@/lib/table-utils";
+import { usePin } from "@/hooks/usePin";
 
 interface DailyRecordsPanelProps {
   selectedDate: Date;
@@ -69,6 +70,8 @@ export default function DailyRecordsPanel({
   const settings = useStore(settingsStore);
   const isMetricsEnabled = settings.visibleRoutes["/metric"] === true;
   const isTodosEnabled = settings.visibleRoutes["/todos"] === true;
+  
+  const { isConfigured, isUnlocked } = usePin();
 
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
 
@@ -190,6 +193,33 @@ export default function DailyRecordsPanel({
     }));
   };
 
+  const shouldHidePrivateRecord = (record: any, datasetId: string): boolean => {
+    // If PIN is not configured, show all records
+    if (!isConfigured) return false;
+    
+    // If PIN is unlocked, show all records
+    if (isUnlocked) return false;
+    
+    // Check if the record itself is private
+    if (record.private) return true;
+    
+    // For daily_logs, check if the associated metric is private
+    if (datasetId === "daily_logs" && record.metric_id) {
+      const metrics = allData.metrics || [];
+      const metric = metrics.find((m: any) => m.id === record.metric_id);
+      if (metric?.private) return true;
+    }
+    
+    // For experiment-related records, check if the associated experiment is private
+    if (record.experiment_id) {
+      const experiments = allData.experiments || [];
+      const experiment = experiments.find((e: any) => e.id === record.experiment_id);
+      if (experiment?.private) return true;
+    }
+    
+    return false;
+  };
+
   const getRecordsForDate = () => {
     const recordsByDataset: Array<{
       datasetId: string;
@@ -211,6 +241,9 @@ export default function DailyRecordsPanel({
 
       const dateRecords = records
         .filter((record: any) => {
+          // First check privacy - if record should be hidden, filter it out
+          if (shouldHidePrivateRecord(record, datasetId)) return false;
+          
           // Special handling for todos - only show completed ones
           if (datasetId === "todos") {
             if (!record.is_complete || !record.completed_at) return false;
