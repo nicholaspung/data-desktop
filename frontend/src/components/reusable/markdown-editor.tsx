@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { Textarea } from "../ui/textarea";
 import ReusableTabs from "./reusable-tabs";
 
@@ -46,7 +47,7 @@ export function MarkdownEditor({
               onChange={handleChange}
               placeholder={placeholder}
               style={{ minHeight, maxHeight }}
-              className="font-mono"
+              className="font-mono overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200"
             />
           ),
         },
@@ -64,11 +65,11 @@ export function MarkdownEditor({
                    prose-code:bg-muted prose-code:text-foreground prose-code:font-mono prose-code:rounded prose-code:px-1 prose-code:py-0.5
                    prose-pre:bg-muted prose-pre:text-foreground prose-pre:font-mono prose-pre:rounded-md prose-pre:p-4 prose-pre:overflow-x-auto
                    prose-li:marker:text-muted-foreground
-                   prose-hr:border-border max-w-none border rounded-md p-3 overflow-auto"
+                   prose-hr:border-border max-w-none border rounded-md p-3 overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200"
               style={{ minHeight, maxHeight }}
             >
               {localValue ? (
-                <ReactMarkdown>{localValue}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkBreaks]}>{localValue}</ReactMarkdown>
               ) : (
                 <div className="text-muted-foreground">{placeholder}</div>
               )}
@@ -87,7 +88,7 @@ export function MarkdownEditor({
       onChange={handleChange}
       placeholder={placeholder}
       style={{ minHeight, maxHeight }}
-      className={`font-mono ${className}`}
+      className={`font-mono overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200 ${className}`}
     />
   );
 }

@@ -62,13 +62,14 @@ export function InfoPanel({
   return (
     <ReusableCard
       cardClassName={cn("border-l-4", variantStyles[variant], className)}
-      contentClassName={cn(contentClassName, "pt-4")}
+      contentClassName={cn(contentClassName, "py-4")}
       showHeader={false}
       content={
         <>
           <div
             className={cn(
-              "flex flex-row items-center justify-between mb-2",
+              "flex flex-row items-center justify-between",
+              expanded && "mb-2",
               collapsible && "cursor-pointer"
             )}
             onClick={collapsible ? toggleExpanded : undefined}

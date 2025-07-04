@@ -7,7 +7,9 @@ import { useStore } from "@tanstack/react-store";
 import { QuestionJournalEntry } from "@/store/journaling-definitions";
 import { formatDate } from "@/lib/date-utils";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReusableCard from "@/components/reusable/reusable-card";
 import ReusableSelect from "@/components/reusable/reusable-select";
 
@@ -89,12 +91,11 @@ export default function QuestionJournalHistory() {
     return (
       <div className="space-y-6">
         {filteredEntries.map((entry) => (
-          <ReusableCard
-            key={entry.id}
-            title={
-              <div className="flex justify-between items-center">
+          <Card key={entry.id} className="overflow-hidden">
+            <CardHeader className="bg-primary/5 py-2">
+              <CardTitle className="text-md flex justify-between items-center">
                 <span>{formatDate(entry.date)}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-muted-foreground font-normal">
                   {new Date(entry.createdAt || entry.date).toLocaleTimeString(
                     [],
                     {
@@ -103,33 +104,24 @@ export default function QuestionJournalHistory() {
                     }
                   )}
                 </span>
-              </div>
-            }
-            showHeader={true}
-            cardClassName="overflow-hidden"
-            contentClassName="pt-4"
-            content={
-              <>
-                <h3 className="font-semibold text-lg mb-2">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="bg-muted p-4 rounded-md">
+                <h3 className="font-semibold text-lg">
                   {extractQuestion(entry.entry)}
                 </h3>
-                <div
-                  className="prose dark:prose-invert max-w-none
-                prose-headings:font-semibold prose-headings:text-foreground
-                prose-p:text-foreground
-                prose-a:text-primary prose-a:underline prose-a:underline-offset-4 hover:prose-a:text-primary/80
-                prose-strong:text-foreground prose-strong:font-semibold
-                prose-blockquote:border-l-border prose-blockquote:text-muted-foreground
-                prose-code:bg-muted prose-code:text-foreground prose-code:font-mono prose-code:rounded prose-code:px-1 prose-code:py-0.5
-                prose-pre:bg-muted prose-pre:text-foreground prose-pre:font-mono prose-pre:rounded-md prose-pre:p-4 prose-pre:overflow-x-auto
-                prose-li:marker:text-muted-foreground
-                prose-hr:border-border max-w-none"
-                >
-                  <ReactMarkdown>{extractAnswer(entry.entry)}</ReactMarkdown>
+              </div>
+              <div>
+                <h4 className="text-md font-medium mb-2">Your Answer:</h4>
+                <div className="prose dark:prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                    {extractAnswer(entry.entry)}
+                  </ReactMarkdown>
                 </div>
-              </>
-            }
-          />
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -168,35 +160,18 @@ export default function QuestionJournalHistory() {
               )}
             </div>
 
-            {(searchTerm || selectedQuestion) && (
+            {selectedQuestion && (
               <div className="flex flex-wrap gap-2">
-                {searchTerm && (
-                  <Badge
-                    variant="secondary"
-                    className="flex gap-1 items-center"
-                  >
-                    Search: {searchTerm}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setSearchTerm("")}
-                    />
-                  </Badge>
-                )}
-                {selectedQuestion && (
-                  <Badge
-                    variant="secondary"
-                    className="flex gap-1 items-center"
-                  >
-                    Question:{" "}
-                    {selectedQuestion.length > 20
-                      ? `${selectedQuestion.substring(0, 20)}...`
-                      : selectedQuestion}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => setSelectedQuestion("")}
-                    />
-                  </Badge>
-                )}
+                <Badge variant="secondary" className="flex gap-1 items-center">
+                  Question:{" "}
+                  {selectedQuestion.length > 20
+                    ? `${selectedQuestion.substring(0, 20)}...`
+                    : selectedQuestion}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => setSelectedQuestion("")}
+                  />
+                </Badge>
               </div>
             )}
 

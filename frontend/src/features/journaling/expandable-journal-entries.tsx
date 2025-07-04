@@ -58,7 +58,7 @@ export default function ExpandableJournalEntries({
           <Card key={entry.id} className="overflow-hidden">
             <CardHeader
               className={cn(
-                "bg-primary/5 pb-2 cursor-pointer",
+                "bg-primary/5 py-2 cursor-pointer",
                 expandedEntries.has(entry.id) ? "border-b" : ""
               )}
               onClick={() => toggleExpand(entry.id)}

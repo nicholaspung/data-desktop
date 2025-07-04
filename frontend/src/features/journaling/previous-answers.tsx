@@ -4,6 +4,7 @@ import { useStore } from "@tanstack/react-store";
 import { QuestionJournalEntry } from "@/store/journaling-definitions";
 import { formatDate } from "@/lib/date-utils";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { useTodayQuestion } from "@/hooks/useTodayQuestion";
 
 export default function PreviousAnswers() {
@@ -47,7 +48,7 @@ export default function PreviousAnswers() {
             <div className="space-y-6">
               {relevantEntries.map((entry) => (
                 <Card key={entry.id} className="overflow-hidden">
-                  <CardHeader className="bg-primary/10 pb-2">
+                  <CardHeader className="bg-primary/10 py-2">
                     <CardTitle className="text-md">
                       {formatDate(entry.date)}
                     </CardTitle>
@@ -64,7 +65,7 @@ export default function PreviousAnswers() {
                  prose-li:marker:text-muted-foreground
                  prose-hr:border-border max-w-none"
                   >
-                    <ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkBreaks]}>
                       {entry.entry.replace(/^##.*(\n|$)/m, "")}
                     </ReactMarkdown>
                   </CardContent>

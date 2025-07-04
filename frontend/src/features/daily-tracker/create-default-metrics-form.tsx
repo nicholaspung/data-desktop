@@ -52,7 +52,7 @@ export default function CreateDefaultMetricsButton() {
   }
 
   return (
-    <Button onClick={handleCreateMetrics} variant="outline">
+    <Button onClick={handleCreateMetrics} variant="outline" size="sm">
       <PlusCircle className="h-4 w-4 mr-2" />
       Create Journaling Metrics
     </Button>

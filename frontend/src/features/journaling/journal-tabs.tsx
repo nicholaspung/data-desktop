@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { PenLine, List } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import ExpandableJournalEntries from "./expandable-journal-entries";
 import { InfoPanel } from "@/components/reusable/info-panel";
 import {
@@ -50,11 +49,7 @@ export default function JournalTabs({
                 <span>Add New</span>
               </span>
             ),
-            content: (
-              <Card>
-                <CardContent className="pt-6">{addEntryForm}</CardContent>
-              </Card>
-            ),
+            content: addEntryForm,
           },
           {
             id: "view",

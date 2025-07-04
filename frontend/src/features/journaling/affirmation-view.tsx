@@ -98,7 +98,7 @@ export default function AffirmationView() {
 
   const CurrentAffirmation = () => (
     <Card>
-      <CardHeader className="pb-3 border-b flex flex-row justify-between items-center">
+      <CardHeader className="py-3 border-b flex flex-row justify-between items-center">
         <CardTitle className="text-md">
           Current Affirmation
           {latestAffirmation && (
@@ -118,7 +118,7 @@ export default function AffirmationView() {
           <span className="sr-only">Edit</span>
         </Button>
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="py-4">
         <div
           className="prose dark:prose-invert max-w-none
                    prose-headings:font-semibold prose-headings:text-foreground
@@ -152,13 +152,6 @@ export default function AffirmationView() {
               <span>Practice logged for today</span>
             </div>
           </div>
-        ) : !affirmationMetric ? (
-          <div className="border-t pt-2 mt-4 text-center text-sm text-muted-foreground">
-            <div className="flex items-center justify-center gap-2">
-              <Lock className="h-4 w-4" />
-              <span>Tracking metric not available</span>
-            </div>
-          </div>
         ) : null}
       </CardContent>
     </Card>
@@ -177,7 +170,21 @@ export default function AffirmationView() {
           hasTodaysAffirmation={false}
         />
       ) : (
-        <CurrentAffirmation />
+        <>
+          <CurrentAffirmation />
+          {!affirmationMetric && (
+            <Card className="border-dashed">
+              <CardContent className="py-4">
+                <div className="text-center text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2">
+                    <Lock className="h-4 w-4" />
+                    <span>Tracking metric not available</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
