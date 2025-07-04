@@ -69,7 +69,7 @@ Use the calendar toggle to control which metrics appear in your daily tracking v
           guideContent={metricLoggerGuideContent}
           storageKey="metric-logger"
         >
-          <AddMetricModal buttonLabel="Add Metric" />
+          <AddMetricModal buttonLabel="Add Metric" buttonSize="sm" />
           <CategoryManager />
         </FeatureHeader>
       }

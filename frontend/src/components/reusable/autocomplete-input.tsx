@@ -31,6 +31,7 @@ export default function AutocompleteInput({
   dropdownPosition = "bottom",
   usePortal = false,
   wider = true,
+  maxDropdownHeight = 300,
 }: {
   label?: string;
   value: string;
@@ -58,6 +59,7 @@ export default function AutocompleteInput({
   dropdownPosition?: "top" | "bottom";
   usePortal?: boolean;
   wider?: boolean;
+  maxDropdownHeight?: number;
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -74,9 +76,9 @@ export default function AutocompleteInput({
   const virtualizer = useVirtualizer({
     count: finalOptions.length,
     getScrollElement: () => listRef.current,
-    estimateSize: () => 50,
+    estimateSize: () => 40,
     overscan: 5,
-    measureElement: (element) => element?.getBoundingClientRect().height ?? 50,
+    measureElement: (element) => element?.getBoundingClientRect().height ?? 40,
   });
 
   useEffect(() => {
@@ -105,10 +107,10 @@ export default function AutocompleteInput({
     } else if (value.length > 0) {
       filteredOptions = options.filter((option) =>
         option.label.toLowerCase().includes(value.toLowerCase())
-      );
+      ).sort((a, b) => a.label.localeCompare(b.label));
     } else if (showSuggestions && !showRecentOptions) {
       // Show all options when dropdown is opened and showRecentOptions is false
-      filteredOptions = options;
+      filteredOptions = [...options].sort((a, b) => a.label.localeCompare(b.label));
     }
 
     setFinalOptions(filteredOptions);
@@ -124,6 +126,7 @@ export default function AutocompleteInput({
   useEffect(() => {
     optionRefs.current = finalOptions.map(() => null);
   }, [finalOptions]);
+
 
   const updateDropdownPosition = useCallback(() => {
     if (inputRef.current && usePortal) {
@@ -268,8 +271,8 @@ export default function AutocompleteInput({
               ref={listRef}
               className="overflow-y-auto overflow-x-hidden py-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
               style={{ 
-                height: Math.min(finalOptions.length * 50, 300) + "px",
-                maxHeight: "300px"
+                height: Math.min(finalOptions.length * 40, maxDropdownHeight) + "px",
+                maxHeight: maxDropdownHeight + "px"
               }}
               onWheel={(e) => e.stopPropagation()}
             >
@@ -370,8 +373,8 @@ export default function AutocompleteInput({
               ref={listRef}
               className="overflow-y-auto overflow-x-hidden py-1 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-transparent"
               style={{ 
-                height: Math.min(finalOptions.length * 50, 300) + "px",
-                maxHeight: "300px"
+                height: Math.min(finalOptions.length * 40, maxDropdownHeight) + "px",
+                maxHeight: maxDropdownHeight + "px"
               }}
               onWheel={(e) => e.stopPropagation()}
             >

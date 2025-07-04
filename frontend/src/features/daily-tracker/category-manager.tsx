@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Plus, FolderPlus } from "lucide-react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
-import ReusableSelect from "@/components/reusable/reusable-select";
 import { useStore } from "@tanstack/react-store";
 import dataStore, {
   deleteEntry,
@@ -15,6 +14,7 @@ import { ApiService } from "@/services/api";
 import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
 export default function CategoryManager({
   onSuccess,
@@ -185,7 +185,7 @@ export default function CategoryManager({
       showTrigger={true}
       fixedFooter={true}
       trigger={
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" size="sm">
           <FolderPlus className="h-4 w-4" />
           Category Manager
         </Button>
@@ -204,20 +204,19 @@ export default function CategoryManager({
                 ),
                 content: (
                   <div className="pt-4 space-y-4">
-                    <div>
-                      <Label htmlFor="new-category-name">Category Name</Label>
-                      <Input
-                        id="new-category-name"
-                        value={categoryName}
-                        onChange={(e) => setCategoryName(e.target.value)}
-                        placeholder="e.g., Fitness, Health, Productivity"
-                        className="mt-1"
-                        autoFocus
-                      />
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Enter a unique name for your category
-                      </p>
-                    </div>
+                    <AutocompleteInput
+                      label="Category Name"
+                      value={categoryName}
+                      onChange={setCategoryName}
+                      onSelect={(option) => setCategoryName(option.label)}
+                      options={categoryOptions}
+                      placeholder="e.g., Fitness, Health, Productivity"
+                      id="new-category-name"
+                      autofocus={true}
+                      description="Enter a unique name for your category"
+                      usePortal={true}
+                      showRecentOptions={false}
+                    />
                     {/* Button moved to fixed footer */}
                   </div>
                 ),
@@ -239,31 +238,57 @@ export default function CategoryManager({
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div>
-                          <Label>Select Category to Edit</Label>
-                          <ReusableSelect
-                            options={categoryOptions}
-                            value={selectedCategory}
+                        <div className="space-y-2">
+                          <AutocompleteInput
+                            label="Select Category to Edit"
+                            value={selectedCategoryData?.name || ""}
                             onChange={(value) => {
-                              setSelectedCategory(value);
+                              // Find category by name when typing
                               const category = categories.find(
-                                (cat: any) => cat.id === value
+                                (cat: any) =>
+                                  cat.name.toLowerCase() === value.toLowerCase()
                               );
-                              setEditCategoryName(category?.name || "");
+                              if (category) {
+                                setSelectedCategory(category.id);
+                                setEditCategoryName(category.name);
+                              } else {
+                                // Clear selection if no exact match
+                                setSelectedCategory("");
+                                setEditCategoryName("");
+                              }
                             }}
-                            title="Category"
-                            placeholder="Select a category..."
-                            triggerClassName="mt-1"
+                            onSelect={(option) => {
+                              setSelectedCategory(option.id);
+                              setEditCategoryName(option.label);
+                            }}
+                            options={categoryOptions}
+                            placeholder="Type or select a category..."
+                            description={
+                              selectedCategory
+                                ? `${getCategoryMetricCount(selectedCategory)} metric${
+                                    getCategoryMetricCount(selectedCategory) !==
+                                    1
+                                      ? "s"
+                                      : ""
+                                  } in this category`
+                                : "Start typing to search for a category"
+                            }
                             usePortal={true}
+                            showRecentOptions={false}
+                            disabled={!!selectedCategory}
                           />
                           {selectedCategory && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {getCategoryMetricCount(selectedCategory)} metric
-                              {getCategoryMetricCount(selectedCategory) !== 1
-                                ? "s"
-                                : ""}{" "}
-                              in this category
-                            </p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCategory("");
+                                setEditCategoryName("");
+                              }}
+                              className="w-full"
+                            >
+                              Change Category
+                            </Button>
                           )}
                         </div>
 
@@ -305,10 +330,7 @@ export default function CategoryManager({
       customFooter={
         activeTab === "add" ? (
           <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-            >
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
               Cancel
             </Button>
             <Button
@@ -319,7 +341,7 @@ export default function CategoryManager({
             </Button>
           </div>
         ) : selectedCategory ? (
-          <div className="flex justify-between">
+          <div className="flex justify-end gap-2">
             <ConfirmDeleteDialog
               title="Delete Category"
               description={
@@ -327,9 +349,7 @@ export default function CategoryManager({
                   ? `This category is being used by ${getCategoryMetricCount(
                       selectedCategory
                     )} metric${
-                      getCategoryMetricCount(selectedCategory) > 1
-                        ? "s"
-                        : ""
+                      getCategoryMetricCount(selectedCategory) > 1 ? "s" : ""
                     }. Please reassign or delete these metrics before deleting the category.`
                   : "Are you sure you want to delete this category? This action cannot be undone."
               }
@@ -339,27 +359,19 @@ export default function CategoryManager({
               variant="destructive"
               size="default"
             />
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleEditCategory}
-                disabled={isSubmitting || !editCategoryName.trim()}
-              >
-                {isSubmitting ? "Updating..." : "Update Category"}
-              </Button>
-            </div>
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleEditCategory}
+              disabled={isSubmitting || !editCategoryName.trim()}
+            >
+              {isSubmitting ? "Updating..." : "Update Category"}
+            </Button>
           </div>
         ) : (
           <div className="flex justify-end">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-            >
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
               Close
             </Button>
           </div>

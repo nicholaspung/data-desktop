@@ -79,6 +79,7 @@ const AddMetricForm = forwardRef<
   const [scheduleDays, setScheduleDays] = useState<string[]>(
     Array.isArray(metric?.schedule_days)
       ? metric.schedule_days
+          .filter(day => day !== -1) // Exclude -1 since it's handled by showInCalendar
           .map((day) => {
             switch (day) {
               case 0:
@@ -127,7 +128,13 @@ const AddMetricForm = forwardRef<
         !!metric?.schedule_start_date ||
         !!metric?.schedule_end_date ||
         (Array.isArray(metric?.schedule_days) &&
-          metric.schedule_days.length > 0))
+          metric.schedule_days.length > 0 &&
+          !(metric.schedule_days.length === 1 && metric.schedule_days[0] === -1)))
+  );
+
+  // Separate state for calendar tracking
+  const [showInCalendar, setShowInCalendar] = useState(
+    !Array.isArray(metric?.schedule_days) || !metric.schedule_days.includes(-1)
   );
 
   const [scheduleIntervalValue, setScheduleIntervalValue] = useState<number>(
@@ -230,10 +237,10 @@ const AddMetricForm = forwardRef<
             case "saturday":
               return 6;
             default:
-              return -1;
+              return null;
           }
         })
-        .filter((day) => day >= 0);
+        .filter((day) => day !== null) as number[];
 
       const now = new Date();
       const hour = now.getHours();
@@ -273,7 +280,11 @@ const AddMetricForm = forwardRef<
           showSchedulingOptions && scheduleEndDate
             ? new Date(endDate[0], endDate[1] - 1, endDate[2], hour, minute)
             : null,
-        schedule_days: showSchedulingOptions ? numericScheduleDays : null,
+        schedule_days: showSchedulingOptions 
+          ? (showInCalendar ? numericScheduleDays : [...numericScheduleDays, -1])
+          : showInCalendar 
+            ? null 
+            : [-1],
 
         goal_value: hasDefaultGoal ? processedGoalValue : null,
         goal_type: hasDefaultGoal
@@ -340,6 +351,7 @@ const AddMetricForm = forwardRef<
     setScheduleDays([]);
     setShowAdvancedOptions(false);
     setShowSchedulingOptions(false);
+    setShowInCalendar(true);
     setHasDefaultGoal(false);
     setGoalValue("");
     setGoalType(GoalType.MINIMUM);
@@ -547,6 +559,23 @@ const AddMetricForm = forwardRef<
             )}
           </div>
         )}
+        {!isEditMode && (
+          <div className="flex items-center justify-between space-x-2">
+            <div>
+              <Label htmlFor="calendar-tracking" className="cursor-pointer">
+                Show in Daily Calendar
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Display this metric in the daily tracking calendar
+              </p>
+            </div>
+            <Switch
+              id="calendar-tracking"
+              checked={showInCalendar}
+              onCheckedChange={setShowInCalendar}
+            />
+          </div>
+        )}
         <div className="pt-2">
           <Button
             type="button"
@@ -588,7 +617,13 @@ const AddMetricForm = forwardRef<
                 <Switch
                   id="scheduling"
                   checked={showSchedulingOptions}
-                  onCheckedChange={setShowSchedulingOptions}
+                  onCheckedChange={(checked) => {
+                    setShowSchedulingOptions(checked);
+                    // If enabling scheduling, also show in calendar
+                    if (checked) {
+                      setShowInCalendar(true);
+                    }
+                  }}
                 />
               </div>
               {showSchedulingOptions && (
