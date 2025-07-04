@@ -275,12 +275,19 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
     return <div className="space-y-1">{rows_per_week}</div>;
   };
 
+  const handleDialogClose = (open: boolean) => {
+    setShowDialog(open);
+    if (!open) {
+      setSelectedDate(null);
+    }
+  };
+
   const renderSelectedDateDialog = () => {
     if (!selectedDate) return null;
 
     const formattedDate = format(selectedDate, "EEEE, MMMM d, yyyy");
     return (
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <Dialog open={showDialog} onOpenChange={handleDialogClose}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center">

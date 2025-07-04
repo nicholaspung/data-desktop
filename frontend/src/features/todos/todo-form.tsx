@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import loadingStore from "@/store/loading-store";
@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, AlertCircle } from "lucide-react";
+import { Calendar as CalendarIcon, AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { ApiService } from "@/services/api";
@@ -27,470 +27,508 @@ import TagInput from "@/components/reusable/tag-input";
 interface TodoFormProps {
   onSuccess?: () => void;
   existingTodo?: Todo;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
 }
 
-export default function TodoForm({ onSuccess, existingTodo }: TodoFormProps) {
-  const isEditMode = !!existingTodo;
+const TodoForm = forwardRef<HTMLFormElement, TodoFormProps>(
+  ({ onSuccess, existingTodo, onSubmittingChange }, ref) => {
+    const isEditMode = !!existingTodo;
 
-  const metrics = useStore(dataStore, (state) => state.metrics);
-  const visibleRoutes = useStore(settingsStore, (state) => state.visibleRoutes);
-  const metricsEnabled = isMetricsEnabled(visibleRoutes);
-  const metricCategories = useStore(
-    dataStore,
-    (state) => state.metric_categories
-  );
-  const isLoadingMetrics = useStore(loadingStore, (state) => state.metrics);
+    const metrics = useStore(dataStore, (state) => state.metrics);
+    const visibleRoutes = useStore(
+      settingsStore,
+      (state) => state.visibleRoutes
+    );
+    const metricsEnabled = isMetricsEnabled(visibleRoutes);
+    const metricCategories = useStore(
+      dataStore,
+      (state) => state.metric_categories
+    );
+    const isLoadingMetrics = useStore(loadingStore, (state) => state.metrics);
 
-  const allTodos = useStore(dataStore, (state) => state.todos);
+    const allTodos = useStore(dataStore, (state) => state.todos);
 
-  const [title, setTitle] = useState(existingTodo?.title || "");
-  const [description, setDescription] = useState(
-    existingTodo?.description || ""
-  );
-  const [deadline, setDeadline] = useState<Date | undefined>(
-    existingTodo?.deadline ? new Date(existingTodo.deadline) : undefined
-  );
-  const [priority, setPriority] = useState<TodoPriority>(
-    (existingTodo?.priority as TodoPriority) || TodoPriority.MEDIUM
-  );
-  const [tagsString, setTagsString] = useState<string>(
-    existingTodo?.tags || ""
-  );
-  const [relatedMetricId, setRelatedMetricId] = useState<string>(
-    existingTodo?.related_metric_id || ""
-  );
-  const [metricType, setMetricType] = useState<string>(
-    existingTodo?.metric_type || "none"
-  );
-  const [reminderDate, setReminderDate] = useState<Date | undefined>(
-    existingTodo?.reminder_date ? new Date(existingTodo.reminder_date) : undefined
-  );
-  const [createMetric, setCreateMetric] = useState(!isEditMode);
-  const [isPrivate, setIsPrivate] = useState(false);
+    const [title, setTitle] = useState(existingTodo?.title || "");
+    const [description, setDescription] = useState(
+      existingTodo?.description || ""
+    );
+    const [deadline, setDeadline] = useState<Date | undefined>(
+      existingTodo?.deadline ? new Date(existingTodo.deadline) : undefined
+    );
+    const [priority, setPriority] = useState<TodoPriority>(
+      (existingTodo?.priority as TodoPriority) || TodoPriority.MEDIUM
+    );
+    const [tagsString, setTagsString] = useState<string>(
+      existingTodo?.tags || ""
+    );
+    const [relatedMetricId, setRelatedMetricId] = useState<string>(
+      existingTodo?.related_metric_id || ""
+    );
+    const [metricType, setMetricType] = useState<string>(
+      existingTodo?.metric_type || "none"
+    );
+    const [reminderDate, setReminderDate] = useState<Date | undefined>(
+      existingTodo?.reminder_date
+        ? new Date(existingTodo.reminder_date)
+        : undefined
+    );
+    const [createMetric, setCreateMetric] = useState(!isEditMode);
+    const [isPrivate, setIsPrivate] = useState(false);
 
-  const [errors, setErrors] = useState<{
-    title?: string;
-    deadline?: string;
-    metricType?: string;
-  }>({});
-
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const validateForm = () => {
-    const newErrors: {
+    const [errors, setErrors] = useState<{
       title?: string;
       deadline?: string;
       metricType?: string;
-    } = {};
+    }>({});
 
-    setFormError(null);
+    const [formError, setFormError] = useState<string | null>(null);
 
-    if (!title.trim()) {
-      newErrors.title = "Title is required";
-    }
+    const validateForm = () => {
+      const newErrors: {
+        title?: string;
+        deadline?: string;
+        metricType?: string;
+      } = {};
 
+      setFormError(null);
 
-    if (createMetric && (!metricType || metricType === "none")) {
-      newErrors.metricType = "Please select a metric type";
-    }
+      if (!title.trim()) {
+        newErrors.title = "Title is required";
+      }
 
-    setErrors(newErrors);
+      if (createMetric && (!metricType || metricType === "none")) {
+        newErrors.metricType = "Please select a metric type";
+      }
 
-    if (Object.keys(newErrors).length > 0) {
-      setFormError("Please fix the errors before submitting the form");
-      return false;
-    }
+      setErrors(newErrors);
 
-    return true;
-  };
+      if (Object.keys(newErrors).length > 0) {
+        setFormError("Please fix the errors before submitting the form");
+        return false;
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+      return true;
+    };
 
-    if (!validateForm()) return;
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    setIsSubmitting(true);
+      if (!validateForm()) return;
 
-    try {
-      let metricId = relatedMetricId;
-      if (createMetric && !isEditMode && metricType && metricType !== "none") {
-        let todoCategoryId: string;
-        const existingCategory = metricCategories.find(
-          (cat) => cat.name === "Todo"
-        );
+      onSubmittingChange?.(true);
 
-        if (existingCategory) {
-          todoCategoryId = existingCategory.id;
-        } else {
-          const newCategory = {
-            name: "Todo",
-          };
-          const savedCategory = await ApiService.addRecord(
-            "metric_categories",
-            newCategory
+      try {
+        let metricId = relatedMetricId;
+        if (
+          createMetric &&
+          !isEditMode &&
+          metricType &&
+          metricType !== "none"
+        ) {
+          let todoCategoryId: string;
+          const existingCategory = metricCategories.find(
+            (cat) => cat.name === "Todo"
           );
-          if (savedCategory) {
-            todoCategoryId = savedCategory.id;
-            addEntry(savedCategory, "metric_categories");
+
+          if (existingCategory) {
+            todoCategoryId = existingCategory.id;
           } else {
-            throw new Error("Failed to create Todo category");
+            const newCategory = {
+              name: "Todo",
+            };
+            const savedCategory = await ApiService.addRecord(
+              "metric_categories",
+              newCategory
+            );
+            if (savedCategory) {
+              todoCategoryId = savedCategory.id;
+              addEntry(savedCategory, "metric_categories");
+            } else {
+              throw new Error("Failed to create Todo category");
+            }
+          }
+
+          const newMetric = {
+            name: `${title} Progress`,
+            description: `Tracks progress for todo: ${title}`,
+            type: metricType === "completion" ? "boolean" : "number",
+            unit: metricType === "time" ? "minutes" : undefined,
+            default_value: metricType === "completion" ? "false" : "0",
+            active: true,
+            private: false,
+            schedule_frequency: "daily",
+            goal_type: metricType === "completion" ? "boolean" : "minimum",
+            goal_value: metricType === "completion" ? "true" : "30",
+            category_id: todoCategoryId,
+          };
+
+          const savedMetric = await ApiService.addRecord("metrics", newMetric);
+          if (savedMetric) {
+            metricId = savedMetric.id;
+            addEntry(savedMetric, "metrics");
+            toast.success("Created associated tracking metric");
           }
         }
 
-        const newMetric = {
-          name: `${title} Progress`,
-          description: `Tracks progress for todo: ${title}`,
-          type: metricType === "completion" ? "boolean" : "number",
-          unit: metricType === "time" ? "minutes" : undefined,
-          default_value: metricType === "completion" ? "false" : "0",
-          active: true,
-          private: false,
-          schedule_frequency: "daily",
-          goal_type: metricType === "completion" ? "boolean" : "minimum",
-          goal_value: metricType === "completion" ? "true" : "30",
-          category_id: todoCategoryId,
+        const todoData: any = {
+          title,
+          description: description || undefined,
+          deadline: deadline?.toISOString(),
+          priority,
+          tags: tagsString,
+          related_metric_id: metricId || undefined,
+          metric_type:
+            metricType && metricType !== "none" ? metricType : undefined,
+          reminder_date: reminderDate?.toISOString(),
+          is_complete: false,
+          status: TodoStatus.NOT_STARTED,
+          private: isPrivate,
         };
 
-        const savedMetric = await ApiService.addRecord("metrics", newMetric);
-        if (savedMetric) {
-          metricId = savedMetric.id;
-          addEntry(savedMetric, "metrics");
-          toast.success("Created associated tracking metric");
+        if (isEditMode && existingTodo) {
+          const response = await ApiService.updateRecord(existingTodo.id, {
+            ...existingTodo,
+            ...todoData,
+          });
+
+          if (response) {
+            updateEntry(existingTodo.id, response, "todos");
+            toast.success("Todo updated successfully");
+            onSuccess?.();
+          }
+        } else {
+          const response = await ApiService.addRecord("todos", todoData);
+
+          if (response) {
+            addEntry(response, "todos");
+            toast.success("Todo created successfully");
+            onSuccess?.();
+          }
         }
+      } catch (error) {
+        console.error("Error saving todo:", error);
+        toast.error(
+          isEditMode ? "Failed to update todo" : "Failed to create todo"
+        );
+        setFormError("An error occurred while saving. Please try again.");
+      } finally {
+        onSubmittingChange?.(false);
       }
+    };
 
-      const todoData: any = {
-        title,
-        description: description || undefined,
-        deadline: deadline?.toISOString(),
-        priority,
-        tags: tagsString,
-        relatedMetricId: metricId || undefined,
-        metricType: (metricType && metricType !== "none") ? metricType : undefined,
-        reminderDate: reminderDate?.toISOString(),
-        is_complete: false,
-        status: TodoStatus.NOT_STARTED,
-        private: isPrivate,
-      };
+    const activeMetrics = metrics.filter((metric) => metric.active);
 
-      if (isEditMode && existingTodo) {
-        const response = await ApiService.updateRecord(existingTodo.id, {
-          ...existingTodo,
-          ...todoData,
-        });
+    const metricOptions = activeMetrics.map((metric) => ({
+      id: metric.id,
+      label: metric.name,
+      description: metric.description,
+      type: metric.type,
+    }));
 
-        if (response) {
-          updateEntry(existingTodo.id, response, "todos");
-          toast.success("Todo updated successfully");
-          onSuccess?.();
-        }
-      } else {
-        const response = await ApiService.addRecord("todos", todoData);
+    const priorityOptions = [
+      { id: TodoPriority.LOW, label: "Low" },
+      { id: TodoPriority.MEDIUM, label: "Medium" },
+      { id: TodoPriority.HIGH, label: "High" },
+      { id: TodoPriority.URGENT, label: "Urgent" },
+    ];
 
-        if (response) {
-          addEntry(response, "todos");
-          toast.success("Todo created successfully");
-          onSuccess?.();
-        }
-      }
-    } catch (error) {
-      toast.error(
-        isEditMode ? "Failed to update todo" : "Failed to create todo"
-      );
-      setFormError("An error occurred while saving. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    const metricTypeOptions = [
+      { id: "none", label: "Select metric type" },
+      { id: "completion", label: "Completion (Yes/No)" },
+      { id: "time", label: "Time Tracked (Minutes)" },
+    ];
 
-  const activeMetrics = metrics.filter((metric) => metric.active);
-
-  const metricOptions = activeMetrics.map((metric) => ({
-    id: metric.id,
-    label: metric.name,
-    description: metric.description,
-    type: metric.type,
-  }));
-
-  const priorityOptions = [
-    { id: TodoPriority.LOW, label: "Low" },
-    { id: TodoPriority.MEDIUM, label: "Medium" },
-    { id: TodoPriority.HIGH, label: "High" },
-    { id: TodoPriority.URGENT, label: "Urgent" },
-  ];
-
-  const metricTypeOptions = [
-    { id: "none", label: "Select metric type" },
-    { id: "completion", label: "Completion (Yes/No)" },
-    { id: "time", label: "Time Tracked (Minutes)" },
-  ];
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-2">
-      {/* Form error alert */}
-      {formError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Required fields notice */}
-      <div className="text-sm text-muted-foreground mb-2">
-        Fields marked with * are required
-      </div>
-
-      <div className="space-y-2">
-        <Label
-          htmlFor="title"
-          className={errors.title ? "text-destructive" : ""}
-        >
-          Title <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (e.target.value.trim()) {
-              setErrors((prev) => ({ ...prev, title: undefined }));
-              setFormError(null);
-            }
-          }}
-          placeholder="What needs to be done?"
-          className={errors.title ? "border-destructive" : ""}
-        />
-        {errors.title && (
-          <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-            <AlertCircle className="h-3 w-3" />
-            {errors.title}
-          </p>
+    return (
+      <form ref={ref} onSubmit={handleSubmit} className="space-y-4 p-2">
+        {/* Form error alert */}
+        {formError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
         )}
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">
-          Description{" "}
-          <span className="text-xs text-muted-foreground">(optional)</span>
-        </Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Add details about this todo"
-          rows={3}
-        />
-      </div>
+        {/* Required fields notice */}
+        <div className="text-sm text-muted-foreground mb-2">
+          Fields marked with * are required
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="deadline">
-            Deadline{" "}
-            <span className="text-xs text-muted-foreground">(optional)</span>
+          <Label
+            htmlFor="title"
+            className={errors.title ? "text-destructive" : ""}
+          >
+            Title <span className="text-destructive">*</span>
           </Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="deadline"
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {deadline ? format(deadline, "PPP") : "Select deadline (optional)"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={deadline}
-                onSelect={(date) => setDeadline(date || undefined)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          {deadline && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setDeadline(undefined)}
-              className="mt-2"
-            >
-              Clear deadline
-            </Button>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              if (e.target.value.trim()) {
+                setErrors((prev) => ({ ...prev, title: undefined }));
+                setFormError(null);
+              }
+            }}
+            placeholder="What needs to be done?"
+            className={errors.title ? "border-destructive" : ""}
+          />
+          {errors.title && (
+            <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+              <AlertCircle className="h-3 w-3" />
+              {errors.title}
+            </p>
           )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="priority">
-            Priority <span className="text-destructive">*</span>
-          </Label>
-          <ReusableSelect
-            options={priorityOptions}
-            value={priority}
-            onChange={(value) => setPriority(value as TodoPriority)}
-            placeholder="Select priority"
-            triggerClassName="w-full"
-          />
-        </div>
-      </div>
-
-      {/* Replace the old tags section with TagInput component */}
-      <TagInput
-        value={tagsString}
-        onChange={setTagsString}
-        label="Tags (optional)"
-        generalData={allTodos}
-        generalDataTagField="tags"
-      />
-
-      {metricsEnabled && (
-        <div className="space-y-4">
-          <Label htmlFor="tracking">
-            Progress Tracking{" "}
+          <Label htmlFor="description">
+            Description{" "}
             <span className="text-xs text-muted-foreground">(optional)</span>
           </Label>
+          <Textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add details about this todo"
+            rows={3}
+          />
+        </div>
 
-        {!isEditMode && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="create-metric"
-                className="h-4 w-4"
-                checked={createMetric}
-                onChange={(e) => {
-                  setCreateMetric(e.target.checked);
-                  if (!e.target.checked) {
-                    setErrors((prev) => ({ ...prev, metricType: undefined }));
-                    setFormError(null);
-                  }
-                }}
-              />
-              <Label htmlFor="create-metric" className="text-sm font-normal">
-                Create a metric to track progress on this todo
-              </Label>
-            </div>
-
-            {createMetric && (
-              <div className="pl-6 space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="metric-type"
-                    className={errors.metricType ? "text-destructive" : ""}
+            <Label htmlFor="deadline">
+              Deadline{" "}
+              <span className="text-xs text-muted-foreground">(optional)</span>
+            </Label>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="deadline"
+                    variant="outline"
+                    className="flex-1 justify-start text-left font-normal"
                   >
-                    Metric Type <span className="text-destructive">*</span>
-                  </Label>
-                  <ReusableSelect
-                    options={metricTypeOptions}
-                    value={metricType}
-                    onChange={(value) => {
-                      setMetricType(value);
-                      setErrors((prev) => ({ ...prev, metricType: undefined }));
-                      setFormError(null);
-                    }}
-                    placeholder="Select metric type"
-                    triggerClassName={cn(
-                      "w-full",
-                      errors.metricType ? "border-destructive" : ""
-                    )}
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {deadline
+                      ? format(deadline, "PPP")
+                      : "Select deadline (optional)"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={deadline}
+                    onSelect={(date) => setDeadline(date || undefined)}
+                    initialFocus
                   />
-                  {errors.metricType && (
-                    <p className="text-xs text-destructive flex items-center gap-1 mt-1">
-                      <AlertCircle className="h-3 w-3" />
-                      {errors.metricType}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Completion tracks whether you worked on this todo each day.
-                    Time tracked logs how many minutes you spent working on it.
-                  </p>
+                </PopoverContent>
+              </Popover>
+              {deadline && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setDeadline(undefined)}
+                  className="h-10 w-10 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="priority">
+              Priority <span className="text-destructive">*</span>
+            </Label>
+            <ReusableSelect
+              options={priorityOptions}
+              value={priority}
+              onChange={(value) => setPriority(value as TodoPriority)}
+              placeholder="Select priority"
+              triggerClassName="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Replace the old tags section with TagInput component */}
+        <TagInput
+          value={tagsString}
+          onChange={setTagsString}
+          label="Tags (optional)"
+          generalData={allTodos}
+          generalDataTagField="tags"
+        />
+
+        {metricsEnabled && (
+          <div className="space-y-4">
+            <Label htmlFor="tracking">
+              Progress Tracking{" "}
+              <span className="text-xs text-muted-foreground">(optional)</span>
+            </Label>
+
+            {!isEditMode && (
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="create-metric"
+                    className="h-4 w-4"
+                    checked={createMetric}
+                    onChange={(e) => {
+                      setCreateMetric(e.target.checked);
+                      if (!e.target.checked) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          metricType: undefined,
+                        }));
+                        setFormError(null);
+                      }
+                    }}
+                  />
+                  <Label
+                    htmlFor="create-metric"
+                    className="text-sm font-normal"
+                  >
+                    Create a metric to track progress on this todo
+                  </Label>
                 </div>
+
+                {createMetric && (
+                  <div className="pl-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="metric-type"
+                        className={errors.metricType ? "text-destructive" : ""}
+                      >
+                        Metric Type <span className="text-destructive">*</span>
+                      </Label>
+                      <ReusableSelect
+                        options={metricTypeOptions}
+                        value={metricType}
+                        onChange={(value) => {
+                          setMetricType(value);
+                          setErrors((prev) => ({
+                            ...prev,
+                            metricType: undefined,
+                          }));
+                          setFormError(null);
+                        }}
+                        placeholder="Select metric type"
+                        triggerClassName={cn(
+                          "w-full",
+                          errors.metricType ? "border-destructive" : ""
+                        )}
+                      />
+                      {errors.metricType && (
+                        <p className="text-xs text-destructive flex items-center gap-1 mt-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.metricType}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Completion tracks whether you worked on this todo each
+                        day. Time tracked logs how many minutes you spent
+                        working on it.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!createMetric && (
+              <div className="space-y-2">
+                <Label htmlFor="related-metric">
+                  Link to Existing Metric{" "}
+                  <span className="text-xs text-muted-foreground">
+                    (optional)
+                  </span>
+                </Label>
+                <ReusableSelect
+                  options={metricOptions}
+                  value={relatedMetricId}
+                  onChange={setRelatedMetricId}
+                  isLoading={isLoadingMetrics}
+                  placeholder="Select a metric to track progress"
+                  triggerClassName="w-full"
+                  renderItem={(option) => (
+                    <div className="flex flex-col">
+                      <span>{option.label}</span>
+                      {option.description && (
+                        <span className="text-xs text-muted-foreground">
+                          {option.description}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                />
               </div>
             )}
           </div>
         )}
 
-        {!createMetric && (
-          <div className="space-y-2">
-            <Label htmlFor="related-metric">
-              Link to Existing Metric{" "}
-              <span className="text-xs text-muted-foreground">(optional)</span>
-            </Label>
-            <ReusableSelect
-              options={metricOptions}
-              value={relatedMetricId}
-              onChange={setRelatedMetricId}
-              isLoading={isLoadingMetrics}
-              placeholder="Select a metric to track progress"
-              triggerClassName="w-full"
-              renderItem={(option) => (
-                <div className="flex flex-col">
-                  <span>{option.label}</span>
-                  {option.description && (
-                    <span className="text-xs text-muted-foreground">
-                      {option.description}
-                    </span>
-                  )}
-                </div>
-              )}
-            />
+        <div className="space-y-2">
+          <Label htmlFor="reminder">
+            Reminder Date{" "}
+            <span className="text-xs text-muted-foreground">(optional)</span>
+          </Label>
+          <div className="flex items-center gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  id="reminder"
+                  variant="outline"
+                  className="flex-1 justify-start text-left font-normal"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {reminderDate
+                    ? format(reminderDate, "PPP")
+                    : "Set reminder date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={reminderDate}
+                  onSelect={(date) => setReminderDate(date || undefined)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {reminderDate && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setReminderDate(undefined)}
+                className="h-10 w-10 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-        )}
+          <p className="text-xs text-muted-foreground">
+            You'll be reminded about this todo on the selected date
+          </p>
         </div>
-      )}
 
-      <div className="space-y-2">
-        <Label htmlFor="reminder">
-          Reminder Date{" "}
-          <span className="text-xs text-muted-foreground">(optional)</span>
-        </Label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="reminder"
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {reminderDate ? format(reminderDate, "PPP") : "Set reminder date"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={reminderDate}
-              onSelect={(date) => setReminderDate(date || undefined)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-        <p className="text-xs text-muted-foreground">
-          You'll be reminded about this todo on the selected date
-        </p>
-      </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="private" className="cursor-pointer">
+            Private (PIN Protected)
+          </Label>
+          <Switch
+            id="private"
+            checked={isPrivate}
+            onCheckedChange={setIsPrivate}
+          />
+        </div>
+      </form>
+    );
+  }
+);
 
-      <div className="flex items-center justify-between">
-        <Label htmlFor="private" className="cursor-pointer">
-          Private (PIN Protected)
-        </Label>
-        <Switch
-          id="private"
-          checked={isPrivate}
-          onCheckedChange={setIsPrivate}
-        />
-      </div>
+TodoForm.displayName = "TodoForm";
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="submit" disabled={isSubmitting} className="gap-2">
-          {isSubmitting && (
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          )}
-          {isEditMode ? "Update Todo" : "Create Todo"}
-        </Button>
-      </div>
-    </form>
-  );
-}
+export default TodoForm;

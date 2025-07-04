@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PlusCircle, Pencil } from "lucide-react";
 import TodoForm from "./todo-form";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
@@ -16,7 +16,19 @@ export default function AddTodoButton({
   onSuccess,
 }: AddTodoButtonProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditMode = !!existingTodo;
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = () => {
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+  };
 
   return (
     <ReusableDialog
@@ -28,6 +40,14 @@ export default function AddTodoButton({
       }
       open={open}
       onOpenChange={setOpen}
+      fixedFooter={true}
+      onConfirm={handleSubmit}
+      onCancel={handleCancel}
+      confirmText={isEditMode ? "Update Todo" : "Create Todo"}
+      cancelText="Cancel"
+      loading={isSubmitting}
+      footerActionDisabled={isSubmitting}
+      disableDefaultConfirm={true}
       trigger={
         isEditMode ? (
           <Button
@@ -42,6 +62,7 @@ export default function AddTodoButton({
           <Button
             variant="default"
             className="gap-2"
+            size="sm"
             onClick={() => setOpen(true)}
           >
             <PlusCircle className="h-4 w-4" />
@@ -50,10 +71,12 @@ export default function AddTodoButton({
         )
       }
       customContent={
-        <ScrollArea className="max-h-[calc(85vh-10rem)] pr-4 overflow-y-auto">
+        <ScrollArea className="max-h-[calc(85vh-14rem)] pr-4 overflow-y-auto">
           <div className="p-1">
             <TodoForm
+              ref={formRef}
               existingTodo={existingTodo}
+              onSubmittingChange={setIsSubmitting}
               onSuccess={() => {
                 setOpen(false);
                 onSuccess?.();
@@ -62,7 +85,6 @@ export default function AddTodoButton({
           </div>
         </ScrollArea>
       }
-      customFooter={<></>}
     />
   );
 }
