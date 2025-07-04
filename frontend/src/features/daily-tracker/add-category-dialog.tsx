@@ -90,6 +90,7 @@ export default function AddCategoryDialog({
       triggerText="Add Category"
       variant="default"
       description="Create a new category for organizing metrics"
+      fixedFooter={true}
       customContent={
         <div className="py-4">
           <AutocompleteInput
@@ -107,6 +108,7 @@ export default function AddCategoryDialog({
                 : "Enter a unique name for your category"
             }
             className={isDuplicate ? "text-destructive" : ""}
+            usePortal={true}
           />
 
           {isDuplicate && (

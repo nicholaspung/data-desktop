@@ -183,6 +183,7 @@ export default function CategoryManager({
       onOpenChange={handleOpenChange}
       contentClassName="sm:max-w-[600px]"
       showTrigger={true}
+      fixedFooter={true}
       trigger={
         <Button variant="outline" className="gap-2">
           <FolderPlus className="h-4 w-4" />
@@ -190,7 +191,7 @@ export default function CategoryManager({
         </Button>
       }
       customContent={
-        <div className="p-4 overflow-y-auto max-h-[70vh]">
+        <div className="p-4">
           <ReusableTabs
             tabs={[
               {
@@ -217,13 +218,7 @@ export default function CategoryManager({
                         Enter a unique name for your category
                       </p>
                     </div>
-                    <Button
-                      onClick={handleAddCategory}
-                      disabled={isSubmitting || !categoryName.trim()}
-                      className="w-full"
-                    >
-                      {isSubmitting ? "Creating..." : "Create Category"}
-                    </Button>
+                    {/* Button moved to fixed footer */}
                   </div>
                 ),
               },
@@ -259,6 +254,7 @@ export default function CategoryManager({
                             title="Category"
                             placeholder="Select a category..."
                             triggerClassName="mt-1"
+                            usePortal={true}
                           />
                           {selectedCategory && (
                             <p className="text-sm text-muted-foreground mt-1">
@@ -288,40 +284,7 @@ export default function CategoryManager({
                               />
                             </div>
 
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={handleEditCategory}
-                                disabled={
-                                  isSubmitting || !editCategoryName.trim()
-                                }
-                                className="flex-1"
-                              >
-                                {isSubmitting
-                                  ? "Updating..."
-                                  : "Update Category"}
-                              </Button>
-                              <ConfirmDeleteDialog
-                                title="Delete Category"
-                                description={
-                                  getCategoryMetricCount(selectedCategory) > 0
-                                    ? `This category is being used by ${getCategoryMetricCount(
-                                        selectedCategory
-                                      )} metric${
-                                        getCategoryMetricCount(
-                                          selectedCategory
-                                        ) > 1
-                                          ? "s"
-                                          : ""
-                                      }. Please reassign or delete these metrics before deleting the category.`
-                                    : "Are you sure you want to delete this category? This action cannot be undone."
-                                }
-                                onConfirm={handleDelete}
-                                loading={isDeleting}
-                                triggerText="Delete"
-                                variant="destructive"
-                                size="default"
-                              />
-                            </div>
+                            {/* Buttons moved to fixed footer */}
                           </>
                         )}
                       </div>
@@ -338,7 +301,70 @@ export default function CategoryManager({
           />
         </div>
       }
-      customFooter={<div />}
+      disableDefaultConfirm={true}
+      customFooter={
+        activeTab === "add" ? (
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddCategory}
+              disabled={isSubmitting || !categoryName.trim()}
+            >
+              {isSubmitting ? "Creating..." : "Create Category"}
+            </Button>
+          </div>
+        ) : selectedCategory ? (
+          <div className="flex justify-between">
+            <ConfirmDeleteDialog
+              title="Delete Category"
+              description={
+                getCategoryMetricCount(selectedCategory) > 0
+                  ? `This category is being used by ${getCategoryMetricCount(
+                      selectedCategory
+                    )} metric${
+                      getCategoryMetricCount(selectedCategory) > 1
+                        ? "s"
+                        : ""
+                    }. Please reassign or delete these metrics before deleting the category.`
+                  : "Are you sure you want to delete this category? This action cannot be undone."
+              }
+              onConfirm={handleDelete}
+              loading={isDeleting}
+              triggerText="Delete"
+              variant="destructive"
+              size="default"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditCategory}
+                disabled={isSubmitting || !editCategoryName.trim()}
+              >
+                {isSubmitting ? "Updating..." : "Update Category"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+            >
+              Close
+            </Button>
+          </div>
+        )
+      }
     />
   );
 }

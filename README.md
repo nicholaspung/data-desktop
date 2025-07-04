@@ -70,11 +70,13 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 - see if there's an easy to migrate data from one computer to the other, or if there's a way to have a sync service easily managed (where the data stored in the backend is end to end encrypted)
 
-### IN PROGRESS
-
 - refactor out icons used in application into lib.ts
 - refactor application to use reusable components
 - refactor application to save data in UTC, and to make use of frontend date functions that display in local time
+
+### IN PROGRESS
+
+- in daily journal, if the user has clicked on an input block, make the screen focus that input block into view
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 

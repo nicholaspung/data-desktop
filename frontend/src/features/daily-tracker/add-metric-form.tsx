@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import { Experiment, GoalType, Metric } from "@/store/experiment-definitions.d";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Save, Plus, Target } from "lucide-react";
+import { Loader2, Save, Target } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore, { addEntry, updateEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -13,17 +13,8 @@ import ReusableSelect from "@/components/reusable/reusable-select";
 import ReusableMultiSelect from "@/components/reusable/reusable-multiselect";
 import { Switch } from "@/components/ui/switch";
 import { ProtectedField } from "@/components/security/protected-content";
-import AutocompleteInput from "@/components/reusable/autocomplete-input";
 
-export default function AddMetricForm({
-  metric,
-  onSuccess,
-  onCancel,
-  className,
-  defaultExperimentId,
-  disableExperimentSelection = false,
-  defaultExperimentName,
-}: {
+interface AddMetricFormProps {
   metric?: Metric;
   onSuccess?: (metricId?: string, metricName?: string) => void;
   onCancel?: () => void;
@@ -31,7 +22,25 @@ export default function AddMetricForm({
   defaultExperimentId?: string;
   disableExperimentSelection?: boolean;
   defaultExperimentName?: string;
-}) {
+  hideButtons?: boolean;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
+}
+
+const AddMetricForm = forwardRef<
+  { submit: () => Promise<void> },
+  AddMetricFormProps
+>((props, ref) => {
+  const {
+    metric,
+    onSuccess,
+    onCancel,
+    className,
+    defaultExperimentId,
+    disableExperimentSelection = false,
+    defaultExperimentName,
+    hideButtons = false,
+    onSubmittingChange,
+  } = props;
   const categories =
     useStore(dataStore, (state) => state.metric_categories) || [];
   const experiments = useStore(dataStore, (state) => state.experiments) || [];
@@ -49,10 +58,6 @@ export default function AddMetricForm({
   );
 
   const [categoryId, setCategoryId] = useState(metric?.category_id || "");
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [isDuplicateCategory, setIsDuplicateCategory] = useState(false);
 
   const [active, setActive] = useState(metric?.active ?? true);
   const [isPrivate, setIsPrivate] = useState(metric?.private ?? false);
@@ -138,18 +143,6 @@ export default function AddMetricForm({
   }));
 
   useEffect(() => {
-    if (showAddCategory && newCategoryName.trim()) {
-      const duplicate = categories.some(
-        (cat: any) =>
-          cat.name.toLowerCase() === newCategoryName.trim().toLowerCase()
-      );
-      setIsDuplicateCategory(duplicate);
-    } else {
-      setIsDuplicateCategory(false);
-    }
-  }, [newCategoryName, categories, showAddCategory]);
-
-  useEffect(() => {
     if (!isEditMode) {
       if (type === "boolean") {
         setDefaultValue("false");
@@ -170,47 +163,33 @@ export default function AddMetricForm({
     }
   }, [type, isEditMode, goalValue]);
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
-      toast.error("Category name is required");
-      return;
-    }
 
-    if (isDuplicateCategory) {
-      toast.error("A category with this name already exists");
-      return;
-    }
-
-    setIsAddingCategory(true);
-
+  const handleCreateCategory = async (categoryName: string) => {
     try {
-      const categoryData = {
-        name: newCategoryName.trim(),
+      const newCategory = {
+        name: categoryName,
       };
 
       const response = await ApiService.addRecord(
         "metric_categories",
-        categoryData
+        newCategory
       );
 
       if (response) {
         addEntry(response, "metric_categories");
         setCategoryId(response.id);
-        setNewCategoryName("");
-        setShowAddCategory(false);
         toast.success(`Category "${response.name}" created and selected`);
       }
     } catch (error) {
       console.error("Error creating category:", error);
       toast.error("Failed to create category");
-    } finally {
-      setIsAddingCategory(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
+    if (onSubmittingChange) onSubmittingChange(true);
 
     try {
       if (!name) {
@@ -337,8 +316,13 @@ export default function AddMetricForm({
       toast.error(`Failed to ${isEditMode ? "update" : "create"} metric`);
     } finally {
       setIsSubmitting(false);
+      if (onSubmittingChange) onSubmittingChange(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    submit: handleSubmit,
+  }));
 
   const resetForm = () => {
     setName("");
@@ -347,8 +331,6 @@ export default function AddMetricForm({
     setUnit("");
     setDefaultValue("0");
     setCategoryId("");
-    setShowAddCategory(false);
-    setNewCategoryName("");
     setActive(true);
     setIsPrivate(false);
     setExperimentId("");
@@ -395,6 +377,7 @@ export default function AddMetricForm({
               onChange={(value) => setType(value as any)}
               title="metric type"
               disabled={isEditMode}
+              usePortal={true}
               options={[
                 { id: "number", label: "Number (e.g., 10, 25.5)" },
                 { id: "boolean", label: "Yes/No (e.g., Completed)" },
@@ -426,6 +409,7 @@ export default function AddMetricForm({
               value={defaultValue}
               onChange={setDefaultValue}
               title="default value"
+              usePortal={true}
               options={[
                 { id: "false", label: "No / Not Completed" },
                 { id: "true", label: "Yes / Completed" },
@@ -446,89 +430,19 @@ export default function AddMetricForm({
           )}
         </div>
         <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="category">Category (optional)</Label>
-            {!showAddCategory && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddCategory(true)}
-                className="text-xs"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                New Category
-              </Button>
-            )}
-          </div>
-          {!showAddCategory ? (
-            <ReusableSelect
-              value={categoryId}
-              onChange={setCategoryId}
-              title="category"
-              noDefault={false}
-              options={categories.map((cat: any) => ({
-                id: cat.id,
-                label: cat.name,
-              }))}
-            />
-          ) : (
-            <div className="border p-3 rounded-md bg-muted/20">
-              <p className="text-sm font-medium mb-2">Create New Category</p>
-              <div className="flex flex-col gap-2">
-                <AutocompleteInput
-                  id="newCategory"
-                  value={newCategoryName}
-                  onChange={setNewCategoryName}
-                  options={categoryOptions}
-                  placeholder="New category name"
-                  autofocus={true}
-                  description={
-                    isDuplicateCategory
-                      ? "A category with this name already exists"
-                      : "Enter a unique name for the category"
-                  }
-                />
-                {isDuplicateCategory && (
-                  <p className="text-sm text-destructive">
-                    This category already exists. Please use a different name.
-                  </p>
-                )}
-                <div className="flex gap-2 mt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setShowAddCategory(false);
-                      setNewCategoryName("");
-                    }}
-                    disabled={isAddingCategory}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    onClick={handleAddCategory}
-                    disabled={
-                      isAddingCategory ||
-                      !newCategoryName.trim() ||
-                      isDuplicateCategory
-                    }
-                  >
-                    {isAddingCategory ? (
-                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4 mr-1" />
-                    )}
-                    Add Category
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
+          <Label htmlFor="category">Category (optional)</Label>
+          <ReusableSelect
+            searchSelect={true}
+            value={categoryId}
+            onChange={setCategoryId}
+            onCreateNew={handleCreateCategory}
+            title="category"
+            noDefault={false}
+            placeholder="Search or create category..."
+            createNewLabel="Create category"
+            usePortal={true}
+            options={categoryOptions}
+          />
         </div>
         {!isEditMode && (
           <div className="space-y-2">
@@ -546,6 +460,7 @@ export default function AddMetricForm({
               title="experiment"
               noDefault={false}
               disabled={disableExperimentSelection}
+              usePortal={true}
               renderItem={(option) =>
                 option.private ? (
                   <ProtectedField>
@@ -591,6 +506,7 @@ export default function AddMetricForm({
                   value={goalValue}
                   onChange={setGoalValue}
                   title="goal value"
+                  usePortal={true}
                   options={[
                     { id: "true", label: "Yes / Completed" },
                     { id: "false", label: "No / Not Completed" },
@@ -625,6 +541,7 @@ export default function AddMetricForm({
                   value={goalType}
                   onChange={setGoalType}
                   title="goal type"
+                  usePortal={true}
                 />
               </div>
             )}
@@ -682,6 +599,7 @@ export default function AddMetricForm({
                       value={scheduleFrequency}
                       onChange={(value) => setScheduleFrequency(value as any)}
                       title="frequency"
+                      usePortal={true}
                       options={[
                         { id: "daily", label: "Daily" },
                         { id: "weekly", label: "Weekly" },
@@ -729,6 +647,7 @@ export default function AddMetricForm({
                           value={scheduleIntervalUnit}
                           onChange={(value) => setScheduleIntervalUnit(value)}
                           title="unit"
+                          usePortal={true}
                           options={[
                             { id: "days", label: "Days" },
                             { id: "weeks", label: "Weeks" },
@@ -767,35 +686,41 @@ export default function AddMetricForm({
             </div>
           </>
         )}
-        <div className="flex justify-end gap-2 pt-4">
-          {onCancel && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            type="submit"
-            disabled={isSubmitting || !name || (hasDefaultGoal && !goalValue)}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {isEditMode ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {isEditMode ? "Update Metric" : "Create Metric"}
-              </>
+        {!hideButtons && (
+          <div className="flex justify-end gap-2 pt-4">
+            {onCancel && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
             )}
-          </Button>
-        </div>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !name || (hasDefaultGoal && !goalValue)}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {isEditMode ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {isEditMode ? "Update Metric" : "Create Metric"}
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </form>
   );
-}
+});
+
+AddMetricForm.displayName = "AddMetricForm";
+
+export default AddMetricForm;

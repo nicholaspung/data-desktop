@@ -8,8 +8,8 @@ import ReusableSelect from "@/components/reusable/reusable-select";
 import TagInput from "@/components/reusable/tag-input";
 import { ApiService } from "@/services/api";
 import { calculateDurationMinutes } from "@/lib/time-utils";
-import { updateEntry } from "@/store/data-store";
-import { Clock, Save, ArrowLeft, Check, FolderIcon, Tag } from "lucide-react";
+import { updateEntry, addEntry } from "@/store/data-store";
+import { Clock, Save, Check, FolderIcon, Tag, History, AlertCircle } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import settingsStore, { isMetricsEnabled } from "@/store/settings-store";
@@ -39,6 +39,9 @@ export default function EditTimeEntryDialog({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [showStartTimeWarning, setShowStartTimeWarning] = useState(false);
+  const [startTimeError, setStartTimeError] = useState<string>("");
+  const [endTimeError, setEndTimeError] = useState<string>("");
 
   const allTimeEntries = useStore(
     dataStore,
@@ -113,22 +116,85 @@ export default function EditTimeEntryDialog({
     setEndTime(formatDateForInput(new Date(entry.end_time)));
   }, [entry]);
 
+  const handleStartTimeChange = (newStartTime: string) => {
+    setStartTime(newStartTime);
+    setStartTimeError("");
+
+    if (newStartTime && endTime) {
+      const newStartDate = new Date(newStartTime);
+      const endDate = new Date(endTime);
+      const now = new Date();
+
+      if (newStartDate > now) {
+        setStartTimeError("Start time cannot be in the future");
+        return;
+      }
+
+      if (newStartDate >= endDate) {
+        setStartTimeError("Start time must be before end time");
+        return;
+      }
+    }
+  };
+
+  const handleEndTimeChange = (newEndTime: string) => {
+    setEndTime(newEndTime);
+    setEndTimeError("");
+
+    if (newEndTime && startTime) {
+      const endDate = new Date(newEndTime);
+      const startDate = new Date(startTime);
+      const now = new Date();
+
+      if (endDate > now) {
+        setEndTimeError("End time cannot be in the future");
+        return;
+      }
+
+      if (endDate <= startDate) {
+        setEndTimeError("End time must be after start time");
+        return;
+      }
+    }
+  };
+
   const handleSave = async () => {
     if (!description || !startTime || !endTime) return;
+
+    setStartTimeError("");
+    setEndTimeError("");
 
     try {
       setIsSaving(true);
 
       const startDate = new Date(startTime);
       const endDate = new Date(endTime);
+      const now = new Date();
+
+      let hasError = false;
+
+      if (startDate > now) {
+        setStartTimeError("Start time cannot be in the future");
+        hasError = true;
+      }
+
+      if (endDate > now) {
+        setEndTimeError("End time cannot be in the future");
+        hasError = true;
+      }
 
       if (startDate >= endDate) {
-        alert("End time must be after start time");
+        setEndTimeError("End time must be after start time");
+        hasError = true;
+      }
+
+      if (hasError) {
         setIsSaving(false);
         return;
       }
 
       const durationMinutes = calculateDurationMinutes(startDate, endDate);
+      const sortedTags = getSortedTags();
 
       const originalEntry = { ...entry };
 
@@ -139,7 +205,7 @@ export default function EditTimeEntryDialog({
         end_time: endDate.toISOString(),
         duration_minutes: durationMinutes,
         category_id: categoryId,
-        tags,
+        tags: sortedTags,
       };
 
       const response = await ApiService.updateRecord(entry.id, updatedEntry);
@@ -165,20 +231,19 @@ export default function EditTimeEntryDialog({
 
   const setStartTimeToNow = () => {
     const now = new Date();
-    setStartTime(
-      new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16)
-    );
+    const formattedNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    handleStartTimeChange(formattedNow);
+    setShowStartTimeWarning(false);
   };
 
   const setEndTimeToNow = () => {
     const now = new Date();
-    setEndTime(
-      new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16)
-    );
+    const formattedNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    handleEndTimeChange(formattedNow);
   };
 
   const findPreviousEntryEndTime = () => {
@@ -206,18 +271,68 @@ export default function EditTimeEntryDialog({
     }
 
     const previousEndDate = new Date(previousEntry.end_time);
-    setStartTime(
-      new Date(
-        previousEndDate.getTime() - previousEndDate.getTimezoneOffset() * 60000
-      )
-        .toISOString()
-        .slice(0, 16)
+    const bufferSeconds = Math.floor(Math.random() * 31) + 30;
+    const bufferedStartTime = new Date(
+      previousEndDate.getTime() + bufferSeconds * 1000
     );
+    const formattedTime = new Date(
+      bufferedStartTime.getTime() - bufferedStartTime.getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16);
+    handleStartTimeChange(formattedTime);
+  };
+
+  const generateRandomColor = () => {
+    const colors = [
+      "#ef4444", // red
+      "#f97316", // orange
+      "#f59e0b", // amber
+      "#eab308", // yellow
+      "#84cc16", // lime
+      "#22c55e", // green
+      "#10b981", // emerald
+      "#14b8a6", // teal
+      "#06b6d4", // cyan
+      "#0ea5e9", // sky
+      "#3b82f6", // blue
+      "#6366f1", // indigo
+      "#8b5cf6", // violet
+      "#a855f7", // purple
+      "#d946ef", // fuchsia
+      "#ec4899", // pink
+      "#f43f5e", // rose
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const handleCreateCategory = async (categoryName: string) => {
+    try {
+      const newCategory = {
+        name: categoryName,
+        color: generateRandomColor(),
+        private: false,
+      };
+
+      const response = await ApiService.addRecord(
+        "time_categories",
+        newCategory
+      );
+
+      if (response) {
+        addEntry(response, "time_categories");
+        setCategoryId(response.id);
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      alert("Failed to create category. Please try again.");
+    }
   };
 
   const categoryOptions = categories.map((category) => ({
     id: category.id,
     label: category.name,
+    color: category.color,
   }));
 
   const handleDescriptionSelect = (
@@ -250,6 +365,17 @@ export default function EditTimeEntryDialog({
     );
   };
 
+  const getSortedTags = () => {
+    if (!tags) return "";
+
+    return tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter((tag) => tag)
+      .sort()
+      .join(", ");
+  };
+
   return (
     <ReusableDialog
       title="Edit Time Entry"
@@ -260,10 +386,11 @@ export default function EditTimeEntryDialog({
       confirmIcon={<Save className="h-4 w-4" />}
       onConfirm={handleSave}
       onCancel={onCancel}
-      footerActionDisabled={!description || !startTime || !endTime || isSaving}
+      footerActionDisabled={!description || !startTime || !endTime || isSaving || !!startTimeError || !!endTimeError}
       footerActionLoadingText="Saving..."
       loading={isSaving}
       contentClassName="sm:max-w-[550px]"
+      fixedFooter={true}
       customContent={
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
@@ -369,72 +496,118 @@ export default function EditTimeEntryDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="edit-start-time">Start Time</Label>
-                <div className="flex space-x-1">
+                <Label htmlFor="edit-start-time" className="text-sm font-medium">Start Time</Label>
+                <div className="flex items-center space-x-1">
+                  {showStartTimeWarning && (
+                    <div className="pl-2 flex items-center gap-1 text-amber-600 dark:text-amber-500 animate-pulse mr-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <span className="text-xs font-medium">
+                        Old start time!
+                      </span>
+                    </div>
+                  )}
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    title="Use previous entry end time"
-                    onClick={setPreviousEntryEndTime}
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-6 px-2 text-xs",
+                      showStartTimeWarning &&
+                        "ring-2 ring-amber-500 ring-offset-2 animate-pulse"
+                    )}
+                    onClick={setStartTimeToNow}
+                    title="Set to current time"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    Now
                   </Button>
                   <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    title="Set to current time"
-                    onClick={setStartTimeToNow}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs flex items-center"
+                    onClick={setPreviousEntryEndTime}
+                    title="Continue from last entry"
+                    disabled={allTimeEntries.length === 0}
                   >
-                    <Clock className="h-4 w-4" />
+                    <History className="h-3 w-3 mr-1" />
+                    Last
                   </Button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  id="edit-start-time"
-                  type="datetime-local"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
+              <Input
+                id="edit-start-time"
+                type="datetime-local"
+                value={startTime}
+                onChange={(e) => handleStartTimeChange(e.target.value)}
+                className={cn(
+                  "h-10 focus:ring-2 focus:ring-primary/50",
+                  showStartTimeWarning &&
+                    "border-amber-500 dark:border-amber-500",
+                  startTimeError && "border-red-500 dark:border-red-500"
+                )}
+              />
+              {startTimeError && (
+                <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-xs">{startTimeError}</span>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <Label htmlFor="edit-end-time">End Time</Label>
+                <Label htmlFor="edit-end-time" className="text-sm font-medium">End Time</Label>
                 <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  title="Set to current time"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
                   onClick={setEndTimeToNow}
+                  title="Set to current time"
                 >
-                  <Clock className="h-4 w-4" />
+                  Now
                 </Button>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  id="edit-end-time"
-                  type="datetime-local"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
+              <Input
+                id="edit-end-time"
+                type="datetime-local"
+                value={endTime}
+                onChange={(e) => handleEndTimeChange(e.target.value)}
+                className={cn(
+                  "h-10 focus:ring-2 focus:ring-primary/50",
+                  endTimeError && "border-red-500 dark:border-red-500"
+                )}
+              />
+              {endTimeError && (
+                <div className="flex items-center gap-1 mt-1 text-red-600 dark:text-red-500">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-xs">{endTimeError}</span>
+                </div>
+              )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-category">Category</Label>
+            <Label htmlFor="edit-category" className="text-sm font-medium">
+              Category
+            </Label>
             <ReusableSelect
+              searchSelect={true}
               options={categoryOptions}
-              value={categoryId || ""}
-              onChange={setCategoryId}
-              placeholder="Select category"
-              title="category"
               noDefault={false}
+              value={categoryId}
+              onChange={setCategoryId}
+              onCreateNew={handleCreateCategory}
+              title="category"
+              placeholder="Search or create category..."
+              createNewLabel="Create category"
+              triggerClassName="h-10"
+              usePortal={true}
+              renderItem={(option) => (
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded-full border"
+                    style={{ backgroundColor: option.color || "#3b82f6" }}
+                  />
+                  <span>{option.label}</span>
+                </div>
+              )}
             />
           </div>
 
@@ -445,6 +618,7 @@ export default function EditTimeEntryDialog({
               label="Tags"
               generalData={allTimeEntries}
               generalDataTagField="tags"
+              usePortal={true}
             />
           </div>
         </div>
