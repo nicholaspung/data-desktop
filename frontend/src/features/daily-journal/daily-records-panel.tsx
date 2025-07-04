@@ -622,6 +622,24 @@ export default function DailyRecordsPanel({
                                 </span>
                               </div>
                             </div>
+                          ) : datasetId === "question_journal" ? (
+                            /* Special handling for Question Journal - show checkmark only */
+                            <div className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Check className="h-4 w-4 text-green-600" />
+                                <span className="font-medium">
+                                  Question journal entry created
+                                </span>
+                              </div>
+                              {record.created_at && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {format(
+                                    new Date(record.created_at),
+                                    "h:mm a"
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           ) : datasetId === "todos" ? (
                             /* Special handling for Todos - only completed ones shown */
                             (() => {

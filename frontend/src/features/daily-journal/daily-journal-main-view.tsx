@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, BookOpen, TrendingUp, Plus } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
 import { DailyJournalEntry } from "@/store/journaling-definitions";
@@ -8,11 +7,11 @@ import ReusableTabs from "@/components/reusable/reusable-tabs";
 import DailyJournalEditor from "./daily-journal-editor";
 import DailyJournalHistory from "./daily-journal-history";
 import DailyRecordsPanel from "./daily-records-panel";
-import { format } from "date-fns";
 
 export default function DailyJournalMainView() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isRecordsPanelCollapsed, setIsRecordsPanelCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState("today");
 
   const entries = useStore(
     dataStore,
@@ -47,42 +46,18 @@ export default function DailyJournalMainView() {
     setIsRecordsPanelCollapsed(!isRecordsPanelCollapsed);
   };
 
+  const handleEditEntry = (entry: DailyJournalEntry) => {
+    setSelectedDate(new Date(entry.date));
+    setActiveTab("today");
+  };
+
   return (
-    <div className="flex flex-col h-full space-y-6">
-      {/* Today's Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-shrink-0">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Selected Date</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {format(selectedDate, "MMM d")}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {format(selectedDate, "EEEE, yyyy")}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Entries</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{entries.length}</div>
-            <p className="text-xs text-muted-foreground">
-              All-time journal entries
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className="flex flex-col h-full">
       {/* Main Content Tabs */}
       <ReusableTabs
         tabsContentClassName="h-full overflow-hidden"
+        value={activeTab}
+        onChange={setActiveTab}
         tabs={[
           {
             id: "today",
@@ -127,6 +102,7 @@ export default function DailyJournalMainView() {
                 entries={entries}
                 showDate={true}
                 onDateSelect={setSelectedDate}
+                onEditEntry={handleEditEntry}
               />
             ),
           },

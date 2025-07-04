@@ -3,7 +3,6 @@ import {
   FeatureHeader,
   FeatureLayout,
 } from "@/components/layout/feature-layout";
-import { FEATURE_ICONS } from "@/lib/icons";
 import DailyJournalMainView from "@/features/daily-journal/daily-journal-main-view";
 import { useStore } from "@tanstack/react-store";
 import settingsStore from "@/store/settings-store";
@@ -19,15 +18,17 @@ function DailyJournalPage() {
 
   const getHelpText = () => {
     let helpText = "The Daily Journal allows you to write daily entries";
-    
+
     if (isMetricsEnabled) {
-      helpText += " and automatically extract metrics from your text. Use special syntax like 'weight: 150lbs' or 'mood: 8/10' to automatically log metrics.";
+      helpText +=
+        " and automatically extract metrics from your text. Use special syntax like 'weight: 150lbs' or 'mood: 8/10' to automatically log metrics.";
     }
-    
+
     if (isTodosEnabled) {
-      helpText += " Use '@todo:TodoName:true' to mark todos complete or '@todo:New Todo Name:false' to create new todos. The system automatically selects the right quote style based on content.";
+      helpText +=
+        " Use '@todo:TodoName:true' to mark todos complete or '@todo:New Todo Name:false' to create new todos. The system automatically selects the right quote style based on content.";
     }
-    
+
     return helpText + ".";
   };
 
@@ -95,9 +96,7 @@ ${
           helpText={getHelpText()}
           helpVariant="info"
           guideContent={getGuideContent()}
-        >
-          <FEATURE_ICONS.BOOK_OPEN className="h-8 w-8" />
-        </FeatureHeader>
+        />
       }
     >
       <DailyJournalMainView />
