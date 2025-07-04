@@ -49,6 +49,7 @@ export default function PrivateToggleButton({
     <Button
       variant={showPrivate ? "default" : "outline"}
       className="gap-2"
+      size="sm"
       onClick={handleToggle}
       title={
         showPrivate

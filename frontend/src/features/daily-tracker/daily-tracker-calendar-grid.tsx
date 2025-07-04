@@ -39,64 +39,66 @@ export default function DailyTrackerCalendarGrid({
   const isLogMeaningful = (log: any, metric: Metric) => {
     if (!log || !metric) return false;
 
-    try {
-      const logValue = JSON.parse(log.value);
-      const defaultValue = metric.default_value
-        ? JSON.parse(metric.default_value)
-        : null;
-      const hasNotes = log.notes && log.notes.trim().length > 0;
-
-      if (metric.type === "boolean") {
-        return logValue === true || hasNotes || logValue !== defaultValue;
+    const hasNotes = log.notes && log.notes.trim().length > 0;
+    
+    // Helper function to safely parse JSON or return the value as-is
+    const safeParseValue = (value: any) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'string' && value.trim() === '') return '';
+      
+      try {
+        return JSON.parse(value);
+      } catch {
+        // If parsing fails, return the original value
+        return value;
       }
+    };
 
-      const hasGoal =
-        metric.goal_value !== undefined &&
-        metric.goal_value !== null &&
-        metric.goal_value !== "" &&
-        metric.goal_value !== "0" &&
-        metric.goal_type !== undefined &&
-        metric.goal_type !== null;
+    const logValue = safeParseValue(log.value);
+    const defaultValue = safeParseValue(metric.default_value);
 
-      if (
-        metric.type === "number" ||
-        metric.type === "percentage" ||
-        metric.type === "time"
-      ) {
-        if (hasNotes) return true;
+    if (metric.type === "boolean") {
+      return logValue === true || hasNotes || logValue !== defaultValue;
+    }
 
-        if (!hasGoal) {
-          const numericValue = parseFloat(String(logValue)) || 0;
+    const hasGoal =
+      metric.goal_value !== undefined &&
+      metric.goal_value !== null &&
+      metric.goal_value !== "" &&
+      metric.goal_value !== "0" &&
+      metric.goal_type !== undefined &&
+      metric.goal_type !== null;
 
-          if (metric.goal_value === "0" || metric.default_value === "0") {
-            return numericValue === 0;
-          }
+    if (
+      metric.type === "number" ||
+      metric.type === "percentage" ||
+      metric.type === "time"
+    ) {
+      if (hasNotes) return true;
 
-          return numericValue > 0;
+      if (!hasGoal) {
+        const numericValue = parseFloat(String(logValue)) || 0;
+
+        if (metric.goal_value === "0" || metric.default_value === "0") {
+          return numericValue === 0;
         }
 
-        return (
-          logValue !== defaultValue || (logValue !== 0 && defaultValue === 0)
-        );
+        return numericValue > 0;
       }
 
-      if (metric.type === "text") {
-        return (
-          hasNotes ||
-          (String(logValue).trim() !== "" && logValue !== defaultValue)
-        );
-      }
-
-      return logValue !== defaultValue && logValue !== "" && logValue !== null;
-    } catch (e) {
-      console.error("Error parsing log value:", e);
-      const defaultValue = metric.default_value || "";
-      const hasNotes = log.notes && log.notes.trim().length > 0;
       return (
-        hasNotes ||
-        (log.value !== defaultValue && log.value !== "" && log.value !== "0")
+        logValue !== defaultValue || (logValue !== 0 && defaultValue === 0)
       );
     }
+
+    if (metric.type === "text") {
+      return (
+        hasNotes ||
+        (String(logValue).trim() !== "" && logValue !== defaultValue)
+      );
+    }
+
+    return logValue !== defaultValue && logValue !== "" && logValue !== null;
   };
 
   const getDayMetricsStats = (day: Date) => {

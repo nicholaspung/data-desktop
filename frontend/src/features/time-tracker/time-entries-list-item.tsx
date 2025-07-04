@@ -85,8 +85,8 @@ export default function TimeEntryListItem({
             </Badge>
           )}
           {entry.tags &&
-            entry.tags.split(",").map((tag) => (
-              <Badge key={tag.trim()} variant="outline" className="text-xs">
+            entry.tags.split(",").map((tag, index) => (
+              <Badge key={`${entry.id}-tag-${index}`} variant="outline" className="text-xs">
                 {tag.trim()}
               </Badge>
             ))}

@@ -88,6 +88,7 @@ export default function AddCategoryDialog({
       title="Add New Category"
       triggerIcon={<FolderPlus className="h-4 w-4 mr-2" />}
       triggerText="Add Category"
+      size="sm"
       variant="default"
       description="Create a new category for organizing metrics"
       fixedFooter={true}

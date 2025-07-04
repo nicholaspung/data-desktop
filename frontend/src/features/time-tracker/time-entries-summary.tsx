@@ -419,7 +419,7 @@ export default function TimeEntriesSummary({
                               ]
                             : []),
                         ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`today-categories-cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -552,7 +552,7 @@ export default function TimeEntriesSummary({
                               ]
                             : []),
                         ].map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell key={`daterange-categories-cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -783,7 +783,7 @@ export default function TimeEntriesSummary({
                       labelLine={false}
                     >
                       {tagSummary.tags.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell key={`tags-cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip

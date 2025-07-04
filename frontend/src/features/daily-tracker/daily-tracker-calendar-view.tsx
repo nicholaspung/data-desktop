@@ -52,7 +52,6 @@ export default function DailyTrackerCalendarView() {
   const dailyLogsLoading =
     useStore(loadingStore, (state) => state.daily_logs) || false;
 
-
   useEffect(() => {
     if (metricsData.length > 0) {
       processLogsForSelectedDate(selectedDate, dailyLogsData);
@@ -425,7 +424,7 @@ export default function DailyTrackerCalendarView() {
                   No metrics found. Add your first metric.
                 </p>
                 <div className="flex items-center space-x-2">
-                  <AddMetricModal buttonLabel="Add Metric" />
+                  <AddMetricModal buttonLabel="Add Metric" buttonSize="sm" />
                   <AddCategoryDialog />
                 </div>
               </div>

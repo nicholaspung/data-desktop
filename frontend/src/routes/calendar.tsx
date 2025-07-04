@@ -142,7 +142,7 @@ function RouteComponent() {
           guideContent={dailyTrackerGuideContent}
           storageKey="calendar-page"
         >
-          <AddMetricModal buttonLabel="Add Metric" />
+          <AddMetricModal buttonLabel="Add Metric" buttonSize="sm" />
           <AddCategoryDialog />
         </FeatureHeader>
       }

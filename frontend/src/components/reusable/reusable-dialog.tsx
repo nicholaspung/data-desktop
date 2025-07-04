@@ -27,7 +27,7 @@ export default function ReusableDialog({
   triggerText,
   triggerIcon,
   variant = "outline",
-  size = triggerText ? "default" : "icon",
+  size,
   confirmVariant = "default",
   loading = false,
   showTrigger = true,
@@ -73,6 +73,7 @@ export default function ReusableDialog({
   disableDefaultConfirm?: boolean;
   fixedFooter?: boolean;
 }) {
+  const finalSize = size || (triggerText ? "default" : "icon");
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       {showTrigger && (
@@ -80,7 +81,7 @@ export default function ReusableDialog({
           {trigger || (
             <Button
               variant={variant}
-              size={size}
+              size={finalSize}
               disabled={loading}
               className={triggerClassName}
             >
