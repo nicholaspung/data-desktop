@@ -136,6 +136,7 @@ const BodyMeasurementsCSVImport = () => {
       <Button
         onClick={() => setShowWeightImportDialog(true)}
         variant="outline"
+        size="sm"
         className="gap-2"
       >
         <FileSpreadsheet className="h-4 w-4" />
@@ -152,6 +153,7 @@ const BodyMeasurementsCSVImport = () => {
             ? `Found ${parsedData.length} weight entries`
             : "Upload a CSV file with date and weight columns"
         }
+        fixedFooter={true}
         customContent={
           <div className="space-y-4">
             {parsedData ? (
@@ -229,7 +231,8 @@ const BodyMeasurementsCSVImport = () => {
                           <strong>date</strong>: Measurement date (YYYY-MM-DD)
                         </li>
                         <li>
-                          <strong>weight</strong>: Weight value (assumes lbs by default)
+                          <strong>weight</strong>: Weight value (assumes lbs by
+                          default)
                         </li>
                       </ul>
                     </div>

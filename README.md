@@ -81,7 +81,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
 - review experiments route to see if there's anything you want to change
-
+- review wealth route to see if there's anything you want to change
+- review dexa scans route to see if there's anything you want to change
+- review bloodwork route to see if there's anything you want to change
 
 ### DONE
 

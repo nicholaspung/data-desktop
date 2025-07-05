@@ -68,8 +68,9 @@ export default function BodyweightChart({
     return typedData
       .filter(
         (record) =>
-          record.measurement.toLowerCase() === "bodyweight" ||
-          record.measurement.toLowerCase() === "weight"
+          record.measurement &&
+          (record.measurement.toLowerCase() === "bodyweight" ||
+           record.measurement.toLowerCase() === "weight")
       )
       .map((record) => ({
         date: formatChartDate(record.date),

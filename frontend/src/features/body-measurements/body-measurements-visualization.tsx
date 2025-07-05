@@ -58,7 +58,7 @@ export default function BodyMeasurementsVisualization({
 
     return actualMeasurements
       .filter((actualType) =>
-        allDisplayedTypes.some(
+        actualType && allDisplayedTypes.some(
           (displayedType) =>
             displayedType.toLowerCase() === actualType.toLowerCase()
         )
@@ -79,7 +79,7 @@ export default function BodyMeasurementsVisualization({
     const map = new Map<string, Map<string, BodyMeasurementRecord>>();
 
     const nonBodyweightData = visibleData.filter(
-      (record) => record.measurement.toLowerCase() !== "bodyweight"
+      (record) => record.measurement && record.measurement.toLowerCase() !== "bodyweight"
     );
 
     nonBodyweightData.forEach((record) => {

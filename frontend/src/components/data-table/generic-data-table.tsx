@@ -31,6 +31,7 @@ export default function GenericDataTable({
   initialPage = 0,
   persistState = true,
   onRowClick,
+  data: externalData,
 }: {
   datasetId: DataStoreName;
   fields: FieldDefinition[];
@@ -45,9 +46,11 @@ export default function GenericDataTable({
   initialPage?: number;
   persistState?: boolean;
   onRowClick?: (row: Record<string, any>) => void;
+  data?: Record<string, any>[];
 }) {
-  const data =
+  const storeData =
     useStore(dataStore, (state) => state[datasetId as DataStoreName]) || [];
+  const data = externalData || storeData;
   const isLoading =
     useStore(loadingStore, (state) => state[datasetId as DataStoreName]) ||
     false;

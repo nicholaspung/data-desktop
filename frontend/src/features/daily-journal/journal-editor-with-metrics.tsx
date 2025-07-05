@@ -1296,6 +1296,11 @@ export default function JournalEditorWithMetrics({
       const lastBlockPos = blockPositions[blockPositions.length - 1];
       if (clickY > lastBlockPos.bottom) {
         lastBlockPos.textarea.focus();
+        lastBlockPos.textarea.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest"
+        });
         setTimeout(() => {
           lastBlockPos.textarea.setSelectionRange(
             lastBlockPos.textarea.value.length,
@@ -1309,6 +1314,11 @@ export default function JournalEditorWithMetrics({
       const firstBlockPos = blockPositions[0];
       if (clickY < firstBlockPos.top) {
         firstBlockPos.textarea.focus();
+        firstBlockPos.textarea.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest"
+        });
         setTimeout(() => {
           firstBlockPos.textarea.setSelectionRange(0, 0);
         }, 0);
@@ -1318,6 +1328,13 @@ export default function JournalEditorWithMetrics({
       // Focus the closest block
       if (closestBlock) {
         closestBlock.textarea.focus();
+        
+        // Scroll the block into view
+        closestBlock.textarea.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "nearest"
+        });
         
         // Try to position cursor based on click X position within the textarea
         const clickX = e.clientX;
