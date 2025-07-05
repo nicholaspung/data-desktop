@@ -4,6 +4,7 @@ import ReusableCard from "@/components/reusable/reusable-card";
 import { Progress } from "@/components/ui/progress";
 import { OngoingIndicator } from "@/components/experiments/ongoing-indicator";
 import { format } from "date-fns";
+import { toLocalDate } from "@/lib/date-utils";
 
 export default function ExperimentDashboardProgress({
   experiment,
@@ -27,24 +28,6 @@ export default function ExperimentDashboardProgress({
 }) {
   const generateCompletionChartData = () => {
     if (!experiment || dailyLogs.length === 0) return [];
-
-    const toLocalDate = (dateInput: string | Date) => {
-      let dateStr: string;
-      if (typeof dateInput === "string") {
-        dateStr = dateInput;
-      } else {
-        dateStr = format(dateInput, "yyyy-MM-dd");
-      }
-
-      if (dateStr.includes("T00:00:00.000Z")) {
-        const datePart = dateStr.split("T")[0];
-        const [year, month, day] = datePart.split("-");
-        return new Date(Number(year), Number(month) - 1, Number(day));
-      } else {
-        const [year, month, day] = dateStr.split("-");
-        return new Date(Number(year), Number(month) - 1, Number(day));
-      }
-    };
 
     const startDate = toLocalDate(experiment.start_date);
     const endDate = experiment.end_date

@@ -46,3 +46,30 @@ export const dateStrToLocalDate = (dateStr: string): Date => {
   const [year, monthPlus1, day] = dateStr.split("-");
   return new Date(new Date(Number(year), Number(monthPlus1) - 1, Number(day)));
 };
+
+/**
+ * Converts a date input (string or Date) to a local date without timezone conversion.
+ * This ensures consistent date handling across components to avoid timezone-related mismatches.
+ * 
+ * @param dateInput - ISO string or Date object
+ * @returns Local Date object
+ */
+export const toLocalDate = (dateInput: string | Date): Date => {
+  let dateStr: string;
+  if (typeof dateInput === "string") {
+    dateStr = dateInput;
+  } else {
+    dateStr = format(dateInput, "yyyy-MM-dd");
+  }
+
+  // Handle ISO strings with UTC timezone (T00:00:00.000Z)
+  if (dateStr.includes("T00:00:00.000Z")) {
+    const datePart = dateStr.split("T")[0];
+    const [year, month, day] = datePart.split("-");
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  } else {
+    // Handle date strings in YYYY-MM-DD format
+    const [year, month, day] = dateStr.split("-");
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+};

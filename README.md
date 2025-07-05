@@ -76,7 +76,11 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### IN PROGRESS
 
-- in daily journal, if the user has clicked on an input block, make the screen focus that input block into view
+- in experiments, for some reason, the daily completion trend isn't showing the correct completion even though it shows correctly in the calendar view
+- in wealth, can you make the "filters" for summary stored in localstorage?
+- in bloodwork, allow the user to put "0" as a value, and also to "clear" that value afterwards if it was an accident
+- in bloodwork, in bloodwork manager, sort the "select" tests and adjust the other sections too
+- in bloodwork, in "add bloodwork", I can't scroll horizontally to select other test dates
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
@@ -87,6 +91,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in metric logger, when a user edits a note, it's slow to change [DONE 2025-07-05]
+- in settings, there's duplicate todos which may or may not be impacting the reordering of the routes [DONE 2025-07-05]
+- in daily journal, if the user has clicked on an input block, make the screen focus that input block into view [DONE 2025-07-04]
 - in metric logger, when saving notes, the responsiveness of typing is pretty slow [DONE 2025-07-02]
 - in daily journal, when searching for metrics or todos, make sure it follows the private/protected logic [DONE 2025-07-03]
 - in daily journal metric logging, if the value is "@metric:name:true,", it will save as value "true,". Is there a way to regex my way out of this? Or does there need to be validation to make sure it will save like that? Check for @todo:name:true, and also @metric:name:10, [DONE 2025-06-30]

@@ -11,9 +11,10 @@ import settingsStore, { routeDependencies, checkRouteDependencies, conditionalFe
 import { Button } from "@/components/ui/button";
 import ReusableCard from "@/components/reusable/reusable-card";
 import { FEATURE_ICONS } from "@/lib/icons";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { dashboardRegistry } from "@/lib/dashboard-registry";
 import { createElement } from "react";
+import { ConfirmChangesDialog } from "@/components/reusable/confirm-changes-dialog";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -26,12 +27,6 @@ const getRoutes = () => {
       name: "Dashboard",
       description: "Main application dashboard",
       icon: <FEATURE_ICONS.HOME className="h-4 w-4 mr-2" />,
-    },
-    {
-      path: "/todos",
-      name: "Todos",
-      description: "Manage your todo list and tasks",
-      icon: <FEATURE_ICONS.TODOS className="h-4 w-4 mr-2" />,
     },
     {
       path: "/metric-calendar",
@@ -76,6 +71,7 @@ function SettingsPage() {
     settingsStore,
     (state) => state.setVisibleRoute
   );
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const orderedRoutes = useMemo(() => {
     const routes = getRoutes();
@@ -86,15 +82,24 @@ function SettingsPage() {
           route.path !== "/dataset" &&
           route.path !== "/settings"
       )
-      .map((route) => ({
-        ...route,
-        config: routeConfigs[route.path] || {
-          href: route.path,
-          order: 999,
-          visible: true,
-        },
-      }))
-      .sort((a, b) => a.config.order - b.config.order);
+      .map((route, index) => {
+        const existingConfig = routeConfigs[route.path];
+        return {
+          ...route,
+          config: existingConfig || {
+            href: route.path,
+            order: 999 + index, // Ensure unique order for new routes
+            visible: true,
+          },
+        };
+      })
+      .sort((a, b) => {
+        // If orders are the same, sort by path to ensure consistent ordering
+        if (a.config.order === b.config.order) {
+          return a.path.localeCompare(b.path);
+        }
+        return a.config.order - b.config.order;
+      });
   }, [routeConfigs]);
 
   const handleRouteToggle = (route: string, checked: boolean) => {
@@ -111,12 +116,15 @@ function SettingsPage() {
         const currentOrder = currentRoute.config.order;
         const targetOrder = targetRoute.config.order;
 
+        // Swap the order values
         newConfigs[currentRoute.path] = {
-          ...currentRoute.config,
+          href: currentRoute.path,
+          visible: currentRoute.config.visible,
           order: targetOrder,
         };
         newConfigs[targetRoute.path] = {
-          ...targetRoute.config,
+          href: targetRoute.path,
+          visible: targetRoute.config.visible,
           order: currentOrder,
         };
 
@@ -151,12 +159,15 @@ function SettingsPage() {
         const currentOrder = currentRoute.config.order;
         const targetOrder = targetRoute.config.order;
 
+        // Swap the order values
         newConfigs[currentRoute.path] = {
-          ...currentRoute.config,
+          href: currentRoute.path,
+          visible: currentRoute.config.visible,
           order: targetOrder,
         };
         newConfigs[targetRoute.path] = {
-          ...targetRoute.config,
+          href: targetRoute.path,
+          visible: targetRoute.config.visible,
           order: currentOrder,
         };
 
@@ -186,6 +197,40 @@ function SettingsPage() {
       localStorage.removeItem("app-settings");
       window.location.reload();
     }
+  };
+
+  const handleResetOrder = () => {
+    settingsStore.setState((state) => {
+      const newConfigs = { ...state.routeConfigs };
+      
+      // Assign sequential order numbers to all routes
+      orderedRoutes.forEach((route, index) => {
+        newConfigs[route.path] = {
+          href: route.path,
+          visible: route.config.visible,
+          order: index,
+        };
+      });
+
+      const newState = { ...state, routeConfigs: newConfigs };
+
+      try {
+        localStorage.setItem(
+          "app-settings",
+          JSON.stringify({
+            visibleRoutes: newState.visibleRoutes,
+            routeConfigs: newState.routeConfigs,
+            defaultDatasetView: newState.defaultDatasetView,
+            enabledDatasets: newState.enabledDatasets,
+            dashboardSummaryConfigs: newState.dashboardSummaryConfigs,
+          })
+        );
+      } catch (error) {
+        console.error("Failed to save settings to localStorage:", error);
+      }
+      return newState;
+    });
+    setShowResetDialog(false);
   };
 
   const navigationContent = (
@@ -324,6 +369,26 @@ function SettingsPage() {
             </div>
           }
           description="Reorder and manage visibility of navigation items in the sidebar"
+          headerActions={
+            <ConfirmChangesDialog
+              title="Reset Navigation Order"
+              description="This will reset the order of all navigation items based on their current display order. Each item will be assigned a sequential number starting from 0."
+              onConfirm={handleResetOrder}
+              onCancel={() => setShowResetDialog(false)}
+              open={showResetDialog}
+              onOpenChange={setShowResetDialog}
+              trigger={
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowResetDialog(true)}
+                  title="Reset the order of navigation items"
+                >
+                  Reset Order
+                </Button>
+              }
+            />
+          }
           content={navigationContent}
         />
       </div>

@@ -22,7 +22,7 @@ import {
 import AddMetricModal from "./add-metric-modal";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import MetricStreakDisplay from "./metric-streak-display";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Input } from "@/components/ui/input";
 import { ApiService } from "@/services/api";
 import { toast } from "sonner";
@@ -30,7 +30,6 @@ import { DailyLog } from "@/store/experiment-definitions";
 import { format } from "date-fns";
 import { addEntry, updateEntry } from "@/store/data-store";
 import { getMetricDisplayUnit } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 import dataStore from "@/store/data-store";
 import { useStore } from "@tanstack/react-store";
 import {
@@ -38,8 +37,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import MetricNoteEditor from "./metric-note-editor";
 
-export default function MetricLoggerListItem({
+const MetricLoggerListItem = memo(function MetricLoggerListItem({
   groupedMetrics,
   isMetricCompleted,
   toggleMetricCompletion,
@@ -70,7 +70,6 @@ export default function MetricLoggerListItem({
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const noteDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const experimentMetrics =
     useStore(dataStore, (state) => state.experiment_metrics) || [];
@@ -172,8 +171,8 @@ export default function MetricLoggerListItem({
     setNoteValue(getMetricNote(metric));
   }, [dailyLogs, selectedDate]);
 
-  const handleNoteChange = useCallback((value: string) => {
-    setNoteValue(value);
+  const handleNoteChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNoteValue(e.target.value);
   }, []);
 
   const saveEditedValue = async (metric: Metric, valueToSave?: string) => {
@@ -307,14 +306,6 @@ export default function MetricLoggerListItem({
     setNoteValue("");
   }, []);
 
-  // Focus textarea when editing starts
-  useEffect(() => {
-    if (editingNoteId && textareaRef.current) {
-      textareaRef.current.focus();
-      const length = textareaRef.current.value.length;
-      textareaRef.current.setSelectionRange(length, length);
-    }
-  }, [editingNoteId]);
 
 
   return Object.keys(groupedMetrics)
@@ -676,51 +667,13 @@ export default function MetricLoggerListItem({
                             </Button>
                           )}
                           {isEditingNote && (
-                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex flex-col gap-2 mt-2">
-                                <Textarea
-                                  ref={textareaRef}
-                                  placeholder="Add a note for today..."
-                                  value={noteValue}
-                                  onChange={(e) => handleNoteChange(e.target.value)}
-                                  rows={3}
-                                  className="min-h-[80px] text-sm bg-background"
-                                  disabled={isSubmittingNote}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <div className="flex justify-end gap-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      cancelEditingNote();
-                                    }}
-                                    disabled={isSubmittingNote}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      saveEditedNote(metric);
-                                    }}
-                                    disabled={isSubmittingNote}
-                                  >
-                                    {isSubmittingNote ? (
-                                      <div className="animate-spin mr-1">
-                                        <Loader2 className="h-4 w-4" />
-                                      </div>
-                                    ) : (
-                                      <Save className="h-4 w-4 mr-1" />
-                                    )}
-                                    Save Note
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
+                            <MetricNoteEditor
+                              value={noteValue}
+                              onChange={handleNoteChange}
+                              onSave={() => saveEditedNote(metric)}
+                              onCancel={cancelEditingNote}
+                              isSubmitting={isSubmittingNote}
+                            />
                           )}
                         </div>
                       </PopoverContent>
@@ -740,51 +693,13 @@ export default function MetricLoggerListItem({
                     )
                   )}
                   {!hasNote && isEditingNote && (
-                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex flex-col gap-2 mt-2">
-                        <Textarea
-                          ref={textareaRef}
-                          placeholder="Add a note for today..."
-                          value={noteValue}
-                          onChange={(e) => handleNoteChange(e.target.value)}
-                          rows={3}
-                          className="min-h-[80px] text-sm bg-background"
-                          disabled={isSubmittingNote}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cancelEditingNote();
-                            }}
-                            disabled={isSubmittingNote}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            variant="default"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              saveEditedNote(metric);
-                            }}
-                            disabled={isSubmittingNote}
-                          >
-                            {isSubmittingNote ? (
-                              <div className="animate-spin mr-1">
-                                <Loader2 className="h-4 w-4" />
-                              </div>
-                            ) : (
-                              <Save className="h-4 w-4 mr-1" />
-                            )}
-                            Save Note
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <MetricNoteEditor
+                      value={noteValue}
+                      onChange={handleNoteChange}
+                      onSave={() => saveEditedNote(metric)}
+                      onCancel={cancelEditingNote}
+                      isSubmitting={isSubmittingNote}
+                    />
                   )}
 
                   <div className="flex flex-col items-center gap-2">
@@ -867,4 +782,6 @@ export default function MetricLoggerListItem({
         </div>
       </div>
     ));
-}
+});
+
+export default MetricLoggerListItem;

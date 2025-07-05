@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, startOfDay, addDays, subDays } from "date-fns";
 import {
@@ -227,7 +227,7 @@ const MetricLogger = () => {
     return result;
   }, [filteredMetrics, categories]);
 
-  const isMetricCompleted = (metric: Metric) => {
+  const isMetricCompleted = useCallback((metric: Metric) => {
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
 
     const todayLog = filteredDailyLogs.find((log: DailyLog) => {
@@ -315,9 +315,9 @@ const MetricLogger = () => {
     }
 
     return false;
-  };
+  }, [filteredDailyLogs, selectedDate]);
 
-  const toggleMetricCompletion = async (metric: Metric) => {
+  const toggleMetricCompletion = useCallback(async (metric: Metric) => {
     if (metric.type !== "boolean" || !metric.active) return;
 
     const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -376,9 +376,9 @@ const MetricLogger = () => {
       console.error("Error updating metric:", error);
       toast.error("Failed to update metric");
     }
-  };
+  }, [filteredDailyLogs, selectedDate, findExperimentForMetric]);
 
-  const toggleCalendarTracking = async (metric: Metric) => {
+  const toggleCalendarTracking = useCallback(async (metric: Metric) => {
     try {
       let scheduleDays = [...(metric.schedule_days || [])];
 
@@ -404,9 +404,9 @@ const MetricLogger = () => {
       console.error("Error updating metric calendar tracking:", error);
       toast.error("Failed to update metric settings");
     }
-  };
+  }, []);
 
-  const toggleMetricActiveStatus = async (metric: Metric) => {
+  const toggleMetricActiveStatus = useCallback(async (metric: Metric) => {
     try {
       const updatedMetric = {
         ...metric,
@@ -424,9 +424,9 @@ const MetricLogger = () => {
       console.error("Error updating metric active status:", error);
       toast.error("Failed to update metric status");
     }
-  };
+  }, []);
 
-  const handleDeleteMetric = async (metric: Metric) => {
+  const handleDeleteMetric = useCallback(async (metric: Metric) => {
     try {
       await ApiService.deleteRecord(metric.id);
       deleteEntry(metric.id, "metrics");
@@ -435,7 +435,7 @@ const MetricLogger = () => {
       console.error("Error deleting metric:", error);
       toast.error("Failed to delete metric");
     }
-  };
+  }, []);
 
   const hasNoMetrics = metrics.length === 0;
 

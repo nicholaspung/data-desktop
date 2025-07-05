@@ -27,6 +27,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, Calendar, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toLocalDate } from "@/lib/date-utils";
 
 function isDefaultValue(metric: Metric, logValue: string): boolean {
   try {
@@ -62,7 +63,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
   useEffect(() => {
     if (selectedDate) {
       const logs = dailyLogs.filter((log: DailyLog) => {
-        const logDate = new Date(log.date);
+        const logDate = toLocalDate(log.date);
         const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
           isSameDay(logDate, selectedDate) &&
@@ -130,7 +131,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
     for (const day of days) {
       const dateString = format(day, "yyyy-MM-dd");
       const hasLogs = dailyLogs.some((log) => {
-        const logDate = new Date(log.date);
+        const logDate = toLocalDate(log.date);
         const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
           isSameDay(logDate, day) &&
@@ -141,7 +142,7 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
       });
 
       const metricsForDay = dailyLogs.filter((log) => {
-        const logDate = new Date(log.date);
+        const logDate = toLocalDate(log.date);
         const metric = metrics.find((m: Metric) => m.id === log.metric_id);
         return (
           isSameDay(logDate, day) &&

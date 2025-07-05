@@ -77,8 +77,9 @@ const defaultRouteConfigs: Record<string, RouteConfig> = {
   "/files": { href: "/files", order: 13, visible: true },
   "/dexa": { href: "/dexa", order: 14, visible: true },
   "/bloodwork": { href: "/bloodwork", order: 15, visible: true },
-  "/dataset": { href: "/dataset", order: 16, visible: true },
-  "/settings": { href: "/settings", order: 17, visible: true },
+  "/multi-measurements": { href: "/multi-measurements", order: 16, visible: true },
+  "/dataset": { href: "/dataset", order: 17, visible: true },
+  "/settings": { href: "/settings", order: 18, visible: true },
 };
 
 const defaultDatasets = {
