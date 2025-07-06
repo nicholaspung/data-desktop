@@ -1,4 +1,5 @@
 import "@tanstack/react-table";
+import { FieldDefinition } from "./types";
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta {
@@ -11,5 +12,6 @@ declare module "@tanstack/react-table" {
     description?: string;
     isSearchable?: boolean;
     options?: { id: string; label: string }[];
+    field?: FieldDefinition;
   }
 }

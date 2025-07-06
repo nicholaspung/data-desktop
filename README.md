@@ -77,7 +77,6 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - in experiments, for some reason, the daily completion trend isn't showing the correct completion even though it shows correctly in the calendar view
-- in wealth, can you make the "filters" for summary stored in localstorage?
 - in bloodwork, allow the user to put "0" as a value, and also to "clear" that value afterwards if it was an accident
 - in bloodwork, in bloodwork manager, sort the "select" tests and adjust the other sections too
 - in bloodwork, in "add bloodwork", I can't scroll horizontally to select other test dates
@@ -91,6 +90,10 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in wealth, when a user hovers over the graph to show the tooltip detail, it's not the highest "z-index" [DONE 2025-07-05]
+- in wealth, when a user types in the search bar for "amount" in the table filters, it doesn't search correctly [DONE 2025-07-05]
+- in wealth, for the tables, can you add a "selection" for the field which allows the user to search for any value in any field [DONE 2025-07-05]
+- in wealth, can you make the "filters" for summary stored in localstorage? [DONE 2025-07-05]
 - in metric logger, when a user edits a note, it's slow to change [DONE 2025-07-05]
 - in settings, there's duplicate todos which may or may not be impacting the reordering of the routes [DONE 2025-07-05]
 - in daily journal, if the user has clicked on an input block, make the screen focus that input block into view [DONE 2025-07-04]

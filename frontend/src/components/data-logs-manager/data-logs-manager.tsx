@@ -22,6 +22,8 @@ import {
   Rows3,
   LayoutList,
   Download,
+  ArrowUpWideNarrow,
+  ArrowDownWideNarrow,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -30,6 +32,10 @@ import { ApiService } from "@/services/api";
 import { DataLogsManagerProps } from "./types";
 import { FieldDefinition } from "@/types/types";
 import { updateEntry, deleteEntry, DataStoreName } from "@/store/data-store";
+import MultipleFileUpload, {
+  FileItem,
+} from "@/components/reusable/multiple-file-upload";
+import FileUpload from "@/components/reusable/file-upload";
 
 export default function DataLogsManager<T extends Record<string, any>>({
   logs,
@@ -62,6 +68,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">(defaultSortOrder);
   const [filterText, setFilterText] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [searchField, setSearchField] = useState<string>("ALL_FIELDS");
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<{
     path: string;
@@ -136,6 +143,14 @@ export default function DataLogsManager<T extends Record<string, any>>({
       .filter((f) => f.isSearchable && f.type === "autocomplete")
       .map((f) => f.key);
   }, [filterableFields, fieldDefinitions]);
+
+  const searchableFieldsList = useMemo(() => {
+    const searchableFields = fieldDefinitions
+      .filter((f) => f.isSearchable)
+      .map((f) => ({ id: f.key, label: f.displayName || f.key }));
+
+    return [{ id: "ALL_FIELDS", label: "All Fields" }, ...searchableFields];
+  }, [fieldDefinitions]);
 
   const filterOptions = useMemo(() => {
     const options: Record<string, string[]> = {};
@@ -280,17 +295,28 @@ export default function DataLogsManager<T extends Record<string, any>>({
 
     if (filterText) {
       const searchTerm = filterText.toLowerCase();
-      const searchableFields = fieldDefinitions
-        .filter((f) => f.isSearchable)
-        .map((f) => f.key);
 
-      filtered = filtered.filter((log) =>
-        searchableFields.some((field) => {
-          const value = log[field];
+      if (searchField === "ALL_FIELDS") {
+        // Search across all searchable fields
+        const searchableFields = fieldDefinitions
+          .filter((f) => f.isSearchable)
+          .map((f) => f.key);
+
+        filtered = filtered.filter((log) =>
+          searchableFields.some((field) => {
+            const value = log[field];
+            if (!value) return false;
+            return String(value).toLowerCase().includes(searchTerm);
+          })
+        );
+      } else {
+        // Search in specific field
+        filtered = filtered.filter((log) => {
+          const value = log[searchField];
           if (!value) return false;
           return String(value).toLowerCase().includes(searchTerm);
-        })
-      );
+        });
+      }
     }
 
     Object.entries(filterValues).forEach(([field, value]) => {
@@ -320,7 +346,15 @@ export default function DataLogsManager<T extends Record<string, any>>({
         return aValue < bValue ? 1 : -1;
       }
     });
-  }, [logs, filterText, filterValues, sortBy, sortOrder, fieldDefinitions]);
+  }, [
+    logs,
+    filterText,
+    filterValues,
+    searchField,
+    sortBy,
+    sortOrder,
+    fieldDefinitions,
+  ]);
 
   const latestLogDate = useMemo(() => {
     if (logs.length === 0 || !dateField) return null;
@@ -620,11 +654,14 @@ export default function DataLogsManager<T extends Record<string, any>>({
                   log[field] !== null &&
                   log[field] !== ""
               )
-              .map((field) => (
-                <div key={field} className="text-xs">
-                  {formatValue(log[field], field, log)}
-                </div>
-              ))}
+              .map((field) => {
+                const formattedValue = formatValue(log[field], field, log);
+                return (
+                  <div key={field} className="text-xs">
+                    {formattedValue}
+                  </div>
+                );
+              })}
         </div>
 
         <div className="flex items-center gap-1">
@@ -697,12 +734,14 @@ export default function DataLogsManager<T extends Record<string, any>>({
                     !tagFields.includes(field) &&
                     log[field] !== undefined
                 )
-                .map((field) => (
-                  <span key={field}>
-                    {getFieldDef(field)?.displayName}:{" "}
-                    {formatValue(log[field], field, log)}
-                  </span>
-                ))}
+                .map((field) => {
+                  const formattedValue = formatValue(log[field], field, log);
+                  return (
+                    <span key={field}>
+                      {getFieldDef(field)?.displayName}: {formattedValue}
+                    </span>
+                  );
+                })}
             </div>
 
             {tagFields.map((field) =>
@@ -870,64 +909,93 @@ export default function DataLogsManager<T extends Record<string, any>>({
               <div className="space-y-4">
                 <div className="space-y-3 border-b pb-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <Input
-                      placeholder="Search..."
-                      value={filterText}
-                      onChange={(e) => {
-                        setFilterText(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="text-sm"
-                    />
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Search</Label>
+                      <div className="flex gap-2">
+                        <ReusableSelect
+                          options={searchableFieldsList}
+                          value={searchField}
+                          onChange={(value) => setSearchField(value)}
+                          placeholder="Search field"
+                          triggerClassName="text-sm w-36"
+                        />
+                        <Input
+                          placeholder={
+                            searchField === "ALL_FIELDS"
+                              ? "Search all fields..."
+                              : `Search ${getFieldDef(searchField)?.displayName || searchField}...`
+                          }
+                          value={filterText}
+                          onChange={(e) => {
+                            setFilterText(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="text-sm flex-1"
+                        />
+                      </div>
+                    </div>
                     {filterableFieldsList.map((field) => (
-                      <ReusableSelect
-                        key={field}
-                        options={[
-                          {
-                            id: `_all_${field}_`,
-                            label: `All ${getFieldDef(field)?.displayName || field}`,
-                          },
-                          ...filterOptions[field].map((value) => ({
-                            id: value,
-                            label: value,
-                          })),
-                        ]}
-                        value={filterValues[field] || `_all_${field}_`}
-                        onChange={(value) => {
-                          setFilterValues((prev) => ({
-                            ...prev,
-                            [field]: value === `_all_${field}_` ? "" : value,
-                          }));
-                          setCurrentPage(1);
-                        }}
-                        placeholder={`Select ${getFieldDef(field)?.displayName || field}`}
-                        triggerClassName="text-sm"
-                      />
+                      <div key={field} className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Filter by {getFieldDef(field)?.displayName || field}
+                        </Label>
+                        <ReusableSelect
+                          options={[
+                            {
+                              id: `_all_${field}_`,
+                              label: `All ${getFieldDef(field)?.displayName || field}`,
+                            },
+                            ...filterOptions[field].map((value) => ({
+                              id: value,
+                              label: value,
+                            })),
+                          ]}
+                          value={filterValues[field] || `_all_${field}_`}
+                          onChange={(value) => {
+                            setFilterValues((prev) => ({
+                              ...prev,
+                              [field]: value === `_all_${field}_` ? "" : value,
+                            }));
+                            setCurrentPage(1);
+                          }}
+                          placeholder={`Select ${getFieldDef(field)?.displayName || field}`}
+                          triggerClassName="text-sm"
+                        />
+                      </div>
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <ReusableSelect
-                      options={sortableFieldsList.map((field) => ({
-                        id: field,
-                        label: getFieldDef(field)?.displayName || field,
-                      }))}
-                      value={sortBy}
-                      onChange={(value) => setSortBy(value)}
-                      placeholder="Sort by"
-                      triggerClassName="text-sm w-32"
-                    />
-                    <ReusableSelect
-                      options={[
-                        { id: "desc", label: "Descending" },
-                        { id: "asc", label: "Ascending" },
-                      ]}
-                      value={sortOrder}
-                      onChange={(value) =>
-                        setSortOrder(value as "asc" | "desc")
-                      }
-                      placeholder="Sort order"
-                      triggerClassName="text-sm w-32"
-                    />
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Sort By</Label>
+                      <ReusableSelect
+                        options={sortableFieldsList.map((field) => ({
+                          id: field,
+                          label: getFieldDef(field)?.displayName || field,
+                        }))}
+                        value={sortBy}
+                        onChange={(value) => setSortBy(value)}
+                        placeholder="Sort by"
+                        triggerClassName="text-sm w-32"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Sort Order</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                        }
+                        className="flex items-center gap-1"
+                        title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                      >
+                        {sortOrder === "asc" ? (
+                          <ArrowUpWideNarrow className="h-4 w-4" />
+                        ) : (
+                          <ArrowDownWideNarrow className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
@@ -967,6 +1035,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
               onCancel={handleCancelEdit}
               confirmText="Save Changes"
               confirmIcon={<Save />}
+              fixedFooter={true}
               customContent={
                 <div className="space-y-4 mt-4">
                   {fieldDefinitions
@@ -1192,6 +1261,62 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               Current: {editingLog[field.key] ? "Yes" : "No"}
                             </p>
                           </>
+                        ) : field.type === "file-multiple" ? (
+                          <>
+                            <MultipleFileUpload
+                              value={(() => {
+                                const editedValue = editedLog[
+                                  field.key as keyof T
+                                ] as FileItem[];
+                                const currentValue = editingLog[
+                                  field.key
+                                ] as FileItem[];
+                                return editedValue !== undefined
+                                  ? editedValue
+                                  : currentValue || [];
+                              })()}
+                              onChange={(files) =>
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: files,
+                                })
+                              }
+                              maxFiles={10}
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Current files:{" "}
+                              {Array.isArray(editingLog[field.key])
+                                ? (editingLog[field.key] as FileItem[]).length
+                                : 0}
+                            </p>
+                          </>
+                        ) : field.type === "file" ? (
+                          <>
+                            <FileUpload
+                              value={(() => {
+                                const editedValue =
+                                  editedLog[field.key as keyof T];
+                                const currentValue = editingLog[field.key];
+                                return editedValue !== undefined
+                                  ? editedValue
+                                  : currentValue;
+                              })()}
+                              onChange={(file) =>
+                                setEditedLog({
+                                  ...editedLog,
+                                  [field.key]: file,
+                                })
+                              }
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Current:{" "}
+                              {editingLog[field.key]
+                                ? "File uploaded"
+                                : "No file"}
+                            </p>
+                          </>
                         ) : (
                           <>
                             <Input
@@ -1235,6 +1360,7 @@ export default function DataLogsManager<T extends Record<string, any>>({
         }}
         confirmText="Download"
         confirmIcon={<Download className="h-4 w-4" />}
+        fixedFooter={true}
         showTrigger={false}
       />
     </div>

@@ -99,9 +99,14 @@ export function createColumn<TData, TValue = any>(
   };
 
   if (field) {
+    // Add field to meta for all columns
+    column.meta = {
+      ...column.meta,
+      field: field,
+    };
+
     if (field.isSearchable) {
       column.filterFn = getFilterFunctionForField(field);
-
       column.enableColumnFilter = true;
     } else {
       column.enableColumnFilter = false;

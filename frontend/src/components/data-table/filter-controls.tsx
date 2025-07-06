@@ -57,6 +57,10 @@ export default function FilterControls({
 
   const getPlaceholder = () => {
     if (!filterColumn) return searchPlaceholder;
+    
+    if (filterColumn === "ALL_FIELDS") {
+      return "Search across all fields...";
+    }
 
     const field = fieldMap.get(filterColumn);
     if (field?.isRelation) {
@@ -72,16 +76,22 @@ export default function FilterControls({
         {filterableColumns.length > 0 && (
           <>
             <ReusableSelect
-              options={filterableColumns.map((column) => ({
-                id: column,
-                label: column,
-              }))}
+              options={[
+                { id: "ALL_FIELDS", label: "ALL_FIELDS" },
+                ...filterableColumns.map((column) => ({
+                  id: column,
+                  label: column,
+                }))
+              ]}
               value={filterColumn}
               onChange={(value) => {
                 setFilterColumn(value);
                 table.resetColumnFilters();
               }}
               renderItem={(option) => {
+                if (option.label === "ALL_FIELDS") {
+                  return "All Fields";
+                }
                 const field = fieldMap.get(option.label);
                 const displayName = field?.displayName || option.label;
                 return `${displayName} ${field?.isRelation ? "(Relation)" : ""}`;
@@ -92,13 +102,18 @@ export default function FilterControls({
             <Input
               placeholder={getPlaceholder()}
               value={
-                (table.getColumn(filterColumn)?.getFilterValue() as string) ||
-                ""
+                filterColumn === "ALL_FIELDS"
+                  ? (table.getState().globalFilter as string) || ""
+                  : (table.getColumn(filterColumn)?.getFilterValue() as string) || ""
               }
               onChange={(event) => {
-                table
-                  .getColumn(filterColumn)
-                  ?.setFilterValue(event.target.value);
+                if (filterColumn === "ALL_FIELDS") {
+                  table.setGlobalFilter(event.target.value);
+                } else {
+                  table
+                    .getColumn(filterColumn)
+                    ?.setFilterValue(event.target.value);
+                }
               }}
               className="max-w-sm"
             />

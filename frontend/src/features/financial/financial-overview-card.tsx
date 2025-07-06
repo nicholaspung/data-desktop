@@ -38,7 +38,17 @@ export function FinancialOverviewCard({
   type,
   children,
 }: FinancialOverviewCardProps) {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("month");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(() => {
+    switch (type) {
+      case "paycheck":
+        return "year";
+      case "balances":
+        return "all";
+      case "logs":
+      default:
+        return "month";
+    }
+  });
   const [selectedMonth, setSelectedMonth] = useState<Date | null>(null);
   const [selectedYear, setSelectedYear] = useState<Date | null>(null);
 

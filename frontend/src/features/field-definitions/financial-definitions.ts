@@ -19,6 +19,7 @@ export const FINANCIAL_LOGS_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       description:
         "Transaction amount (use negative for expenses, positive for income)",
       unit: "$",
+      isSearchable: true,
     },
     {
       key: "description",
@@ -64,6 +65,7 @@ export const FINANCIAL_BALANCES_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Amount",
       description: "Account balance amount",
       unit: "$",
+      isSearchable: true,
     },
     {
       key: "account_name",
@@ -108,6 +110,7 @@ export const PAYCHECK_INFO_FIELD_DEFINITIONS: FieldDefinitionsDataset = {
       displayName: "Amount",
       description: "Paycheck amount",
       unit: "$",
+      isSearchable: true,
     },
     {
       key: "deduction_type",

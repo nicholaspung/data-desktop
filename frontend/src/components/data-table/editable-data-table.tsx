@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { FieldDefinition } from "@/types/types";
 import { formatCellValue, getDisplayValue } from "@/lib/table-utils";
+import { allFieldsFilter } from "@/lib/table-filter-utils";
 import Pagination from "./pagination";
 import { calculateColumnWidth } from "../../lib/table-width-utils";
 import EditableCell from "./editable-cell";
@@ -82,7 +83,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
   );
   const [filterColumn, setFilterColumn] = useState<string>(
     initialFilterColumn ||
-      (filterableColumns.length > 0 ? filterableColumns[0] : "")
+      (filterableColumns.length > 0 ? "ALL_FIELDS" : "")
   );
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [pagination, setPagination] = useState({
@@ -297,35 +298,7 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
       pagination,
       rowSelection,
     },
-    globalFilterFn: (row, columnId, filterValue) => {
-      const column = table.getColumn(columnId);
-      if (column?.columnDef?.meta?.isRelation) {
-        const relatedDataKey = `${columnId}_data`;
-        const relatedData = row.original[relatedDataKey];
-        if (relatedData) {
-          const displayFields = [
-            "name",
-            "title",
-            "displayName",
-            "date",
-            "label",
-          ];
-          for (const field of displayFields) {
-            if (relatedData[field]) {
-              const value = String(relatedData[field]).toLowerCase();
-              if (value.includes(String(filterValue).toLowerCase())) {
-                return true;
-              }
-            }
-          }
-        }
-      }
-
-      const value = row.getValue(columnId);
-      return String(value)
-        .toLowerCase()
-        .includes(String(filterValue).toLowerCase());
-    },
+    globalFilterFn: allFieldsFilter,
     enableFilters: true,
     manualFiltering: false,
     onPaginationChange: (updater) => {
@@ -386,8 +359,23 @@ export function EditableDataTable<TData extends Record<string, any>, TValue>({
         filterableColumns={filterableColumns}
         filterColumn={filterColumn}
         setFilterColumn={(newColumn) => {
+          const wasAllFields = filterColumn === "ALL_FIELDS";
+          const isAllFields = newColumn === "ALL_FIELDS";
+          
           setFilterColumn(newColumn);
-          table.resetColumnFilters();
+          
+          if (wasAllFields && !isAllFields) {
+            // Switching from All Fields to specific field - clear global filter
+            table.setGlobalFilter("");
+            table.resetColumnFilters();
+          } else if (!wasAllFields && isAllFields) {
+            // Switching from specific field to All Fields - clear column filters
+            table.resetColumnFilters();
+            table.setGlobalFilter("");
+          } else {
+            // Normal field switch - just reset column filters
+            table.resetColumnFilters();
+          }
 
           if (
             onFilterChange &&

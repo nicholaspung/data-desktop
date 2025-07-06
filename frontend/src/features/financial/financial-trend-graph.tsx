@@ -921,6 +921,9 @@ export default function FinancialTrendGraph({
                             name,
                           ];
                         }}
+                        contentStyle={{
+                          zIndex: 9999,
+                        }}
                       />
                       <Legend />
                       {chartLines.map((line) => (
@@ -968,6 +971,9 @@ export default function FinancialTrendGraph({
                             num < 0 ? `-$${formatted}` : `$${formatted}`,
                             name,
                           ];
+                        }}
+                        contentStyle={{
+                          zIndex: 9999,
                         }}
                       />
                       <Legend />
