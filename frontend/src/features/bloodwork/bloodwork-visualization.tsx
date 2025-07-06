@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from "react";
 import { useStore } from "@tanstack/react-store";
 import dataStore from "@/store/data-store";
-import { Search } from "lucide-react";
+import { Search, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import BloodworkSummary from "./bloodwork-summary";
@@ -16,6 +17,7 @@ import BloodMarkerManager from "./blood-marker-manager";
 import { BloodworkTest } from "@/store/bloodwork-definitions";
 
 const BloodworkVisualizations: React.FC = () => {
+  const [markerManagerOpen, setMarkerManagerOpen] = useState(false);
   const bloodMarkers = useStore(
     dataStore,
     (state) => state.blood_markers || []
@@ -372,7 +374,18 @@ const BloodworkVisualizations: React.FC = () => {
                 <p className="text-muted-foreground">
                   No blood markers found. Please add some markers first.
                 </p>
-                <BloodMarkerManager />
+                <Button 
+                  variant="outline" 
+                  onClick={() => setMarkerManagerOpen(true)}
+                  className="gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Manage Blood Markers
+                </Button>
+                <BloodMarkerManager 
+                  open={markerManagerOpen} 
+                  onOpenChange={setMarkerManagerOpen} 
+                />
               </div>
             ) : (
               <p className="text-muted-foreground">

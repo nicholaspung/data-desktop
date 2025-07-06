@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit, Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import DataForm from "@/components/data-form/data-form";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -10,11 +10,14 @@ import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
-import ReusableTabs from "@/components/reusable/reusable-tabs";
 import { format } from "date-fns";
 
-export default function BloodResultsManager() {
-  const [open, setOpen] = useState(false);
+interface BloodResultsManagerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function BloodResultsManager({ open, onOpenChange }: BloodResultsManagerProps) {
   const [activeTab, setActiveTab] = useState("add");
   const [selectedResult, setSelectedResult] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -91,7 +94,7 @@ export default function BloodResultsManager() {
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    onOpenChange(newOpen);
     if (!newOpen) {
       setSelectedResult("");
       setTimeout(() => setActiveTab("add"), 300);
@@ -104,14 +107,8 @@ export default function BloodResultsManager() {
       description="Add new blood results or update existing ones."
       open={open}
       onOpenChange={handleOpenChange}
-      showTrigger={true}
+      showTrigger={false}
       contentClassName="sm:max-w-[800px]"
-      trigger={
-        <Button variant="outline" className="gap-2">
-          <Edit className="h-4 w-4" />
-          Manage Blood Results
-        </Button>
-      }
       customContent={
         <div className="p-4 overflow-y-auto max-h-[70vh]">
           <ReusableTabs
@@ -125,7 +122,7 @@ export default function BloodResultsManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
+                  <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-3">
                     {tests.length === 0 || markers.length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground">
                         {tests.length === 0 && markers.length === 0
@@ -156,29 +153,31 @@ export default function BloodResultsManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
+                  <div className="max-h-[60vh] overflow-y-auto pr-3">
                     {results.length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground">
                         No blood results available to edit. Please add a result
                         first.
                       </div>
                     ) : (
-                      <>
-                        <div className="mb-6">
-                          <h3 className="text-sm font-medium mb-2">
-                            Select Blood Result to Edit:
-                          </h3>
-                          <ReusableSelect
-                            options={resultOptions}
-                            value={selectedResult}
-                            onChange={setSelectedResult}
-                            title="Blood Result"
-                            placeholder="Search blood results..."
-                            searchSelect={true}
-                            usePortal={true}
-                          />
+                      <div className="space-y-4">
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-sm font-medium mb-2">
+                              Select Blood Result to Edit:
+                            </h3>
+                            <ReusableSelect
+                              options={resultOptions}
+                              value={selectedResult}
+                              onChange={setSelectedResult}
+                              title="Blood Result"
+                              placeholder="Search blood results..."
+                              searchSelect={true}
+                              usePortal={true}
+                            />
+                          </div>
                           {selectedResult && (
-                            <div className="mt-3">
+                            <div>
                               <ConfirmDeleteDialog
                                 title="Delete Blood Result"
                                 description="Are you sure you want to delete this blood result? This action cannot be undone."
@@ -212,7 +211,7 @@ export default function BloodResultsManager() {
                             Select a result to edit its details
                           </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 ),

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit, Plus } from "lucide-react";
+import { Plus, Edit } from "lucide-react";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 import DataForm from "@/components/data-form/data-form";
 import ReusableSelect from "@/components/reusable/reusable-select";
@@ -11,10 +11,13 @@ import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
 import { format } from "date-fns";
-import ReusableTabs from "@/components/reusable/reusable-tabs";
 
-export default function BloodworkManager() {
-  const [open, setOpen] = useState(false);
+interface BloodworkManagerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function BloodworkManager({ open, onOpenChange }: BloodworkManagerProps) {
   const [activeTab, setActiveTab] = useState("add");
   const [selectedTest, setSelectedTest] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -66,7 +69,7 @@ export default function BloodworkManager() {
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    onOpenChange(newOpen);
     if (!newOpen) {
       setSelectedTest("");
       setTimeout(() => setActiveTab("add"), 300);
@@ -80,13 +83,7 @@ export default function BloodworkManager() {
       open={open}
       onOpenChange={handleOpenChange}
       contentClassName="sm:max-w-[800px]"
-      showTrigger={true}
-      trigger={
-        <Button variant="outline" className="gap-2">
-          <Edit className="h-4 w-4" />
-          Manage Bloodwork Tests
-        </Button>
-      }
+      showTrigger={false}
       customContent={
         <div className="p-4 overflow-y-auto max-h-[70vh]">
           <ReusableTabs
@@ -100,7 +97,7 @@ export default function BloodworkManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
+                  <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-3">
                     <DataForm
                       datasetId="bloodwork"
                       fields={bloodworkFields}
@@ -121,29 +118,31 @@ export default function BloodworkManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
+                  <div className="max-h-[60vh] overflow-y-auto pr-3">
                     {tests.length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground">
                         No bloodwork tests available to edit. Please add a test
                         first.
                       </div>
                     ) : (
-                      <>
-                        <div className="mb-6">
-                          <h3 className="text-sm font-medium mb-2">
-                            Select Bloodwork Test to Edit:
-                          </h3>
-                          <ReusableSelect
-                            options={testOptions}
-                            value={selectedTest}
-                            onChange={setSelectedTest}
-                            title="Bloodwork Test"
-                            placeholder="Search bloodwork tests..."
-                            searchSelect={true}
-                            usePortal={true}
-                          />
+                      <div className="space-y-4">
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-sm font-medium mb-2">
+                              Select Bloodwork Test to Edit:
+                            </h3>
+                            <ReusableSelect
+                              options={testOptions}
+                              value={selectedTest}
+                              onChange={setSelectedTest}
+                              title="Bloodwork Test"
+                              placeholder="Search bloodwork tests..."
+                              searchSelect={true}
+                              usePortal={true}
+                            />
+                          </div>
                           {selectedTest && (
-                            <div className="mt-3">
+                            <div>
                               <ConfirmDeleteDialog
                                 title="Delete Bloodwork Test"
                                 description="Are you sure you want to delete this bloodwork test? This will also delete all results associated with this test. This action cannot be undone."
@@ -177,7 +176,7 @@ export default function BloodworkManager() {
                             Select a test to edit its details
                           </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 ),

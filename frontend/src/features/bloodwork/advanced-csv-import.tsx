@@ -499,6 +499,7 @@ export default function BloodworkCSVImport() {
       <Button
         variant="outline"
         className="gap-2"
+        size="sm"
         onClick={() => {
           resetImport();
           setOpen(true);
@@ -538,8 +539,9 @@ export default function BloodworkCSVImport() {
           isProcessing
         }
         contentClassName="max-h-[95vh] overflow-hidden max-w-[800px]"
+        fixedFooter={true}
         customContent={
-          <div className="py-4">
+          <div>
             <Tabs
               value={activeTab}
               onValueChange={setActiveTab}

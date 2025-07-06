@@ -8,6 +8,7 @@ import ReusableDialog from "@/components/reusable/reusable-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -176,7 +177,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
     } else if (wasExisting && !exists) {
       resetFormData();
     }
-  }, [date, existingDates]);
+  }, [date, existingDates, existingBloodwork, bloodResults]);
 
   useEffect(() => {
     if (showAddDialog) {
@@ -267,7 +268,8 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           const data = markerValues[key];
 
           if (typeof data.value === "string") return data.value.trim() !== "";
-          return data.value !== null && data.value !== undefined;
+          // Allow 0 as a valid number value
+          return typeof data.value === "number" || data.value !== "";
         })
 
         .filter((markerId) => {
@@ -333,7 +335,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       confirmIcon={<span>💾</span>}
       onConfirm={handleSubmit}
       trigger={
-        <Button className="gap-2">
+        <Button className="gap-2" size="sm">
           <PlusCircle className="h-4 w-4" />
           Add Bloodwork
         </Button>
@@ -342,8 +344,9 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
       loading={isSubmitting}
       footerActionDisabled={!isFormValid()}
       footerActionLoadingText="Saving..."
+      fixedFooter={true}
       customContent={
-        <div className="space-y-6 p-4 overflow-y-auto max-h-[70vh]">
+        <div className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">
               Test Date{" "}
@@ -400,28 +403,30 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
           {!isExistingDate && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Fasted</label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={fasted ? "true" : "false"}
-                    onChange={(e) => setFasted(e.target.value === "true")}
-                  >
-                    <option value="false">No</option>
-                    <option value="true">Yes</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <AutocompleteInput
-                    label="Lab Name"
-                    value={labName}
-                    onChange={setLabName}
-                    options={labNameOptions}
-                    placeholder="Lab or facility name"
-                    emptyMessage="No lab names found. Start typing to add a new one."
-                    showRecentOptions={true}
-                    maxRecentOptions={5}
-                  />
+                <AutocompleteInput
+                  label="Lab Name"
+                  value={labName}
+                  onChange={setLabName}
+                  options={labNameOptions}
+                  placeholder="Lab or facility name"
+                  emptyMessage="No lab names found. Start typing to add a new one."
+                  showRecentOptions={true}
+                  maxRecentOptions={5}
+                />
+                <div className="flex items-end h-full pb-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="fasted"
+                      checked={fasted}
+                      onCheckedChange={(checked) => setFasted(!!checked)}
+                    />
+                    <label
+                      htmlFor="fasted"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Fasted
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -436,10 +441,10 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
             </>
           )}
 
-          <div className="grid grid-cols-1 h-[400px]">
+          <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Search Markers</label>
-              <div className="relative h-full">
+              <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground z-10" />
                 <Input
                   type="text"
@@ -451,7 +456,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
               </div>
             </div>
 
-            <div className="border rounded-md overflow-hidden h-full">
+            <div className="border rounded-md overflow-hidden h-[400px]">
               <div className="bg-muted p-2 text-sm font-medium">
                 Blood Markers
               </div>
@@ -465,11 +470,10 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
               ) : (
                 <div
                   ref={parentRef}
-                  className="overflow-y-auto"
+                  className="overflow-y-hidden hover:overflow-y-auto overscroll-contain transition-all duration-200"
                   style={{
                     height: "calc(100% - 40px)",
                     width: "100%",
-                    overflow: "auto",
                   }}
                 >
                   <div
@@ -501,7 +505,7 @@ export function AddBloodworkDialog({ onSuccess }: { onSuccess?: () => void }) {
                         >
                           <BloodMarkerInput
                             marker={marker}
-                            value={markerValues[marker.id]?.value || ""}
+                            value={markerValues[marker.id]?.value ?? ""}
                             valueType={
                               markerValues[marker.id]?.valueType || "number"
                             }

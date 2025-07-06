@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit, Plus } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Edit } from "lucide-react";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
+import ReusableTabs from "@/components/reusable/reusable-tabs";
 import DataForm from "@/components/data-form/data-form";
 import ReusableSelect from "@/components/reusable/reusable-select";
 import { useFieldDefinitions } from "@/features/field-definitions/field-definitions-store";
@@ -10,16 +10,21 @@ import { useStore } from "@tanstack/react-store";
 import { toast } from "sonner";
 import { ConfirmDeleteDialog } from "@/components/reusable/confirm-delete-dialog";
 import { ApiService } from "@/services/api";
-import ReusableTabs from "@/components/reusable/reusable-tabs";
+import AddBloodMarkerForm, { AddBloodMarkerFormRef } from "./add-blood-marker-form";
 
-export default function BloodMarkerManager() {
-  const [open, setOpen] = useState(false);
+interface BloodMarkerManagerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export default function BloodMarkerManager({ open, onOpenChange }: BloodMarkerManagerProps) {
   const [activeTab, setActiveTab] = useState("add");
   const [selectedMarker, setSelectedMarker] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
   const { getDatasetFields } = useFieldDefinitions();
   const bloodMarkerFields = getDatasetFields("blood_markers");
+  const addFormRef = useRef<AddBloodMarkerFormRef>(null);
 
   const markers = useStore(dataStore, (state) => state.blood_markers);
 
@@ -60,7 +65,7 @@ export default function BloodMarkerManager() {
   );
 
   const handleAddSuccess = () => {
-    toast.success("Blood marker added successfully!");
+    // Success message is handled by the form component
   };
 
   const handleEditSuccess = () => {
@@ -87,7 +92,7 @@ export default function BloodMarkerManager() {
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
+    onOpenChange(newOpen);
     if (!newOpen) {
       setSelectedMarker("");
       setSelectedCategory("");
@@ -101,16 +106,14 @@ export default function BloodMarkerManager() {
       description="Add new blood markers or update existing ones."
       open={open}
       onOpenChange={handleOpenChange}
-      showTrigger={true}
+      showTrigger={false}
       contentClassName="sm:max-w-[800px]"
-      trigger={
-        <Button variant="outline" className="gap-2">
-          <Edit className="h-4 w-4" />
-          Manage Blood Markers
-        </Button>
-      }
+      confirmText={activeTab === "add" ? "Add Blood Marker" : undefined}
+      onConfirm={activeTab === "add" ? () => addFormRef.current?.submit() : undefined}
+      loading={activeTab === "add" ? addFormRef.current?.isSubmitting : false}
+      fixedFooter={activeTab === "add"}
       customContent={
-        <div className="p-4 overflow-y-auto max-h-[70vh]">
+        <div className="space-y-4">
           <ReusableTabs
             tabs={[
               {
@@ -122,14 +125,10 @@ export default function BloodMarkerManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
-                    <DataForm
-                      datasetId="blood_markers"
-                      fields={bloodMarkerFields}
+                  <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-3">
+                    <AddBloodMarkerForm
+                      ref={addFormRef}
                       onSuccess={handleAddSuccess}
-                      submitLabel="Add Blood Marker"
-                      mode="add"
-                      title="Add New Blood Marker"
                     />
                   </div>
                 ),
@@ -143,15 +142,15 @@ export default function BloodMarkerManager() {
                   </div>
                 ),
                 content: (
-                  <div className="pt-2">
+                  <div className="max-h-[60vh] overflow-y-auto pr-3">
                     {markers.length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground">
                         No blood markers available to edit. Please add a marker
                         first.
                       </div>
                     ) : (
-                      <>
-                        <div className="mb-6 space-y-4">
+                      <div className="space-y-4">
+                        <div className="space-y-4">
                           {categories.length > 0 && (
                             <div>
                               <h3 className="text-sm font-medium mb-2">
@@ -233,7 +232,7 @@ export default function BloodMarkerManager() {
                             Select a marker to edit its details
                           </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 ),
@@ -247,7 +246,6 @@ export default function BloodMarkerManager() {
           />
         </div>
       }
-      customFooter={<div />}
     />
   );
 }

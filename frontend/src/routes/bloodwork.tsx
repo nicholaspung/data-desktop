@@ -7,6 +7,7 @@ import {
 } from "@/components/layout/feature-layout";
 import { CompactInfoPanel } from "@/components/reusable/info-panel";
 import { AddBloodworkDialog } from "@/features/bloodwork/add-bloodwork-dialog";
+import { useState } from "react";
 import BloodMarkerManager from "@/features/bloodwork/blood-marker-manager";
 import BloodworkManager from "@/features/bloodwork/bloodwork-manager";
 import BloodResultsManager from "@/features/bloodwork/blood-results-manager";
@@ -25,6 +26,10 @@ export const Route = createFileRoute("/bloodwork")({
 });
 
 export default function BloodworkPage() {
+  const [markerManagerOpen, setMarkerManagerOpen] = useState(false);
+  const [bloodworkManagerOpen, setBloodworkManagerOpen] = useState(false);
+  const [resultsManagerOpen, setResultsManagerOpen] = useState(false);
+
   return (
     <FeatureLayout
       header={
@@ -38,19 +43,19 @@ export default function BloodworkPage() {
             <BloodworkCSVImport />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="px-2 flex">
+                <Button variant="outline" className="px-2 flex" size="icon">
                   <FEATURE_ICONS.SETTINGS className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <BloodMarkerManager />
+                <DropdownMenuItem onClick={() => setMarkerManagerOpen(true)}>
+                  Manage Blood Markers
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <BloodworkManager />
+                <DropdownMenuItem onClick={() => setBloodworkManagerOpen(true)}>
+                  Manage Bloodwork Tests
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <BloodResultsManager />
+                <DropdownMenuItem onClick={() => setResultsManagerOpen(true)}>
+                  Manage Blood Results
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -157,6 +162,10 @@ export default function BloodworkPage() {
       sidebarPosition="right"
     >
       <BloodworkVisualizations />
+      
+      <BloodMarkerManager open={markerManagerOpen} onOpenChange={setMarkerManagerOpen} />
+      <BloodworkManager open={bloodworkManagerOpen} onOpenChange={setBloodworkManagerOpen} />
+      <BloodResultsManager open={resultsManagerOpen} onOpenChange={setResultsManagerOpen} />
     </FeatureLayout>
   );
 }

@@ -63,7 +63,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - make a "chores" functionality, see if todos or metrics would be a good spot to place this in, idea is to create a task, and then the task will stay there until the user completes it, and then it will continue on with the usual timeframe, but also allow the user to push the task a few days/weeks/months and adjust it moving forward (similar to the calendar applications)
 - add a people crm feature (in progress)
   - in people crm feature, make a "make a meeting" where the user is allowed to select multiple users, and also create new simple users really quickly in that add form view
-- in daily journal, add a way to manually add "obsidian" like text, and to log those metrics
+- make a milestone tracker, similar to the tim urban "how many weeks until you hit some age you think you're going to die" poster
 
 - PDF reports from data
 - in bloodwork, for reports, provide a table where a user can copy/paste their "out of range" markers to be used in a LLM
@@ -77,10 +77,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 ### IN PROGRESS
 
 - in experiments, for some reason, the daily completion trend isn't showing the correct completion even though it shows correctly in the calendar view
-- in bloodwork, allow the user to put "0" as a value, and also to "clear" that value afterwards if it was an accident
 - in bloodwork, in bloodwork manager, sort the "select" tests and adjust the other sections too
 - in bloodwork, in "add bloodwork", I can't scroll horizontally to select other test dates
-- in daily journal, when I press "left arrow key" at the beginning of the input block, it should go to the previous input block at the end of the line
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
@@ -91,6 +89,8 @@ This application will be optimized as I find it a pain to do certain actions. Th
 
 ### DONE
 
+- in bloodwork, allow the user to put "0" as a value, and also to "clear" that value afterwards if it was an accident [DONE 2025-07-05]
+- in daily journal, when I press "left arrow key" at the beginning of the input block, it should go to the previous input block at the end of the line [DONE 2025-07-05]
 - in wealth, when a user hovers over the graph to show the tooltip detail, it's not the highest "z-index" [DONE 2025-07-05]
 - in wealth, when a user types in the search bar for "amount" in the table filters, it doesn't search correctly [DONE 2025-07-05]
 - in wealth, for the tables, can you add a "selection" for the field which allows the user to search for any value in any field [DONE 2025-07-05]

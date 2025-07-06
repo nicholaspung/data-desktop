@@ -1028,6 +1028,35 @@ export default function JournalEditorWithMetrics({
             }
           }, 10);
         }
+      } else if (e.key === "ArrowLeft" && !showMetricsPanel && !showTodoPanel) {
+        // Check if cursor is at the beginning of the current block
+        if (cursorPosition === 0 && blockIndex > 0) {
+          e.preventDefault();
+          const prevBlock = blocks[blockIndex - 1];
+          setTimeout(() => {
+            const prevTextarea = blockRefs.current[prevBlock.id];
+            if (prevTextarea) {
+              prevTextarea.focus();
+              // Move cursor to the end of the previous block
+              const endPosition = prevTextarea.value.length;
+              prevTextarea.setSelectionRange(endPosition, endPosition);
+            }
+          }, 10);
+        }
+      } else if (e.key === "ArrowRight" && !showMetricsPanel && !showTodoPanel) {
+        // Check if cursor is at the end of the current block
+        if (cursorPosition === textarea.value.length && blockIndex < blocks.length - 1) {
+          e.preventDefault();
+          const nextBlock = blocks[blockIndex + 1];
+          setTimeout(() => {
+            const nextTextarea = blockRefs.current[nextBlock.id];
+            if (nextTextarea) {
+              nextTextarea.focus();
+              // Move cursor to the beginning of the next block
+              nextTextarea.setSelectionRange(0, 0);
+            }
+          }, 10);
+        }
       }
     },
     [blocks, addBlock, removeBlock, showMetricsPanel, showTodoPanel]

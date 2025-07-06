@@ -153,10 +153,15 @@ export default function BloodMarkerInput({
               onChange={(e) => {
                 const inputValue = e.target.value;
 
-                const numValue =
-                  inputValue === "" ? "" : parseFloat(inputValue);
+                // Allow empty string to clear the value
+                if (inputValue === "") {
+                  onChange("", "number");
+                  return;
+                }
+                
+                const numValue = parseFloat(inputValue);
                 onChange(
-                  isNaN(numValue as number) ? inputValue : numValue,
+                  isNaN(numValue) ? inputValue : numValue,
                   "number"
                 );
               }}
