@@ -223,7 +223,7 @@ function WealthPage() {
         icon: <FEATURE_ICONS.FILE_TEXT className="h-4 w-4" />,
         content: (
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center my-4">
               <h3 className="text-lg font-semibold">Financial Files</h3>
               <Button
                 onClick={() =>

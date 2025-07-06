@@ -80,6 +80,7 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in bloodwork, allow the user to put "0" as a value, and also to "clear" that value afterwards if it was an accident
 - in bloodwork, in bloodwork manager, sort the "select" tests and adjust the other sections too
 - in bloodwork, in "add bloodwork", I can't scroll horizontally to select other test dates
+- in daily journal, when I press "left arrow key" at the beginning of the input block, it should go to the previous input block at the end of the line
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 
