@@ -102,6 +102,11 @@ const defaultSidebarItems: SidebarItem[] = [
     href: "/bloodwork",
   },
   {
+    title: "Quick Actions",
+    icon: <FEATURE_ICONS.PLUS_SQUARE className="h-5 w-5" />,
+    href: "/quick-actions",
+  },
+  {
     title: "Datasets",
     icon: <FEATURE_ICONS.DATASETS className="h-5 w-5" />,
     href: "/dataset",

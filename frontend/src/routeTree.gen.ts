@@ -16,6 +16,7 @@ import { Route as TodosImport } from './routes/todos'
 import { Route as TimeTrackerImport } from './routes/time-tracker'
 import { Route as TimePlannerImport } from './routes/time-planner'
 import { Route as SettingsImport } from './routes/settings'
+import { Route as QuickActionsImport } from './routes/quick-actions'
 import { Route as PeopleCrmImport } from './routes/people-crm'
 import { Route as MultiMeasurementsImport } from './routes/multi-measurements'
 import { Route as MetricCalendarImport } from './routes/metric-calendar'
@@ -61,6 +62,12 @@ const TimePlannerRoute = TimePlannerImport.update({
 const SettingsRoute = SettingsImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const QuickActionsRoute = QuickActionsImport.update({
+  id: '/quick-actions',
+  path: '/quick-actions',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -263,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleCrmImport
       parentRoute: typeof rootRoute
     }
+    '/quick-actions': {
+      id: '/quick-actions'
+      path: '/quick-actions'
+      fullPath: '/quick-actions'
+      preLoaderRoute: typeof QuickActionsImport
+      parentRoute: typeof rootRoute
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -319,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/metric-calendar': typeof MetricCalendarRoute
   '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
+  '/quick-actions': typeof QuickActionsRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
@@ -342,6 +357,7 @@ export interface FileRoutesByTo {
   '/metric-calendar': typeof MetricCalendarRoute
   '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
+  '/quick-actions': typeof QuickActionsRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
@@ -366,6 +382,7 @@ export interface FileRoutesById {
   '/metric-calendar': typeof MetricCalendarRoute
   '/multi-measurements': typeof MultiMeasurementsRoute
   '/people-crm': typeof PeopleCrmRoute
+  '/quick-actions': typeof QuickActionsRoute
   '/settings': typeof SettingsRoute
   '/time-planner': typeof TimePlannerRoute
   '/time-tracker': typeof TimeTrackerRoute
@@ -391,6 +408,7 @@ export interface FileRouteTypes {
     | '/metric-calendar'
     | '/multi-measurements'
     | '/people-crm'
+    | '/quick-actions'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
@@ -413,6 +431,7 @@ export interface FileRouteTypes {
     | '/metric-calendar'
     | '/multi-measurements'
     | '/people-crm'
+    | '/quick-actions'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
@@ -435,6 +454,7 @@ export interface FileRouteTypes {
     | '/metric-calendar'
     | '/multi-measurements'
     | '/people-crm'
+    | '/quick-actions'
     | '/settings'
     | '/time-planner'
     | '/time-tracker'
@@ -459,6 +479,7 @@ export interface RootRouteChildren {
   MetricCalendarRoute: typeof MetricCalendarRoute
   MultiMeasurementsRoute: typeof MultiMeasurementsRoute
   PeopleCrmRoute: typeof PeopleCrmRoute
+  QuickActionsRoute: typeof QuickActionsRoute
   SettingsRoute: typeof SettingsRoute
   TimePlannerRoute: typeof TimePlannerRoute
   TimeTrackerRoute: typeof TimeTrackerRoute
@@ -482,6 +503,7 @@ const rootRouteChildren: RootRouteChildren = {
   MetricCalendarRoute: MetricCalendarRoute,
   MultiMeasurementsRoute: MultiMeasurementsRoute,
   PeopleCrmRoute: PeopleCrmRoute,
+  QuickActionsRoute: QuickActionsRoute,
   SettingsRoute: SettingsRoute,
   TimePlannerRoute: TimePlannerRoute,
   TimeTrackerRoute: TimeTrackerRoute,
@@ -514,6 +536,7 @@ export const routeTree = rootRoute
         "/metric-calendar",
         "/multi-measurements",
         "/people-crm",
+        "/quick-actions",
         "/settings",
         "/time-planner",
         "/time-tracker",
@@ -565,6 +588,9 @@ export const routeTree = rootRoute
     },
     "/people-crm": {
       "filePath": "people-crm.tsx"
+    },
+    "/quick-actions": {
+      "filePath": "quick-actions.tsx"
     },
     "/settings": {
       "filePath": "settings.tsx"

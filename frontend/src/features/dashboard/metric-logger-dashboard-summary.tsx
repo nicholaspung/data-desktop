@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useStore } from "@tanstack/react-store";
 import { format, parseISO, startOfDay } from "date-fns";
-import { CheckCircle2, Circle, Lock, Tag } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Tag, FileText } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import dataStore, { addEntry } from "@/store/data-store";
 import { ApiService } from "@/services/api";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   ProtectedContent,
@@ -23,8 +25,10 @@ import { registerDashboardSummary } from "@/lib/dashboard-registry";
 
 export default function MetricLoggerDashboardSummary({
   showPrivateMetrics = true,
+  hideHeader = false,
 }: {
   showPrivateMetrics?: boolean;
+  hideHeader?: boolean;
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(
@@ -36,6 +40,8 @@ export default function MetricLoggerDashboardSummary({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<Metric | null>(null);
   const [metricValue, setMetricValue] = useState<string | number | boolean>("");
+  const [metricNotes, setMetricNotes] = useState<string>("");
+  const [includeNotes, setIncludeNotes] = useState(false);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -141,6 +147,8 @@ export default function MetricLoggerDashboardSummary({
     } else {
       setMetricValue("");
     }
+    
+    setMetricNotes("");
   };
 
   const handleLogMetric = async () => {
@@ -160,6 +168,7 @@ export default function MetricLoggerDashboardSummary({
         date: selectedDate,
         metric_id: selectedMetric.id,
         value: stringValue,
+        ...(includeNotes && metricNotes.trim() && { notes: metricNotes.trim() }),
       };
 
       const response = await ApiService.addRecord("daily_logs", newLog);
@@ -173,6 +182,7 @@ export default function MetricLoggerDashboardSummary({
 
       setSelectedMetric(null);
       setMetricValue("");
+      setMetricNotes("");
       setSearchTerm("");
     } catch (error) {
       console.error("Error logging metric:", error);
@@ -388,6 +398,31 @@ export default function MetricLoggerDashboardSummary({
                 )}
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="include-notes"
+                  checked={includeNotes}
+                  onCheckedChange={setIncludeNotes}
+                />
+                <Label htmlFor="include-notes" className="flex items-center gap-1">
+                  <FileText className="h-3.5 w-3.5" />
+                  Add notes
+                </Label>
+              </div>
+
+              {includeNotes && (
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={metricNotes}
+                    onChange={(e) => setMetricNotes(e.target.value)}
+                    placeholder="Add optional notes about this metric entry..."
+                    rows={3}
+                  />
+                </div>
+              )}
+
               <Button
                 onClick={handleLogMetric}
                 disabled={isSubmitting}
@@ -421,6 +456,7 @@ export default function MetricLoggerDashboardSummary({
       customContent={fullWidthContent}
       className="h-full"
       contentClassName="p-4"
+      hideHeader={hideHeader}
     />
   );
 }

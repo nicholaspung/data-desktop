@@ -78,8 +78,9 @@ const defaultRouteConfigs: Record<string, RouteConfig> = {
   "/dexa": { href: "/dexa", order: 14, visible: true },
   "/bloodwork": { href: "/bloodwork", order: 15, visible: true },
   "/multi-measurements": { href: "/multi-measurements", order: 16, visible: true },
-  "/dataset": { href: "/dataset", order: 17, visible: true },
-  "/settings": { href: "/settings", order: 18, visible: true },
+  "/quick-actions": { href: "/quick-actions", order: 17, visible: true },
+  "/dataset": { href: "/dataset", order: 18, visible: true },
+  "/settings": { href: "/settings", order: 19, visible: true },
 };
 
 const defaultDatasets = {
@@ -150,6 +151,7 @@ export const conditionalFeatures: Record<string, string[]> = {
     "/dexa",
     "/bloodwork",
   ],
+  "/quick-actions": ["/metric", "/daily-journal", "/people-crm", "/todos"],
 };
 
 export const checkRouteDependencies = (

@@ -79,6 +79,9 @@ This application will be optimized as I find it a pain to do certain actions. Th
 - in experiments, for some reason, the daily completion trend isn't showing the correct completion even though it shows correctly in the calendar view
 - in bloodwork, in bloodwork manager, sort the "select" tests and adjust the other sections too
 - in bloodwork, in "add bloodwork", I can't scroll horizontally to select other test dates
+- in quick actions, dashboard summary should use the reusable summary and follow the pattern
+- in quick actions, it should also check if any of the other features are enabled in order to display them
+- in the dashboard summaries, add hover based scrolling
 
 - make everything encrypted on the frontend sending it over to the backend (by default, all records will be encrypted, and then stored as encrypted. need to figure out how to encrypt the data first)
 

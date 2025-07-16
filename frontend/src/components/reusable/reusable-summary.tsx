@@ -65,6 +65,7 @@ interface ReusableSummaryProps {
   contentClassName?: string;
   customContent?: ReactNode;
   isDashboardConstrained?: boolean;
+  hideHeader?: boolean;
 }
 
 function StatusBadge({
@@ -94,6 +95,7 @@ export default function ReusableSummary({
   contentClassName,
   customContent,
   isDashboardConstrained = false,
+  hideHeader = false,
 }: ReusableSummaryProps) {
   const titleContent = (
     <div className="flex items-center gap-2">
@@ -114,9 +116,10 @@ export default function ReusableSummary({
   if (loading) {
     return (
       <ReusableCard
-        useSeparator={true}
-        title={titleContent}
-        headerActions={headerActions}
+        useSeparator={!hideHeader}
+        title={hideHeader ? undefined : titleContent}
+        headerActions={hideHeader ? undefined : headerActions}
+        showHeader={!hideHeader}
         cardClassName={className}
         contentClassName={contentClassName}
         isDashboardConstrained={isDashboardConstrained}
@@ -134,9 +137,10 @@ export default function ReusableSummary({
   if (emptyState) {
     return (
       <ReusableCard
-        useSeparator={true}
-        title={titleContent}
-        headerActions={headerActions}
+        useSeparator={!hideHeader}
+        title={hideHeader ? undefined : titleContent}
+        headerActions={hideHeader ? undefined : headerActions}
+        showHeader={!hideHeader}
         cardClassName={className}
         contentClassName={contentClassName}
         isDashboardConstrained={isDashboardConstrained}
@@ -159,9 +163,10 @@ export default function ReusableSummary({
   if (customContent) {
     return (
       <ReusableCard
-        useSeparator={true}
-        title={titleContent}
-        headerActions={headerActions}
+        useSeparator={!hideHeader}
+        title={hideHeader ? undefined : titleContent}
+        headerActions={hideHeader ? undefined : headerActions}
+        showHeader={!hideHeader}
         cardClassName={`${className} overflow-y-auto`}
         contentClassName={contentClassName}
         isDashboardConstrained={isDashboardConstrained}
@@ -172,9 +177,10 @@ export default function ReusableSummary({
 
   return (
     <ReusableCard
-      useSeparator={true}
-      title={titleContent}
-      headerActions={headerActions}
+      useSeparator={!hideHeader}
+      title={hideHeader ? undefined : titleContent}
+      headerActions={hideHeader ? undefined : headerActions}
+      showHeader={!hideHeader}
       cardClassName={`${className} overflow-y-auto`}
       contentClassName={contentClassName}
       isDashboardConstrained={isDashboardConstrained}

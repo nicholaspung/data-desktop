@@ -45,6 +45,7 @@ import "@/features/dashboard/people-crm-dashboard-summary";
 import "@/features/dashboard/wealth-dashboard-summary";
 import "@/features/dashboard/body-measurements-dashboard-summary";
 import "@/features/dashboard/files-dashboard-summary";
+import "@/features/quick-actions";
 
 const sizeClasses = {
   small: "col-span-1",
