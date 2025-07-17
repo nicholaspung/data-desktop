@@ -47,6 +47,21 @@ const getDefaultRoutes = () => {
     "/dataset": true,
     "/settings": true,
     "/people": true,
+    "/time-tracker": true,
+    "/calendar": true,
+    "/todos": true,
+    "/metric": true,
+    "/experiments": true,
+    "/journaling": true,
+    "/daily-journal": true,
+    "/people-crm": true,
+    "/body-measurements": true,
+    "/wealth": true,
+    "/files": true,
+    "/dexa": true,
+    "/bloodwork": true,
+    "/multi-measurements": true,
+    "/quick-actions": true,
   };
 
   dashboardRegistry.getAllRoutes().forEach((route) => {
