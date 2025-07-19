@@ -253,22 +253,39 @@ export function FinancialOverviewCard({
         accountGroups.get(key)!.push(balance);
       });
 
-      // For each group, find the most recent entry that passes the date filter
-      const latestBalances: FinancialBalance[] = [];
+      // For each group, find the latest date and sum all records for that date
+      const aggregatedBalances: FinancialBalance[] = [];
       
       accountGroups.forEach((groupBalances) => {
-        // Filter by date (use false for cumulative filter) and sort by date descending
+        // Filter by date (use false for cumulative filter)
         const validBalances = groupBalances
-          .filter((balance) => filterByDate(balance.date, false))
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          .filter((balance) => filterByDate(balance.date, false));
         
-        // Take the most recent one
-        if (validBalances.length > 0) {
-          latestBalances.push(validBalances[0]);
-        }
+        if (validBalances.length === 0) return;
+        
+        // Find the latest date for this account combination
+        const latestDate = validBalances
+          .map(b => new Date(b.date).getTime())
+          .reduce((max, date) => Math.max(max, date), 0);
+        
+        // Get all balances for that latest date
+        const latestDateBalances = validBalances
+          .filter(b => new Date(b.date).getTime() === latestDate);
+        
+        // Sum up all the amounts for this account on the latest date
+        const totalAmount = latestDateBalances
+          .reduce((sum, balance) => sum + balance.amount, 0);
+        
+        // Use the first balance as a template and update the amount
+        const aggregatedBalance = {
+          ...latestDateBalances[0],
+          amount: totalAmount
+        };
+        
+        aggregatedBalances.push(aggregatedBalance);
       });
 
-      return latestBalances;
+      return aggregatedBalances;
     } else if (type === "paycheck" && paychecks) {
       return paychecks.filter(
         (paycheck) => filterByDate(paycheck.date, true) && filterByContent(paycheck)
