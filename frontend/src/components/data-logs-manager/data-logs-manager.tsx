@@ -418,9 +418,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
           const dateValue = processedData[field.key as keyof T];
           if (dateValue) {
             // If it's already a Date object, convert to ISO string
-            if (dateValue instanceof Date) {
+            if (typeof dateValue === 'object' && dateValue !== null && 'toISOString' in dateValue) {
               processedData[field.key as keyof T] =
-                dateValue.toISOString() as T[keyof T];
+                (dateValue as Date).toISOString() as T[keyof T];
             } else if (typeof dateValue === "string") {
               // Check if the date is already in ISO format
               if (dateValue.includes("T") || dateValue.includes("Z")) {
