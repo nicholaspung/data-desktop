@@ -4,7 +4,8 @@
   "description": "Desktop application for data, including import/export, analysis, and graphs.",
   "scripts": {
     "release": "node ./release.js",
-    "dev": "wails dev -appargs dev -tags webkit2_41"
+    "dev": "wails dev -appargs dev",
+    "dev:linux": "wails dev -appargs dev -tags webkit2_41"
   },
   "author": "nicholaspungdev@gmail.com",
   "license": "GNU AGPLv3",

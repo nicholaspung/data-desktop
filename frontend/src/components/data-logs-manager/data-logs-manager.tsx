@@ -415,30 +415,36 @@ export default function DataLogsManager<T extends Record<string, any>>({
       const processedData = { ...editedLog };
       fieldDefinitions.forEach((field) => {
         if (field.type === "date" && processedData[field.key as keyof T]) {
-          const dateValue = processedData[field.key as keyof T] as string;
+          const dateValue = processedData[field.key as keyof T];
           if (dateValue) {
-            // Check if the date is already in ISO format
-            if (dateValue.includes("T") || dateValue.includes("Z")) {
-              // Already in ISO format, use as-is
-              const date = new Date(dateValue);
-              if (!isNaN(date.getTime())) {
-                processedData[field.key as keyof T] =
-                  date.toISOString() as T[keyof T];
+            // If it's already a Date object, convert to ISO string
+            if (dateValue instanceof Date) {
+              processedData[field.key as keyof T] =
+                dateValue.toISOString() as T[keyof T];
+            } else if (typeof dateValue === "string") {
+              // Check if the date is already in ISO format
+              if (dateValue.includes("T") || dateValue.includes("Z")) {
+                // Already in ISO format, use as-is
+                const date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                  processedData[field.key as keyof T] =
+                    date.toISOString() as T[keyof T];
+                } else {
+                  console.error(`Invalid ISO date: ${dateValue}`);
+                  processedData[field.key as keyof T] =
+                    new Date().toISOString() as T[keyof T];
+                }
               } else {
-                console.error(`Invalid ISO date: ${dateValue}`);
-                processedData[field.key as keyof T] =
-                  new Date().toISOString() as T[keyof T];
-              }
-            } else {
-              // Assume it's a date string without time, create local date
-              const localDate = new Date(dateValue + "T00:00:00");
-              if (!isNaN(localDate.getTime())) {
-                processedData[field.key as keyof T] =
-                  localDate.toISOString() as T[keyof T];
-              } else {
-                console.error(`Invalid date: ${dateValue}`);
-                processedData[field.key as keyof T] =
-                  new Date().toISOString() as T[keyof T];
+                // Assume it's a date string without time, create local date
+                const localDate = new Date(dateValue + "T00:00:00");
+                if (!isNaN(localDate.getTime())) {
+                  processedData[field.key as keyof T] =
+                    localDate.toISOString() as T[keyof T];
+                } else {
+                  console.error(`Invalid date: ${dateValue}`);
+                  processedData[field.key as keyof T] =
+                    new Date().toISOString() as T[keyof T];
+                }
               }
             }
           }
@@ -910,7 +916,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                 <div className="space-y-3 border-b pb-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Search</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Search
+                      </Label>
                       <div className="flex gap-2">
                         <ReusableSelect
                           options={searchableFieldsList}
@@ -966,7 +974,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Sort By</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Sort By
+                      </Label>
                       <ReusableSelect
                         options={sortableFieldsList.map((field) => ({
                           id: field,
@@ -979,7 +989,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">Sort Order</Label>
+                      <Label className="text-xs text-muted-foreground">
+                        Sort Order
+                      </Label>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1124,8 +1136,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               type="number"
                               step="0.01"
                               value={
-                                (editedLog[field.key as keyof T] as number) ||
-                                ""
+                                editedLog[field.key as keyof T] !== undefined
+                                  ? (editedLog[field.key as keyof T] as number)
+                                  : (editingLog[field.key] as number) || ""
                               }
                               onChange={(e) =>
                                 setEditedLog({
@@ -1162,8 +1175,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               id={`edit-${field.key}`}
                               label=""
                               value={
-                                (editedLog[field.key as keyof T] as string) ||
-                                ""
+                                ((editedLog[field.key as keyof T] !== undefined
+                                  ? editedLog[field.key as keyof T]
+                                  : editingLog[field.key]) as string) || ""
                               }
                               onChange={(value) =>
                                 setEditedLog({
@@ -1214,8 +1228,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                           <>
                             <TagInput
                               value={
-                                (editedLog[field.key as keyof T] as string) ||
-                                ""
+                                ((editedLog[field.key as keyof T] !== undefined
+                                  ? editedLog[field.key as keyof T]
+                                  : editingLog[field.key]) as string) || ""
                               }
                               onChange={(value) =>
                                 setEditedLog({
@@ -1239,9 +1254,12 @@ export default function DataLogsManager<T extends Record<string, any>>({
                               <Checkbox
                                 id={`edit-${field.key}`}
                                 checked={
-                                  (editedLog[
-                                    field.key as keyof T
-                                  ] as boolean) || false
+                                  editedLog[field.key as keyof T] !== undefined
+                                    ? (editedLog[
+                                        field.key as keyof T
+                                      ] as boolean)
+                                    : (editingLog[field.key] as boolean) ||
+                                      false
                                 }
                                 onCheckedChange={(checked) =>
                                   setEditedLog({
@@ -1322,8 +1340,9 @@ export default function DataLogsManager<T extends Record<string, any>>({
                             <Input
                               id={`edit-${field.key}`}
                               value={
-                                (editedLog[field.key as keyof T] as string) ||
-                                ""
+                                ((editedLog[field.key as keyof T] !== undefined
+                                  ? editedLog[field.key as keyof T]
+                                  : editingLog[field.key]) as string) || ""
                               }
                               onChange={(e) =>
                                 setEditedLog({

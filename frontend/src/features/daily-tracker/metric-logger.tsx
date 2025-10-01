@@ -101,6 +101,21 @@ const MetricLogger = () => {
     });
   }, [dailyLogs, metrics]);
 
+  // Create a fast lookup map for logs by metric_id and date
+  const logsByMetricAndDate = useMemo(() => {
+    const map = new Map<string, DailyLog>();
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+    filteredDailyLogs.forEach((log: DailyLog) => {
+      const logDate = new Date(log.date);
+      const logDateString = format(logDate, "yyyy-MM-dd");
+      if (logDateString === selectedDateString) {
+        map.set(log.metric_id, log);
+      }
+    });
+    return map;
+  }, [filteredDailyLogs, selectedDate]);
+
   const filteredMetrics = useMemo(() => {
     return metrics.filter((metric: Metric) => {
       if (!showInactive && !metric.active) return false;
@@ -137,15 +152,7 @@ const MetricLogger = () => {
           !(metric.goal_value === "" || metric.goal_value === "0"));
 
       if (showOnlyIncomplete) {
-        const selectedDateString = format(selectedDate, "yyyy-MM-dd");
-
-        const todayLog = filteredDailyLogs.find((log: DailyLog) => {
-          const logDate = new Date(log.date);
-          const logDateString = format(logDate, "yyyy-MM-dd");
-          return (
-            log.metric_id === metric.id && logDateString === selectedDateString
-          );
-        });
+        const todayLog = logsByMetricAndDate.get(metric.id);
 
         if (metric.type === "boolean") {
           if (!todayLog)
@@ -198,8 +205,7 @@ const MetricLogger = () => {
     showOnlyIncomplete,
     showOnlyWithGoals,
     showInactive,
-    filteredDailyLogs,
-    selectedDate,
+    logsByMetricAndDate,
     showCalendarTracked,
     categories,
     showPrivateMetrics,
@@ -227,156 +233,149 @@ const MetricLogger = () => {
     return result;
   }, [filteredMetrics, categories]);
 
-  const isMetricCompleted = useCallback((metric: Metric) => {
-    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+  const isMetricCompleted = useCallback(
+    (metric: Metric) => {
+      const todayLog = logsByMetricAndDate.get(metric.id);
 
-    const todayLog = filteredDailyLogs.find((log: DailyLog) => {
-      let logDate;
-      if (typeof log.date === "string") {
-        logDate = new Date(log.date);
-        logDate.setHours(0, 0, 0, 0);
-      } else {
-        logDate = new Date(log.date);
-        logDate.setHours(0, 0, 0, 0);
-      }
+      if (!todayLog) return false;
 
-      const logDateString = format(logDate, "yyyy-MM-dd");
-      return (
-        log.metric_id === metric.id && logDateString === selectedDateString
-      );
-    });
-
-    if (!todayLog) return false;
-
-    let loggedValue;
-    try {
-      loggedValue = JSON.parse(todayLog.value);
-    } catch {
-      loggedValue = todayLog.value;
-    }
-
-    if (metric.type === "boolean") {
-      return loggedValue === true;
-    }
-
-    const hasGoal =
-      metric.goal_value !== undefined &&
-      metric.goal_value !== null &&
-      metric.goal_value !== "" &&
-      metric.goal_value !== "0" &&
-      metric.goal_type !== undefined &&
-      metric.goal_type !== null;
-
-    if (hasGoal) {
-      let goalValue;
+      let loggedValue;
       try {
-        goalValue = parseFloat(metric.goal_value!);
+        loggedValue = JSON.parse(todayLog.value);
       } catch {
-        goalValue = 0;
+        loggedValue = todayLog.value;
       }
 
-      const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
-
-      switch (metric.goal_type) {
-        case "minimum":
-          return numericLoggedValue >= goalValue;
-        case "maximum":
-          return numericLoggedValue <= goalValue;
-        case "exact":
-          return numericLoggedValue === goalValue;
-        default:
-          return numericLoggedValue >= goalValue;
-      }
-    }
-
-    if (
-      metric.type === "number" ||
-      metric.type === "percentage" ||
-      metric.type === "time"
-    ) {
-      const numericValue = parseFloat(String(loggedValue)) || 0;
-
-      if (todayLog.notes && todayLog.notes.trim() && numericValue === 0) {
-        const defaultValue = parseFloat(metric.default_value || "0") || 0;
-        if (numericValue === defaultValue) {
-          return false;
-        }
+      if (metric.type === "boolean") {
+        return loggedValue === true;
       }
 
-      if (metric.goal_value === "0" || metric.default_value === "0") {
-        return numericValue === 0;
-      }
+      const hasGoal =
+        metric.goal_value !== undefined &&
+        metric.goal_value !== null &&
+        metric.goal_value !== "" &&
+        metric.goal_value !== "0" &&
+        metric.goal_type !== undefined &&
+        metric.goal_type !== null;
 
-      return numericValue > 0;
-    }
-
-    if (metric.type === "text") {
-      return String(loggedValue).trim() !== "";
-    }
-
-    return false;
-  }, [filteredDailyLogs, selectedDate]);
-
-  const toggleMetricCompletion = useCallback(async (metric: Metric) => {
-    if (metric.type !== "boolean" || !metric.active) return;
-
-    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
-
-    const todayLog = filteredDailyLogs.find((log: DailyLog) => {
-      const logDate = new Date(log.date);
-      const logDateString = format(logDate, "yyyy-MM-dd");
-      return (
-        log.metric_id === metric.id && logDateString === selectedDateString
-      );
-    });
-
-    try {
-      if (todayLog) {
-        let currentValue;
+      if (hasGoal) {
+        let goalValue;
         try {
-          currentValue = JSON.parse(todayLog.value);
-        } catch (e) {
-          console.error(e);
-          currentValue = todayLog.value === "true";
+          goalValue = parseFloat(metric.goal_value!);
+        } catch {
+          goalValue = 0;
         }
 
-        const newValue = !currentValue;
+        const numericLoggedValue = parseFloat(String(loggedValue)) || 0;
 
-        const experimentId = findExperimentForMetric(metric.id);
-        const updatedLog = {
-          ...todayLog,
-          value: JSON.stringify(newValue),
-          experiment_id: experimentId,
-        };
-
-        const response = await ApiService.updateRecord(todayLog.id, updatedLog);
-        if (response) {
-          updateEntry(todayLog.id, response, "daily_logs");
-          toast.success(
-            `${metric.name} ${newValue ? "completed" : "uncompleted"}`
-          );
-        }
-      } else {
-        const experimentId = findExperimentForMetric(metric.id);
-        const newLog = {
-          date: selectedDate,
-          metric_id: metric.id,
-          experiment_id: experimentId,
-          value: "true",
-          notes: "",
-        };
-
-        const response = await ApiService.addRecord("daily_logs", newLog);
-        if (response) {
-          addEntry(response, "daily_logs");
-          toast.success(`${metric.name} completed`);
+        switch (metric.goal_type) {
+          case "minimum":
+            return numericLoggedValue >= goalValue;
+          case "maximum":
+            return numericLoggedValue <= goalValue;
+          case "exact":
+            return numericLoggedValue === goalValue;
+          default:
+            return numericLoggedValue >= goalValue;
         }
       }
-    } catch (error) {
-      console.error("Error updating metric:", error);
-      toast.error("Failed to update metric");
-    }
-  }, [filteredDailyLogs, selectedDate, findExperimentForMetric]);
+
+      if (
+        metric.type === "number" ||
+        metric.type === "percentage" ||
+        metric.type === "time"
+      ) {
+        const numericValue = parseFloat(String(loggedValue)) || 0;
+
+        if (todayLog.notes && todayLog.notes.trim() && numericValue === 0) {
+          const defaultValue = parseFloat(metric.default_value || "0") || 0;
+          if (numericValue === defaultValue) {
+            return false;
+          }
+        }
+
+        if (metric.goal_value === "0" || metric.default_value === "0") {
+          return numericValue === 0;
+        }
+
+        return numericValue > 0;
+      }
+
+      if (metric.type === "text") {
+        return String(loggedValue).trim() !== "";
+      }
+
+      return false;
+    },
+    [logsByMetricAndDate]
+  );
+
+  const toggleMetricCompletion = useCallback(
+    async (metric: Metric) => {
+      if (metric.type !== "boolean" || !metric.active) return;
+
+      const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+
+      const todayLog = filteredDailyLogs.find((log: DailyLog) => {
+        const logDate = new Date(log.date);
+        const logDateString = format(logDate, "yyyy-MM-dd");
+        return (
+          log.metric_id === metric.id && logDateString === selectedDateString
+        );
+      });
+
+      try {
+        if (todayLog) {
+          let currentValue;
+          try {
+            currentValue = JSON.parse(todayLog.value);
+          } catch (e) {
+            console.error(e);
+            currentValue = todayLog.value === "true";
+          }
+
+          const newValue = !currentValue;
+
+          const experimentId = findExperimentForMetric(metric.id);
+          const updatedLog = {
+            ...todayLog,
+            value: JSON.stringify(newValue),
+            experiment_id: experimentId,
+          };
+
+          const response = await ApiService.updateRecord(
+            todayLog.id,
+            updatedLog
+          );
+          if (response) {
+            updateEntry(todayLog.id, response, "daily_logs");
+            toast.success(
+              `${metric.name} ${newValue ? "completed" : "uncompleted"}`
+            );
+          }
+        } else {
+          const experimentId = findExperimentForMetric(metric.id);
+          const newLog = {
+            date: selectedDate,
+            metric_id: metric.id,
+            experiment_id: experimentId,
+            value: "true",
+            notes: "",
+          };
+
+          const response = await ApiService.addRecord("daily_logs", newLog);
+          if (response) {
+            addEntry(response, "daily_logs");
+            toast.success(`${metric.name} completed`);
+          }
+        }
+      } catch (error) {
+        console.error("Error updating metric:", error);
+        toast.error("Failed to update metric");
+      }
+    },
+    [filteredDailyLogs, selectedDate, findExperimentForMetric]
+  );
 
   const toggleCalendarTracking = useCallback(async (metric: Metric) => {
     try {

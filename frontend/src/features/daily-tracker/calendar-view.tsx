@@ -85,6 +85,10 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
     setCurrentMonth(addMonths(currentMonth, 1));
   };
 
+  const goToToday = () => {
+    setCurrentMonth(new Date());
+  };
+
   const handleDateClick = (day: Date) => {
     setSelectedDate(day);
   };
@@ -95,9 +99,14 @@ export default function CalendarView({ selectedMetrics }: CalendarViewProps) {
         <Button onClick={prevMonth} size="sm" variant="outline">
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-lg font-semibold">
-          {format(currentMonth, "MMMM yyyy")}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">
+            {format(currentMonth, "MMMM yyyy")}
+          </h2>
+          <Button onClick={goToToday} size="sm" variant="outline">
+            Today
+          </Button>
+        </div>
         <Button onClick={nextMonth} size="sm" variant="outline">
           <ChevronRight className="h-4 w-4" />
         </Button>
