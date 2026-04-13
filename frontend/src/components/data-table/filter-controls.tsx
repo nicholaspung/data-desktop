@@ -2,10 +2,15 @@ import { Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Download } from "lucide-react";
-import { exportToCSV } from "@/lib/csv-export";
+import {
+  exportToCSV,
+  exportToZipWithFiles,
+  hasExportableFileFields,
+} from "@/lib/csv-export";
 import { FieldDefinition } from "@/types/types";
 import { ExportColumnsDialog } from "./export-columns-dialog";
 import ReusableSelect from "../reusable/reusable-select";
+import { toast } from "sonner";
 
 export default function FilterControls({
   filterableColumns,
@@ -31,7 +36,7 @@ export default function FilterControls({
   const fieldMap = new Map<string, FieldDefinition>();
   fields.forEach((field) => fieldMap.set(field.key, field));
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const rowsToExport =
       table.getFilteredRowModel().rows.length > 0
         ? table.getFilteredRowModel().rows.map((row) => row.original)
@@ -48,7 +53,27 @@ export default function FilterControls({
       .filter((column) => column.id !== "actions" && column.id !== "select")
       .map((column) => column.id);
 
-    exportToCSV(rowsToExport, fields, filename, visibleColumns);
+    let savedPath: string | null = null;
+
+    if (hasExportableFileFields(fields, visibleColumns)) {
+      savedPath = await exportToZipWithFiles(
+        rowsToExport,
+        fields,
+        filename.replace(/\.csv$/, ""),
+        visibleColumns,
+        datasetId
+      );
+    } else {
+      savedPath = await exportToCSV(rowsToExport, fields, filename, visibleColumns);
+    }
+
+    if (!savedPath) {
+      return;
+    }
+
+    toast.success("Data exported", {
+      description: savedPath,
+    });
 
     if (onExport) {
       onExport();

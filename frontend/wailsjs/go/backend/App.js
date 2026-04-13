@@ -90,6 +90,10 @@ export function SaveDailyJournalWithMetrics(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['backend']['App']['SaveDailyJournalWithMetrics'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function SaveExportFile(arg1, arg2) {
+  return window['go']['backend']['App']['SaveExportFile'](arg1, arg2);
+}
+
 export function SaveFiles(arg1, arg2) {
   return window['go']['backend']['App']['SaveFiles'](arg1, arg2);
 }

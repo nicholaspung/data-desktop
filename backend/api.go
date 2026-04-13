@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,11 +11,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
+	goRuntime "runtime"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // Todo status constants to match frontend enum
@@ -110,13 +112,13 @@ func (a *App) Startup(ctx context.Context) {
 func getAppDataDir() (string, error) {
 	var appDir string
 
-	if runtime.GOOS == "darwin" {
+	if goRuntime.GOOS == "darwin" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
 		appDir = filepath.Join(homeDir, "Library", "Application Support", "DataDesktop")
-	} else if runtime.GOOS == "windows" {
+	} else if goRuntime.GOOS == "windows" {
 		appDir = filepath.Join(os.Getenv("APPDATA"), "DataDesktop")
 	} else {
 		homeDir, err := os.UserHomeDir()
@@ -139,6 +141,65 @@ func (a *App) Shutdown(ctx context.Context) {
 
 func (a *App) GetDatasets() ([]database.Dataset, error) {
 	return database.ListDatasets()
+}
+
+func (a *App) SaveExportFile(base64Content string, defaultFilename string) (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("application context is not initialized")
+	}
+
+	if strings.TrimSpace(defaultFilename) == "" {
+		return "", fmt.Errorf("default filename is required")
+	}
+
+	defaultDirectory := ""
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		defaultDirectory = filepath.Join(homeDir, "Downloads")
+	}
+
+	savePath, err := wailsRuntime.SaveFileDialog(a.ctx, wailsRuntime.SaveDialogOptions{
+		Title:                "Save Export",
+		DefaultDirectory:     defaultDirectory,
+		DefaultFilename:      defaultFilename,
+		CanCreateDirectories: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if savePath == "" {
+		return "", nil
+	}
+
+	fileBytes, err := decodeBase64Content(base64Content)
+	if err != nil {
+		return "", err
+	}
+
+	if err := os.WriteFile(savePath, fileBytes, 0644); err != nil {
+		return "", err
+	}
+
+	return savePath, nil
+}
+
+func decodeBase64Content(content string) ([]byte, error) {
+	if content == "" {
+		return nil, fmt.Errorf("no file content provided")
+	}
+
+	payload := content
+	if commaIndex := strings.Index(content, ","); commaIndex >= 0 {
+		payload = content[commaIndex+1:]
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode export content: %w", err)
+	}
+
+	return decoded, nil
 }
 
 func (a *App) GetDataset(id string) (database.Dataset, error) {

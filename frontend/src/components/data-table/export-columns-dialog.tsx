@@ -5,7 +5,11 @@ import { Download, Settings } from "lucide-react";
 import { FieldDefinition } from "@/types/types";
 import { Label } from "@/components/ui/label";
 import { Table } from "@tanstack/react-table";
-import { exportToCSV, exportToZipWithFiles } from "@/lib/csv-export";
+import {
+  exportToCSV,
+  exportToZipWithFiles,
+  hasExportableFileFields,
+} from "@/lib/csv-export";
 import { toast } from "sonner";
 import ReusableDialog from "@/components/reusable/reusable-dialog";
 
@@ -76,20 +80,40 @@ export function ExportColumnsDialog({
       .replace(/[:.]/g, "-")
       .substring(0, 19);
     const filename = `${datasetId}_export_${timestamp}`;
+    const includesFiles = hasExportableFileFields(fields, selectedColumns);
 
     try {
-      if (exportAsZip) {
-        await exportToZipWithFiles(
+      let savedPath: string | null = null;
+
+      if (exportAsZip || includesFiles) {
+        savedPath = await exportToZipWithFiles(
           rowsToExport,
           fields,
           filename,
+          selectedColumns,
+          datasetId
+        );
+      } else {
+        savedPath = await exportToCSV(
+          rowsToExport,
+          fields,
+          `${filename}.csv`,
           selectedColumns
         );
-        toast.success("Data exported to ZIP with files");
-      } else {
-        exportToCSV(rowsToExport, fields, `${filename}.csv`, selectedColumns);
-        toast.success("Data exported to CSV");
       }
+
+      if (!savedPath) {
+        return;
+      }
+
+      toast.success(
+        exportAsZip || includesFiles
+          ? "Data exported to ZIP with files"
+          : "Data exported to CSV",
+        {
+          description: savedPath,
+        }
+      );
 
       setOpen(false);
 
@@ -142,7 +166,7 @@ export function ExportColumnsDialog({
             Export as ZIP with files
           </Label>
           <p className="text-sm text-muted-foreground ml-2">
-            (Includes file downloads in a "files" folder)
+            (Record `id` is always included, and files are stored under matching record folders)
           </p>
         </div>
       )}

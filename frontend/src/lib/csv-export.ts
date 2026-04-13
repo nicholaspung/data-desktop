@@ -3,142 +3,50 @@ import JSZip from "jszip";
 import { FieldDefinition } from "@/types/types";
 import { ApiService } from "@/services/api";
 
-export function exportToCSV(
-  data: Record<string, any>[],
+interface ExportColumn {
+  id: string;
+  title: string;
+  field?: FieldDefinition;
+  kind?: "record_id" | "field" | "relation_display";
+}
+
+interface ExportedFileRecord {
+  recordId: string;
+  fieldKey: string;
+  sourcePath: string;
+  exportPath: string;
+  originalName: string;
+  fileIndex: number;
+}
+
+const RECORD_ID_COLUMN: ExportColumn = {
+  id: "id",
+  title: "id",
+  kind: "record_id",
+};
+
+export async function exportToCSV(
+  data: Record<string, unknown>[],
   fields: FieldDefinition[],
   filename: string = "export.csv",
   visibleColumns?: string[]
-): void {
+): Promise<string | null> {
   if (data.length === 0) {
     console.warn("No data to export");
-    return;
+    return null;
   }
 
   try {
-    const fieldMap = new Map<string, FieldDefinition>();
-    fields.forEach((field) => {
-      fieldMap.set(field.key, field);
-    });
-
-    const columnsToExport = visibleColumns
-      ? fields.filter((field) => visibleColumns.includes(field.key))
-      : fields;
-
-    const processedData = data.map((row) => {
-      const processedRow: Record<string, any> = {};
-
-      columnsToExport.forEach((field) => {
-        const key = field.key;
-        const value = row[key];
-
-        if (field.type === "file") {
-          processedRow[key] = value ? "[Image]" : "";
-        } else if (field.type === "file-multiple") {
-          if (value && Array.isArray(value)) {
-            processedRow[key] =
-              value.length > 0 ? `[${value.length} files]` : "";
-          } else {
-            processedRow[key] = value ? "[Multiple files]" : "";
-          }
-        } else if (field.isRelation) {
-          const relatedDataKey = `${key}_data`;
-          const relatedData = row[relatedDataKey] as
-            | Record<string, unknown>
-            | undefined;
-
-          if (relatedData) {
-            if (field.displayField && relatedData[field.displayField]) {
-              if (
-                field.secondaryDisplayField &&
-                relatedData[field.secondaryDisplayField]
-              ) {
-                processedRow[key] =
-                  `${relatedData[field.displayField]} (${relatedData[field.secondaryDisplayField]})`;
-              } else {
-                processedRow[key] = relatedData[field.displayField];
-              }
-            } else {
-              processedRow[key] =
-                (relatedData.name as string) ||
-                (relatedData.title as string) ||
-                (relatedData.displayName as string) ||
-                (relatedData.label as string) ||
-                (relatedData.date
-                  ? new Date(
-                      relatedData.date as string | number | Date
-                    ).toLocaleDateString()
-                  : `ID: ${value}`);
-            }
-          } else {
-            processedRow[key] = value ? `ID: ${value}` : "";
-          }
-        } else if (field.type === "date" && value) {
-          const date =
-            value instanceof Date
-              ? value
-              : new Date(value as string | number | Date);
-          if (!isNaN(date.getTime())) {
-            processedRow[key] = date.toISOString().split("T")[0];
-          } else {
-            processedRow[key] = "";
-          }
-        } else if (field.type === "boolean") {
-          processedRow[key] = value ? "Yes" : "No";
-        } else if (
-          field.type === "percentage" &&
-          typeof value === "number" &&
-          value < 1
-        ) {
-          processedRow[key] = (value * 100).toFixed(2);
-        } else if (field.type === "markdown") {
-          processedRow[key] =
-            value && typeof value === "string"
-              ? value.replace(/[#*_`[\]()]/g, "")
-              : "";
-        } else {
-          processedRow[key] =
-            value !== undefined && value !== null ? value : "";
-        }
-      });
-
-      return processedRow;
-    });
-
-    const headers = columnsToExport.map((field) => {
-      return {
-        id: field.key,
-        title: field.displayName || field.key,
-      };
-    });
-
-    const papaConfig = {
-      header: true,
-      columns: headers.map((h) => h.id),
-      newline: "\r\n",
-    };
-
-    const csv = Papa.unparse(processedData, papaConfig);
-
-    const headerRow = headers.map((h) => `"${h.title}"`).join(",");
-    const rows = csv.split("\r\n");
-    rows[0] = headerRow;
-    const finalCsv = rows.join("\r\n");
-
-    const blob = new Blob([finalCsv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const columns = buildExportColumns(fields, visibleColumns);
+    const processedData = data.map((row) => buildExportRow(row, columns));
+    const finalCsv = buildCsv(processedData, columns);
+    return await ApiService.saveExportBlob(
+      new Blob([finalCsv], { type: "text/csv;charset=utf-8;" }),
+      filename
+    );
   } catch (error) {
     console.error("Error exporting data to CSV:", error);
+    return null;
   }
 }
 
@@ -146,246 +54,475 @@ export async function exportToZipWithFiles(
   data: Record<string, unknown>[],
   fields: FieldDefinition[],
   filename: string = "export",
-  visibleColumns?: string[]
-): Promise<void> {
+  visibleColumns?: string[],
+  datasetId?: string
+): Promise<string | null> {
   if (data.length === 0) {
     console.warn("No data to export");
-    return;
+    return null;
   }
 
   try {
     const zip = new JSZip();
+    const columns = buildExportColumns(fields, visibleColumns);
+    const fileManifest: ExportedFileRecord[] = [];
+    const processedData = data.map((row) =>
+      buildExportRow(row, columns, {
+        fileFieldFormatter: (field, value, recordId) => {
+          const exportedFiles = createExportedFileRecords(
+            value,
+            field.key,
+            recordId
+          );
 
-    const fieldMap = new Map<string, FieldDefinition>();
-    fields.forEach((field) => {
-      fieldMap.set(field.key, field);
-    });
+          exportedFiles.forEach((file) => fileManifest.push(file));
 
-    const columnsToExport = visibleColumns
-      ? fields.filter((field) => visibleColumns.includes(field.key))
-      : fields;
-
-    const fileDownloadMap = new Map<string, string>();
-    const processedData = [];
-
-    for (let rowIndex = 0; rowIndex < data.length; rowIndex++) {
-      const row = data[rowIndex];
-      const processedRow: Record<string, unknown> = {};
-
-      for (const field of columnsToExport) {
-        const key = field.key;
-        const value = row[key];
-
-        if (field.type === "file" || field.type === "file-multiple") {
-          if (value) {
-            if (field.type === "file-multiple") {
-              const fileObjects = Array.isArray(value) ? value : [value];
-              const localPaths: string[] = [];
-
-              for (
-                let fileIndex = 0;
-                fileIndex < fileObjects.length;
-                fileIndex++
-              ) {
-                const fileObj = fileObjects[fileIndex];
-                let fileUrl = "";
-                let fileName = "";
-
-                if (typeof fileObj === "string") {
-                  fileUrl = fileObj;
-                  fileName = `file${fileIndex + 1}`;
-                } else if (fileObj && typeof fileObj === "object") {
-                  fileUrl =
-                    (fileObj as any).src ||
-                    (fileObj as any).url ||
-                    (fileObj as any).path ||
-                    "";
-                  fileName = (fileObj as any).name || `file${fileIndex + 1}`;
-                }
-
-                if (fileUrl) {
-                  const fileExtension =
-                    getFileExtension(fileName) || getFileExtension(fileUrl);
-                  const localPath = `files/${key}_row${rowIndex + 1}_${fileName}${fileExtension}`;
-                  localPaths.push(localPath);
-
-                  if (!fileDownloadMap.has(fileUrl)) {
-                    fileDownloadMap.set(fileUrl, localPath);
-                  }
-                }
-              }
-              processedRow[key] =
-                localPaths.length > 0 ? localPaths.join(";") : "";
-            } else {
-              let fileUrl = "";
-              let fileName = "";
-
-              if (typeof value === "string") {
-                fileUrl = value;
-                fileName = "file";
-              } else if (value && typeof value === "object") {
-                fileUrl =
-                  (value as any).src ||
-                  (value as any).url ||
-                  (value as any).path ||
-                  "";
-                fileName = (value as any).name || "file";
-              }
-
-              if (fileUrl) {
-                const fileExtension =
-                  getFileExtension(fileName) || getFileExtension(fileUrl);
-                const localPath = `files/${key}_row${rowIndex + 1}_${fileName}${fileExtension}`;
-                processedRow[key] = localPath;
-
-                if (!fileDownloadMap.has(fileUrl)) {
-                  fileDownloadMap.set(fileUrl, localPath);
-                }
-              } else {
-                processedRow[key] = "";
-              }
-            }
-          } else {
-            processedRow[key] = "";
+          if (field.type === "file-multiple") {
+            return exportedFiles.map((file) => file.exportPath).join(";");
           }
-        } else if (field.isRelation) {
-          const relatedDataKey = `${key}_data`;
-          const relatedData = row[relatedDataKey] as
-            | Record<string, unknown>
-            | undefined;
 
-          if (relatedData) {
-            if (field.displayField && relatedData[field.displayField]) {
-              if (
-                field.secondaryDisplayField &&
-                relatedData[field.secondaryDisplayField]
-              ) {
-                processedRow[key] =
-                  `${relatedData[field.displayField]} (${relatedData[field.secondaryDisplayField]})`;
-              } else {
-                processedRow[key] = relatedData[field.displayField];
-              }
-            } else {
-              processedRow[key] =
-                (relatedData.name as string) ||
-                (relatedData.title as string) ||
-                (relatedData.displayName as string) ||
-                (relatedData.label as string) ||
-                (relatedData.date
-                  ? new Date(
-                      relatedData.date as string | number | Date
-                    ).toLocaleDateString()
-                  : `ID: ${value}`);
-            }
-          } else {
-            processedRow[key] = value ? `ID: ${value}` : "";
-          }
-        } else if (field.type === "date" && value) {
-          const date =
-            value instanceof Date
-              ? value
-              : new Date(value as string | number | Date);
-          if (!isNaN(date.getTime())) {
-            processedRow[key] = date.toISOString().split("T")[0];
-          } else {
-            processedRow[key] = "";
-          }
-        } else if (field.type === "boolean") {
-          processedRow[key] = value ? "Yes" : "No";
-        } else if (
-          field.type === "percentage" &&
-          typeof value === "number" &&
-          value < 1
-        ) {
-          processedRow[key] = (value * 100).toFixed(2);
-        } else if (field.type === "markdown") {
-          processedRow[key] =
-            value && typeof value === "string"
-              ? value.replace(/[#*_`[\]()]/g, "")
-              : "";
-        } else {
-          processedRow[key] =
-            value !== undefined && value !== null ? value : "";
-        }
-      }
+          return exportedFiles[0]?.exportPath || "";
+        },
+      })
+    );
 
-      processedData.push(processedRow);
-    }
-
-    const headers = columnsToExport.map((field) => {
-      return {
-        id: field.key,
-        title: field.displayName || field.key,
-      };
-    });
-
-    const papaConfig = {
-      header: true,
-      columns: headers.map((h) => h.id),
-      newline: "\r\n",
-    };
-
-    const csv = Papa.unparse(processedData, papaConfig);
-    const headerRow = headers.map((h) => `"${h.title}"`).join(",");
-    const rows = csv.split("\r\n");
-    rows[0] = headerRow;
-    const finalCsv = rows.join("\r\n");
-
-    zip.file(`${filename}.csv`, finalCsv);
+    zip.file(`${filename}.csv`, buildCsv(processedData, columns));
 
     let filesDownloaded = 0;
-    for (const [filePath, localPath] of fileDownloadMap) {
+    for (const fileRecord of fileManifest) {
       try {
-        const base64Data = await ApiService.getFile(filePath);
-        if (base64Data) {
-          const response = await fetch(base64Data);
-          const blob = await response.blob();
-          zip.file(localPath, blob);
-          filesDownloaded++;
-        } else {
-          console.warn(`Failed to get file: ${filePath}`);
+        const base64Data = await ApiService.getFile(fileRecord.sourcePath);
+        if (!base64Data) {
+          console.warn(`Failed to get file: ${fileRecord.sourcePath}`);
+          continue;
         }
+
+        const response = await fetch(base64Data);
+        const blob = await response.blob();
+        zip.file(fileRecord.exportPath, blob);
+        filesDownloaded++;
       } catch (error) {
-        console.warn(`Error getting file ${filePath}:`, error);
+        console.warn(`Error getting file ${fileRecord.sourcePath}:`, error);
       }
     }
 
-    const manifest = {
-      totalFiles: fileDownloadMap.size,
-      processedFiles: filesDownloaded,
-      fileMap: Object.fromEntries(fileDownloadMap),
-      timestamp: new Date().toISOString(),
-    };
-    zip.file("manifest.json", JSON.stringify(manifest, null, 2));
+    zip.file(
+      "manifest.json",
+      JSON.stringify(
+        {
+          formatVersion: 2,
+          datasetId: datasetId || null,
+          exportedAt: new Date().toISOString(),
+          recordsFile: `${filename}.csv`,
+          filesDirectory: "files",
+          recordCount: processedData.length,
+          totalFiles: fileManifest.length,
+          processedFiles: filesDownloaded,
+          columns: columns.map((column) => column.id),
+          fileManifest,
+        },
+        null,
+        2
+      )
+    );
 
     const zipBlob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(zipBlob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.setAttribute("download", `${filename}.zip`);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    return await ApiService.saveExportBlob(zipBlob, `${filename}.zip`);
   } catch (error) {
     console.error("Error exporting data to ZIP:", error);
+    return null;
   }
 }
 
-function getFileExtension(url: string): string {
+export function hasExportableFileFields(
+  fields: FieldDefinition[],
+  visibleColumns?: string[]
+): boolean {
+  const visibleColumnSet = visibleColumns ? new Set(visibleColumns) : null;
+
+  return fields.some(
+    (field) =>
+      (field.type === "file" || field.type === "file-multiple") &&
+      (!visibleColumnSet || visibleColumnSet.has(field.key))
+  );
+}
+
+function buildExportColumns(
+  fields: FieldDefinition[],
+  visibleColumns?: string[]
+): ExportColumn[] {
+  const selectedFields = visibleColumns
+    ? fields.filter((field) => visibleColumns.includes(field.key))
+    : fields;
+
+  const columns: ExportColumn[] = [RECORD_ID_COLUMN];
+
+  selectedFields.forEach((field) => {
+    columns.push({
+      id: field.key,
+      title: field.key,
+      field,
+      kind: "field",
+    });
+
+    if (field.isRelation) {
+      columns.push({
+        id: `${field.key}__display`,
+        title: `${field.key}__display`,
+        field,
+        kind: "relation_display",
+      });
+    }
+  });
+
+  return columns;
+}
+
+function buildExportRow(
+  row: Record<string, unknown>,
+  columns: ExportColumn[],
+  options?: {
+    fileFieldFormatter?: (
+      field: FieldDefinition,
+      value: unknown,
+      recordId: string
+    ) => string;
+  }
+): Record<string, unknown> {
+  const recordId = getRecordId(row);
+  const processedRow: Record<string, unknown> = {
+    id: recordId,
+  };
+
+  columns.forEach((column) => {
+    if (column.kind === "record_id") {
+      processedRow[column.id] = recordId;
+      return;
+    }
+
+    if (!column.field) {
+      return;
+    }
+
+    if (column.kind === "relation_display") {
+      processedRow[column.id] = formatRelationDisplayValue(row, column.field);
+      return;
+    }
+
+    processedRow[column.id] = formatFieldValue(row, column.field, recordId, {
+      fileFieldFormatter: options?.fileFieldFormatter,
+    });
+  });
+
+  return processedRow;
+}
+
+function formatFieldValue(
+  row: Record<string, unknown>,
+  field: FieldDefinition,
+  recordId: string,
+  options?: {
+    fileFieldFormatter?: (
+      field: FieldDefinition,
+      value: unknown,
+      recordId: string
+    ) => string;
+  }
+): unknown {
+  const key = field.key;
+  const value = row[key];
+
+  if (field.type === "file" || field.type === "file-multiple") {
+    if (options?.fileFieldFormatter) {
+      return options.fileFieldFormatter(field, value, recordId);
+    }
+
+    const exportedFiles = createExportedFileRecords(value, key, recordId);
+
+    if (field.type === "file-multiple") {
+      return exportedFiles.map((file) => file.exportPath).join(";");
+    }
+
+    return exportedFiles[0]?.exportPath || "";
+  }
+
+  if (field.isRelation) {
+    return serializeRawValue(value);
+  }
+
+  if (field.type === "date") {
+    return serializeDateValue(value);
+  }
+
+  if (field.type === "boolean" && typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (field.type === "markdown" && typeof value === "string") {
+    return value;
+  }
+
+  return String(serializeRawValue(value));
+}
+
+function formatRelationDisplayValue(
+  row: Record<string, unknown>,
+  field: FieldDefinition
+): string {
+  const key = field.key;
+  const value = row[key];
+  const relatedDataKey = `${key}_data`;
+  const relatedData = row[relatedDataKey] as Record<string, unknown> | undefined;
+
+  if (relatedData) {
+    if (field.displayField && relatedData[field.displayField]) {
+      if (
+        field.secondaryDisplayField &&
+        relatedData[field.secondaryDisplayField]
+      ) {
+        return `${String(relatedData[field.displayField])} (${String(
+          relatedData[field.secondaryDisplayField]
+        )})`;
+      }
+
+      return String(relatedData[field.displayField]);
+    }
+
+    return String(
+      relatedData.name ||
+        relatedData.title ||
+        relatedData.displayName ||
+        relatedData.label ||
+        relatedData.date ||
+        value ||
+        ""
+    );
+  }
+
+  return value !== undefined && value !== null ? String(value) : "";
+}
+
+function serializeDateValue(value: unknown): string {
+  if (value === undefined || value === null || value === "") {
+    return "";
+  }
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? "" : value.toISOString();
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? String(value) : date.toISOString();
+  }
+
+  return String(serializeRawValue(value));
+}
+
+function serializeRawValue(value: unknown): unknown {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? "" : value.toISOString();
+  }
+
+  if (Array.isArray(value) || isPlainObject(value)) {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return value;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function buildCsv(
+  processedData: Record<string, unknown>[],
+  columns: ExportColumn[]
+): string {
+  const papaConfig = {
+    header: true,
+    columns: columns.map((column) => column.id),
+    newline: "\r\n",
+  };
+
+  const csv = Papa.unparse(processedData, papaConfig);
+  const headerRow = columns.map((column) => `"${column.title}"`).join(",");
+  const rows = csv.split("\r\n");
+  rows[0] = headerRow;
+
+  return rows.join("\r\n");
+}
+
+function createExportedFileRecords(
+  value: unknown,
+  fieldKey: string,
+  recordId: string
+): ExportedFileRecord[] {
+  const fileEntries = extractFileEntries(value);
+
+  return fileEntries.map((file, index) => {
+    const exportPath = buildExportFilePath(
+      recordId,
+      fieldKey,
+      file.originalName,
+      file.sourcePath,
+      index
+    );
+
+    return {
+      recordId,
+      fieldKey,
+      sourcePath: file.sourcePath,
+      exportPath,
+      originalName: file.originalName,
+      fileIndex: index,
+    };
+  });
+}
+
+function extractFileEntries(
+  value: unknown
+): Array<{ sourcePath: string; originalName: string }> {
+  if (!value) {
+    return [];
+  }
+
+  const values = Array.isArray(value) ? value : [value];
+
+  return values
+    .map((entry, index) => {
+      if (typeof entry === "string") {
+        return {
+          sourcePath: entry,
+          originalName: getFileNameFromPath(entry) || `file-${index + 1}`,
+        };
+      }
+
+      if (entry && typeof entry === "object") {
+        const sourcePath =
+          String(
+            (entry as Record<string, unknown>).src ||
+              (entry as Record<string, unknown>).url ||
+              (entry as Record<string, unknown>).path ||
+              ""
+          ) || "";
+
+        if (!sourcePath) {
+          return null;
+        }
+
+        const explicitName = (entry as Record<string, unknown>).name;
+
+        return {
+          sourcePath,
+          originalName:
+            (typeof explicitName === "string" && explicitName) ||
+            getFileNameFromPath(sourcePath) ||
+            `file-${index + 1}`,
+        };
+      }
+
+      return null;
+    })
+    .filter(
+      (
+        entry
+      ): entry is {
+        sourcePath: string;
+        originalName: string;
+      } => Boolean(entry?.sourcePath)
+    );
+}
+
+function buildExportFilePath(
+  recordId: string,
+  fieldKey: string,
+  originalName: string,
+  sourcePath: string,
+  fileIndex: number
+): string {
+  const sanitizedRecordId = sanitizePathSegment(recordId);
+  const sanitizedFieldKey = sanitizePathSegment(fieldKey);
+  const normalizedFileName = normalizeFileName(
+    originalName,
+    sourcePath,
+    `file-${fileIndex + 1}`
+  );
+
+  return `files/${sanitizedRecordId}/${sanitizedFieldKey}/${String(
+    fileIndex + 1
+  ).padStart(2, "0")}_${normalizedFileName}`;
+}
+
+function normalizeFileName(
+  originalName: string,
+  sourcePath: string,
+  fallbackBase: string
+): string {
+  const trimmedName = originalName.trim();
+  const existingExtension = getFileExtension(trimmedName);
+  const fallbackExtension = getFileExtension(sourcePath);
+  const safeBaseName = sanitizePathSegment(
+    trimmedName.replace(/\.[^/.]+$/, "") || fallbackBase
+  );
+  const extension = existingExtension || fallbackExtension;
+
+  return `${safeBaseName}${extension}`;
+}
+
+function getRecordId(row: Record<string, unknown>): string {
+  const rawId = row.id;
+
+  if (typeof rawId === "string" && rawId.trim()) {
+    return rawId;
+  }
+
+  if (typeof rawId === "number") {
+    return String(rawId);
+  }
+
+  return "unknown-record";
+}
+
+function getFileNameFromPath(path: string): string {
   try {
-    const pathname = new URL(url).pathname;
+    const pathname = new URL(path).pathname;
+    return pathname.split("/").pop() || "";
+  } catch {
+    return path.split("/").pop() || "";
+  }
+}
+
+function sanitizePathSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+function getFileExtension(path: string): string {
+  try {
+    const pathname = new URL(path).pathname;
     const lastDot = pathname.lastIndexOf(".");
     return lastDot !== -1 ? pathname.substring(lastDot) : "";
   } catch {
-    const lastDot = url.lastIndexOf(".");
-    const lastSlash = url.lastIndexOf("/");
+    const lastDot = path.lastIndexOf(".");
+    const lastSlash = path.lastIndexOf("/");
     if (lastDot !== -1 && lastDot > lastSlash) {
-      return url.substring(lastDot);
+      return path.substring(lastDot);
     }
     return "";
   }

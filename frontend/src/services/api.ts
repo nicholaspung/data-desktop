@@ -17,6 +17,7 @@ import {
   UploadFile,
   GetFileAsBase64,
   DeleteFile,
+  SaveExportFile,
   SaveDailyJournalWithMetrics,
 } from "../../wailsjs/go/backend/App";
 import { database } from "wailsjs/go/models";
@@ -309,6 +310,18 @@ export const ApiService = {
     }
   },
 
+  async saveExportBlob(blob: Blob, fileName: string): Promise<string | null> {
+    try {
+      const base64File = await blobToDataUrl(blob);
+      const savedPath = await SaveExportFile(base64File, fileName);
+      return savedPath || null;
+    } catch (error) {
+      console.error(`Failed to save export ${fileName}:`, error);
+      toast.error("Failed to save export");
+      return null;
+    }
+  },
+
   async uploadFileChunk(
     chunkData: string,
     fileName: string,
@@ -360,3 +373,19 @@ export const ApiService = {
     }
   },
 };
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error("Failed to convert blob to data URL"));
+    };
+    reader.onerror = () => reject(reader.error || new Error("FileReader failed"));
+    reader.readAsDataURL(blob);
+  });
+}
